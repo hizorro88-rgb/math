@@ -1,9 +1,12 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../models/curriculum.dart';
 import '../models/progress.dart';
 import '../models/question.dart';
 import '../models/quiz_config.dart';
+import '../services/sounds.dart';
 import '../widgets/bouncy_button.dart';
 import 'result_screen.dart';
 
@@ -59,6 +62,11 @@ class _QuizScreenState extends State<QuizScreen> {
         _lastGained = 0;
       }
     });
+    if (_isCorrect) {
+      Sounds.correct(_combo);
+    } else {
+      Sounds.wrong();
+    }
   }
 
   Future<void> _next() async {
@@ -66,6 +74,7 @@ class _QuizScreenState extends State<QuizScreen> {
       final level = widget.level;
       final stars = starsForScore(_correctCount, _questions.length);
       final earned = _roundPoints + completionBonus(stars);
+      if (stars >= 1) Sounds.complete();
       if (level != null) {
         // 결과 화면으로 넘어가기 전에 기록을 저장한다.
         await ProgressStore.saveStars(level.number, stars);
@@ -95,24 +104,35 @@ class _QuizScreenState extends State<QuizScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            _buildTopBar(),
-            Expanded(
-              child: SingleChildScrollView(
-                padding: const EdgeInsets.symmetric(horizontal: 24),
-                child: Column(
-                  children: [
-                    const SizedBox(height: 16),
-                    _buildQuestionCard(),
-                    const SizedBox(height: 24),
-                    _buildChoices(),
-                    const SizedBox(height: 16),
-                  ],
+            Column(
+              children: [
+                _buildTopBar(),
+                Expanded(
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.symmetric(horizontal: 24),
+                    child: Column(
+                      children: [
+                        const SizedBox(height: 16),
+                        _buildQuestionCard(),
+                        const SizedBox(height: 24),
+                        _buildChoices(),
+                        const SizedBox(height: 16),
+                      ],
+                    ),
+                  ),
+                ),
+                _buildFeedbackPanel(),
+              ],
+            ),
+            // 5연속 정답부터 화면 가득 반짝반짝!
+            if (_answered && _isCorrect && _combo >= 5)
+              Positioned.fill(
+                child: IgnorePointer(
+                  child: _SparkleBurst(key: ValueKey('sparkle$_currentIndex')),
                 ),
               ),
-            ),
-            _buildFeedbackPanel(),
           ],
         ),
       ),
@@ -323,6 +343,59 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 별과 반짝이가 가운데에서 사방으로 퍼지는 일회성 축하 효과
+class _SparkleBurst extends StatelessWidget {
+  const _SparkleBurst({super.key});
+
+  static const _emojis = [
+    '✨',
+    '⭐',
+    '🌟',
+    '✨',
+    '⭐',
+    '✨',
+    '🌟',
+    '✨',
+    '⭐',
+    '✨',
+    '🌟',
+    '⭐'
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0, end: 1),
+      duration: const Duration(milliseconds: 900),
+      curve: Curves.easeOut,
+      builder: (context, t, _) => Stack(
+        children: [
+          for (var i = 0; i < _emojis.length; i++)
+            Align(
+              alignment: Alignment.center,
+              child: Transform.translate(
+                offset: Offset(
+                  math.cos(i * 2 * math.pi / _emojis.length) * 170 * t,
+                  math.sin(i * 2 * math.pi / _emojis.length) * 190 * t - 60,
+                ),
+                child: Opacity(
+                  opacity: (1 - t).clamp(0.0, 1.0),
+                  child: Transform.scale(
+                    scale: 0.5 + t,
+                    child: Text(
+                      _emojis[i],
+                      style: const TextStyle(fontSize: 26),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

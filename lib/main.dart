@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 
 import 'screens/level_map_screen.dart';
+import 'services/sounds.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await Sounds.init();
   runApp(const PreschoolMathApp());
 }
 

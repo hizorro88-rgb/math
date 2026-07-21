@@ -2,9 +2,13 @@ import 'package:flutter/material.dart';
 
 import '../models/curriculum.dart';
 import '../models/progress.dart';
+import '../models/shop.dart';
+import '../services/sounds.dart';
 import '../widgets/bouncy_button.dart';
+import '../widgets/owl_avatar.dart';
 import 'practice_screen.dart';
 import 'quiz_screen.dart';
+import 'shop_screen.dart';
 
 /// 홈 화면: 마스코트 인사, 칭호 카드, 그리고 100단계 학습 지도.
 class LevelMapScreen extends StatefulWidget {
@@ -15,10 +19,17 @@ class LevelMapScreen extends StatefulWidget {
 }
 
 class _MapData {
-  const _MapData({required this.stars, required this.points});
+  const _MapData({
+    required this.stars,
+    required this.points,
+    required this.coins,
+    required this.equipped,
+  });
 
   final List<int> stars;
   final int points;
+  final int coins;
+  final List<ShopItem> equipped;
 }
 
 class _LevelMapScreenState extends State<LevelMapScreen> {
@@ -33,6 +44,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
   Future<_MapData> _load() async => _MapData(
         stars: await ProgressStore.load(),
         points: await ProgressStore.loadPoints(),
+        coins: await ProgressStore.loadCoins(),
+        equipped: await ShopStore.loadEquipped(),
       );
 
   void _refresh() {
@@ -55,6 +68,13 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     _refresh();
   }
 
+  Future<void> _openShop() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ShopScreen()),
+    );
+    _refresh();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -72,14 +92,38 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
           return ListView(
             padding: EdgeInsets.zero,
             children: [
-              _Header(totalStars: totalStars, points: data.points),
+              _Header(
+                totalStars: totalStars,
+                coins: data.coins,
+                equipped: data.equipped,
+                onOwlTap: _openShop,
+                onSoundChanged: () => setState(() {}),
+              ),
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
                     _RankCard(points: data.points),
                     const SizedBox(height: 14),
-                    _PracticeCard(onTap: _openPractice),
+                    Row(
+                      children: [
+                        Expanded(
+                            child: _MenuCard(
+                          emoji: '🛍️',
+                          title: '꾸미기 가게',
+                          subtitle: '코인으로 부엉이 꾸미기',
+                          onTap: _openShop,
+                        )),
+                        const SizedBox(width: 12),
+                        Expanded(
+                            child: _MenuCard(
+                          emoji: '🎨',
+                          title: '자유 연습',
+                          subtitle: '원하는 방식으로 연습',
+                          onTap: _openPractice,
+                        )),
+                      ],
+                    ),
                     const SizedBox(height: 14),
                     for (final unit in Curriculum.units) ...[
                       _UnitSection(
@@ -100,18 +144,28 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
   }
 }
 
-/// 초록 그라데이션 헤더: 부엉이 마스코트가 인사하고 별·점수를 보여준다.
+/// 초록 그라데이션 헤더: 꾸며진 부엉이가 인사하고 별·코인을 보여준다.
+/// 부엉이를 누르면 꾸미기 가게로 간다.
 class _Header extends StatelessWidget {
-  const _Header({required this.totalStars, required this.points});
+  const _Header({
+    required this.totalStars,
+    required this.coins,
+    required this.equipped,
+    required this.onOwlTap,
+    required this.onSoundChanged,
+  });
 
   final int totalStars;
-  final int points;
+  final int coins;
+  final List<ShopItem> equipped;
+  final VoidCallback onOwlTap;
+  final VoidCallback onSoundChanged;
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 12, 20, 22),
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 22),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
           begin: Alignment.topLeft,
@@ -125,18 +179,39 @@ class _Header extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              '수학 놀이',
-              style: TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.bold,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(height: 10),
             Row(
               children: [
-                const Text('🦉', style: TextStyle(fontSize: 52)),
+                const Text(
+                  '수학 놀이',
+                  style: TextStyle(
+                    fontSize: 28,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+                const Spacer(),
+                IconButton(
+                  onPressed: () async {
+                    await Sounds.setEnabled(!Sounds.enabled);
+                    onSoundChanged();
+                  },
+                  icon: Icon(
+                    Sounds.enabled
+                        ? Icons.volume_up_rounded
+                        : Icons.volume_off_rounded,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 4),
+            Row(
+              children: [
+                GestureDetector(
+                  onTap: onOwlTap,
+                  child: OwlAvatar(size: 52, equipped: equipped),
+                ),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Container(
@@ -165,7 +240,7 @@ class _Header extends StatelessWidget {
               children: [
                 _StatChip(text: '⭐ $totalStars'),
                 const SizedBox(width: 10),
-                _StatChip(text: '🪙 $points'),
+                _StatChip(text: '🪙 $coins'),
               ],
             ),
           ],
@@ -279,10 +354,18 @@ class _RankCard extends StatelessWidget {
   }
 }
 
-/// 자유 연습으로 들어가는 카드
-class _PracticeCard extends StatelessWidget {
-  const _PracticeCard({required this.onTap});
+/// 꾸미기 가게 / 자유 연습으로 들어가는 메뉴 카드
+class _MenuCard extends StatelessWidget {
+  const _MenuCard({
+    required this.emoji,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
 
+  final String emoji;
+  final String title;
+  final String subtitle;
   final VoidCallback onTap;
 
   @override
@@ -291,28 +374,22 @@ class _PracticeCard extends StatelessWidget {
       color: Colors.white,
       shadowColor: Colors.grey.shade300,
       borderRadius: 22,
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       onTap: onTap,
-      child: const Row(
+      child: Column(
         children: [
-          Text('🎨', style: TextStyle(fontSize: 32)),
-          SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '자유 연습',
-                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-                ),
-                Text(
-                  '원하는 방식으로 자유롭게 연습해요',
-                  style: TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-              ],
-            ),
+          Text(emoji, style: const TextStyle(fontSize: 32)),
+          const SizedBox(height: 6),
+          Text(
+            title,
+            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
           ),
-          Icon(Icons.chevron_right, color: Colors.grey),
+          const SizedBox(height: 2),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: const TextStyle(fontSize: 13, color: Colors.grey),
+          ),
         ],
       ),
     );

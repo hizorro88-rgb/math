@@ -57,4 +57,42 @@ void main() {
     expect(find.text('3단계'), findsOneWidget);
     expect(find.textContaining('= ?'), findsOneWidget);
   });
+
+  testWidgets('꾸미기 가게에서 코인으로 아이템을 산다', (tester) async {
+    SharedPreferences.setMockInitialValues({'coins_v1': 100});
+
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('꾸미기 가게'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('🪙 100'), findsOneWidget);
+    expect(find.text('리본'), findsOneWidget);
+
+    // 리본(80코인) 구매 → 코인 차감 + 착용
+    await tester.ensureVisible(find.text('리본'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('리본'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('🪙 20'), findsOneWidget);
+    expect(find.text('착용 중'), findsOneWidget);
+
+    // 구매 축하 스낵바가 사라질 때까지 기다린다.
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+
+    // 왕관(600코인)은 못 산다
+    await tester.ensureVisible(find.text('왕관'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('왕관'));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 400));
+    expect(find.textContaining('코인이 부족해요'), findsOneWidget);
+
+    // 남은 스낵바 타이머를 흘려보낸다.
+    await tester.pump(const Duration(seconds: 2));
+    await tester.pumpAndSettle();
+  });
 }
