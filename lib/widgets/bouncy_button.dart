@@ -1,0 +1,72 @@
+import 'package:flutter/material.dart';
+
+/// 듀오링고처럼 아래에 진한 그림자가 깔려 있고, 누르면 쏙 들어가는 버튼.
+class BouncyButton extends StatefulWidget {
+  const BouncyButton({
+    super.key,
+    required this.color,
+    required this.child,
+    this.onTap,
+    this.borderRadius = 20,
+    this.padding = const EdgeInsets.symmetric(vertical: 16),
+    this.shadowColor,
+    this.border,
+  });
+
+  final Color color;
+
+  /// 버튼 아래 3D 그림자 색. 없으면 [color]를 어둡게 만들어 쓴다.
+  final Color? shadowColor;
+  final Widget child;
+  final VoidCallback? onTap;
+  final double borderRadius;
+  final EdgeInsets padding;
+  final BoxBorder? border;
+
+  /// [color]를 살짝 어둡게 만든다.
+  static Color darken(Color color, [double amount = 0.18]) {
+    final hsl = HSLColor.fromColor(color);
+    return hsl
+        .withLightness((hsl.lightness - amount).clamp(0.0, 1.0))
+        .toColor();
+  }
+
+  @override
+  State<BouncyButton> createState() => _BouncyButtonState();
+}
+
+class _BouncyButtonState extends State<BouncyButton> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final depth = _pressed || widget.onTap == null ? 0.0 : 4.0;
+    final shadow = widget.shadowColor ?? BouncyButton.darken(widget.color);
+
+    return GestureDetector(
+      onTapDown:
+          widget.onTap == null ? null : (_) => setState(() => _pressed = true),
+      onTapCancel: () => setState(() => _pressed = false),
+      onTapUp: widget.onTap == null
+          ? null
+          : (_) {
+              setState(() => _pressed = false);
+              widget.onTap!();
+            },
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 80),
+        margin: EdgeInsets.only(top: 4 - depth, bottom: depth),
+        padding: widget.padding,
+        decoration: BoxDecoration(
+          color: widget.color,
+          borderRadius: BorderRadius.circular(widget.borderRadius),
+          border: widget.border,
+          boxShadow: [
+            BoxShadow(color: shadow, offset: Offset(0, depth), blurRadius: 0),
+          ],
+        ),
+        child: Center(child: widget.child),
+      ),
+    );
+  }
+}

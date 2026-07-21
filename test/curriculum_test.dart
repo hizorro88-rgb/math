@@ -78,5 +78,34 @@ void main() {
       expect(ProgressStore.isUnlocked(stars, 2), isTrue);
       expect(ProgressStore.isUnlocked(stars, 3), isFalse);
     });
+
+    test('정답 점수: 기본 10점, 3연속부터 콤보 보너스 +5점', () {
+      expect(pointsForAnswer(1), 10);
+      expect(pointsForAnswer(2), 10);
+      expect(pointsForAnswer(3), 15);
+      expect(pointsForAnswer(10), 15);
+    });
+
+    test('통과 보너스는 별 개수 × 10점', () {
+      expect(completionBonus(0), 0);
+      expect(completionBonus(1), 10);
+      expect(completionBonus(3), 30);
+    });
+
+    test('누적 점수에 따라 칭호가 자란다', () {
+      expect(rankForPoints(0).title, '알');
+      expect(rankForPoints(99).title, '알');
+      expect(rankForPoints(100).title, '병아리');
+      expect(rankForPoints(4500).title, '수학 왕');
+      expect(rankForPoints(999999).title, '수학 왕');
+
+      expect(nextRankFor(0)!.title, '병아리');
+      expect(nextRankFor(4500), isNull);
+
+      // 칭호 점수 기준은 점점 커진다.
+      for (var i = 1; i < ranks.length; i++) {
+        expect(ranks[i].minPoints, greaterThan(ranks[i - 1].minPoints));
+      }
+    });
   });
 }

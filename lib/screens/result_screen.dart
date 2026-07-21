@@ -3,21 +3,26 @@ import 'package:flutter/material.dart';
 import '../models/curriculum.dart';
 import '../models/progress.dart';
 import '../models/quiz_config.dart';
+import '../widgets/bouncy_button.dart';
 import 'quiz_screen.dart';
 
-/// 결과 화면: 별과 칭찬 메시지를 보여주고 다음 단계 또는 다시 도전으로 이어진다.
+/// 결과 화면: 별·점수·칭호를 보여주고 다음 단계 또는 다시 도전으로 이어진다.
 class ResultScreen extends StatelessWidget {
   const ResultScreen({
     super.key,
     required this.config,
     required this.correctCount,
     required this.totalCount,
+    required this.earnedPoints,
     this.level,
   });
 
   final QuizConfig config;
   final int correctCount;
   final int totalCount;
+
+  /// 이번 판에 모은 점수 (통과 보너스 포함)
+  final int earnedPoints;
 
   /// 단계 도전이면 해당 단계, 자유 연습이면 null
   final Level? level;
@@ -79,7 +84,7 @@ class ResultScreen extends StatelessWidget {
                     ),
                 ],
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               Text(
                 _message,
                 textAlign: TextAlign.center,
@@ -88,11 +93,11 @@ class ResultScreen extends StatelessWidget {
                   fontWeight: FontWeight.bold,
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Text(
                 '$totalCount문제 중에 $correctCount문제를 맞혔어요!',
                 textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 20, color: Colors.grey.shade700),
+                style: TextStyle(fontSize: 18, color: Colors.grey.shade700),
               ),
               if (level != null && !_cleared) ...[
                 const SizedBox(height: 8),
@@ -102,10 +107,13 @@ class ResultScreen extends StatelessWidget {
                   style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
                 ),
               ],
+              const SizedBox(height: 20),
+              _PointsCard(earnedPoints: earnedPoints),
               const Spacer(),
               if (nextLevel != null) ...[
-                ElevatedButton(
-                  onPressed: () {
+                BouncyButton(
+                  color: const Color(0xFF58CC02),
+                  onTap: () {
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
                         builder: (_) => QuizScreen(
@@ -115,32 +123,57 @@ class ResultScreen extends StatelessWidget {
                       ),
                     );
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFF58CC02),
-                    foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(vertical: 20),
+                  child: Text(
+                    '다음 단계 (${nextLevel.number}단계) ➡️',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
                   ),
-                  child: Text('다음 단계 (${nextLevel.number}단계) ➡️'),
                 ),
                 const SizedBox(height: 12),
               ],
-              _SecondaryButton(
-                label: '다시 하기 🔄',
-                filled: nextLevel == null,
-                onPressed: () {
+              BouncyButton(
+                color:
+                    nextLevel == null ? const Color(0xFF58CC02) : Colors.white,
+                shadowColor: nextLevel == null ? null : Colors.grey.shade300,
+                border: nextLevel == null
+                    ? null
+                    : Border.all(color: const Color(0xFF58CC02), width: 2),
+                onTap: () {
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(
                       builder: (_) => QuizScreen(config: config, level: level),
                     ),
                   );
                 },
+                child: Text(
+                  '다시 하기 🔄',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: nextLevel == null
+                        ? Colors.white
+                        : const Color(0xFF58CC02),
+                  ),
+                ),
               ),
               const SizedBox(height: 12),
-              _SecondaryButton(
-                label: level != null ? '지도로 🗺️' : '처음으로 🏠',
-                filled: false,
-                onPressed: () =>
+              BouncyButton(
+                color: Colors.white,
+                shadowColor: Colors.grey.shade300,
+                border: Border.all(color: const Color(0xFF58CC02), width: 2),
+                onTap: () =>
                     Navigator.of(context).popUntil((route) => route.isFirst),
+                child: Text(
+                  level != null ? '지도로 🗺️' : '처음으로 🏠',
+                  style: const TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF58CC02),
+                  ),
+                ),
               ),
               const SizedBox(height: 8),
             ],
@@ -151,41 +184,69 @@ class ResultScreen extends StatelessWidget {
   }
 }
 
-/// 초록색 채움/테두리 버튼
-class _SecondaryButton extends StatelessWidget {
-  const _SecondaryButton({
-    required this.label,
-    required this.filled,
-    required this.onPressed,
-  });
+/// 이번 판 점수가 차오르고, 누적 점수와 칭호를 보여주는 카드
+class _PointsCard extends StatelessWidget {
+  const _PointsCard({required this.earnedPoints});
 
-  final String label;
-  final bool filled;
-  final VoidCallback onPressed;
+  final int earnedPoints;
 
   @override
   Widget build(BuildContext context) {
-    if (filled) {
-      return ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: const Color(0xFF58CC02),
-          foregroundColor: Colors.white,
-          padding: const EdgeInsets.symmetric(vertical: 20),
-        ),
-        child: Text(label),
-      );
-    }
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 20),
-        side: const BorderSide(color: Color(0xFF58CC02), width: 2),
-        foregroundColor: const Color(0xFF58CC02),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        textStyle: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFF6D8),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: const Color(0xFFFFD34D), width: 3),
       ),
-      child: Text(label),
+      child: Column(
+        children: [
+          TweenAnimationBuilder<int>(
+            tween: IntTween(begin: 0, end: earnedPoints),
+            duration: const Duration(milliseconds: 900),
+            builder: (context, value, _) => Text(
+              '🪙 +$value점',
+              style: const TextStyle(
+                fontSize: 30,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFB8860B),
+              ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          FutureBuilder<int>(
+            future: ProgressStore.loadPoints(),
+            builder: (context, snapshot) {
+              final total = snapshot.data;
+              if (total == null) return const SizedBox(height: 20);
+              final rank = rankForPoints(total);
+              final next = nextRankFor(total);
+              return Column(
+                children: [
+                  Text(
+                    '모은 점수 $total점 · ${rank.emoji} ${rank.title}',
+                    style: TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.brown.shade400,
+                    ),
+                  ),
+                  if (next != null) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      '${next.emoji} ${next.title}까지 ${next.minPoints - total}점!',
+                      style: TextStyle(
+                        fontSize: 14,
+                        color: Colors.brown.shade300,
+                      ),
+                    ),
+                  ],
+                ],
+              );
+            },
+          ),
+        ],
+      ),
     );
   }
 }

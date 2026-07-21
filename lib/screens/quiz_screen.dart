@@ -4,9 +4,11 @@ import '../models/curriculum.dart';
 import '../models/progress.dart';
 import '../models/question.dart';
 import '../models/quiz_config.dart';
+import '../widgets/bouncy_button.dart';
 import 'result_screen.dart';
 
 /// 퀴즈 화면: 문제를 하나씩 풀고, 듀오링고처럼 아래에서 정답 여부를 알려준다.
+/// 정답은 +10점, 3연속 정답부터 🔥 콤보 보너스 +5점.
 class QuizScreen extends StatefulWidget {
   const QuizScreen({super.key, required this.config, this.level});
 
@@ -24,12 +26,18 @@ class _QuizScreenState extends State<QuizScreen> {
   int _currentIndex = 0;
   int _correctCount = 0;
 
+  /// 연속 정답 개수와 이번 판에 모은 점수
+  int _combo = 0;
+  int _roundPoints = 0;
+  int _lastGained = 0;
+
   /// 아이가 고른 보기. null이면 아직 고르지 않은 상태.
   int? _selectedChoice;
 
   Question get _question => _questions[_currentIndex];
   bool get _answered => _selectedChoice != null;
   bool get _isCorrect => _selectedChoice == _question.answer;
+  Color get _themeColor => widget.level?.unit.color ?? const Color(0xFF58CC02);
 
   @override
   void initState() {
@@ -43,6 +51,12 @@ class _QuizScreenState extends State<QuizScreen> {
       _selectedChoice = choice;
       if (choice == _question.answer) {
         _correctCount++;
+        _combo++;
+        _lastGained = pointsForAnswer(_combo);
+        _roundPoints += _lastGained;
+      } else {
+        _combo = 0;
+        _lastGained = 0;
       }
     });
   }
@@ -50,13 +64,13 @@ class _QuizScreenState extends State<QuizScreen> {
   Future<void> _next() async {
     if (_currentIndex + 1 >= _questions.length) {
       final level = widget.level;
+      final stars = starsForScore(_correctCount, _questions.length);
+      final earned = _roundPoints + completionBonus(stars);
       if (level != null) {
-        // 결과 화면으로 넘어가기 전에 별 기록을 저장한다.
-        await ProgressStore.saveStars(
-          level.number,
-          starsForScore(_correctCount, _questions.length),
-        );
+        // 결과 화면으로 넘어가기 전에 기록을 저장한다.
+        await ProgressStore.saveStars(level.number, stars);
       }
+      await ProgressStore.addPoints(earned);
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
@@ -65,6 +79,7 @@ class _QuizScreenState extends State<QuizScreen> {
             level: level,
             correctCount: _correctCount,
             totalCount: _questions.length,
+            earnedPoints: earned,
           ),
         ),
       );
@@ -138,15 +153,26 @@ class _QuizScreenState extends State<QuizScreen> {
                   value: value,
                   minHeight: 14,
                   backgroundColor: Colors.grey.shade300,
-                  color: const Color(0xFF58CC02),
+                  color: _themeColor,
                 ),
               ),
             ),
           ),
           const SizedBox(width: 12),
+          if (_combo >= 2) ...[
+            Text(
+              '🔥$_combo',
+              style: const TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFFF7A00),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
           Text(
-            '⭐ $_correctCount',
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            '🪙 $_roundPoints',
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ],
       ),
@@ -159,8 +185,16 @@ class _QuizScreenState extends State<QuizScreen> {
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: Colors.grey.shade300, width: 2),
+        borderRadius: BorderRadius.circular(28),
+        border:
+            Border.all(color: _themeColor.withValues(alpha: 0.35), width: 3),
+        boxShadow: [
+          BoxShadow(
+            color: _themeColor.withValues(alpha: 0.12),
+            offset: const Offset(0, 6),
+            blurRadius: 14,
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -180,9 +214,9 @@ class _QuizScreenState extends State<QuizScreen> {
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 12,
+      mainAxisSpacing: 14,
       crossAxisSpacing: 12,
-      childAspectRatio: 1.8,
+      childAspectRatio: 1.75,
       children: [
         for (final choice in _question.choices)
           _ChoiceButton(
@@ -209,38 +243,70 @@ class _QuizScreenState extends State<QuizScreen> {
         _isCorrect ? const Color(0xFFD7FFB8) : const Color(0xFFFFDFE0);
     final textColor =
         _isCorrect ? const Color(0xFF58A700) : const Color(0xFFEA2B2B);
-    final message =
-        _isCorrect ? '정답이에요! 🎉' : '아쉬워요! 정답은 ${_question.answer}이에요';
+    final message = _isCorrect ? '정답이에요! 🎉' : '아쉬워요! 정답은 ${_question.answer}';
 
     final isLast = _currentIndex + 1 >= _questions.length;
 
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 24),
-      color: color,
+      padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
+      ),
       child: SafeArea(
         top: false,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              message,
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    message,
+                    style: TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: textColor,
+                    ),
+                  ),
+                ),
+                if (_isCorrect)
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      _combo >= 3 ? '+$_lastGained점 🔥' : '+$_lastGained점',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: textColor,
+                      ),
+                    ),
+                  ),
+              ],
             ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: _next,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: textColor,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+            const SizedBox(height: 14),
+            BouncyButton(
+              color: _isCorrect
+                  ? const Color(0xFF58CC02)
+                  : const Color(0xFFEA2B2B),
+              onTap: _next,
+              child: Text(
+                isLast ? '결과 보기 🏁' : '계속하기',
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
               ),
-              child: Text(isLast ? '결과 보기 🏁' : '계속하기'),
             ),
           ],
         ),
@@ -251,7 +317,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
 enum _ChoiceState { idle, correct, wrong, disabled }
 
-/// 큼직한 보기 버튼
+/// 큼직한 3D 보기 버튼
 class _ChoiceButton extends StatelessWidget {
   const _ChoiceButton({
     required this.value,
@@ -292,6 +358,15 @@ class _ChoiceButton extends StatelessWidget {
           color: background,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(color: border, width: 3),
+          boxShadow: state == _ChoiceState.idle
+              ? [
+                  BoxShadow(
+                    color: Colors.grey.shade300,
+                    offset: const Offset(0, 4),
+                    blurRadius: 0,
+                  ),
+                ]
+              : null,
         ),
         child: Center(
           child: Text(

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/quiz_config.dart';
+import '../widgets/bouncy_button.dart';
 import 'quiz_screen.dart';
 
 /// 자유 연습: 퀴즈 종류와 난이도를 직접 고르고 시작한다. (단계 진행과 무관)
@@ -93,14 +94,18 @@ class _PracticeScreenState extends State<PracticeScreen> {
                       ],
                     ),
                     const Spacer(),
-                    ElevatedButton(
-                      onPressed: _startQuiz,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xFF58CC02),
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 20),
+                    BouncyButton(
+                      color: const Color(0xFF58CC02),
+                      padding: const EdgeInsets.symmetric(vertical: 20),
+                      onTap: _startQuiz,
+                      child: const Text(
+                        '시작하기 🚀',
+                        style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
                       ),
-                      child: const Text('시작하기 🚀'),
                     ),
                     const SizedBox(height: 8),
                   ],
@@ -156,6 +161,13 @@ class _ChoiceCard extends StatelessWidget {
             color: selected ? const Color(0xFF58CC02) : Colors.grey.shade300,
             width: 3,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: selected ? const Color(0xFFB5E48C) : Colors.grey.shade300,
+              offset: const Offset(0, 4),
+              blurRadius: 0,
+            ),
+          ],
         ),
         child: Column(
           children: [

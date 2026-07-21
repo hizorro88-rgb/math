@@ -11,16 +11,55 @@ int starsForScore(int correctCount, int totalCount) {
   return 0;
 }
 
-/// 단계별 별 개수를 기기에 저장하고 불러온다.
+/// 정답 한 개의 점수. 3연속 정답(콤보)부터 보너스가 붙는다.
+int pointsForAnswer(int combo) => 10 + (combo >= 3 ? 5 : 0);
+
+/// 단계를 마쳤을 때 별 개수에 따라 주는 보너스 점수.
+int completionBonus(int stars) => stars * 10;
+
+/// 누적 점수로 얻는 칭호. 점수가 쌓일수록 멋진 동물로 자란다.
+class Rank {
+  const Rank(this.emoji, this.title, this.minPoints);
+
+  final String emoji;
+  final String title;
+  final int minPoints;
+}
+
+const List<Rank> ranks = [
+  Rank('🥚', '알', 0),
+  Rank('🐣', '병아리', 100),
+  Rank('🐿️', '다람쥐', 300),
+  Rank('🐰', '토끼', 600),
+  Rank('🦊', '여우', 1000),
+  Rank('🐼', '판다', 1500),
+  Rank('🦁', '사자', 2100),
+  Rank('🐘', '코끼리', 2800),
+  Rank('🦄', '유니콘', 3600),
+  Rank('👑', '수학 왕', 4500),
+];
+
+/// 지금 점수의 칭호
+Rank rankForPoints(int points) => ranks.lastWhere((r) => points >= r.minPoints);
+
+/// 다음 칭호. 이미 최고 칭호면 null.
+Rank? nextRankFor(int points) {
+  final current = rankForPoints(points);
+  final index = ranks.indexOf(current);
+  return index + 1 < ranks.length ? ranks[index + 1] : null;
+}
+
+/// 단계별 별과 누적 점수를 기기에 저장하고 불러온다.
 class ProgressStore {
   ProgressStore._();
 
-  static const _key = 'level_stars_v1';
+  static const _starsKey = 'level_stars_v1';
+  static const _pointsKey = 'total_points_v1';
 
   /// 100개 단계의 별 개수 목록 (인덱스 0 = 1단계)
   static Future<List<int>> load() async {
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getStringList(_key) ?? const [];
+    final saved = prefs.getStringList(_starsKey) ?? const [];
     return List.generate(
       Curriculum.totalLevels,
       (i) => i < saved.length ? int.tryParse(saved[i]) ?? 0 : 0,
@@ -34,7 +73,21 @@ class ProgressStore {
     if (stars <= current[index]) return;
     current[index] = stars;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_key, current.map((s) => '$s').toList());
+    await prefs.setStringList(_starsKey, current.map((s) => '$s').toList());
+  }
+
+  /// 지금까지 모은 누적 점수
+  static Future<int> loadPoints() async {
+    final prefs = await SharedPreferences.getInstance();
+    return prefs.getInt(_pointsKey) ?? 0;
+  }
+
+  /// 점수를 더해서 저장하고, 더한 뒤의 누적 점수를 돌려준다.
+  static Future<int> addPoints(int earned) async {
+    final prefs = await SharedPreferences.getInstance();
+    final total = (prefs.getInt(_pointsKey) ?? 0) + earned;
+    await prefs.setInt(_pointsKey, total);
+    return total;
   }
 
   /// 별 1개 이상이면 통과. 1단계이거나 앞 단계를 통과했으면 도전할 수 있다.
