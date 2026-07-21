@@ -123,13 +123,24 @@ class ResultScreen extends StatelessWidget {
                       ),
                     );
                   },
-                  child: Text(
-                    '다음 단계 (${nextLevel.number}단계) ➡️',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        '다음 단계 (${nextLevel.number}단계)',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 28,
+                        color: Colors.white,
+                      ),
+                    ],
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -148,15 +159,28 @@ class ResultScreen extends StatelessWidget {
                     ),
                   );
                 },
-                child: Text(
-                  '다시 하기 🔄',
-                  style: TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: nextLevel == null
-                        ? Colors.white
-                        : const Color(0xFF58CC02),
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '다시 하기',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: nextLevel == null
+                            ? Colors.white
+                            : const Color(0xFF58CC02),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.refresh_rounded,
+                      size: 28,
+                      color: nextLevel == null
+                          ? Colors.white
+                          : const Color(0xFF58CC02),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 12),
@@ -166,13 +190,24 @@ class ResultScreen extends StatelessWidget {
                 border: Border.all(color: const Color(0xFF58CC02), width: 2),
                 onTap: () =>
                     Navigator.of(context).popUntil((route) => route.isFirst),
-                child: Text(
-                  level != null ? '지도로 🗺️' : '처음으로 🏠',
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF58CC02),
-                  ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      level != null ? '지도로' : '처음으로',
+                      style: const TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF58CC02),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      level != null ? Icons.map_rounded : Icons.home_rounded,
+                      size: 28,
+                      color: const Color(0xFF58CC02),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 8),

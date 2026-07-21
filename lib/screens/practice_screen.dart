@@ -98,13 +98,24 @@ class _PracticeScreenState extends State<PracticeScreen> {
                       color: const Color(0xFF58CC02),
                       padding: const EdgeInsets.symmetric(vertical: 20),
                       onTap: _startQuiz,
-                      child: const Text(
-                        '시작하기 🚀',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '시작하기',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
+                          ),
+                          SizedBox(width: 8),
+                          Icon(
+                            Icons.play_arrow_rounded,
+                            size: 32,
+                            color: Colors.white,
+                          ),
+                        ],
                       ),
                     ),
                     const SizedBox(height: 8),

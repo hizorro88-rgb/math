@@ -299,13 +299,26 @@ class _QuizScreenState extends State<QuizScreen> {
                   ? const Color(0xFF58CC02)
                   : const Color(0xFFEA2B2B),
               onTap: _next,
-              child: Text(
-                isLast ? '결과 보기 🏁' : '계속하기',
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    isLast ? '결과 보기' : '계속하기',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  if (isLast) ...[
+                    const SizedBox(width: 8),
+                    const Icon(
+                      Icons.emoji_events_rounded,
+                      size: 28,
+                      color: Colors.white,
+                    ),
+                  ],
+                ],
               ),
             ),
           ],
