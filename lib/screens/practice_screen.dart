@@ -3,15 +3,15 @@ import 'package:flutter/material.dart';
 import '../models/quiz_config.dart';
 import 'quiz_screen.dart';
 
-/// 시작 화면: 퀴즈 종류와 난이도를 고르고 시작한다.
-class HomeScreen extends StatefulWidget {
-  const HomeScreen({super.key});
+/// 자유 연습: 퀴즈 종류와 난이도를 직접 고르고 시작한다. (단계 진행과 무관)
+class PracticeScreen extends StatefulWidget {
+  const PracticeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  State<PracticeScreen> createState() => _PracticeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _PracticeScreenState extends State<PracticeScreen> {
   QuizMode _mode = QuizMode.addition;
   Difficulty _difficulty = Difficulty.easy;
 
@@ -19,7 +19,10 @@ class _HomeScreenState extends State<HomeScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => QuizScreen(
-          config: QuizConfig(mode: _mode, difficulty: _difficulty),
+          config: QuizConfig(
+            mode: _mode,
+            maxNumber: _difficulty.maxNumber,
+          ),
         ),
       ),
     );
@@ -28,6 +31,14 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        backgroundColor: const Color(0xFF58CC02),
+        foregroundColor: Colors.white,
+        title: const Text(
+          '🎨 자유 연습',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+      ),
       // 화면이 작으면 스크롤되고, 크면 위아래로 넉넉하게 펼쳐진다.
       body: SafeArea(
         child: LayoutBuilder(
@@ -40,29 +51,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const Spacer(),
-                    const Text(
-                      '🦉',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 72),
-                    ),
-                    const SizedBox(height: 8),
-                    const Text(
-                      '수학 놀이',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 40,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF58CC02),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '재미있게 더하기 빼기를 배워요!',
-                      textAlign: TextAlign.center,
-                      style:
-                          TextStyle(fontSize: 18, color: Colors.grey.shade600),
-                    ),
                     const Spacer(),
                     const _SectionLabel('어떤 공부를 할까요?'),
                     const SizedBox(height: 8),

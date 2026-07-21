@@ -1,27 +1,36 @@
 import 'package:flutter/material.dart';
 
+import '../models/curriculum.dart';
+import '../models/progress.dart';
 import '../models/quiz_config.dart';
 import 'quiz_screen.dart';
 
-/// 결과 화면: 별과 칭찬 메시지를 보여주고 다시 도전할 수 있게 한다.
+/// 결과 화면: 별과 칭찬 메시지를 보여주고 다음 단계 또는 다시 도전으로 이어진다.
 class ResultScreen extends StatelessWidget {
   const ResultScreen({
     super.key,
     required this.config,
     required this.correctCount,
     required this.totalCount,
+    this.level,
   });
 
   final QuizConfig config;
   final int correctCount;
   final int totalCount;
 
-  int get _stars {
-    final ratio = correctCount / totalCount;
-    if (ratio >= 0.9) return 3;
-    if (ratio >= 0.7) return 2;
-    if (ratio >= 0.5) return 1;
-    return 0;
+  /// 단계 도전이면 해당 단계, 자유 연습이면 null
+  final Level? level;
+
+  int get _stars => starsForScore(correctCount, totalCount);
+
+  bool get _cleared => _stars >= 1;
+
+  Level? get _nextLevel {
+    final current = level;
+    if (current == null || !_cleared) return null;
+    if (current.number >= Curriculum.totalLevels) return null;
+    return Curriculum.levelAt(current.number + 1);
   }
 
   String get _message => switch (_stars) {
@@ -33,6 +42,8 @@ class ResultScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final nextLevel = _nextLevel;
+
     return Scaffold(
       body: SafeArea(
         child: Padding(
@@ -41,6 +52,14 @@ class ResultScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Spacer(),
+              if (level != null) ...[
+                Text(
+                  '${level!.number}단계 · ${level!.unit.emoji} ${level!.unit.title}',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 12),
+              ],
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
@@ -75,45 +94,98 @@ class ResultScreen extends StatelessWidget {
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 20, color: Colors.grey.shade700),
               ),
+              if (level != null && !_cleared) ...[
+                const SizedBox(height: 8),
+                Text(
+                  '5문제 이상 맞히면 다음 단계가 열려요!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
+                ),
+              ],
               const Spacer(),
-              ElevatedButton(
+              if (nextLevel != null) ...[
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (_) => QuizScreen(
+                          config: nextLevel.config,
+                          level: nextLevel,
+                        ),
+                      ),
+                    );
+                  },
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF58CC02),
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                  ),
+                  child: Text('다음 단계 (${nextLevel.number}단계) ➡️'),
+                ),
+                const SizedBox(height: 12),
+              ],
+              _SecondaryButton(
+                label: '다시 하기 🔄',
+                filled: nextLevel == null,
                 onPressed: () {
                   Navigator.of(context).pushReplacement(
                     MaterialPageRoute(
-                      builder: (_) => QuizScreen(config: config),
+                      builder: (_) => QuizScreen(config: config, level: level),
                     ),
                   );
                 },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: const Color(0xFF58CC02),
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                ),
-                child: const Text('다시 하기 🔄'),
               ),
               const SizedBox(height: 12),
-              OutlinedButton(
+              _SecondaryButton(
+                label: level != null ? '지도로 🗺️' : '처음으로 🏠',
+                filled: false,
                 onPressed: () =>
                     Navigator.of(context).popUntil((route) => route.isFirst),
-                style: OutlinedButton.styleFrom(
-                  padding: const EdgeInsets.symmetric(vertical: 20),
-                  side: const BorderSide(color: Color(0xFF58CC02), width: 2),
-                  foregroundColor: const Color(0xFF58CC02),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20),
-                  ),
-                  textStyle: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                child: const Text('처음으로 🏠'),
               ),
               const SizedBox(height: 8),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// 초록색 채움/테두리 버튼
+class _SecondaryButton extends StatelessWidget {
+  const _SecondaryButton({
+    required this.label,
+    required this.filled,
+    required this.onPressed,
+  });
+
+  final String label;
+  final bool filled;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    if (filled) {
+      return ElevatedButton(
+        onPressed: onPressed,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFF58CC02),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 20),
+        ),
+        child: Text(label),
+      );
+    }
+    return OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 20),
+        side: const BorderSide(color: Color(0xFF58CC02), width: 2),
+        foregroundColor: const Color(0xFF58CC02),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        textStyle: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+      ),
+      child: Text(label),
     );
   }
 }

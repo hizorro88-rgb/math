@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'screens/home_screen.dart';
+import 'screens/level_map_screen.dart';
 
 void main() {
   runApp(const PreschoolMathApp());
@@ -33,7 +33,7 @@ class PreschoolMathApp extends StatelessWidget {
           ),
         ),
       ),
-      home: const HomeScreen(),
+      home: const LevelMapScreen(),
     );
   }
 }

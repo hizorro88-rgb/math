@@ -10,7 +10,7 @@ enum QuizMode {
   final String emoji;
 }
 
-/// 난이도: 답이 최대 몇까지 나오는지
+/// 자유 연습에서 고르는 난이도: 답이 최대 몇까지 나오는지
 enum Difficulty {
   easy('쉬워요', '5까지', 5),
   normal('보통이에요', '10까지', 10);
@@ -26,11 +26,13 @@ enum Difficulty {
 class QuizConfig {
   const QuizConfig({
     required this.mode,
-    required this.difficulty,
+    required this.maxNumber,
     this.questionCount = 10,
   });
 
   final QuizMode mode;
-  final Difficulty difficulty;
+
+  /// 답(그리고 피연산자)이 넘지 않는 최대값
+  final int maxNumber;
   final int questionCount;
 }

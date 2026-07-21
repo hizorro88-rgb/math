@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 
+import '../models/curriculum.dart';
+import '../models/progress.dart';
 import '../models/question.dart';
 import '../models/quiz_config.dart';
 import 'result_screen.dart';
 
 /// 퀴즈 화면: 문제를 하나씩 풀고, 듀오링고처럼 아래에서 정답 여부를 알려준다.
 class QuizScreen extends StatefulWidget {
-  const QuizScreen({super.key, required this.config});
+  const QuizScreen({super.key, required this.config, this.level});
 
   final QuizConfig config;
+
+  /// 단계 도전이면 해당 단계, 자유 연습이면 null
+  final Level? level;
 
   @override
   State<QuizScreen> createState() => _QuizScreenState();
@@ -42,12 +47,22 @@ class _QuizScreenState extends State<QuizScreen> {
     });
   }
 
-  void _next() {
+  Future<void> _next() async {
     if (_currentIndex + 1 >= _questions.length) {
+      final level = widget.level;
+      if (level != null) {
+        // 결과 화면으로 넘어가기 전에 별 기록을 저장한다.
+        await ProgressStore.saveStars(
+          level.number,
+          starsForScore(_correctCount, _questions.length),
+        );
+      }
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => ResultScreen(
             config: widget.config,
+            level: level,
             correctCount: _correctCount,
             totalCount: _questions.length,
           ),
@@ -99,6 +114,17 @@ class _QuizScreenState extends State<QuizScreen> {
             color: Colors.grey,
             onPressed: () => Navigator.of(context).pop(),
           ),
+          if (widget.level != null) ...[
+            Text(
+              '${widget.level!.number}단계',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey,
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
           Expanded(
             child: ClipRRect(
               borderRadius: BorderRadius.circular(8),

@@ -69,7 +69,7 @@ class QuestionGenerator {
       QuizMode.mixed => _random.nextBool(),
     };
 
-    final max = config.difficulty.maxNumber;
+    final max = config.maxNumber;
     int left;
     int right;
 

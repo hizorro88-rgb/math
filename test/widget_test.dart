@@ -1,17 +1,51 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preschool_math/main.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
-  testWidgets('홈 화면이 뜨고 시작 버튼으로 퀴즈를 시작할 수 있다', (tester) async {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
+  testWidgets('학습 지도가 뜨고 1단계만 열려 있다', (tester) async {
     await tester.pumpWidget(const PreschoolMathApp());
-
-    expect(find.text('수학 놀이'), findsOneWidget);
-    expect(find.text('시작하기 🚀'), findsOneWidget);
-
-    // 시작을 누르면 퀴즈 화면으로 넘어간다.
-    await tester.tap(find.text('시작하기 🚀'));
     await tester.pumpAndSettle();
 
+    expect(find.text('🦉 수학 놀이'), findsOneWidget);
+    expect(find.text('자유 연습'), findsOneWidget);
+    expect(find.textContaining('덧셈 첫걸음'), findsOneWidget);
+
+    // 1단계는 열려 있고, 잠긴 단계(🔒)도 보인다.
+    expect(find.text('1'), findsOneWidget);
+    expect(find.text('🔒'), findsWidgets);
+  });
+
+  testWidgets('1단계를 누르면 퀴즈가 시작된다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('1'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('1단계'), findsOneWidget);
+    expect(find.textContaining('= ?'), findsOneWidget);
+  });
+
+  testWidgets('통과한 기록이 있으면 다음 단계가 열린다', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'level_stars_v1': ['3', '2'],
+    });
+
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    // 1, 2단계 통과 → 3단계까지 열려 있고 총 별 5개
+    expect(find.text('⭐ 5'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
+    await tester.tap(find.text('3'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('3단계'), findsOneWidget);
     expect(find.textContaining('= ?'), findsOneWidget);
   });
 }

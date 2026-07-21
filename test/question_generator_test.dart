@@ -7,13 +7,13 @@ import 'package:preschool_math/models/quiz_config.dart';
 void main() {
   group('QuestionGenerator', () {
     for (final mode in QuizMode.values) {
-      for (final difficulty in Difficulty.values) {
-        test('${mode.label} / ${difficulty.description} 문제가 규칙에 맞는다', () {
+      for (final maxNumber in [3, 5, 10, 15, 20]) {
+        test('${mode.label} / $maxNumber까지 문제가 규칙에 맞는다', () {
           final generator = QuestionGenerator(random: Random(42));
           // 여러 판을 만들어 다양한 경우를 확인한다.
           for (var round = 0; round < 50; round++) {
             final questions = generator.generate(
-              QuizConfig(mode: mode, difficulty: difficulty),
+              QuizConfig(mode: mode, maxNumber: maxNumber),
             );
             expect(questions, hasLength(10));
 
@@ -22,9 +22,9 @@ void main() {
               if (mode == QuizMode.addition) expect(q.isAddition, isTrue);
               if (mode == QuizMode.subtraction) expect(q.isAddition, isFalse);
 
-              // 답이 0 이상, 난이도 최대값 이하인지
+              // 답이 0 이상, 최대값 이하인지
               expect(q.answer, greaterThanOrEqualTo(0));
-              expect(q.answer, lessThanOrEqualTo(difficulty.maxNumber));
+              expect(q.answer, lessThanOrEqualTo(maxNumber));
 
               // 피연산자는 1 이상 (0 + n 같은 문제는 내지 않는다)
               expect(q.left, greaterThanOrEqualTo(1));
