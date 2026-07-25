@@ -1,3 +1,4 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preschool_math/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -56,6 +57,44 @@ void main() {
 
     expect(find.text('3단계'), findsOneWidget);
     expect(find.textContaining('= ?'), findsOneWidget);
+  });
+
+  testWidgets('퀴즈 도중 나가려면 확인 팝업을 거친다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    // 1단계 입장 후 아무것도 안 풀었으면 X로 바로 나간다.
+    await tester.tap(find.text('1'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+    expect(find.text('수학 놀이'), findsOneWidget);
+
+    // 다시 들어가서 한 문제를 풀면, X를 눌렀을 때 확인 팝업이 뜬다.
+    await tester.tap(find.text('1'));
+    await tester.pumpAndSettle();
+    final choice = find.byWidgetPredicate(
+      (w) => w is Text && RegExp(r'^\d+$').hasMatch(w.data ?? ''),
+    );
+    await tester.tap(choice.first);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+    expect(find.text('정말 그만할까요?'), findsOneWidget);
+
+    // '계속 풀기'를 누르면 퀴즈로 돌아온다.
+    await tester.tap(find.text('계속 풀기'));
+    await tester.pumpAndSettle();
+    expect(find.text('정말 그만할까요?'), findsNothing);
+    expect(find.textContaining('= ?'), findsOneWidget);
+
+    // 다시 X → '그만하기'를 누르면 지도로 나간다.
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('그만하기'));
+    await tester.pumpAndSettle();
+    expect(find.text('수학 놀이'), findsOneWidget);
   });
 
   testWidgets('꾸미기 가게에서 코인으로 아이템을 산다', (tester) async {

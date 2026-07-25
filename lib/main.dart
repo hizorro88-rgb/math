@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 
 import 'screens/level_map_screen.dart';
 import 'services/sounds.dart';
+import 'services/speech.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Sounds.init();
+  await Speech.init();
   runApp(const PreschoolMathApp());
 }
 

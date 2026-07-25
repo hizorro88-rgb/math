@@ -1,12 +1,14 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models/curriculum.dart';
 import '../models/progress.dart';
 import '../models/question.dart';
 import '../models/quiz_config.dart';
 import '../services/sounds.dart';
+import '../services/speech.dart';
 import '../widgets/bouncy_button.dart';
 import 'result_screen.dart';
 
@@ -49,7 +51,11 @@ class _QuizScreenState extends State<QuizScreen> {
   void initState() {
     super.initState();
     _questions = QuestionGenerator().generate(widget.config);
+    // 첫 문제를 음성으로 읽어 준다.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _speakQuestion());
   }
+
+  void _speakQuestion() => Speech.speak(_question.speechText);
 
   void _selectChoice(int choice) {
     if (_answered) return;
@@ -67,9 +73,82 @@ class _QuizScreenState extends State<QuizScreen> {
     });
     if (_isCorrect) {
       Sounds.correct(_combo);
+      HapticFeedback.lightImpact().ignore();
+      Speech.speak('정답이에요!');
     } else {
       Sounds.wrong();
+      HapticFeedback.heavyImpact().ignore();
+      Speech.speak('아쉬워요. 정답은 ${_question.answer}이에요.');
     }
+  }
+
+  /// 퀴즈 도중이면 확인 팝업을 띄우고, 시작 전이면 바로 나간다.
+  Future<void> _confirmExit() async {
+    if (!_answered && _currentIndex == 0) {
+      Navigator.of(context).pop();
+      return;
+    }
+
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (context) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('🥺',
+                  textAlign: TextAlign.center, style: TextStyle(fontSize: 48)),
+              const SizedBox(height: 8),
+              const Text(
+                '정말 그만할까요?',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '지금 나가면 이번 판 점수가 사라져요',
+                textAlign: TextAlign.center,
+                style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
+              ),
+              const SizedBox(height: 20),
+              BouncyButton(
+                color: const Color(0xFF58CC02),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                onTap: () => Navigator.of(context).pop(false),
+                child: const Text(
+                  '계속 풀기',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+              BouncyButton(
+                color: Colors.white,
+                shadowColor: Colors.grey.shade300,
+                border: Border.all(color: Colors.grey.shade300, width: 2),
+                padding: const EdgeInsets.symmetric(vertical: 14),
+                onTap: () => Navigator.of(context).pop(true),
+                child: Text(
+                  '그만하기',
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (leave == true && mounted) Navigator.of(context).pop();
   }
 
   Future<void> _next() async {
@@ -104,10 +183,22 @@ class _QuizScreenState extends State<QuizScreen> {
       _currentIndex++;
       _selectedChoice = null;
     });
+    _speakQuestion();
   }
 
   @override
   Widget build(BuildContext context) {
+    return PopScope(
+      // 시스템 뒤로 가기(안드로이드)도 확인 팝업을 거치게 한다.
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _confirmExit();
+      },
+      child: _buildScaffold(),
+    );
+  }
+
+  Widget _buildScaffold() {
     return Scaffold(
       body: SafeArea(
         child: Stack(
@@ -153,7 +244,7 @@ class _QuizScreenState extends State<QuizScreen> {
           IconButton(
             icon: const Icon(Icons.close, size: 28),
             color: Colors.grey,
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: _confirmExit,
           ),
           if (widget.level != null) ...[
             Text(
@@ -222,14 +313,32 @@ class _QuizScreenState extends State<QuizScreen> {
           ),
         ],
       ),
-      child: Column(
+      child: Stack(
         children: [
-          Text(
-            _question.expression,
-            style: const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+          Column(
+            children: [
+              Text(
+                _question.expression,
+                style:
+                    const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              _EmojiHint(question: _question),
+            ],
           ),
-          const SizedBox(height: 16),
-          _EmojiHint(question: _question),
+          // 문제를 다시 읽어 주는 버튼
+          Positioned(
+            top: -6,
+            right: -6,
+            child: IconButton(
+              onPressed: _speakQuestion,
+              icon: Icon(
+                Icons.volume_up_rounded,
+                size: 30,
+                color: _themeColor,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -442,36 +551,48 @@ class _ChoiceButton extends StatelessWidget {
         ),
     };
 
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        decoration: BoxDecoration(
-          color: background,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: border, width: 3),
-          boxShadow: state == _ChoiceState.idle
-              ? [
-                  BoxShadow(
-                    color: Colors.grey.shade300,
-                    offset: const Offset(0, 4),
-                    blurRadius: 0,
-                  ),
-                ]
-              : null,
-        ),
-        child: Center(
-          child: Text(
-            '$value',
-            style: TextStyle(
-              fontSize: 36,
-              fontWeight: FontWeight.bold,
-              color: textColor,
-            ),
+    Widget button = AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: border, width: 3),
+        boxShadow: state == _ChoiceState.idle
+            ? [
+                BoxShadow(
+                  color: Colors.grey.shade300,
+                  offset: const Offset(0, 4),
+                  blurRadius: 0,
+                ),
+              ]
+            : null,
+      ),
+      child: Center(
+        child: Text(
+          '$value',
+          style: TextStyle(
+            fontSize: 36,
+            fontWeight: FontWeight.bold,
+            color: textColor,
           ),
         ),
       ),
     );
+
+    // 틀린 버튼은 좌우로 도리도리 흔들린다.
+    if (state == _ChoiceState.wrong) {
+      button = TweenAnimationBuilder<double>(
+        tween: Tween(begin: 0, end: 1),
+        duration: const Duration(milliseconds: 500),
+        builder: (context, t, child) => Transform.translate(
+          offset: Offset(math.sin(t * math.pi * 5) * 8 * (1 - t), 0),
+          child: child,
+        ),
+        child: button,
+      );
+    }
+
+    return GestureDetector(onTap: onTap, child: button);
   }
 }
 

@@ -50,7 +50,9 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
 
   void _refresh() {
     if (!mounted) return;
-    setState(() => _dataFuture = _load());
+    setState(() {
+      _dataFuture = _load();
+    });
   }
 
   Future<void> _openLevel(Level level) async {

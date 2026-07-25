@@ -25,6 +25,9 @@ class Question {
   int get answer => isAddition ? left + right : left - right;
 
   String get expression => '$left ${isAddition ? '+' : '-'} $right = ?';
+
+  /// 음성으로 읽어 줄 문장 (예: "3 더하기 2는?")
+  String get speechText => '$left ${isAddition ? '더하기' : '빼기'} $right는?';
 }
 
 /// 설정에 맞는 문제 목록을 만들어 준다.
