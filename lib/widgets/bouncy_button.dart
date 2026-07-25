@@ -38,6 +38,19 @@ class BouncyButton extends StatefulWidget {
 class _BouncyButtonState extends State<BouncyButton> {
   bool _pressed = false;
 
+  /// 연타로 화면 전환 등이 중복 실행되는 것을 막는다.
+  DateTime? _lastTapTime;
+
+  void _handleTap() {
+    final now = DateTime.now();
+    if (_lastTapTime != null &&
+        now.difference(_lastTapTime!) < const Duration(milliseconds: 400)) {
+      return;
+    }
+    _lastTapTime = now;
+    widget.onTap!();
+  }
+
   @override
   Widget build(BuildContext context) {
     final depth = _pressed || widget.onTap == null ? 0.0 : 4.0;
@@ -51,7 +64,7 @@ class _BouncyButtonState extends State<BouncyButton> {
           ? null
           : (_) {
               setState(() => _pressed = false);
-              widget.onTap!();
+              _handleTap();
             },
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 80),

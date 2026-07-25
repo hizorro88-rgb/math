@@ -49,6 +49,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       );
 
   void _refresh() {
+    if (!mounted) return;
     setState(() => _dataFuture = _load());
   }
 

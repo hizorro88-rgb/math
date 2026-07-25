@@ -57,20 +57,25 @@ class _ShopScreenState extends State<ShopScreen> {
       Sounds.buy(); // 효과음은 기다리지 않는다
       await _load();
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('${item.emoji} ${item.name}을(를) 샀어요!'),
-          duration: const Duration(seconds: 1),
-        ),
-      );
+      // 연타해도 스낵바가 쌓이지 않게 이전 것을 지우고 띄운다.
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text('${item.emoji} ${item.name}을(를) 샀어요!'),
+            duration: const Duration(seconds: 1),
+          ),
+        );
     } else {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('코인이 부족해요! ${item.cost - _coins}개 더 모아요 💪'),
-          duration: const Duration(seconds: 1),
-        ),
-      );
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          SnackBar(
+            content: Text('코인이 부족해요! ${item.cost - _coins}개 더 모아요 💪'),
+            duration: const Duration(seconds: 1),
+          ),
+        );
     }
   }
 

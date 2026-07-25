@@ -37,6 +37,9 @@ class _QuizScreenState extends State<QuizScreen> {
   /// 아이가 고른 보기. null이면 아직 고르지 않은 상태.
   int? _selectedChoice;
 
+  /// 마지막 문제 처리 중 중복 실행(빠른 연타) 방지
+  bool _finishing = false;
+
   Question get _question => _questions[_currentIndex];
   bool get _answered => _selectedChoice != null;
   bool get _isCorrect => _selectedChoice == _question.answer;
@@ -70,7 +73,10 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Future<void> _next() async {
+    // 답을 고르기 전이거나(연타로 이미 넘어간 뒤), 마무리 중이면 무시
+    if (!_answered || _finishing) return;
     if (_currentIndex + 1 >= _questions.length) {
+      _finishing = true;
       final level = widget.level;
       final stars = starsForScore(_correctCount, _questions.length);
       final earned = _roundPoints + completionBonus(stars);
