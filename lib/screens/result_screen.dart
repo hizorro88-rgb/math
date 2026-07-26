@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/curriculum.dart';
+import '../models/daily.dart';
 import '../models/progress.dart';
 import '../models/quiz_config.dart';
 import '../widgets/bouncy_button.dart';
@@ -14,6 +15,7 @@ class ResultScreen extends StatelessWidget {
     required this.correctCount,
     required this.totalCount,
     required this.earnedPoints,
+    this.completedMissions = const [],
     this.level,
   });
 
@@ -23,6 +25,9 @@ class ResultScreen extends StatelessWidget {
 
   /// 이번 판에 모은 점수 (통과 보너스 포함)
   final int earnedPoints;
+
+  /// 이번 판으로 새로 달성한 데일리 미션들
+  final List<DailyMission> completedMissions;
 
   /// 단계 도전이면 해당 단계, 자유 연습이면 null
   final Level? level;
@@ -109,6 +114,10 @@ class ResultScreen extends StatelessWidget {
               ],
               const SizedBox(height: 20),
               _PointsCard(earnedPoints: earnedPoints),
+              if (completedMissions.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                _MissionBanner(missions: completedMissions),
+              ],
               const Spacer(),
               if (nextLevel != null) ...[
                 BouncyButton(
@@ -214,6 +223,47 @@ class ResultScreen extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// 이번 판으로 달성한 데일리 미션 축하 배너
+class _MissionBanner extends StatelessWidget {
+  const _MissionBanner({required this.missions});
+
+  final List<DailyMission> missions;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFFFEBD6),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFFF9600), width: 2),
+      ),
+      child: Column(
+        children: [
+          const Text(
+            '🎯 오늘의 미션 완료!',
+            style: TextStyle(
+              fontSize: 17,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFFB05E00),
+            ),
+          ),
+          const SizedBox(height: 4),
+          for (final mission in missions)
+            Text(
+              '${mission.emoji} ${mission.title}  +${mission.reward} 🪙',
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFB05E00),
+              ),
+            ),
+        ],
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/curriculum.dart';
+import '../models/daily.dart';
 import '../models/progress.dart';
 import '../models/shop.dart';
 import '../services/sounds.dart';
@@ -24,12 +25,14 @@ class _MapData {
     required this.points,
     required this.coins,
     required this.equipped,
+    required this.daily,
   });
 
   final List<int> stars;
   final int points;
   final int coins;
   final List<ShopItem> equipped;
+  final DailyState daily;
 }
 
 class _LevelMapScreenState extends State<LevelMapScreen> {
@@ -46,6 +49,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
         points: await ProgressStore.loadPoints(),
         coins: await ProgressStore.loadCoins(),
         equipped: await ShopStore.loadEquipped(),
+        daily: await DailyStore.load(),
       );
 
   void _refresh() {
@@ -107,6 +111,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 child: Column(
                   children: [
                     _RankCard(points: data.points),
+                    const SizedBox(height: 14),
+                    _DailyCard(daily: data.daily),
                     const SizedBox(height: 14),
                     Row(
                       children: [
@@ -353,6 +359,120 @@ class _RankCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 오늘의 미션 카드: 진행 바와 보상, 연속 출석 🔥
+class _DailyCard extends StatelessWidget {
+  const _DailyCard({required this.daily});
+
+  final DailyState daily;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            offset: const Offset(0, 4),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text(
+                '🎯 오늘의 미션',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+              ),
+              const Spacer(),
+              Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFFFEBD6),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  daily.streak > 0 ? '🔥 ${daily.streak}일 연속' : '오늘도 도전!',
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFFB05E00),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          for (final mission in dailyMissions) ...[
+            _MissionRow(mission: mission, daily: daily),
+            if (mission != dailyMissions.last) const SizedBox(height: 8),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _MissionRow extends StatelessWidget {
+  const _MissionRow({required this.mission, required this.daily});
+
+  final DailyMission mission;
+  final DailyState daily;
+
+  @override
+  Widget build(BuildContext context) {
+    final done = daily.isDone(mission);
+    final progress = daily.progressOf(mission).clamp(0, mission.target);
+
+    return Row(
+      children: [
+        Text(mission.emoji, style: const TextStyle(fontSize: 20)),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                mission.title,
+                style: const TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 3),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: progress / mission.target,
+                  minHeight: 7,
+                  backgroundColor: Colors.grey.shade200,
+                  color:
+                      done ? const Color(0xFF58CC02) : const Color(0xFFFF9600),
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        Text(
+          done ? '✅' : '$progress/${mission.target} · 🪙${mission.reward}',
+          style: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.bold,
+            color: done ? const Color(0xFF58A700) : Colors.grey.shade600,
+          ),
+        ),
+      ],
     );
   }
 }

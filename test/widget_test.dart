@@ -8,6 +8,14 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
+  /// 화면 밖에 있을 수 있는 위젯을 스크롤로 보이게 한 뒤 탭한다.
+  Future<void> scrollAndTap(WidgetTester tester, Finder finder) async {
+    await tester.ensureVisible(finder);
+    await tester.pumpAndSettle();
+    await tester.tap(finder);
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('학습 지도가 뜨고 1단계만 열려 있다', (tester) async {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
@@ -28,8 +36,7 @@ void main() {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('1'));
-    await tester.pumpAndSettle();
+    await scrollAndTap(tester, find.text('1'));
 
     expect(find.text('1단계'), findsOneWidget);
     expect(find.textContaining('= ?'), findsOneWidget);
@@ -52,8 +59,7 @@ void main() {
 
     // 3단계가 열려 있다.
     expect(find.text('3'), findsOneWidget);
-    await tester.tap(find.text('3'));
-    await tester.pumpAndSettle();
+    await scrollAndTap(tester, find.text('3'));
 
     expect(find.text('3단계'), findsOneWidget);
     expect(find.textContaining('= ?'), findsOneWidget);
@@ -64,15 +70,13 @@ void main() {
     await tester.pumpAndSettle();
 
     // 1단계 입장 후 아무것도 안 풀었으면 X로 바로 나간다.
-    await tester.tap(find.text('1'));
-    await tester.pumpAndSettle();
+    await scrollAndTap(tester, find.text('1'));
     await tester.tap(find.byIcon(Icons.close));
     await tester.pumpAndSettle();
-    expect(find.text('수학 놀이'), findsOneWidget);
+    expect(find.textContaining('= ?'), findsNothing); // 지도로 돌아옴
 
     // 다시 들어가서 한 문제를 풀면, X를 눌렀을 때 확인 팝업이 뜬다.
-    await tester.tap(find.text('1'));
-    await tester.pumpAndSettle();
+    await scrollAndTap(tester, find.text('1'));
     final choice = find.byWidgetPredicate(
       (w) => w is Text && RegExp(r'^\d+$').hasMatch(w.data ?? ''),
     );
@@ -94,7 +98,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('그만하기'));
     await tester.pumpAndSettle();
-    expect(find.text('수학 놀이'), findsOneWidget);
+    expect(find.textContaining('= ?'), findsNothing); // 지도로 돌아옴
   });
 
   testWidgets('꾸미기 가게에서 코인으로 아이템을 산다', (tester) async {

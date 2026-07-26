@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../models/curriculum.dart';
+import '../models/daily.dart';
 import '../models/progress.dart';
 import '../models/question.dart';
 import '../models/quiz_config.dart';
@@ -165,6 +166,11 @@ class _QuizScreenState extends State<QuizScreen> {
         await ProgressStore.saveStars(level.number, stars);
       }
       await ProgressStore.addPoints(earned);
+      // 데일리 미션·출석 기록 (새로 달성한 미션은 결과 화면에서 축하)
+      final completedMissions = await DailyStore.recordRound(
+        correctCount: _correctCount,
+        stars: stars,
+      );
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
@@ -174,6 +180,7 @@ class _QuizScreenState extends State<QuizScreen> {
             correctCount: _correctCount,
             totalCount: _questions.length,
             earnedPoints: earned,
+            completedMissions: completedMissions,
           ),
         ),
       );
