@@ -55,172 +55,191 @@ class ResultScreen extends StatelessWidget {
     final nextLevel = _nextLevel;
 
     return Scaffold(
+      // 화면이 작으면 스크롤되고, 크면 위아래로 넉넉하게 펼쳐진다.
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Spacer(),
-              if (level != null) ...[
-                Text(
-                  '${level!.number}단계 · ${level!.unit.emoji} ${level!.unit.title}',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 18, color: Colors.grey.shade600),
-                ),
-                const SizedBox(height: 12),
-              ],
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  for (var i = 0; i < 3; i++)
-                    TweenAnimationBuilder<double>(
-                      tween: Tween(begin: 0, end: 1),
-                      duration: Duration(milliseconds: 400 + i * 300),
-                      curve: Curves.elasticOut,
-                      builder: (context, value, child) => Transform.scale(
-                        scale: value,
-                        child: child,
+        child: LayoutBuilder(
+          builder: (context, constraints) => SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
+            child: ConstrainedBox(
+              constraints:
+                  BoxConstraints(minHeight: constraints.maxHeight - 48),
+              child: IntrinsicHeight(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Spacer(),
+                    if (level != null) ...[
+                      Text(
+                        '${level!.number}단계 · ${level!.unit.emoji} ${level!.unit.title}',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 18, color: Colors.grey.shade600),
                       ),
-                      child: Text(
-                        i < _stars ? '⭐' : '☆',
-                        style: const TextStyle(fontSize: 64),
+                      const SizedBox(height: 12),
+                    ],
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        for (var i = 0; i < 3; i++)
+                          TweenAnimationBuilder<double>(
+                            tween: Tween(begin: 0, end: 1),
+                            duration: Duration(milliseconds: 400 + i * 300),
+                            curve: Curves.elasticOut,
+                            builder: (context, value, child) => Transform.scale(
+                              scale: value,
+                              child: child,
+                            ),
+                            child: Text(
+                              i < _stars ? '⭐' : '☆',
+                              style: const TextStyle(fontSize: 64),
+                            ),
+                          ),
+                      ],
+                    ),
+                    const SizedBox(height: 20),
+                    Text(
+                      _message,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
                       ),
                     ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Text(
-                _message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 28,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                '$totalCount문제 중에 $correctCount문제를 맞혔어요!',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 18, color: Colors.grey.shade700),
-              ),
-              if (level != null && !_cleared) ...[
-                const SizedBox(height: 8),
-                Text(
-                  '5문제 이상 맞히면 다음 단계가 열려요!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 16, color: Colors.grey.shade600),
-                ),
-              ],
-              const SizedBox(height: 20),
-              _PointsCard(earnedPoints: earnedPoints),
-              if (completedMissions.isNotEmpty) ...[
-                const SizedBox(height: 12),
-                _MissionBanner(missions: completedMissions),
-              ],
-              const Spacer(),
-              if (nextLevel != null) ...[
-                BouncyButton(
-                  color: const Color(0xFF58CC02),
-                  onTap: () {
-                    Navigator.of(context).pushReplacement(
-                      MaterialPageRoute(
-                        builder: (_) => QuizScreen(
-                          config: nextLevel.config,
-                          level: nextLevel,
-                        ),
-                      ),
-                    );
-                  },
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
+                    const SizedBox(height: 12),
+                    Text(
+                      '$totalCount문제 중에 $correctCount문제를 맞혔어요!',
+                      textAlign: TextAlign.center,
+                      style:
+                          TextStyle(fontSize: 18, color: Colors.grey.shade700),
+                    ),
+                    if (level != null && !_cleared) ...[
+                      const SizedBox(height: 8),
                       Text(
-                        '다음 단계 (${nextLevel.number}단계)',
-                        style: const TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(
-                        Icons.arrow_forward_rounded,
-                        size: 28,
-                        color: Colors.white,
+                        '5문제 이상 맞히면 다음 단계가 열려요!',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(
+                            fontSize: 16, color: Colors.grey.shade600),
                       ),
                     ],
-                  ),
-                ),
-                const SizedBox(height: 12),
-              ],
-              BouncyButton(
-                color:
-                    nextLevel == null ? const Color(0xFF58CC02) : Colors.white,
-                shadowColor: nextLevel == null ? null : Colors.grey.shade300,
-                border: nextLevel == null
-                    ? null
-                    : Border.all(color: const Color(0xFF58CC02), width: 2),
-                onTap: () {
-                  Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(
-                      builder: (_) => QuizScreen(config: config, level: level),
-                    ),
-                  );
-                },
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '다시 하기',
-                      style: TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: nextLevel == null
-                            ? Colors.white
-                            : const Color(0xFF58CC02),
+                    const SizedBox(height: 20),
+                    _PointsCard(earnedPoints: earnedPoints),
+                    if (completedMissions.isNotEmpty) ...[
+                      const SizedBox(height: 12),
+                      _MissionBanner(missions: completedMissions),
+                    ],
+                    const Spacer(),
+                    if (nextLevel != null) ...[
+                      BouncyButton(
+                        color: const Color(0xFF58CC02),
+                        onTap: () {
+                          Navigator.of(context).pushReplacement(
+                            MaterialPageRoute(
+                              builder: (_) => QuizScreen(
+                                config: nextLevel.config,
+                                level: nextLevel,
+                              ),
+                            ),
+                          );
+                        },
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              '다음 단계 (${nextLevel.number}단계)',
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            const Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 28,
+                              color: Colors.white,
+                            ),
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.refresh_rounded,
-                      size: 28,
+                      const SizedBox(height: 12),
+                    ],
+                    BouncyButton(
                       color: nextLevel == null
-                          ? Colors.white
-                          : const Color(0xFF58CC02),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 12),
-              BouncyButton(
-                color: Colors.white,
-                shadowColor: Colors.grey.shade300,
-                border: Border.all(color: const Color(0xFF58CC02), width: 2),
-                onTap: () =>
-                    Navigator.of(context).popUntil((route) => route.isFirst),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      level != null ? '지도로' : '처음으로',
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF58CC02),
+                          ? const Color(0xFF58CC02)
+                          : Colors.white,
+                      shadowColor:
+                          nextLevel == null ? null : Colors.grey.shade300,
+                      border: nextLevel == null
+                          ? null
+                          : Border.all(
+                              color: const Color(0xFF58CC02), width: 2),
+                      onTap: () {
+                        Navigator.of(context).pushReplacement(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                QuizScreen(config: config, level: level),
+                          ),
+                        );
+                      },
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            '다시 하기',
+                            style: TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: nextLevel == null
+                                  ? Colors.white
+                                  : const Color(0xFF58CC02),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.refresh_rounded,
+                            size: 28,
+                            color: nextLevel == null
+                                ? Colors.white
+                                : const Color(0xFF58CC02),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      level != null ? Icons.map_rounded : Icons.home_rounded,
-                      size: 28,
-                      color: const Color(0xFF58CC02),
+                    const SizedBox(height: 12),
+                    BouncyButton(
+                      color: Colors.white,
+                      shadowColor: Colors.grey.shade300,
+                      border:
+                          Border.all(color: const Color(0xFF58CC02), width: 2),
+                      onTap: () => Navigator.of(context)
+                          .popUntil((route) => route.isFirst),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                            level != null ? '지도로' : '처음으로',
+                            style: const TextStyle(
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF58CC02),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            level != null
+                                ? Icons.map_rounded
+                                : Icons.home_rounded,
+                            size: 28,
+                            color: const Color(0xFF58CC02),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(height: 8),
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
-            ],
+            ),
           ),
         ),
       ),

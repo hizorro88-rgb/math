@@ -14,6 +14,9 @@ int starsForScore(int correctCount, int totalCount) {
 /// 정답 한 개의 점수. 3연속 정답(콤보)부터 보너스가 붙는다.
 int pointsForAnswer(int combo) => 10 + (combo >= 3 ? 5 : 0);
 
+/// 틀렸던 문제를 다시 풀어서 맞혔을 때 주는 점수
+const int retryPoints = 5;
+
 /// 단계를 마쳤을 때 별 개수에 따라 주는 보너스 점수.
 int completionBonus(int stars) => stars * 10;
 

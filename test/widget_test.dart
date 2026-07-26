@@ -101,6 +101,60 @@ void main() {
     expect(find.textContaining('= ?'), findsNothing); // 지도로 돌아옴
   });
 
+  testWidgets('틀린 문제는 판 끝에 다시 나오고, 다시 맞히면 +5점', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+    await scrollAndTap(tester, find.text('1'));
+
+    String expr() => tester.widget<Text>(find.textContaining('= ?')).data!;
+    int answerOf(String e) {
+      final m = RegExp(r'(\d+) ([+-]) (\d+)').firstMatch(e)!;
+      final a = int.parse(m.group(1)!);
+      final b = int.parse(m.group(3)!);
+      return m.group(2) == '+' ? a + b : a - b;
+    }
+
+    Future<void> answer({required bool correct}) async {
+      final ans = answerOf(expr());
+      final choices = find
+          .byWidgetPredicate(
+              (w) => w is Text && RegExp(r'^\d+$').hasMatch(w.data ?? ''))
+          .evaluate()
+          .map((e) => (e.widget as Text).data!)
+          .toList();
+      final target = correct ? '$ans' : choices.firstWhere((c) => c != '$ans');
+      await tester.ensureVisible(find.text(target));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(target));
+      await tester.pumpAndSettle();
+    }
+
+    // 1번 문제를 일부러 틀린다.
+    final wrongExpr = expr();
+    await answer(correct: false);
+    expect(find.textContaining('아쉬워요'), findsOneWidget);
+    await tester.tap(find.text('계속하기'));
+    await tester.pumpAndSettle();
+
+    // 나머지 9문제는 전부 맞힌다.
+    for (var i = 0; i < 9; i++) {
+      await answer(correct: true);
+      await tester.tap(find.text('계속하기'));
+      await tester.pumpAndSettle();
+    }
+
+    // 11번째로 틀렸던 문제가 다시 나온다.
+    expect(find.text('🔁 다시 풀어 봐요!'), findsOneWidget);
+    expect(expr(), wrongExpr);
+
+    // 다시 맞히면 +5점 보너스, 별점은 첫 시도 기준(9/10)
+    await answer(correct: true);
+    expect(find.text('+5점'), findsOneWidget);
+    await tester.tap(find.text('결과 보기'));
+    await tester.pumpAndSettle();
+    expect(find.text('10문제 중에 9문제를 맞혔어요!'), findsOneWidget);
+  });
+
   testWidgets('꾸미기 가게에서 코인으로 아이템을 산다', (tester) async {
     SharedPreferences.setMockInitialValues({'coins_v1': 100});
 

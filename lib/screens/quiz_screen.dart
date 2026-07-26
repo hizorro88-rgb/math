@@ -15,6 +15,7 @@ import 'result_screen.dart';
 
 /// 퀴즈 화면: 문제를 하나씩 풀고, 듀오링고처럼 아래에서 정답 여부를 알려준다.
 /// 정답은 +10점, 3연속 정답부터 🔥 콤보 보너스 +5점.
+/// 틀린 문제는 판 끝에 한 번 더 나온다 (다시 맞히면 +5점).
 class QuizScreen extends StatefulWidget {
   const QuizScreen({super.key, required this.config, this.level});
 
@@ -27,8 +28,20 @@ class QuizScreen extends StatefulWidget {
   State<QuizScreen> createState() => _QuizScreenState();
 }
 
+/// 풀 문제 큐의 한 칸: 처음 나온 문제인지, 틀려서 다시 나온 문제인지
+class _QuizEntry {
+  const _QuizEntry(this.question, {this.isRetry = false});
+
+  final Question question;
+  final bool isRetry;
+}
+
 class _QuizScreenState extends State<QuizScreen> {
-  late final List<Question> _questions;
+  /// 처음 출제된 문제 수 (별점 계산 기준)
+  late final int _baseCount;
+
+  /// 남은 문제 큐. 틀린 문제가 뒤에 다시 추가된다.
+  final List<_QuizEntry> _entries = [];
   int _currentIndex = 0;
   int _correctCount = 0;
 
@@ -43,7 +56,8 @@ class _QuizScreenState extends State<QuizScreen> {
   /// 마지막 문제 처리 중 중복 실행(빠른 연타) 방지
   bool _finishing = false;
 
-  Question get _question => _questions[_currentIndex];
+  Question get _question => _entries[_currentIndex].question;
+  bool get _isRetryQuestion => _entries[_currentIndex].isRetry;
   bool get _answered => _selectedChoice != null;
   bool get _isCorrect => _selectedChoice == _question.answer;
   Color get _themeColor => widget.level?.unit.color ?? const Color(0xFF58CC02);
@@ -51,7 +65,9 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   void initState() {
     super.initState();
-    _questions = QuestionGenerator().generate(widget.config);
+    final questions = QuestionGenerator().generate(widget.config);
+    _baseCount = questions.length;
+    _entries.addAll(questions.map(_QuizEntry.new));
     // 첫 문제를 음성으로 읽어 준다.
     WidgetsBinding.instance.addPostFrameCallback((_) => _speakQuestion());
   }
@@ -63,13 +79,23 @@ class _QuizScreenState extends State<QuizScreen> {
     setState(() {
       _selectedChoice = choice;
       if (choice == _question.answer) {
-        _correctCount++;
-        _combo++;
-        _lastGained = pointsForAnswer(_combo);
-        _roundPoints += _lastGained;
+        if (_isRetryQuestion) {
+          // 다시 풀어서 맞힘: 보너스만 주고 별점·콤보에는 영향 없음
+          _lastGained = retryPoints;
+          _roundPoints += retryPoints;
+        } else {
+          _correctCount++;
+          _combo++;
+          _lastGained = pointsForAnswer(_combo);
+          _roundPoints += _lastGained;
+        }
       } else {
         _combo = 0;
         _lastGained = 0;
+        // 처음 틀린 문제는 판 끝에 한 번 더 나온다.
+        if (!_isRetryQuestion) {
+          _entries.add(_QuizEntry(_question, isRetry: true));
+        }
       }
     });
     if (_isCorrect) {
@@ -155,10 +181,10 @@ class _QuizScreenState extends State<QuizScreen> {
   Future<void> _next() async {
     // 답을 고르기 전이거나(연타로 이미 넘어간 뒤), 마무리 중이면 무시
     if (!_answered || _finishing) return;
-    if (_currentIndex + 1 >= _questions.length) {
+    if (_currentIndex + 1 >= _entries.length) {
       _finishing = true;
       final level = widget.level;
-      final stars = starsForScore(_correctCount, _questions.length);
+      final stars = starsForScore(_correctCount, _baseCount);
       final earned = _roundPoints + completionBonus(stars);
       if (stars >= 1) Sounds.complete();
       if (level != null) {
@@ -178,7 +204,7 @@ class _QuizScreenState extends State<QuizScreen> {
             config: widget.config,
             level: level,
             correctCount: _correctCount,
-            totalCount: _questions.length,
+            totalCount: _baseCount,
             earnedPoints: earned,
             completedMissions: completedMissions,
           ),
@@ -269,8 +295,7 @@ class _QuizScreenState extends State<QuizScreen> {
               borderRadius: BorderRadius.circular(8),
               child: TweenAnimationBuilder<double>(
                 tween: Tween(
-                  end:
-                      (_currentIndex + (_answered ? 1 : 0)) / _questions.length,
+                  end: (_currentIndex + (_answered ? 1 : 0)) / _entries.length,
                 ),
                 duration: const Duration(milliseconds: 300),
                 builder: (context, value, _) => LinearProgressIndicator(
@@ -324,6 +349,25 @@ class _QuizScreenState extends State<QuizScreen> {
         children: [
           Column(
             children: [
+              if (_isRetryQuestion) ...[
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFEBD6),
+                    borderRadius: BorderRadius.circular(999),
+                  ),
+                  child: const Text(
+                    '🔁 다시 풀어 봐요!',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFB05E00),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
               Text(
                 _question.expression,
                 style:
@@ -387,7 +431,7 @@ class _QuizScreenState extends State<QuizScreen> {
         _isCorrect ? const Color(0xFF58A700) : const Color(0xFFEA2B2B);
     final message = _isCorrect ? '정답이에요! 🎉' : '아쉬워요! 정답은 ${_question.answer}';
 
-    final isLast = _currentIndex + 1 >= _questions.length;
+    final isLast = _currentIndex + 1 >= _entries.length;
 
     return Container(
       width: double.infinity,
@@ -425,7 +469,9 @@ class _QuizScreenState extends State<QuizScreen> {
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
-                      _combo >= 3 ? '+$_lastGained점 🔥' : '+$_lastGained점',
+                      !_isRetryQuestion && _combo >= 3
+                          ? '+$_lastGained점 🔥'
+                          : '+$_lastGained점',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
