@@ -11,7 +11,13 @@ enum QuizMode {
   multiplication('곱셈', '✖️'),
 
   /// 곱셈구구를 거꾸로 푸는 나눗셈 (초등 3학년~)
-  division('나눗셈', '➗');
+  division('나눗셈', '➗'),
+
+  /// 세로셈 덧셈: 일의 자리·십의 자리를 이해하며 자리마다 답을 채운다
+  verticalAdd('세로 덧셈', '🧮'),
+
+  /// 세로셈 뺄셈
+  verticalSub('세로 뺄셈', '📝');
 
   const QuizMode(this.label, this.emoji);
 

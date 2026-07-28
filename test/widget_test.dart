@@ -76,11 +76,15 @@ void main() {
     await tester.pumpAndSettle();
 
     await scrollAndTap(tester, find.text('초등 2학년'));
-    expect(find.textContaining('곱셈 첫걸음'), findsOneWidget);
 
-    // 카테고리 첫 단계(두 자리 덧셈 1단계)는 앞 카테고리를 안 깨도 열려 있다.
-    await scrollAndTap(tester, find.text('두 자리 덧셈'));
-    // 첫 단계 버블 탭 (카테고리 첫 단계 번호)
+    // 첫 묶음(두 자리 덧셈)이 보이고, 스크롤하면 곱셈 묶음도 있다.
+    expect(find.text('두 자리 덧셈'), findsOneWidget);
+    await tester.dragUntilVisible(
+      find.textContaining('곱셈 첫걸음'),
+      find.byType(ListView).last,
+      const Offset(0, -300),
+    );
+    expect(find.textContaining('곱셈 첫걸음'), findsOneWidget);
   });
 
   testWidgets('퀴즈 도중 나가려면 확인 팝업을 거친다', (tester) async {
@@ -174,6 +178,43 @@ void main() {
     await tester.tap(find.text('결과 보기'));
     await tester.pumpAndSettle();
     expect(find.text('10문제 중에 9문제를 맞혔어요!'), findsOneWidget);
+  });
+
+  testWidgets('세로 덧셈: 키패드로 일의 자리부터 채워서 맞힌다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    // 자유 연습 → 세로 덧셈 모드 → 시작
+    await scrollAndTap(tester, find.text('자유 연습'));
+    await scrollAndTap(tester, find.text('세로 덧셈'));
+    await scrollAndTap(tester, find.text('시작하기'));
+
+    // 세로로 늘어선 숫자 칸(fontSize 34)에서 두 수를 읽는다.
+    final cells = tester
+        .widgetList<Text>(
+            find.byWidgetPredicate((w) => w is Text && w.style?.fontSize == 34))
+        .map((t) => t.data ?? '')
+        .where((s) => s.isNotEmpty)
+        .toList();
+    final opIndex = cells.indexWhere((s) => s == '+' || s == '−');
+    final top = int.parse(cells.sublist(0, opIndex).join());
+    final bottom = int.parse(cells.sublist(opIndex + 1).join());
+    final answer = top + bottom;
+
+    // 키패드(fontSize 24)로 일의 자리부터 입력한다.
+    for (final ch in '$answer'.split('').reversed) {
+      final keyFinder = find.byWidgetPredicate(
+        (w) => w is Text && w.data == ch && w.style?.fontSize == 24,
+      );
+      await tester.ensureVisible(keyFinder);
+      await tester.pumpAndSettle();
+      await tester.tap(keyFinder);
+      await tester.pumpAndSettle();
+    }
+
+    // 다 채우면 자동 채점되어 정답 피드백이 뜬다.
+    expect(find.text('정답이에요! 🎉'), findsOneWidget);
+    expect(find.text('계속하기'), findsOneWidget);
   });
 
   testWidgets('꾸미기 가게에서 코인으로 아이템을 산다', (tester) async {

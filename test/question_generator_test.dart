@@ -95,6 +95,46 @@ void main() {
     });
   });
 
+  group('QuestionGenerator 세로셈', () {
+    test('세로 덧셈: 두 자리 수 중심, 합이 범위를 넘지 않는다', () {
+      final generator = QuestionGenerator(random: Random(21));
+      for (final maxNumber in [5, 20, 40, 99]) {
+        final effectiveMax = maxNumber < 20 ? 20 : maxNumber;
+        for (var round = 0; round < 30; round++) {
+          final questions = generator.generate(
+            QuizConfig(mode: QuizMode.verticalAdd, maxNumber: maxNumber),
+          );
+          for (final q in questions) {
+            expect(q.vertical, isTrue);
+            expect(q.op, QuestionOp.add);
+            expect(q.left, greaterThanOrEqualTo(10)); // 두 자리
+            expect(q.right, greaterThanOrEqualTo(1));
+            expect(q.answer, lessThanOrEqualTo(effectiveMax));
+          }
+        }
+      }
+    });
+
+    test('세로 뺄셈: 두 자리 수에서 빼고 답은 0 이상', () {
+      final generator = QuestionGenerator(random: Random(23));
+      for (final maxNumber in [20, 40, 99]) {
+        for (var round = 0; round < 30; round++) {
+          final questions = generator.generate(
+            QuizConfig(mode: QuizMode.verticalSub, maxNumber: maxNumber),
+          );
+          for (final q in questions) {
+            expect(q.vertical, isTrue);
+            expect(q.op, QuestionOp.sub);
+            expect(q.left, greaterThanOrEqualTo(11)); // 두 자리
+            expect(q.left, lessThanOrEqualTo(maxNumber));
+            expect(q.right, greaterThanOrEqualTo(1));
+            expect(q.answer, greaterThanOrEqualTo(0));
+          }
+        }
+      }
+    });
+  });
+
   group('QuestionGenerator 덧셈·뺄셈', () {
     for (final mode in [
       QuizMode.addition,

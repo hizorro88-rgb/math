@@ -54,6 +54,10 @@ class _QuizScreenState extends State<QuizScreen> {
   /// 아이가 고른 보기. null이면 아직 고르지 않은 상태.
   int? _selectedChoice;
 
+  /// 세로셈 자리 입력값 (인덱스 0 = 일의 자리). 문제가 바뀌면 새로 만든다.
+  List<int?> _slots = [];
+  int _slotsIndex = -1;
+
   /// 마지막 문제 처리 중 중복 실행(빠른 연타) 방지
   bool _finishing = false;
 
@@ -74,6 +78,41 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   void _speakQuestion() => Speech.speak(_question.speechText);
+
+  /// 세로셈: 현재 문제에 맞는 자리 칸을 준비한다 (정답 자리수만큼).
+  void _ensureSlots() {
+    if (_slotsIndex == _currentIndex) return;
+    _slotsIndex = _currentIndex;
+    _slots = List<int?>.filled('${_question.answer}'.length, null);
+  }
+
+  /// 세로셈 키패드: 일의 자리부터 채우고, 다 채우면 자동으로 채점한다.
+  void _tapDigit(int digit) {
+    if (_answered) return;
+    _ensureSlots();
+    final index = _slots.indexOf(null);
+    if (index == -1) return;
+    setState(() => _slots[index] = digit);
+
+    if (!_slots.contains(null)) {
+      var value = 0;
+      var place = 1;
+      for (final d in _slots) {
+        value += d! * place;
+        place *= 10;
+      }
+      _selectChoice(value);
+    }
+  }
+
+  void _tapBackspace() {
+    if (_answered) return;
+    _ensureSlots();
+    final firstNull = _slots.indexOf(null);
+    final last = firstNull == -1 ? _slots.length - 1 : firstNull - 1;
+    if (last < 0) return;
+    setState(() => _slots[last] = null);
+  }
 
   void _selectChoice(int choice) {
     if (_answered) return;
@@ -254,7 +293,10 @@ class _QuizScreenState extends State<QuizScreen> {
                         const SizedBox(height: 16),
                         _buildQuestionCard(),
                         const SizedBox(height: 24),
-                        _buildChoices(),
+                        if (_question.vertical)
+                          _buildKeypad()
+                        else
+                          _buildChoices(),
                         const SizedBox(height: 16),
                       ],
                     ),
@@ -375,19 +417,33 @@ class _QuizScreenState extends State<QuizScreen> {
                 ),
                 const SizedBox(height: 8),
               ],
-              // 세 자리 수처럼 긴 식은 자동으로 줄어들어 카드 안에 들어간다.
-              FittedBox(
-                fit: BoxFit.scaleDown,
-                child: Text(
-                  _question.expression,
-                  style: TextStyle(
-                    fontSize: _question.isCounting ? 38 : 48,
-                    fontWeight: FontWeight.bold,
+              if (_question.vertical) ...[
+                // 세로셈: 자리수를 맞춰 세로로 보여주고 자리마다 답 칸을 채운다.
+                Builder(builder: (context) {
+                  _ensureSlots();
+                  return _VerticalProblem(
+                    question: _question,
+                    slots: _slots,
+                    answered: _answered,
+                    correct: _isCorrect,
+                    themeColor: _themeColor,
+                  );
+                }),
+              ] else ...[
+                // 세 자리 수처럼 긴 식은 자동으로 줄어들어 카드 안에 들어간다.
+                FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    _question.expression,
+                    style: TextStyle(
+                      fontSize: _question.isCounting ? 38 : 48,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              _EmojiHint(question: _question),
+                const SizedBox(height: 16),
+                _EmojiHint(question: _question),
+              ],
             ],
           ),
           // 문제를 다시 읽어 주는 버튼
@@ -405,6 +461,72 @@ class _QuizScreenState extends State<QuizScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  /// 세로셈용 숫자 키패드 (0~9 + 지우기)
+  Widget _buildKeypad() {
+    Widget key({required Widget child, VoidCallback? onTap}) {
+      return Expanded(
+        child: GestureDetector(
+          onTap: _answered ? null : onTap,
+          child: Container(
+            height: 56,
+            margin: const EdgeInsets.all(3),
+            decoration: BoxDecoration(
+              color: _answered ? Colors.grey.shade100 : Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: Colors.grey.shade300, width: 2),
+              boxShadow: _answered
+                  ? null
+                  : [
+                      BoxShadow(
+                        color: Colors.grey.shade300,
+                        offset: const Offset(0, 3),
+                        blurRadius: 0,
+                      ),
+                    ],
+            ),
+            child: Center(child: child),
+          ),
+        ),
+      );
+    }
+
+    Widget digitKey(int digit) => key(
+          onTap: () => _tapDigit(digit),
+          child: Text(
+            '$digit',
+            style: TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              color: _answered ? Colors.grey.shade400 : Colors.black87,
+            ),
+          ),
+        );
+
+    return Column(
+      children: [
+        Row(children: [for (var d = 1; d <= 5; d++) digitKey(d)]),
+        Row(
+          children: [
+            for (var d = 6; d <= 9; d++) digitKey(d),
+            digitKey(0),
+          ],
+        ),
+        Row(
+          children: [
+            key(
+              onTap: _tapBackspace,
+              child: Icon(
+                Icons.backspace_outlined,
+                size: 24,
+                color: _answered ? Colors.grey.shade400 : Colors.grey.shade600,
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -582,6 +704,121 @@ class _SparkleBurst extends StatelessWidget {
   }
 }
 
+/// 세로셈 표시: 자리수를 맞춰 세로로 늘어놓고,
+/// 답은 자리마다 칸([])을 일의 자리부터 채운다.
+class _VerticalProblem extends StatelessWidget {
+  const _VerticalProblem({
+    required this.question,
+    required this.slots,
+    required this.answered,
+    required this.correct,
+    required this.themeColor,
+  });
+
+  final Question question;
+  final List<int?> slots;
+  final bool answered;
+  final bool correct;
+  final Color themeColor;
+
+  static const _cellWidth = 44.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final top = '${question.left}';
+    final bottom = '${question.right}';
+    // 연산 기호 1칸 + 가장 긴 수의 자리수
+    final columns = 1 +
+        [top.length, bottom.length, slots.length]
+            .reduce((a, b) => a > b ? a : b);
+
+    Widget digitCell(String text) => SizedBox(
+          width: _cellWidth,
+          height: 52,
+          child: Center(
+            child: Text(
+              text,
+              style: const TextStyle(fontSize: 34, fontWeight: FontWeight.bold),
+            ),
+          ),
+        );
+
+    // 오른쪽 정렬: 앞을 빈 칸으로 채운다.
+    Widget numberRow(String number, {String op = ''}) {
+      final pad = columns - number.length - 1;
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          digitCell(op),
+          for (var i = 0; i < pad; i++) digitCell(''),
+          for (final ch in number.split('')) digitCell(ch),
+        ],
+      );
+    }
+
+    // 답 칸: 일의 자리가 맨 오른쪽. 지금 채울 칸을 강조한다.
+    final activePlace = slots.indexOf(null);
+    Widget answerBox(int place) {
+      final digit = slots[place];
+      final isActive = !answered && place == activePlace;
+      final borderColor = answered
+          ? (correct ? const Color(0xFF58CC02) : const Color(0xFFEA2B2B))
+          : isActive
+              ? themeColor
+              : Colors.grey.shade300;
+      return Container(
+        width: _cellWidth - 4,
+        height: 54,
+        margin: const EdgeInsets.symmetric(horizontal: 2),
+        decoration: BoxDecoration(
+          color: answered
+              ? (correct ? const Color(0xFFD7FFB8) : const Color(0xFFFFDFE0))
+              : isActive
+                  ? themeColor.withValues(alpha: 0.08)
+                  : Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: borderColor, width: isActive ? 3 : 2),
+        ),
+        child: Center(
+          child: Text(
+            digit == null ? '' : '$digit',
+            style: const TextStyle(fontSize: 30, fontWeight: FontWeight.bold),
+          ),
+        ),
+      );
+    }
+
+    final answerPad = columns - slots.length - 1;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        numberRow(top),
+        numberRow(bottom, op: question.op == QuestionOp.add ? '+' : '−'),
+        Container(
+          width: columns * _cellWidth,
+          height: 3,
+          margin: const EdgeInsets.symmetric(vertical: 6),
+          decoration: BoxDecoration(
+            color: Colors.black87,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(width: _cellWidth),
+            for (var i = 0; i < answerPad; i++)
+              const SizedBox(width: _cellWidth),
+            // 높은 자리부터 왼쪽 → 오른쪽으로 그린다.
+            for (var place = slots.length - 1; place >= 0; place--)
+              answerBox(place),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
 enum _ChoiceState { idle, correct, wrong, disabled }
 
 /// 큼직한 3D 보기 버튼
@@ -676,6 +913,9 @@ class _EmojiHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const style = TextStyle(fontSize: 26);
+
+    // 세로셈은 자리수 학습이 목적이라 그림 힌트를 겹치지 않는다.
+    if (question.vertical) return const SizedBox.shrink();
 
     switch (question.op) {
       // 수 세기: 그림을 전부 또렷하게 보여주고 세게 한다.

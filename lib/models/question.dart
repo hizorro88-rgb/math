@@ -13,11 +13,16 @@ class Question {
     required this.right,
     required this.choices,
     required this.emoji,
+    this.vertical = false,
   });
 
   final QuestionOp op;
   final int left;
   final int right;
+
+  /// 세로셈 표시 여부: 자리수를 맞춰 세로로 보여주고
+  /// 일의 자리부터 키패드로 답을 채운다.
+  final bool vertical;
 
   /// 정답 1개 + 오답 3개가 섞여 있는 보기 목록
   final List<int> choices;
@@ -132,6 +137,34 @@ class QuestionGenerator {
           left: divisor * quotient,
           right: divisor,
           choices: _buildChoices(quotient, quotient + 2),
+          emoji: _emoji,
+        );
+
+      // 세로 덧셈: 두 자리 수 중심으로 자리수 계산을 연습한다.
+      case QuizMode.verticalAdd:
+        final m = max < 20 ? 20 : max;
+        final sum = 11 + _random.nextInt(m - 10); // 11..m
+        final left = 10 + _random.nextInt(sum - 10); // 10..sum-1
+        return Question(
+          op: QuestionOp.add,
+          vertical: true,
+          left: left,
+          right: sum - left,
+          choices: _buildChoices(sum, m),
+          emoji: _emoji,
+        );
+
+      // 세로 뺄셈: 두 자리 수에서 빼기 (답은 0 이상)
+      case QuizMode.verticalSub:
+        final m = max < 20 ? 20 : max;
+        final left = 11 + _random.nextInt(m - 10); // 11..m
+        final right = 1 + _random.nextInt(left); // 1..left
+        return Question(
+          op: QuestionOp.sub,
+          vertical: true,
+          left: left,
+          right: right,
+          choices: _buildChoices(left - right, m),
           emoji: _emoji,
         );
 

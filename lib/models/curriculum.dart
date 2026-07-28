@@ -237,6 +237,18 @@ class Curriculum {
               startMax: 16,
               endMax: 20),
           Unit(
+              title: '세로 덧셈 첫걸음',
+              emoji: '🧮',
+              mode: QuizMode.verticalAdd,
+              startMax: 20,
+              endMax: 40),
+          Unit(
+              title: '세로 뺄셈 첫걸음',
+              emoji: '📝',
+              mode: QuizMode.verticalSub,
+              startMax: 20,
+              endMax: 40),
+          Unit(
               title: '덧뺄셈 마스터',
               emoji: '🦄',
               mode: QuizMode.mixed,
@@ -256,6 +268,18 @@ class Curriculum {
               mode: QuizMode.addition,
               startMax: 25,
               endMax: 50),
+          Unit(
+              title: '받아올림 세로 덧셈',
+              emoji: '🚜',
+              mode: QuizMode.verticalAdd,
+              startMax: 50,
+              endMax: 99),
+          Unit(
+              title: '받아내림 세로 뺄셈',
+              emoji: '⛵',
+              mode: QuizMode.verticalSub,
+              startMax: 50,
+              endMax: 99),
           Unit(
               title: '두 자리 뺄셈',
               emoji: '🚁',
