@@ -8,6 +8,7 @@ import '../models/daily.dart';
 import '../models/progress.dart';
 import '../models/question.dart';
 import '../models/quiz_config.dart';
+import '../models/stats.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../widgets/bouncy_button.dart';
@@ -76,6 +77,10 @@ class _QuizScreenState extends State<QuizScreen> {
 
   void _selectChoice(int choice) {
     if (_answered) return;
+    // 첫 시도만 학습 통계에 기록한다 (재출제 풀이는 제외).
+    if (!_isRetryQuestion) {
+      StatsStore.recordAnswer(_question, correct: choice == _question.answer);
+    }
     setState(() {
       _selectedChoice = choice;
       if (choice == _question.answer) {
@@ -197,6 +202,8 @@ class _QuizScreenState extends State<QuizScreen> {
         correctCount: _correctCount,
         stars: stars,
       );
+      // 리포트용 주간 활동 기록
+      await StatsStore.recordRoundDay();
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(

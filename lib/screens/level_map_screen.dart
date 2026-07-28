@@ -9,6 +9,7 @@ import '../widgets/bouncy_button.dart';
 import '../widgets/owl_avatar.dart';
 import 'practice_screen.dart';
 import 'quiz_screen.dart';
+import 'report_screen.dart';
 import 'shop_screen.dart';
 
 /// 홈 화면: 마스코트 인사, 칭호 카드, 그리고 100단계 학습 지도.
@@ -82,6 +83,12 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     _refresh();
   }
 
+  void _openReport() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ReportScreen()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -104,6 +111,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 coins: data.coins,
                 equipped: data.equipped,
                 onOwlTap: _openShop,
+                onReportTap: _openReport,
                 onSoundChanged: () => setState(() {}),
               ),
               Padding(
@@ -161,6 +169,7 @@ class _Header extends StatelessWidget {
     required this.coins,
     required this.equipped,
     required this.onOwlTap,
+    required this.onReportTap,
     required this.onSoundChanged,
   });
 
@@ -168,6 +177,7 @@ class _Header extends StatelessWidget {
   final int coins;
   final List<ShopItem> equipped;
   final VoidCallback onOwlTap;
+  final VoidCallback onReportTap;
   final VoidCallback onSoundChanged;
 
   @override
@@ -199,6 +209,14 @@ class _Header extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
+                IconButton(
+                  onPressed: onReportTap,
+                  icon: const Icon(
+                    Icons.insert_chart_rounded,
+                    color: Colors.white,
+                    size: 28,
+                  ),
+                ),
                 IconButton(
                   onPressed: () async {
                     await Sounds.setEnabled(!Sounds.enabled);
