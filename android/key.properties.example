@@ -1,0 +1,11 @@
+# 릴리즈 서명 설정 예시.
+# 이 파일을 복사해 android/key.properties 로 만들고 값을 채워 주세요.
+# key.properties 는 .gitignore 에 포함되어 커밋되지 않습니다.
+#
+# 키스토어 만들기:
+#   keytool -genkey -v -keystore ~/upload-keystore.jks \
+#     -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+storeFile=/절대/경로/upload-keystore.jks
+storePassword=키스토어_비밀번호
+keyAlias=upload
+keyPassword=키_비밀번호

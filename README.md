@@ -72,6 +72,30 @@ flutter build apk    # Android APK
 flutter build ios    # iOS (macOS + Xcode 필요)
 ```
 
+## 출시(릴리즈) 빌드
+
+**안드로이드 (플레이 스토어)**
+
+1. 업로드 키스토어 만들기:
+   ```bash
+   keytool -genkey -v -keystore ~/upload-keystore.jks \
+     -keyalg RSA -keysize 2048 -validity 10000 -alias upload
+   ```
+2. `android/key.properties.example`을 복사해 `android/key.properties`를 만들고 값 채우기
+   (이 파일은 커밋되지 않아요)
+3. 빌드: `flutter build appbundle` → `build/app/outputs/bundle/release/app-release.aab` 업로드
+
+**iOS (앱스토어)** — macOS + Xcode 필요
+
+```bash
+flutter build ipa
+```
+Xcode에서 서명 팀만 지정하면 됩니다.
+
+- 버전 올리기: `pubspec.yaml`의 `version: 1.0.0+1` (이름+빌드번호) 수정
+- 스토어 설명·키워드·개인정보 문안: [`store/listing.md`](store/listing.md)
+- 이 앱은 인터넷 권한을 쓰지 않고 개인정보를 수집하지 않습니다 (모든 데이터 로컬 저장)
+
 ## 테스트
 
 ```bash
