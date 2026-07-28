@@ -1,5 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'profile.dart';
+
 import 'progress.dart';
 
 /// 아이템을 다는 자리: 머리 위 / 얼굴 / 옆자리 친구
@@ -75,13 +77,14 @@ class ShopStore {
 
   static Future<Set<String>> loadOwned() async {
     final prefs = await SharedPreferences.getInstance();
-    return (prefs.getStringList(_ownedKey) ?? const []).toSet();
+    return (prefs.getStringList(Profiles.scoped(_ownedKey)) ?? const [])
+        .toSet();
   }
 
   /// 착용 중인 아이템들 (자리마다 최대 1개)
   static Future<List<ShopItem>> loadEquipped() async {
     final prefs = await SharedPreferences.getInstance();
-    final ids = prefs.getStringList(_equippedKey) ?? const [];
+    final ids = prefs.getStringList(Profiles.scoped(_equippedKey)) ?? const [];
     return [
       for (final id in ids)
         if (shopItemById(id) != null) shopItemById(id)!,
@@ -95,7 +98,7 @@ class ShopStore {
     if (!await ProgressStore.spendCoins(item.cost)) return false;
     owned.add(item.id);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_ownedKey, owned.toList());
+    await prefs.setStringList(Profiles.scoped(_ownedKey), owned.toList());
     await equip(item);
     return true;
   }
@@ -107,7 +110,7 @@ class ShopStore {
     equipped.add(item);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(
-      _equippedKey,
+      Profiles.scoped(_equippedKey),
       equipped.map((e) => e.id).toList(),
     );
   }
@@ -118,7 +121,7 @@ class ShopStore {
     equipped.removeWhere((e) => e.id == item.id);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setStringList(
-      _equippedKey,
+      Profiles.scoped(_equippedKey),
       equipped.map((e) => e.id).toList(),
     );
   }

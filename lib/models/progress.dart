@@ -1,5 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'profile.dart';
+
 import 'curriculum.dart';
 
 /// 맞힌 개수로 별(0~3개)을 계산한다.
@@ -63,7 +65,7 @@ class ProgressStore {
   /// 100개 단계의 별 개수 목록 (인덱스 0 = 1단계)
   static Future<List<int>> load() async {
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getStringList(_starsKey) ?? const [];
+    final saved = prefs.getStringList(Profiles.scoped(_starsKey)) ?? const [];
     return List.generate(
       Curriculum.totalLevels,
       (i) => i < saved.length ? int.tryParse(saved[i]) ?? 0 : 0,
@@ -77,13 +79,14 @@ class ProgressStore {
     if (stars <= current[index]) return;
     current[index] = stars;
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(_starsKey, current.map((s) => '$s').toList());
+    await prefs.setStringList(
+        Profiles.scoped(_starsKey), current.map((s) => '$s').toList());
   }
 
   /// 지금까지 모은 누적 점수
   static Future<int> loadPoints() async {
     final prefs = await SharedPreferences.getInstance();
-    return prefs.getInt(_pointsKey) ?? 0;
+    return prefs.getInt(Profiles.scoped(_pointsKey)) ?? 0;
   }
 
   /// 점수를 더해서 저장하고, 더한 뒤의 누적 점수를 돌려준다.
@@ -91,9 +94,10 @@ class ProgressStore {
   /// (칭호는 누적 점수 기준이라 코인을 써도 내려가지 않는다)
   static Future<int> addPoints(int earned) async {
     final prefs = await SharedPreferences.getInstance();
-    final total = (prefs.getInt(_pointsKey) ?? 0) + earned;
-    await prefs.setInt(_pointsKey, total);
-    await prefs.setInt(_coinsKey, (prefs.getInt(_coinsKey) ?? 0) + earned);
+    final total = (prefs.getInt(Profiles.scoped(_pointsKey)) ?? 0) + earned;
+    await prefs.setInt(Profiles.scoped(_pointsKey), total);
+    await prefs.setInt(Profiles.scoped(_coinsKey),
+        (prefs.getInt(Profiles.scoped(_coinsKey)) ?? 0) + earned);
     return total;
   }
 
@@ -101,20 +105,20 @@ class ProgressStore {
   /// 예전 버전에서 넘어온 경우 그동안 모은 점수만큼 코인을 채워 준다.
   static Future<int> loadCoins() async {
     final prefs = await SharedPreferences.getInstance();
-    if (!prefs.containsKey(_coinsKey)) {
-      final migrated = prefs.getInt(_pointsKey) ?? 0;
-      await prefs.setInt(_coinsKey, migrated);
+    if (!prefs.containsKey(Profiles.scoped(_coinsKey))) {
+      final migrated = prefs.getInt(Profiles.scoped(_pointsKey)) ?? 0;
+      await prefs.setInt(Profiles.scoped(_coinsKey), migrated);
       return migrated;
     }
-    return prefs.getInt(_coinsKey) ?? 0;
+    return prefs.getInt(Profiles.scoped(_coinsKey)) ?? 0;
   }
 
   /// 코인이 충분하면 차감하고 true를 돌려준다.
   static Future<bool> spendCoins(int cost) async {
     final prefs = await SharedPreferences.getInstance();
-    final coins = prefs.getInt(_coinsKey) ?? 0;
+    final coins = prefs.getInt(Profiles.scoped(_coinsKey)) ?? 0;
     if (coins < cost) return false;
-    await prefs.setInt(_coinsKey, coins - cost);
+    await prefs.setInt(Profiles.scoped(_coinsKey), coins - cost);
     return true;
   }
 

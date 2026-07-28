@@ -1,5 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'profile.dart';
+
 import 'daily.dart';
 import 'question.dart';
 
@@ -76,14 +78,14 @@ class StatsStore {
       {required bool correct}) async {
     final prefs = await SharedPreferences.getInstance();
 
-    final typeKey = question.isCounting
+    final typeKey = Profiles.scoped(question.isCounting
         ? (correct ? _countCorrectKey : _countWrongKey)
         : question.isAddition
             ? (correct ? _addCorrectKey : _addWrongKey)
-            : (correct ? _subCorrectKey : _subWrongKey);
+            : (correct ? _subCorrectKey : _subWrongKey));
     await prefs.setInt(typeKey, (prefs.getInt(typeKey) ?? 0) + 1);
 
-    final bandKey = correct ? _bandCorrectKey : _bandWrongKey;
+    final bandKey = Profiles.scoped(correct ? _bandCorrectKey : _bandWrongKey);
     final bands = _parseBands(prefs.getString(bandKey));
     bands[statBandOf(question)]++;
     await prefs.setString(bandKey, bands.join(','));
@@ -93,31 +95,32 @@ class StatsStore {
   static Future<void> recordRoundDay({DateTime? now}) async {
     final prefs = await SharedPreferences.getInstance();
     final today = DailyStore.dayKey(now ?? DateTime.now());
-    final entries = _parseDays(prefs.getStringList(_daysKey));
+    final entries = _parseDays(prefs.getStringList(Profiles.scoped(_daysKey)));
     entries[today] = (entries[today] ?? 0) + 1;
 
     final keys = entries.keys.toList()..sort();
     final kept = keys.length > 14 ? keys.sublist(keys.length - 14) : keys;
     await prefs.setStringList(
-      _daysKey,
+      Profiles.scoped(_daysKey),
       [for (final k in kept) '$k:${entries[k]}'],
     );
   }
 
   static Future<LearningStats> load({DateTime? now}) async {
     final prefs = await SharedPreferences.getInstance();
-    final entries = _parseDays(prefs.getStringList(_daysKey));
+    final entries = _parseDays(prefs.getStringList(Profiles.scoped(_daysKey)));
     final time = now ?? DateTime.now();
 
     return LearningStats(
-      addCorrect: prefs.getInt(_addCorrectKey) ?? 0,
-      addWrong: prefs.getInt(_addWrongKey) ?? 0,
-      subCorrect: prefs.getInt(_subCorrectKey) ?? 0,
-      subWrong: prefs.getInt(_subWrongKey) ?? 0,
-      countCorrect: prefs.getInt(_countCorrectKey) ?? 0,
-      countWrong: prefs.getInt(_countWrongKey) ?? 0,
-      bandCorrect: _parseBands(prefs.getString(_bandCorrectKey)),
-      bandWrong: _parseBands(prefs.getString(_bandWrongKey)),
+      addCorrect: prefs.getInt(Profiles.scoped(_addCorrectKey)) ?? 0,
+      addWrong: prefs.getInt(Profiles.scoped(_addWrongKey)) ?? 0,
+      subCorrect: prefs.getInt(Profiles.scoped(_subCorrectKey)) ?? 0,
+      subWrong: prefs.getInt(Profiles.scoped(_subWrongKey)) ?? 0,
+      countCorrect: prefs.getInt(Profiles.scoped(_countCorrectKey)) ?? 0,
+      countWrong: prefs.getInt(Profiles.scoped(_countWrongKey)) ?? 0,
+      bandCorrect:
+          _parseBands(prefs.getString(Profiles.scoped(_bandCorrectKey))),
+      bandWrong: _parseBands(prefs.getString(Profiles.scoped(_bandWrongKey))),
       recentDays: [
         for (var i = 6; i >= 0; i--)
           () {

@@ -1,5 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'profile.dart';
+
 import 'progress.dart';
 
 /// 매일 리셋되는 미션. 달성하면 코인을 보상으로 받는다.
@@ -87,25 +89,26 @@ class DailyStore {
     final time = now ?? DateTime.now();
     final today = dayKey(time);
 
-    if (prefs.getString(_dateKey) != today) {
-      await prefs.setString(_dateKey, today);
-      await prefs.setInt(_roundsKey, 0);
-      await prefs.setInt(_correctKey, 0);
-      await prefs.setInt(_starsKey, 0);
-      await prefs.setStringList(_claimedKey, const []);
+    if (prefs.getString(Profiles.scoped(_dateKey)) != today) {
+      await prefs.setString(Profiles.scoped(_dateKey), today);
+      await prefs.setInt(Profiles.scoped(_roundsKey), 0);
+      await prefs.setInt(Profiles.scoped(_correctKey), 0);
+      await prefs.setInt(Profiles.scoped(_starsKey), 0);
+      await prefs.setStringList(Profiles.scoped(_claimedKey), const []);
     }
 
     // 마지막 출석이 어제보다 오래됐으면 스트릭은 끊긴 것으로 보여 준다.
-    final lastDay = prefs.getString(_streakDayKey);
+    final lastDay = prefs.getString(Profiles.scoped(_streakDayKey));
     final yesterday = dayKey(time.subtract(const Duration(days: 1)));
-    var streak = prefs.getInt(_streakKey) ?? 0;
+    var streak = prefs.getInt(Profiles.scoped(_streakKey)) ?? 0;
     if (lastDay != today && lastDay != yesterday) streak = 0;
 
     return DailyState(
-      rounds: prefs.getInt(_roundsKey) ?? 0,
-      correct: prefs.getInt(_correctKey) ?? 0,
-      stars: prefs.getInt(_starsKey) ?? 0,
-      claimed: (prefs.getStringList(_claimedKey) ?? const []).toSet(),
+      rounds: prefs.getInt(Profiles.scoped(_roundsKey)) ?? 0,
+      correct: prefs.getInt(Profiles.scoped(_correctKey)) ?? 0,
+      stars: prefs.getInt(Profiles.scoped(_starsKey)) ?? 0,
+      claimed: (prefs.getStringList(Profiles.scoped(_claimedKey)) ?? const [])
+          .toSet(),
       streak: streak,
     );
   }
@@ -125,19 +128,20 @@ class DailyStore {
     final rounds = before.rounds + 1;
     final correct = before.correct + correctCount;
     final starsTotal = before.stars + stars;
-    await prefs.setInt(_roundsKey, rounds);
-    await prefs.setInt(_correctKey, correct);
-    await prefs.setInt(_starsKey, starsTotal);
+    await prefs.setInt(Profiles.scoped(_roundsKey), rounds);
+    await prefs.setInt(Profiles.scoped(_correctKey), correct);
+    await prefs.setInt(Profiles.scoped(_starsKey), starsTotal);
 
     // 출석 스트릭: 오늘 처음 완료했을 때만 갱신
-    if (prefs.getString(_streakDayKey) != today) {
+    if (prefs.getString(Profiles.scoped(_streakDayKey)) != today) {
       final yesterday = dayKey(time.subtract(const Duration(days: 1)));
-      final wasYesterday = prefs.getString(_streakDayKey) == yesterday;
+      final wasYesterday =
+          prefs.getString(Profiles.scoped(_streakDayKey)) == yesterday;
       await prefs.setInt(
-        _streakKey,
-        wasYesterday ? (prefs.getInt(_streakKey) ?? 0) + 1 : 1,
+        Profiles.scoped(_streakKey),
+        wasYesterday ? (prefs.getInt(Profiles.scoped(_streakKey)) ?? 0) + 1 : 1,
       );
-      await prefs.setString(_streakDayKey, today);
+      await prefs.setString(Profiles.scoped(_streakDayKey), today);
     }
 
     // 새로 달성한 미션 보상 지급
@@ -158,7 +162,7 @@ class DailyStore {
         await ProgressStore.addPoints(mission.reward);
       }
     }
-    await prefs.setStringList(_claimedKey, claimed.toList());
+    await prefs.setStringList(Profiles.scoped(_claimedKey), claimed.toList());
     return newlyDone;
   }
 }

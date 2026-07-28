@@ -2,12 +2,14 @@ import 'package:flutter/material.dart';
 
 import '../models/curriculum.dart';
 import '../models/daily.dart';
+import '../models/profile.dart';
 import '../models/progress.dart';
 import '../models/shop.dart';
 import '../services/sounds.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/owl_avatar.dart';
 import 'practice_screen.dart';
+import 'profile_screen.dart';
 import 'quiz_screen.dart';
 import 'report_screen.dart';
 import 'shop_screen.dart';
@@ -27,6 +29,7 @@ class _MapData {
     required this.coins,
     required this.equipped,
     required this.daily,
+    required this.profile,
   });
 
   final List<int> stars;
@@ -34,6 +37,7 @@ class _MapData {
   final int coins;
   final List<ShopItem> equipped;
   final DailyState daily;
+  final Profile profile;
 }
 
 class _LevelMapScreenState extends State<LevelMapScreen> {
@@ -51,6 +55,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
         coins: await ProgressStore.loadCoins(),
         equipped: await ShopStore.loadEquipped(),
         daily: await DailyStore.load(),
+        profile: await Profiles.active(),
       );
 
   void _refresh() {
@@ -89,6 +94,13 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     );
   }
 
+  Future<void> _openProfiles() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const ProfileScreen()),
+    );
+    _refresh(); // 프로필이 바뀌면 진행도·코인 등을 다시 불러온다.
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -110,7 +122,9 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 totalStars: totalStars,
                 coins: data.coins,
                 equipped: data.equipped,
+                profile: data.profile,
                 onOwlTap: _openShop,
+                onProfileTap: _openProfiles,
                 onReportTap: _openReport,
                 onSoundChanged: () => setState(() {}),
               ),
@@ -168,7 +182,9 @@ class _Header extends StatelessWidget {
     required this.totalStars,
     required this.coins,
     required this.equipped,
+    required this.profile,
     required this.onOwlTap,
+    required this.onProfileTap,
     required this.onReportTap,
     required this.onSoundChanged,
   });
@@ -176,7 +192,9 @@ class _Header extends StatelessWidget {
   final int totalStars;
   final int coins;
   final List<ShopItem> equipped;
+  final Profile profile;
   final VoidCallback onOwlTap;
+  final VoidCallback onProfileTap;
   final VoidCallback onReportTap;
   final VoidCallback onSoundChanged;
 
@@ -209,6 +227,31 @@ class _Header extends StatelessWidget {
                   ),
                 ),
                 const Spacer(),
+                // 프로필 바꾸기
+                GestureDetector(
+                  onTap: onProfileTap,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.25),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: Colors.white.withValues(alpha: 0.6),
+                      ),
+                    ),
+                    child: Text(
+                      '${profile.emoji} ${profile.name}',
+                      style: const TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
                 IconButton(
                   onPressed: onReportTap,
                   icon: const Icon(
@@ -250,9 +293,9 @@ class _Header extends StatelessWidget {
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(18),
                     ),
-                    child: const Text(
-                      '오늘도 신나게\n수학 놀이 하자!',
-                      style: TextStyle(
+                    child: Text(
+                      '${profile.name}, 오늘도\n신나게 수학 놀이 하자!',
+                      style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF4B4B4B),
