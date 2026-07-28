@@ -15,6 +15,10 @@ class LearningStats {
     required this.subWrong,
     required this.countCorrect,
     required this.countWrong,
+    required this.mulCorrect,
+    required this.mulWrong,
+    required this.divCorrect,
+    required this.divWrong,
     required this.bandCorrect,
     required this.bandWrong,
     required this.recentDays,
@@ -29,6 +33,12 @@ class LearningStats {
   final int countCorrect;
   final int countWrong;
 
+  /// 곱셈/나눗셈 정답/오답
+  final int mulCorrect;
+  final int mulWrong;
+  final int divCorrect;
+  final int divWrong;
+
   /// 수 범위(0: 5까지, 1: 10까지, 2: 20까지)별 정답/오답
   final List<int> bandCorrect;
   final List<int> bandWrong;
@@ -36,8 +46,9 @@ class LearningStats {
   /// 최근 7일 동안 하루에 푼 판 수 (오래된 날 → 오늘 순)
   final List<({String day, int rounds})> recentDays;
 
-  int get totalCorrect => addCorrect + subCorrect + countCorrect;
-  int get totalWrong => addWrong + subWrong + countWrong;
+  int get totalCorrect =>
+      addCorrect + subCorrect + countCorrect + mulCorrect + divCorrect;
+  int get totalWrong => addWrong + subWrong + countWrong + mulWrong + divWrong;
   int get totalAnswered => totalCorrect + totalWrong;
 
   /// 정답률(%). 푼 문제가 없으면 null.
@@ -49,14 +60,15 @@ class LearningStats {
 }
 
 /// 수 범위 이름 (리포트 표시용)
-const List<String> statBandNames = ['5까지', '10까지', '20까지'];
+const List<String> statBandNames = ['5까지', '10까지', '20까지', '큰 수'];
 
 /// 문제가 속하는 수 범위: 등장하는 가장 큰 수 기준
 int statBandOf(Question q) {
   final biggest = [q.left, q.right, q.answer].reduce((a, b) => a > b ? a : b);
   if (biggest <= 5) return 0;
   if (biggest <= 10) return 1;
-  return 2;
+  if (biggest <= 20) return 2;
+  return 3;
 }
 
 /// 학습 통계를 기기에 저장하고 불러온다.
@@ -69,6 +81,10 @@ class StatsStore {
   static const _subWrongKey = 'stats_sub_wrong_v1';
   static const _countCorrectKey = 'stats_count_correct_v1';
   static const _countWrongKey = 'stats_count_wrong_v1';
+  static const _mulCorrectKey = 'stats_mul_correct_v1';
+  static const _mulWrongKey = 'stats_mul_wrong_v1';
+  static const _divCorrectKey = 'stats_div_correct_v1';
+  static const _divWrongKey = 'stats_div_wrong_v1';
   static const _bandCorrectKey = 'stats_band_correct_v1'; // 'a,b,c'
   static const _bandWrongKey = 'stats_band_wrong_v1';
   static const _daysKey = 'stats_days_v1'; // ['2026-07-28:3', ...]
@@ -78,11 +94,13 @@ class StatsStore {
       {required bool correct}) async {
     final prefs = await SharedPreferences.getInstance();
 
-    final typeKey = Profiles.scoped(question.isCounting
-        ? (correct ? _countCorrectKey : _countWrongKey)
-        : question.isAddition
-            ? (correct ? _addCorrectKey : _addWrongKey)
-            : (correct ? _subCorrectKey : _subWrongKey));
+    final typeKey = Profiles.scoped(switch (question.op) {
+      QuestionOp.counting => correct ? _countCorrectKey : _countWrongKey,
+      QuestionOp.add => correct ? _addCorrectKey : _addWrongKey,
+      QuestionOp.sub => correct ? _subCorrectKey : _subWrongKey,
+      QuestionOp.mul => correct ? _mulCorrectKey : _mulWrongKey,
+      QuestionOp.div => correct ? _divCorrectKey : _divWrongKey,
+    });
     await prefs.setInt(typeKey, (prefs.getInt(typeKey) ?? 0) + 1);
 
     final bandKey = Profiles.scoped(correct ? _bandCorrectKey : _bandWrongKey);
@@ -118,6 +136,10 @@ class StatsStore {
       subWrong: prefs.getInt(Profiles.scoped(_subWrongKey)) ?? 0,
       countCorrect: prefs.getInt(Profiles.scoped(_countCorrectKey)) ?? 0,
       countWrong: prefs.getInt(Profiles.scoped(_countWrongKey)) ?? 0,
+      mulCorrect: prefs.getInt(Profiles.scoped(_mulCorrectKey)) ?? 0,
+      mulWrong: prefs.getInt(Profiles.scoped(_mulWrongKey)) ?? 0,
+      divCorrect: prefs.getInt(Profiles.scoped(_divCorrectKey)) ?? 0,
+      divWrong: prefs.getInt(Profiles.scoped(_divWrongKey)) ?? 0,
       bandCorrect:
           _parseBands(prefs.getString(Profiles.scoped(_bandCorrectKey))),
       bandWrong: _parseBands(prefs.getString(Profiles.scoped(_bandWrongKey))),
@@ -134,7 +156,7 @@ class StatsStore {
   static List<int> _parseBands(String? raw) {
     final parts = (raw ?? '').split(',');
     return List.generate(
-      3,
+      statBandNames.length,
       (i) => i < parts.length ? int.tryParse(parts[i]) ?? 0 : 0,
     );
   }

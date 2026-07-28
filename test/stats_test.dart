@@ -3,11 +3,15 @@ import 'package:preschool_math/models/question.dart';
 import 'package:preschool_math/models/stats.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-Question _q({required int left, required int right, required bool add}) =>
+Question _q({
+  required int left,
+  required int right,
+  QuestionOp op = QuestionOp.add,
+}) =>
     Question(
+      op: op,
       left: left,
       right: right,
-      isAddition: add,
       choices: const [0, 1, 2, 3],
       emoji: '🍎',
     );
@@ -21,34 +25,40 @@ void main() {
 
   group('StatsStore', () {
     test('유형별 정답/오답이 누적된다', () async {
-      await StatsStore.recordAnswer(_q(left: 2, right: 1, add: true),
+      await StatsStore.recordAnswer(_q(left: 2, right: 1), correct: true);
+      await StatsStore.recordAnswer(_q(left: 2, right: 1), correct: false);
+      await StatsStore.recordAnswer(_q(left: 3, right: 1, op: QuestionOp.sub),
           correct: true);
-      await StatsStore.recordAnswer(_q(left: 2, right: 1, add: true),
+      await StatsStore.recordAnswer(_q(left: 3, right: 4, op: QuestionOp.mul),
+          correct: true);
+      await StatsStore.recordAnswer(_q(left: 12, right: 3, op: QuestionOp.div),
           correct: false);
-      await StatsStore.recordAnswer(_q(left: 3, right: 1, add: false),
-          correct: true);
 
       final stats = await StatsStore.load();
       expect(stats.addCorrect, 1);
       expect(stats.addWrong, 1);
       expect(stats.subCorrect, 1);
       expect(stats.subWrong, 0);
-      expect(stats.totalAnswered, 3);
+      expect(stats.mulCorrect, 1);
+      expect(stats.divWrong, 1);
+      expect(stats.totalAnswered, 5);
     });
 
     test('수 범위는 문제에 나오는 가장 큰 수 기준으로 나뉜다', () async {
-      expect(statBandOf(_q(left: 2, right: 3, add: true)), 0); // 답 5 → 5까지
-      expect(statBandOf(_q(left: 6, right: 4, add: true)), 1); // 답 10 → 10까지
-      expect(statBandOf(_q(left: 12, right: 3, add: false)), 2); // 12 → 20까지
+      expect(statBandOf(_q(left: 2, right: 3)), 0); // 답 5 → 5까지
+      expect(statBandOf(_q(left: 6, right: 4)), 1); // 답 10 → 10까지
+      expect(statBandOf(_q(left: 12, right: 3, op: QuestionOp.sub)), 2);
+      expect(statBandOf(_q(left: 7, right: 8, op: QuestionOp.mul)), 3); // 56
 
-      await StatsStore.recordAnswer(_q(left: 2, right: 3, add: true),
-          correct: true);
-      await StatsStore.recordAnswer(_q(left: 12, right: 3, add: false),
+      await StatsStore.recordAnswer(_q(left: 2, right: 3), correct: true);
+      await StatsStore.recordAnswer(_q(left: 12, right: 3, op: QuestionOp.sub),
+          correct: false);
+      await StatsStore.recordAnswer(_q(left: 7, right: 8, op: QuestionOp.mul),
           correct: false);
 
       final stats = await StatsStore.load();
-      expect(stats.bandCorrect, [1, 0, 0]);
-      expect(stats.bandWrong, [0, 0, 1]);
+      expect(stats.bandCorrect, [1, 0, 0, 0]);
+      expect(stats.bandWrong, [0, 0, 1, 1]);
     });
 
     test('최근 7일 활동이 날짜별로 기록된다', () async {

@@ -14,7 +14,7 @@ void main() {
             QuizConfig(mode: QuizMode.counting, maxNumber: maxNumber),
           );
           for (final q in questions) {
-            expect(q.isCounting, isTrue);
+            expect(q.op, QuestionOp.counting);
             expect(q.answer, q.left);
             expect(q.left, greaterThanOrEqualTo(1));
             expect(q.left, lessThanOrEqualTo(maxNumber));
@@ -33,18 +33,78 @@ void main() {
         final questions = generator.generate(
           const QuizConfig(mode: QuizMode.mixed, maxNumber: 10),
         );
-        expect(questions.every((q) => !q.isCounting), isTrue);
+        expect(
+          questions.every(
+            (q) => q.op == QuestionOp.add || q.op == QuestionOp.sub,
+          ),
+          isTrue,
+        );
       }
     });
   });
 
-  group('QuestionGenerator', () {
-    for (final mode in QuizMode.values.where((m) => m != QuizMode.counting)) {
-      for (final maxNumber in [3, 5, 10, 15, 20]) {
+  group('QuestionGenerator 곱셈', () {
+    test('max단까지의 구구단이 나온다 (2~max) × (1~9)', () {
+      final generator = QuestionGenerator(random: Random(11));
+      for (final maxNumber in [3, 5, 9, 15]) {
+        for (var round = 0; round < 30; round++) {
+          final questions = generator.generate(
+            QuizConfig(mode: QuizMode.multiplication, maxNumber: maxNumber),
+          );
+          for (final q in questions) {
+            expect(q.op, QuestionOp.mul);
+            expect(q.left, greaterThanOrEqualTo(2));
+            expect(q.left, lessThanOrEqualTo(maxNumber));
+            expect(q.right, greaterThanOrEqualTo(1));
+            expect(q.right, lessThanOrEqualTo(9));
+            expect(q.answer, q.left * q.right);
+            expect(q.expression, '${q.left} × ${q.right} = ?');
+            expect(q.choices, hasLength(4));
+            expect(q.choices.toSet(), hasLength(4));
+            expect(q.choices, contains(q.answer));
+            expect(q.choices.every((c) => c >= 0), isTrue);
+          }
+        }
+      }
+    });
+  });
+
+  group('QuestionGenerator 나눗셈', () {
+    test('나누어떨어지는 나눗셈만 나온다 (몫 1~9)', () {
+      final generator = QuestionGenerator(random: Random(13));
+      for (final maxNumber in [3, 5, 9]) {
+        for (var round = 0; round < 30; round++) {
+          final questions = generator.generate(
+            QuizConfig(mode: QuizMode.division, maxNumber: maxNumber),
+          );
+          for (final q in questions) {
+            expect(q.op, QuestionOp.div);
+            expect(q.right, greaterThanOrEqualTo(2)); // 나누는 수
+            expect(q.right, lessThanOrEqualTo(maxNumber));
+            expect(q.left % q.right, 0); // 항상 나누어떨어짐
+            expect(q.answer, greaterThanOrEqualTo(1)); // 몫
+            expect(q.answer, lessThanOrEqualTo(9));
+            expect(q.answer, q.left ~/ q.right);
+            expect(q.expression, '${q.left} ÷ ${q.right} = ?');
+            expect(q.choices, hasLength(4));
+            expect(q.choices.toSet(), hasLength(4));
+            expect(q.choices, contains(q.answer));
+          }
+        }
+      }
+    });
+  });
+
+  group('QuestionGenerator 덧셈·뺄셈', () {
+    for (final mode in [
+      QuizMode.addition,
+      QuizMode.subtraction,
+      QuizMode.mixed,
+    ]) {
+      for (final maxNumber in [3, 5, 10, 20, 50, 300]) {
         test('${mode.label} / $maxNumber까지 문제가 규칙에 맞는다', () {
           final generator = QuestionGenerator(random: Random(42));
-          // 여러 판을 만들어 다양한 경우를 확인한다.
-          for (var round = 0; round < 50; round++) {
+          for (var round = 0; round < 30; round++) {
             final questions = generator.generate(
               QuizConfig(mode: mode, maxNumber: maxNumber),
             );
@@ -52,8 +112,8 @@ void main() {
 
             for (final q in questions) {
               // 모드에 맞는 연산인지
-              if (mode == QuizMode.addition) expect(q.isAddition, isTrue);
-              if (mode == QuizMode.subtraction) expect(q.isAddition, isFalse);
+              if (mode == QuizMode.addition) expect(q.op, QuestionOp.add);
+              if (mode == QuizMode.subtraction) expect(q.op, QuestionOp.sub);
 
               // 답이 0 이상, 최대값 이하인지
               expect(q.answer, greaterThanOrEqualTo(0));
@@ -72,10 +132,7 @@ void main() {
 
             // 바로 앞 문제와 같은 문제가 연달아 나오지 않는지
             for (var i = 1; i < questions.length; i++) {
-              expect(
-                questions[i].expression,
-                isNot(questions[i - 1].expression),
-              );
+              expect(questions[i].dedupKey, isNot(questions[i - 1].dedupKey));
             }
           }
         });

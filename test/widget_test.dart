@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preschool_math/main.dart';
+import 'package:preschool_math/models/profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
+    Profiles.activeId = 1;
   });
 
   /// 화면 밖에 있을 수 있는 위젯을 스크롤로 보이게 한 뒤 탭한다.
@@ -16,36 +18,41 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('학습 지도가 뜨고 1단계만 열려 있다', (tester) async {
+  testWidgets('홈에 나이·학년 카테고리가 보인다', (tester) async {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
     expect(find.text('수학 놀이'), findsOneWidget);
     expect(find.text('자유 연습'), findsOneWidget);
-    expect(find.textContaining('덧셈 첫걸음'), findsOneWidget);
-
-    // 점수 0점이면 칭호는 알
     expect(find.text('지금 나는 알!'), findsOneWidget);
 
-    // 1단계는 열려 있고, 잠긴 단계(🔒)도 보인다.
-    expect(find.text('1'), findsOneWidget);
-    expect(find.text('🔒'), findsWidgets);
+    // 7개 카테고리
+    for (final title in ['4살', '5살', '6살', '7살']) {
+      expect(find.text(title), findsOneWidget);
+    }
+    await tester.ensureVisible(find.text('초등 3학년'));
+    expect(find.text('초등 2학년'), findsOneWidget);
+    expect(find.text('초등 3학년'), findsOneWidget);
   });
 
-  testWidgets('1단계를 누르면 퀴즈가 시작된다', (tester) async {
+  testWidgets('4살 카테고리에서 1단계만 열려 있고, 누르면 수 세기 퀴즈가 시작된다', (tester) async {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
-    await scrollAndTap(tester, find.text('1'));
+    await scrollAndTap(tester, find.text('4살'));
+    expect(find.text('수 세기 첫걸음'), findsOneWidget);
+    expect(find.text('1'), findsOneWidget);
+    expect(find.text('🔒'), findsWidgets);
 
+    await scrollAndTap(tester, find.text('1'));
     expect(find.text('1단계'), findsOneWidget);
-    expect(find.textContaining('= ?'), findsOneWidget);
+    expect(find.text('몇 개일까요?'), findsOneWidget); // 4살 첫 단계는 수 세기
     expect(find.text('🪙 0'), findsOneWidget);
   });
 
   testWidgets('통과한 기록이 있으면 다음 단계가 열리고 점수가 보인다', (tester) async {
     SharedPreferences.setMockInitialValues({
-      'level_stars_v1': ['3', '2'],
+      'level_stars_v2': ['3', '2'],
       'total_points_v1': 250,
     });
 
@@ -57,23 +64,35 @@ void main() {
     expect(find.text('🪙 250'), findsOneWidget);
     expect(find.text('지금 나는 병아리!'), findsOneWidget);
 
-    // 3단계가 열려 있다.
+    await scrollAndTap(tester, find.text('4살'));
     expect(find.text('3'), findsOneWidget);
     await scrollAndTap(tester, find.text('3'));
 
     expect(find.text('3단계'), findsOneWidget);
-    expect(find.textContaining('= ?'), findsOneWidget);
+  });
+
+  testWidgets('초등 2학년 곱셈 카테고리는 바로 시작할 수 있다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await scrollAndTap(tester, find.text('초등 2학년'));
+    expect(find.textContaining('곱셈 첫걸음'), findsOneWidget);
+
+    // 카테고리 첫 단계(두 자리 덧셈 1단계)는 앞 카테고리를 안 깨도 열려 있다.
+    await scrollAndTap(tester, find.text('두 자리 덧셈'));
+    // 첫 단계 버블 탭 (카테고리 첫 단계 번호)
   });
 
   testWidgets('퀴즈 도중 나가려면 확인 팝업을 거친다', (tester) async {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
-    // 1단계 입장 후 아무것도 안 풀었으면 X로 바로 나간다.
+    // 4살 → 1단계 입장, 아무것도 안 풀었으면 X로 바로 나간다.
+    await scrollAndTap(tester, find.text('4살'));
     await scrollAndTap(tester, find.text('1'));
     await tester.tap(find.byIcon(Icons.close));
     await tester.pumpAndSettle();
-    expect(find.textContaining('= ?'), findsNothing); // 지도로 돌아옴
+    expect(find.textContaining('몇 개일까요?'), findsNothing); // 지도로 돌아옴
 
     // 다시 들어가서 한 문제를 풀면, X를 눌렀을 때 확인 팝업이 뜬다.
     await scrollAndTap(tester, find.text('1'));
@@ -91,20 +110,22 @@ void main() {
     await tester.tap(find.text('계속 풀기'));
     await tester.pumpAndSettle();
     expect(find.text('정말 그만할까요?'), findsNothing);
-    expect(find.textContaining('= ?'), findsOneWidget);
 
     // 다시 X → '그만하기'를 누르면 지도로 나간다.
     await tester.tap(find.byIcon(Icons.close));
     await tester.pumpAndSettle();
     await tester.tap(find.text('그만하기'));
     await tester.pumpAndSettle();
-    expect(find.textContaining('= ?'), findsNothing); // 지도로 돌아옴
+    expect(find.text('몇 개일까요?'), findsNothing);
   });
 
-  testWidgets('틀린 문제는 판 끝에 다시 나오고, 다시 맞히면 +5점', (tester) async {
+  testWidgets('틀린 문제는 판 끝에 다시 나오고, 다시 맞히면 +5점 (자유 연습)', (tester) async {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
-    await scrollAndTap(tester, find.text('1'));
+
+    // 자유 연습 → 덧셈(기본)으로 시작
+    await scrollAndTap(tester, find.text('자유 연습'));
+    await scrollAndTap(tester, find.text('시작하기'));
 
     String expr() => tester.widget<Text>(find.textContaining('= ?')).data!;
     int answerOf(String e) {

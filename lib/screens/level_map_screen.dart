@@ -8,13 +8,14 @@ import '../models/shop.dart';
 import '../services/sounds.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/owl_avatar.dart';
+import 'category_screen.dart';
 import 'practice_screen.dart';
 import 'profile_screen.dart';
-import 'quiz_screen.dart';
 import 'report_screen.dart';
 import 'shop_screen.dart';
 
-/// 홈 화면: 마스코트 인사, 칭호 카드, 그리고 100단계 학습 지도.
+/// 홈 화면: 마스코트 인사, 칭호 카드, 오늘의 미션,
+/// 그리고 나이·학년별(4살~초3) 학습 카테고리.
 class LevelMapScreen extends StatefulWidget {
   const LevelMapScreen({super.key});
 
@@ -65,11 +66,9 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     });
   }
 
-  Future<void> _openLevel(Level level) async {
+  Future<void> _openCategory(AgeCategory category) async {
     await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => QuizScreen(config: level.config, level: level),
-      ),
+      MaterialPageRoute(builder: (_) => CategoryScreen(category: category)),
     );
     _refresh();
   }
@@ -156,13 +155,14 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                       ],
                     ),
                     const SizedBox(height: 14),
-                    for (final unit in Curriculum.units) ...[
-                      _UnitSection(
-                        unit: unit,
+                    // 나이·학년에 맞는 카테고리를 골라 들어간다.
+                    for (final category in Curriculum.categories) ...[
+                      _CategoryCard(
+                        category: category,
                         stars: stars,
-                        onLevelTap: _openLevel,
+                        onTap: () => _openCategory(category),
                       ),
-                      const SizedBox(height: 14),
+                      const SizedBox(height: 12),
                     ],
                   ],
                 ),
@@ -580,209 +580,93 @@ class _MenuCard extends StatelessWidget {
   }
 }
 
-/// 한 묶음(10단계)을 보여주는 카드
-class _UnitSection extends StatelessWidget {
-  const _UnitSection({
-    required this.unit,
+/// 연령/학년 카테고리 카드: 진행률과 함께 상세 화면으로 들어간다.
+class _CategoryCard extends StatelessWidget {
+  const _CategoryCard({
+    required this.category,
     required this.stars,
-    required this.onLevelTap,
-  });
-
-  final Unit unit;
-  final List<int> stars;
-  final void Function(Level) onLevelTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final unitLevels =
-        Curriculum.levels.where((l) => l.unit.index == unit.index).toList();
-    final clearedCount =
-        unitLevels.where((l) => stars[l.number - 1] >= 1).length;
-
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: [
-          BoxShadow(
-            color: unit.color.withValues(alpha: 0.15),
-            offset: const Offset(0, 5),
-            blurRadius: 12,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: unit.color.withValues(alpha: 0.15),
-                  borderRadius: BorderRadius.circular(14),
-                ),
-                child: Center(
-                  child: Text(unit.emoji, style: const TextStyle(fontSize: 28)),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      '${unit.index + 1}묶음 · ${unit.title}',
-                      style: const TextStyle(
-                        fontSize: 17,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(5),
-                            child: LinearProgressIndicator(
-                              value: clearedCount / Curriculum.levelsPerUnit,
-                              minHeight: 8,
-                              backgroundColor: Colors.grey.shade200,
-                              color: unit.color,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          '$clearedCount/${Curriculum.levelsPerUnit}',
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.grey.shade600,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              for (final level in unitLevels)
-                _LevelBubble(
-                  level: level,
-                  stars: stars[level.number - 1],
-                  unlocked: ProgressStore.isUnlocked(stars, level.number),
-                  color: unit.color,
-                  onTap: () => onLevelTap(level),
-                ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// 동그란 3D 단계 버튼: 잠김 🔒 / 도전 가능(통통) / 통과(별 표시)
-class _LevelBubble extends StatelessWidget {
-  const _LevelBubble({
-    required this.level,
-    required this.stars,
-    required this.unlocked,
-    required this.color,
     required this.onTap,
   });
 
-  final Level level;
-  final int stars;
-  final bool unlocked;
-  final Color color;
+  final AgeCategory category;
+  final List<int> stars;
   final VoidCallback onTap;
-
-  bool get _cleared => stars >= 1;
-  bool get _isCurrent => unlocked && !_cleared;
 
   @override
   Widget build(BuildContext context) {
-    final bubble = GestureDetector(
-      onTap: unlocked ? onTap : null,
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          gradient: _cleared
-              ? LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [color, BouncyButton.darken(color, 0.08)],
-                )
-              : null,
-          color: _cleared
-              ? null
-              : unlocked
-                  ? Colors.white
-                  : Colors.grey.shade200,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: unlocked ? color : Colors.grey.shade300,
-            width: 3,
+    final cleared = Curriculum.levels
+        .where((l) =>
+            l.unit.category.index == category.index && stars[l.number - 1] >= 1)
+        .length;
+    final total = category.totalLevels;
+
+    return BouncyButton(
+      color: Colors.white,
+      shadowColor: Colors.grey.shade300,
+      borderRadius: 22,
+      padding: const EdgeInsets.all(14),
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 54,
+            height: 54,
+            decoration: BoxDecoration(
+              color: category.color.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Center(
+              child: Text(category.emoji, style: const TextStyle(fontSize: 28)),
+            ),
           ),
-          boxShadow: unlocked
-              ? [
-                  BoxShadow(
-                    color: _cleared
-                        ? BouncyButton.darken(color, 0.15)
-                        : Colors.grey.shade300,
-                    offset: const Offset(0, 3),
-                    blurRadius: 0,
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  category.title,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
                   ),
-                ]
-              : null,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (!unlocked)
-              const Opacity(
-                opacity: 0.6,
-                child: Text('🔒', style: TextStyle(fontSize: 18)),
-              )
-            else ...[
-              Text(
-                '${level.number}',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: _cleared ? Colors.white : color,
                 ),
-              ),
-              if (_cleared)
-                Text('⭐' * stars, style: const TextStyle(fontSize: 7)),
-            ],
-          ],
-        ),
+                const SizedBox(height: 2),
+                Text(
+                  category.desc,
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 6),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(5),
+                        child: LinearProgressIndicator(
+                          value: total == 0 ? 0 : cleared / total,
+                          minHeight: 8,
+                          backgroundColor: Colors.grey.shade200,
+                          color: category.color,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      '$cleared/$total',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.grey.shade600,
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          const Icon(Icons.chevron_right, color: Colors.grey),
+        ],
       ),
     );
-
-    // 지금 도전할 단계는 통! 하고 커지면서 나타난다.
-    if (_isCurrent) {
-      return TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0.6, end: 1),
-        duration: const Duration(milliseconds: 700),
-        curve: Curves.elasticOut,
-        builder: (context, value, child) =>
-            Transform.scale(scale: value, child: child),
-        child: bubble,
-      );
-    }
-    return bubble;
   }
 }

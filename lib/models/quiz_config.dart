@@ -1,11 +1,17 @@
-/// 퀴즈 종류: 덧셈, 뺄셈, 섞어서, 수 세기
+/// 퀴즈 종류: 덧셈, 뺄셈, 섞어서, 수 세기, 곱셈, 나눗셈
 enum QuizMode {
   addition('덧셈', '➕'),
   subtraction('뺄셈', '➖'),
   mixed('섞어서', '🎲'),
 
   /// 그림 개수를 세는 모드 (덧셈 이전 단계, 더 어린 아이용)
-  counting('수 세기', '🔢');
+  counting('수 세기', '🔢'),
+
+  /// 곱셈구구 (초등 2학년~)
+  multiplication('곱셈', '✖️'),
+
+  /// 곱셈구구를 거꾸로 푸는 나눗셈 (초등 3학년~)
+  division('나눗셈', '➗');
 
   const QuizMode(this.label, this.emoji);
 

@@ -227,7 +227,9 @@ class _AccuracyCard extends StatelessWidget {
       ('➕ 덧셈', stats.addCorrect, stats.addWrong),
       ('➖ 뺄셈', stats.subCorrect, stats.subWrong),
       ('🔢 수 세기', stats.countCorrect, stats.countWrong),
-      for (var i = 0; i < 3; i++)
+      ('✖️ 곱셈', stats.mulCorrect, stats.mulWrong),
+      ('➗ 나눗셈', stats.divCorrect, stats.divWrong),
+      for (var i = 0; i < statBandNames.length; i++)
         ('📏 ${statBandNames[i]}', stats.bandCorrect[i], stats.bandWrong[i]),
     ];
 
@@ -316,7 +318,9 @@ class _AdviceCard extends StatelessWidget {
       ('덧셈', LearningStats.accuracy(stats.addCorrect, stats.addWrong)),
       ('뺄셈', LearningStats.accuracy(stats.subCorrect, stats.subWrong)),
       ('수 세기', LearningStats.accuracy(stats.countCorrect, stats.countWrong)),
-      for (var i = 0; i < 3; i++)
+      ('곱셈', LearningStats.accuracy(stats.mulCorrect, stats.mulWrong)),
+      ('나눗셈', LearningStats.accuracy(stats.divCorrect, stats.divWrong)),
+      for (var i = 0; i < statBandNames.length; i++)
         (
           '${statBandNames[i]} 수',
           LearningStats.accuracy(stats.bandCorrect[i], stats.bandWrong[i]),

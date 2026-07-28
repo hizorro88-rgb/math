@@ -55,23 +55,33 @@ class _PracticeScreenState extends State<PracticeScreen> {
                     const Spacer(),
                     const _SectionLabel('어떤 공부를 할까요?'),
                     const SizedBox(height: 8),
-                    GridView.count(
-                      crossAxisCount: 2,
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      mainAxisSpacing: 8,
-                      crossAxisSpacing: 8,
-                      childAspectRatio: 1.6,
-                      children: [
-                        for (final mode in QuizMode.values)
-                          _ChoiceCard(
-                            emoji: mode.emoji,
-                            label: mode.label,
-                            selected: _mode == mode,
-                            onTap: () => setState(() => _mode = mode),
-                          ),
-                      ],
-                    ),
+                    // 모드 2열 배치 (IntrinsicHeight 안이라 GridView 대신 Row 사용)
+                    for (var row = 0;
+                        row < (QuizMode.values.length + 1) ~/ 2;
+                        row++) ...[
+                      Row(
+                        children: [
+                          for (var col = 0; col < 2; col++) ...[
+                            Expanded(
+                              child: row * 2 + col < QuizMode.values.length
+                                  ? _ChoiceCard(
+                                      emoji:
+                                          QuizMode.values[row * 2 + col].emoji,
+                                      label:
+                                          QuizMode.values[row * 2 + col].label,
+                                      selected: _mode ==
+                                          QuizMode.values[row * 2 + col],
+                                      onTap: () => setState(() => _mode =
+                                          QuizMode.values[row * 2 + col]),
+                                    )
+                                  : const SizedBox(),
+                            ),
+                            if (col == 0) const SizedBox(width: 8),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                    ],
                     const SizedBox(height: 24),
                     const _SectionLabel('얼마나 어려울까요?'),
                     const SizedBox(height: 8),

@@ -375,11 +375,15 @@ class _QuizScreenState extends State<QuizScreen> {
                 ),
                 const SizedBox(height: 8),
               ],
-              Text(
-                _question.expression,
-                style: TextStyle(
-                  fontSize: _question.isCounting ? 38 : 48,
-                  fontWeight: FontWeight.bold,
+              // 세 자리 수처럼 긴 식은 자동으로 줄어들어 카드 안에 들어간다.
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                child: Text(
+                  _question.expression,
+                  style: TextStyle(
+                    fontSize: _question.isCounting ? 38 : 48,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -659,60 +663,108 @@ class _ChoiceButton extends StatelessWidget {
 }
 
 /// 개수 세기를 도와주는 이모지 그림.
-/// 덧셈: 🍎🍎🍎 ➕ 🍎🍎 / 뺄셈: 빼는 만큼 흐리게 표시
+/// 덧셈: 🍎🍎🍎 ➕ 🍎🍎 / 뺄셈: 빼는 만큼 흐리게 /
+/// 곱셈: 줄로 늘어놓은 묶음 / 나눗셈: 나누는 수만큼 묶어서 표시.
+/// 그림이 20개를 넘으면(큰 수 문제) 힌트를 생략한다.
 class _EmojiHint extends StatelessWidget {
   const _EmojiHint({required this.question});
 
   final Question question;
 
+  static const _maxHintItems = 20;
+
   @override
   Widget build(BuildContext context) {
     const style = TextStyle(fontSize: 26);
 
-    // 수 세기: 그림을 전부 또렷하게 보여주고 세게 한다.
-    if (question.isCounting) {
-      return Wrap(
-        alignment: WrapAlignment.center,
-        spacing: 4,
-        runSpacing: 6,
-        children: [
-          for (var i = 0; i < question.left; i++)
-            Text(question.emoji, style: const TextStyle(fontSize: 34)),
-        ],
-      );
-    }
+    switch (question.op) {
+      // 수 세기: 그림을 전부 또렷하게 보여주고 세게 한다.
+      case QuestionOp.counting:
+        return Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 4,
+          runSpacing: 6,
+          children: [
+            for (var i = 0; i < question.left; i++)
+              Text(question.emoji, style: const TextStyle(fontSize: 34)),
+          ],
+        );
 
-    if (question.isAddition) {
-      return Wrap(
-        alignment: WrapAlignment.center,
-        crossAxisAlignment: WrapCrossAlignment.center,
-        spacing: 2,
-        runSpacing: 4,
-        children: [
-          for (var i = 0; i < question.left; i++)
-            Text(question.emoji, style: style),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 6),
-            child: Text('➕', style: TextStyle(fontSize: 20)),
-          ),
-          for (var i = 0; i < question.right; i++)
-            Text(question.emoji, style: style),
-        ],
-      );
-    }
+      case QuestionOp.add:
+        if (question.left + question.right > _maxHintItems) {
+          return const SizedBox.shrink();
+        }
+        return Wrap(
+          alignment: WrapAlignment.center,
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 2,
+          runSpacing: 4,
+          children: [
+            for (var i = 0; i < question.left; i++)
+              Text(question.emoji, style: style),
+            const Padding(
+              padding: EdgeInsets.symmetric(horizontal: 6),
+              child: Text('➕', style: TextStyle(fontSize: 20)),
+            ),
+            for (var i = 0; i < question.right; i++)
+              Text(question.emoji, style: style),
+          ],
+        );
 
-    // 뺄셈: 전체 중에서 빼는 개수만큼 흐리게 보여준다.
-    return Wrap(
-      alignment: WrapAlignment.center,
-      spacing: 2,
-      runSpacing: 4,
-      children: [
-        for (var i = 0; i < question.left; i++)
-          Opacity(
-            opacity: i < question.left - question.right ? 1.0 : 0.25,
-            child: Text(question.emoji, style: style),
-          ),
-      ],
-    );
+      // 뺄셈: 전체 중에서 빼는 개수만큼 흐리게 보여준다.
+      case QuestionOp.sub:
+        if (question.left > _maxHintItems) return const SizedBox.shrink();
+        return Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 2,
+          runSpacing: 4,
+          children: [
+            for (var i = 0; i < question.left; i++)
+              Opacity(
+                opacity: i < question.left - question.right ? 1.0 : 0.25,
+                child: Text(question.emoji, style: style),
+              ),
+          ],
+        );
+
+      // 곱셈: left개씩 right줄 — "몇씩 몇 묶음"을 눈으로 보여준다.
+      case QuestionOp.mul:
+        if (question.left * question.right > _maxHintItems) {
+          return const SizedBox.shrink();
+        }
+        return Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            for (var row = 0; row < question.right; row++)
+              Text(
+                question.emoji * question.left,
+                style: const TextStyle(fontSize: 22, height: 1.2),
+              ),
+          ],
+        );
+
+      // 나눗셈: 전체를 나누는 수만큼씩 묶어서 보여준다.
+      case QuestionOp.div:
+        if (question.left > _maxHintItems) return const SizedBox.shrink();
+        return Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 6,
+          runSpacing: 6,
+          children: [
+            for (var group = 0; group < question.answer; group++)
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                decoration: BoxDecoration(
+                  border: Border.all(color: Colors.grey.shade300),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  question.emoji * question.right,
+                  style: const TextStyle(fontSize: 20),
+                ),
+              ),
+          ],
+        );
+    }
   }
 }

@@ -58,7 +58,8 @@ Rank? nextRankFor(int points) {
 class ProgressStore {
   ProgressStore._();
 
-  static const _starsKey = 'level_stars_v1';
+  // v2: 커리큘럼이 연령별 260단계로 재편되면서 단계 번호가 바뀌어 키를 올림
+  static const _starsKey = 'level_stars_v2';
   static const _pointsKey = 'total_points_v1';
   static const _coinsKey = 'coins_v1';
 
@@ -122,7 +123,12 @@ class ProgressStore {
     return true;
   }
 
-  /// 별 1개 이상이면 통과. 1단계이거나 앞 단계를 통과했으면 도전할 수 있다.
-  static bool isUnlocked(List<int> stars, int levelNumber) =>
-      levelNumber == 1 || stars[levelNumber - 2] >= 1;
+  /// 별 1개 이상이면 통과.
+  /// 각 연령 카테고리의 첫 단계는 항상 열려 있고(나이에 맞게 바로 시작),
+  /// 그 뒤로는 같은 카테고리 안에서 앞 단계를 통과해야 열린다.
+  static bool isUnlocked(List<int> stars, int levelNumber) {
+    final level = Curriculum.levelAt(levelNumber);
+    if (levelNumber == level.unit.category.firstLevelNumber) return true;
+    return stars[levelNumber - 2] >= 1;
+  }
 }
