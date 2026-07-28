@@ -2,12 +2,13 @@ import 'dart:math';
 
 import 'quiz_config.dart';
 
-/// 덧셈 또는 뺄셈 한 문제
+/// 덧셈·뺄셈 또는 수 세기 한 문제
 class Question {
   Question({
     required this.left,
     required this.right,
     required this.isAddition,
+    this.isCounting = false,
     required this.choices,
     required this.emoji,
   });
@@ -16,18 +17,31 @@ class Question {
   final int right;
   final bool isAddition;
 
+  /// 수 세기 문제: 그림이 [left]개 나오고 개수를 맞힌다.
+  final bool isCounting;
+
   /// 정답 1개 + 오답 3개가 섞여 있는 보기 목록
   final List<int> choices;
 
   /// 개수 세기를 도와주는 그림 이모지 (예: 🍎)
   final String emoji;
 
-  int get answer => isAddition ? left + right : left - right;
+  int get answer => isCounting
+      ? left
+      : isAddition
+          ? left + right
+          : left - right;
 
-  String get expression => '$left ${isAddition ? '+' : '-'} $right = ?';
+  String get expression =>
+      isCounting ? '몇 개일까요?' : '$left ${isAddition ? '+' : '-'} $right = ?';
 
   /// 음성으로 읽어 줄 문장 (예: "3 더하기 2는?")
-  String get speechText => '$left ${isAddition ? '더하기' : '빼기'} $right는?';
+  String get speechText =>
+      isCounting ? '모두 몇 개일까요?' : '$left ${isAddition ? '더하기' : '빼기'} $right는?';
+
+  /// 같은 문제가 연달아 나오는지 판정할 때 쓰는 키.
+  /// 수 세기는 표현식이 모두 같으므로 개수로 구분한다.
+  String get dedupKey => isCounting ? 'counting:$left' : expression;
 }
 
 /// 설정에 맞는 문제 목록을 만들어 준다.
@@ -51,28 +65,41 @@ class QuestionGenerator {
 
   List<Question> generate(QuizConfig config) {
     final questions = <Question>[];
-    String? previousExpression;
+    String? previousKey;
 
     for (var i = 0; i < config.questionCount; i++) {
       Question question;
       // 바로 앞 문제와 똑같은 문제는 피한다.
       do {
         question = _generateOne(config);
-      } while (question.expression == previousExpression);
-      previousExpression = question.expression;
+      } while (question.dedupKey == previousKey);
+      previousKey = question.dedupKey;
       questions.add(question);
     }
     return questions;
   }
 
   Question _generateOne(QuizConfig config) {
+    final max = config.maxNumber;
+
+    // 수 세기: 그림 1~max개를 보여주고 개수를 맞힌다.
+    if (config.mode == QuizMode.counting) {
+      final count = 1 + _random.nextInt(max);
+      return Question(
+        left: count,
+        right: 0,
+        isAddition: true,
+        isCounting: true,
+        choices: _buildChoices(count, max),
+        emoji: _emojis[_random.nextInt(_emojis.length)],
+      );
+    }
+
     final isAddition = switch (config.mode) {
       QuizMode.addition => true,
       QuizMode.subtraction => false,
-      QuizMode.mixed => _random.nextBool(),
+      QuizMode.mixed || QuizMode.counting => _random.nextBool(),
     };
-
-    final max = config.maxNumber;
     int left;
     int right;
 

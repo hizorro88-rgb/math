@@ -5,8 +5,41 @@ import 'package:preschool_math/models/question.dart';
 import 'package:preschool_math/models/quiz_config.dart';
 
 void main() {
+  group('QuestionGenerator 수 세기', () {
+    test('그림 개수가 정답이고 1~최대값 범위다', () {
+      final generator = QuestionGenerator(random: Random(7));
+      for (final maxNumber in [3, 5, 10]) {
+        for (var round = 0; round < 30; round++) {
+          final questions = generator.generate(
+            QuizConfig(mode: QuizMode.counting, maxNumber: maxNumber),
+          );
+          for (final q in questions) {
+            expect(q.isCounting, isTrue);
+            expect(q.answer, q.left);
+            expect(q.left, greaterThanOrEqualTo(1));
+            expect(q.left, lessThanOrEqualTo(maxNumber));
+            expect(q.expression, '몇 개일까요?');
+            expect(q.choices, hasLength(4));
+            expect(q.choices.toSet(), hasLength(4));
+            expect(q.choices, contains(q.answer));
+          }
+        }
+      }
+    });
+
+    test('섞어서 모드에는 수 세기 문제가 나오지 않는다', () {
+      final generator = QuestionGenerator(random: Random(3));
+      for (var round = 0; round < 30; round++) {
+        final questions = generator.generate(
+          const QuizConfig(mode: QuizMode.mixed, maxNumber: 10),
+        );
+        expect(questions.every((q) => !q.isCounting), isTrue);
+      }
+    });
+  });
+
   group('QuestionGenerator', () {
-    for (final mode in QuizMode.values) {
+    for (final mode in QuizMode.values.where((m) => m != QuizMode.counting)) {
       for (final maxNumber in [3, 5, 10, 15, 20]) {
         test('${mode.label} / $maxNumber까지 문제가 규칙에 맞는다', () {
           final generator = QuestionGenerator(random: Random(42));

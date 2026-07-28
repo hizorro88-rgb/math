@@ -377,8 +377,10 @@ class _QuizScreenState extends State<QuizScreen> {
               ],
               Text(
                 _question.expression,
-                style:
-                    const TextStyle(fontSize: 48, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontSize: _question.isCounting ? 38 : 48,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
               const SizedBox(height: 16),
               _EmojiHint(question: _question),
@@ -666,6 +668,19 @@ class _EmojiHint extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const style = TextStyle(fontSize: 26);
+
+    // 수 세기: 그림을 전부 또렷하게 보여주고 세게 한다.
+    if (question.isCounting) {
+      return Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 4,
+        runSpacing: 6,
+        children: [
+          for (var i = 0; i < question.left; i++)
+            Text(question.emoji, style: const TextStyle(fontSize: 34)),
+        ],
+      );
+    }
 
     if (question.isAddition) {
       return Wrap(

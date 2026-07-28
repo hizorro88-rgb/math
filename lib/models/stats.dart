@@ -11,6 +11,8 @@ class LearningStats {
     required this.addWrong,
     required this.subCorrect,
     required this.subWrong,
+    required this.countCorrect,
+    required this.countWrong,
     required this.bandCorrect,
     required this.bandWrong,
     required this.recentDays,
@@ -21,6 +23,10 @@ class LearningStats {
   final int subCorrect;
   final int subWrong;
 
+  /// 수 세기 모드 정답/오답
+  final int countCorrect;
+  final int countWrong;
+
   /// 수 범위(0: 5까지, 1: 10까지, 2: 20까지)별 정답/오답
   final List<int> bandCorrect;
   final List<int> bandWrong;
@@ -28,8 +34,8 @@ class LearningStats {
   /// 최근 7일 동안 하루에 푼 판 수 (오래된 날 → 오늘 순)
   final List<({String day, int rounds})> recentDays;
 
-  int get totalCorrect => addCorrect + subCorrect;
-  int get totalWrong => addWrong + subWrong;
+  int get totalCorrect => addCorrect + subCorrect + countCorrect;
+  int get totalWrong => addWrong + subWrong + countWrong;
   int get totalAnswered => totalCorrect + totalWrong;
 
   /// 정답률(%). 푼 문제가 없으면 null.
@@ -59,6 +65,8 @@ class StatsStore {
   static const _addWrongKey = 'stats_add_wrong_v1';
   static const _subCorrectKey = 'stats_sub_correct_v1';
   static const _subWrongKey = 'stats_sub_wrong_v1';
+  static const _countCorrectKey = 'stats_count_correct_v1';
+  static const _countWrongKey = 'stats_count_wrong_v1';
   static const _bandCorrectKey = 'stats_band_correct_v1'; // 'a,b,c'
   static const _bandWrongKey = 'stats_band_wrong_v1';
   static const _daysKey = 'stats_days_v1'; // ['2026-07-28:3', ...]
@@ -68,9 +76,11 @@ class StatsStore {
       {required bool correct}) async {
     final prefs = await SharedPreferences.getInstance();
 
-    final typeKey = question.isAddition
-        ? (correct ? _addCorrectKey : _addWrongKey)
-        : (correct ? _subCorrectKey : _subWrongKey);
+    final typeKey = question.isCounting
+        ? (correct ? _countCorrectKey : _countWrongKey)
+        : question.isAddition
+            ? (correct ? _addCorrectKey : _addWrongKey)
+            : (correct ? _subCorrectKey : _subWrongKey);
     await prefs.setInt(typeKey, (prefs.getInt(typeKey) ?? 0) + 1);
 
     final bandKey = correct ? _bandCorrectKey : _bandWrongKey;
@@ -104,6 +114,8 @@ class StatsStore {
       addWrong: prefs.getInt(_addWrongKey) ?? 0,
       subCorrect: prefs.getInt(_subCorrectKey) ?? 0,
       subWrong: prefs.getInt(_subWrongKey) ?? 0,
+      countCorrect: prefs.getInt(_countCorrectKey) ?? 0,
+      countWrong: prefs.getInt(_countWrongKey) ?? 0,
       bandCorrect: _parseBands(prefs.getString(_bandCorrectKey)),
       bandWrong: _parseBands(prefs.getString(_bandWrongKey)),
       recentDays: [

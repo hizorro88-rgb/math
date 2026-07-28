@@ -226,8 +226,9 @@ class _AccuracyCard extends StatelessWidget {
     final rows = <(String, int, int)>[
       ('➕ 덧셈', stats.addCorrect, stats.addWrong),
       ('➖ 뺄셈', stats.subCorrect, stats.subWrong),
+      ('🔢 수 세기', stats.countCorrect, stats.countWrong),
       for (var i = 0; i < 3; i++)
-        ('🔢 ${statBandNames[i]}', stats.bandCorrect[i], stats.bandWrong[i]),
+        ('📏 ${statBandNames[i]}', stats.bandCorrect[i], stats.bandWrong[i]),
     ];
 
     return _reportCard(
@@ -314,6 +315,7 @@ class _AdviceCard extends StatelessWidget {
     final candidates = <(String, int?)>[
       ('덧셈', LearningStats.accuracy(stats.addCorrect, stats.addWrong)),
       ('뺄셈', LearningStats.accuracy(stats.subCorrect, stats.subWrong)),
+      ('수 세기', LearningStats.accuracy(stats.countCorrect, stats.countWrong)),
       for (var i = 0; i < 3; i++)
         (
           '${statBandNames[i]} 수',

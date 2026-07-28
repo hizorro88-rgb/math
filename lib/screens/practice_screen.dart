@@ -55,20 +55,21 @@ class _PracticeScreenState extends State<PracticeScreen> {
                     const Spacer(),
                     const _SectionLabel('어떤 공부를 할까요?'),
                     const SizedBox(height: 8),
-                    Row(
+                    GridView.count(
+                      crossAxisCount: 2,
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      mainAxisSpacing: 8,
+                      crossAxisSpacing: 8,
+                      childAspectRatio: 1.6,
                       children: [
-                        for (final mode in QuizMode.values) ...[
-                          Expanded(
-                            child: _ChoiceCard(
-                              emoji: mode.emoji,
-                              label: mode.label,
-                              selected: _mode == mode,
-                              onTap: () => setState(() => _mode = mode),
-                            ),
+                        for (final mode in QuizMode.values)
+                          _ChoiceCard(
+                            emoji: mode.emoji,
+                            label: mode.label,
+                            selected: _mode == mode,
+                            onTap: () => setState(() => _mode = mode),
                           ),
-                          if (mode != QuizMode.values.last)
-                            const SizedBox(width: 8),
-                        ],
                       ],
                     ),
                     const SizedBox(height: 24),

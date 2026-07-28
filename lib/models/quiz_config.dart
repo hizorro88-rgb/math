@@ -1,8 +1,11 @@
-/// 퀴즈 종류: 덧셈, 뺄셈, 섞어서
+/// 퀴즈 종류: 덧셈, 뺄셈, 섞어서, 수 세기
 enum QuizMode {
   addition('덧셈', '➕'),
   subtraction('뺄셈', '➖'),
-  mixed('섞어서', '🎲');
+  mixed('섞어서', '🎲'),
+
+  /// 그림 개수를 세는 모드 (덧셈 이전 단계, 더 어린 아이용)
+  counting('수 세기', '🔢');
 
   const QuizMode(this.label, this.emoji);
 
