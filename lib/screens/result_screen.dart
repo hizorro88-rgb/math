@@ -1,47 +1,57 @@
 import 'package:flutter/material.dart';
 
-import '../models/curriculum.dart';
 import '../models/daily.dart';
 import '../models/progress.dart';
-import '../models/quiz_config.dart';
 import '../widgets/bouncy_button.dart';
-import 'quiz_screen.dart';
 
 /// 결과 화면: 별·점수·칭호를 보여주고 다음 단계 또는 다시 도전으로 이어진다.
+/// 수학·한글 어느 과목이든 쓸 수 있도록 다음/다시 화면은 빌더로 받는다.
 class ResultScreen extends StatelessWidget {
   const ResultScreen({
     super.key,
-    required this.config,
     required this.correctCount,
     required this.totalCount,
     required this.earnedPoints,
+    required this.retryBuilder,
+    this.chestCoins = 0,
     this.completedMissions = const [],
-    this.level,
+    this.headerText,
+    this.showUnlockHint = false,
+    this.nextLabel,
+    this.nextBuilder,
+    this.homeLabel = '처음으로',
+    this.homeIcon = Icons.home_rounded,
   });
 
-  final QuizConfig config;
   final int correctCount;
   final int totalCount;
 
-  /// 이번 판에 모은 점수 (통과 보너스 포함)
+  /// 이번 판에 모은 점수 (통과 보너스 포함, 보물상자 제외)
   final int earnedPoints;
+
+  /// 보물상자에서 나온 보너스 코인 (0이면 상자 없음)
+  final int chestCoins;
 
   /// 이번 판으로 새로 달성한 데일리 미션들
   final List<DailyMission> completedMissions;
 
-  /// 단계 도전이면 해당 단계, 자유 연습이면 null
-  final Level? level;
+  /// 단계 도전이면 '12단계 · 🐞 덧셈 첫걸음' 같은 안내문
+  final String? headerText;
+
+  /// 통과하지 못한 단계 도전이면 잠금 해제 안내를 보여준다.
+  final bool showUnlockHint;
+
+  /// 다음 단계 버튼 (통과했을 때만 전달)
+  final String? nextLabel;
+  final Widget Function()? nextBuilder;
+
+  /// 다시 하기를 눌렀을 때 열 퀴즈 화면
+  final Widget Function() retryBuilder;
+
+  final String homeLabel;
+  final IconData homeIcon;
 
   int get _stars => starsForScore(correctCount, totalCount);
-
-  bool get _cleared => _stars >= 1;
-
-  Level? get _nextLevel {
-    final current = level;
-    if (current == null || !_cleared) return null;
-    if (current.number >= Curriculum.totalLevels) return null;
-    return Curriculum.levelAt(current.number + 1);
-  }
 
   String get _message => switch (_stars) {
         3 => '와, 최고예요! 🏆',
@@ -50,9 +60,15 @@ class ResultScreen extends StatelessWidget {
         _ => '괜찮아요! 다시 해 볼까요? 🌱',
       };
 
+  void _replace(BuildContext context, Widget Function() builder) {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(builder: (_) => builder()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final nextLevel = _nextLevel;
+    final hasNext = nextLabel != null && nextBuilder != null;
 
     return Scaffold(
       // 화면이 작으면 스크롤되고, 크면 위아래로 넉넉하게 펼쳐진다.
@@ -68,9 +84,9 @@ class ResultScreen extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     const Spacer(),
-                    if (level != null) ...[
+                    if (headerText != null) ...[
                       Text(
-                        '${level!.number}단계 · ${level!.unit.emoji} ${level!.unit.title}',
+                        headerText!,
                         textAlign: TextAlign.center,
                         style: TextStyle(
                             fontSize: 18, color: Colors.grey.shade600),
@@ -112,7 +128,7 @@ class ResultScreen extends StatelessWidget {
                       style:
                           TextStyle(fontSize: 18, color: Colors.grey.shade700),
                     ),
-                    if (level != null && !_cleared) ...[
+                    if (showUnlockHint) ...[
                       const SizedBox(height: 8),
                       Text(
                         '5문제 이상 맞히면 다음 단계가 열려요!',
@@ -123,29 +139,24 @@ class ResultScreen extends StatelessWidget {
                     ],
                     const SizedBox(height: 20),
                     _PointsCard(earnedPoints: earnedPoints),
+                    if (chestCoins > 0) ...[
+                      const SizedBox(height: 12),
+                      _ChestBanner(coins: chestCoins),
+                    ],
                     if (completedMissions.isNotEmpty) ...[
                       const SizedBox(height: 12),
                       _MissionBanner(missions: completedMissions),
                     ],
                     const Spacer(),
-                    if (nextLevel != null) ...[
+                    if (hasNext) ...[
                       BouncyButton(
                         color: const Color(0xFF58CC02),
-                        onTap: () {
-                          Navigator.of(context).pushReplacement(
-                            MaterialPageRoute(
-                              builder: (_) => QuizScreen(
-                                config: nextLevel.config,
-                                level: nextLevel,
-                              ),
-                            ),
-                          );
-                        },
+                        onTap: () => _replace(context, nextBuilder!),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
                             Text(
-                              '다음 단계 (${nextLevel.number}단계)',
+                              nextLabel!,
                               style: const TextStyle(
                                 fontSize: 24,
                                 fontWeight: FontWeight.bold,
@@ -164,23 +175,13 @@ class ResultScreen extends StatelessWidget {
                       const SizedBox(height: 12),
                     ],
                     BouncyButton(
-                      color: nextLevel == null
-                          ? const Color(0xFF58CC02)
-                          : Colors.white,
-                      shadowColor:
-                          nextLevel == null ? null : Colors.grey.shade300,
-                      border: nextLevel == null
-                          ? null
-                          : Border.all(
-                              color: const Color(0xFF58CC02), width: 2),
-                      onTap: () {
-                        Navigator.of(context).pushReplacement(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                QuizScreen(config: config, level: level),
-                          ),
-                        );
-                      },
+                      color: hasNext ? Colors.white : const Color(0xFF58CC02),
+                      shadowColor: hasNext ? Colors.grey.shade300 : null,
+                      border: hasNext
+                          ? Border.all(
+                              color: const Color(0xFF58CC02), width: 2)
+                          : null,
+                      onTap: () => _replace(context, retryBuilder),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
@@ -189,18 +190,18 @@ class ResultScreen extends StatelessWidget {
                             style: TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
-                              color: nextLevel == null
-                                  ? Colors.white
-                                  : const Color(0xFF58CC02),
+                              color: hasNext
+                                  ? const Color(0xFF58CC02)
+                                  : Colors.white,
                             ),
                           ),
                           const SizedBox(width: 8),
                           Icon(
                             Icons.refresh_rounded,
                             size: 28,
-                            color: nextLevel == null
-                                ? Colors.white
-                                : const Color(0xFF58CC02),
+                            color: hasNext
+                                ? const Color(0xFF58CC02)
+                                : Colors.white,
                           ),
                         ],
                       ),
@@ -217,7 +218,7 @@ class ResultScreen extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Text(
-                            level != null ? '지도로' : '처음으로',
+                            homeLabel,
                             style: const TextStyle(
                               fontSize: 24,
                               fontWeight: FontWeight.bold,
@@ -225,13 +226,8 @@ class ResultScreen extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          Icon(
-                            level != null
-                                ? Icons.map_rounded
-                                : Icons.home_rounded,
-                            size: 28,
-                            color: const Color(0xFF58CC02),
-                          ),
+                          Icon(homeIcon,
+                              size: 28, color: const Color(0xFF58CC02)),
                         ],
                       ),
                     ),
@@ -240,6 +236,41 @@ class ResultScreen extends StatelessWidget {
                 ),
               ),
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 보물상자 보너스 배너: 통! 하고 나타나서 보너스 코인을 알려준다.
+class _ChestBanner extends StatelessWidget {
+  const _ChestBanner({required this.coins});
+
+  final int coins;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.4, end: 1),
+      duration: const Duration(milliseconds: 700),
+      curve: Curves.elasticOut,
+      builder: (context, value, child) =>
+          Transform.scale(scale: value, child: child),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFEFE3FF),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFA560E8), width: 2),
+        ),
+        child: Text(
+          '🎁 보물상자 발견! 보너스 +$coins 🪙',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF6B2FB3),
           ),
         ),
       ),

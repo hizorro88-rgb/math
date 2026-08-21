@@ -12,6 +12,8 @@ import '../models/stats.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../widgets/bouncy_button.dart';
+import '../widgets/quiz_exit_dialog.dart';
+import '../widgets/sparkle_burst.dart';
 import 'result_screen.dart';
 
 /// 퀴즈 화면: 문제를 하나씩 풀고, 듀오링고처럼 아래에서 정답 여부를 알려준다.
@@ -60,6 +62,9 @@ class _QuizScreenState extends State<QuizScreen> {
 
   /// 마지막 문제 처리 중 중복 실행(빠른 연타) 방지
   bool _finishing = false;
+
+  /// 보물상자 추첨용
+  final _random = math.Random();
 
   Question get _question => _entries[_currentIndex].question;
   bool get _isRetryQuestion => _entries[_currentIndex].isRetry;
@@ -159,67 +164,8 @@ class _QuizScreenState extends State<QuizScreen> {
       Navigator.of(context).pop();
       return;
     }
-
-    final leave = await showDialog<bool>(
-      context: context,
-      builder: (context) => Dialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text('🥺',
-                  textAlign: TextAlign.center, style: TextStyle(fontSize: 48)),
-              const SizedBox(height: 8),
-              const Text(
-                '정말 그만할까요?',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                '지금 나가면 이번 판 점수가 사라져요',
-                textAlign: TextAlign.center,
-                style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
-              ),
-              const SizedBox(height: 20),
-              BouncyButton(
-                color: const Color(0xFF58CC02),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                onTap: () => Navigator.of(context).pop(false),
-                child: const Text(
-                  '계속 풀기',
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-              const SizedBox(height: 10),
-              BouncyButton(
-                color: Colors.white,
-                shadowColor: Colors.grey.shade300,
-                border: Border.all(color: Colors.grey.shade300, width: 2),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-                onTap: () => Navigator.of(context).pop(true),
-                child: Text(
-                  '그만하기',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade600,
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (leave == true && mounted) Navigator.of(context).pop();
+    final leave = await confirmQuizExit(context);
+    if (leave && mounted) Navigator.of(context).pop();
   }
 
   Future<void> _next() async {
@@ -230,12 +176,17 @@ class _QuizScreenState extends State<QuizScreen> {
       final level = widget.level;
       final stars = starsForScore(_correctCount, _baseCount);
       final earned = _roundPoints + completionBonus(stars);
+      // 통과하면 가끔 보물상자가 나온다 (3별이면 확률 업, 보너스 10~50코인)
+      final chestCoins =
+          _random.nextDouble() < (stars >= 3 ? 0.35 : (stars >= 1 ? 0.15 : 0))
+              ? (2 + _random.nextInt(9)) * 5
+              : 0;
       if (stars >= 1) Sounds.complete();
       if (level != null) {
         // 결과 화면으로 넘어가기 전에 기록을 저장한다.
         await ProgressStore.saveStars(level.number, stars);
       }
-      await ProgressStore.addPoints(earned);
+      await ProgressStore.addPoints(earned + chestCoins);
       // 데일리 미션·출석 기록 (새로 달성한 미션은 결과 화면에서 축하)
       final completedMissions = await DailyStore.recordRound(
         correctCount: _correctCount,
@@ -244,15 +195,31 @@ class _QuizScreenState extends State<QuizScreen> {
       // 리포트용 주간 활동 기록
       await StatsStore.recordRoundDay();
       if (!mounted) return;
+      final nextLevel =
+          (level != null && stars >= 1 && level.number < Curriculum.totalLevels)
+              ? Curriculum.levelAt(level.number + 1)
+              : null;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => ResultScreen(
-            config: widget.config,
-            level: level,
             correctCount: _correctCount,
             totalCount: _baseCount,
             earnedPoints: earned,
+            chestCoins: chestCoins,
             completedMissions: completedMissions,
+            headerText: level != null
+                ? '${level.number}단계 · ${level.unit.emoji} ${level.unit.title}'
+                : null,
+            showUnlockHint: level != null && stars < 1,
+            nextLabel:
+                nextLevel != null ? '다음 단계 (${nextLevel.number}단계)' : null,
+            nextBuilder: nextLevel != null
+                ? () => QuizScreen(config: nextLevel.config, level: nextLevel)
+                : null,
+            retryBuilder: () =>
+                QuizScreen(config: widget.config, level: level),
+            homeLabel: level != null ? '지도로' : '처음으로',
+            homeIcon: level != null ? Icons.map_rounded : Icons.home_rounded,
           ),
         ),
       );
@@ -309,7 +276,7 @@ class _QuizScreenState extends State<QuizScreen> {
             if (_answered && _isCorrect && _combo >= 5)
               Positioned.fill(
                 child: IgnorePointer(
-                  child: _SparkleBurst(key: ValueKey('sparkle$_currentIndex')),
+                  child: SparkleBurst(key: ValueKey('sparkle$_currentIndex')),
                 ),
               ),
           ],
@@ -651,59 +618,6 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 }
 
-/// 별과 반짝이가 가운데에서 사방으로 퍼지는 일회성 축하 효과
-class _SparkleBurst extends StatelessWidget {
-  const _SparkleBurst({super.key});
-
-  static const _emojis = [
-    '✨',
-    '⭐',
-    '🌟',
-    '✨',
-    '⭐',
-    '✨',
-    '🌟',
-    '✨',
-    '⭐',
-    '✨',
-    '🌟',
-    '⭐'
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0, end: 1),
-      duration: const Duration(milliseconds: 900),
-      curve: Curves.easeOut,
-      builder: (context, t, _) => Stack(
-        children: [
-          for (var i = 0; i < _emojis.length; i++)
-            Align(
-              alignment: Alignment.center,
-              child: Transform.translate(
-                offset: Offset(
-                  math.cos(i * 2 * math.pi / _emojis.length) * 170 * t,
-                  math.sin(i * 2 * math.pi / _emojis.length) * 190 * t - 60,
-                ),
-                child: Opacity(
-                  opacity: (1 - t).clamp(0.0, 1.0),
-                  child: Transform.scale(
-                    scale: 0.5 + t,
-                    child: Text(
-                      _emojis[i],
-                      style: const TextStyle(fontSize: 26),
-                    ),
-                  ),
-                ),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
 /// 세로셈 표시: 자리수를 맞춰 세로로 늘어놓고,
 /// 답은 자리마다 칸([])을 일의 자리부터 채운다.
 class _VerticalProblem extends StatelessWidget {
@@ -914,8 +828,34 @@ class _EmojiHint extends StatelessWidget {
   Widget build(BuildContext context) {
     const style = TextStyle(fontSize: 26);
 
-    // 세로셈은 자리수 학습이 목적이라 그림 힌트를 겹치지 않는다.
-    if (question.vertical) return const SizedBox.shrink();
+    // 세로셈은 자리수 학습, 듣고 풀기는 암산이 목적이라 그림 힌트를 겹치지 않는다.
+    if (question.vertical || question.listenOnly) {
+      return const SizedBox.shrink();
+    }
+
+    // 빈칸 덧셈: 전체를 보여주되 가려진 쪽을 흐리게 — 세면 답이 보인다.
+    if (question.blankSide != 0) {
+      if (question.op != QuestionOp.add ||
+          question.left + question.right > _maxHintItems) {
+        return const SizedBox.shrink();
+      }
+      return Wrap(
+        alignment: WrapAlignment.center,
+        spacing: 2,
+        runSpacing: 4,
+        children: [
+          for (var i = 0; i < question.left + question.right; i++)
+            Opacity(
+              opacity: (question.blankSide == 1
+                      ? i < question.left
+                      : i >= question.left)
+                  ? 0.25
+                  : 1.0,
+              child: Text(question.emoji, style: style),
+            ),
+        ],
+      );
+    }
 
     switch (question.op) {
       // 수 세기: 그림을 전부 또렷하게 보여주고 세게 한다.
@@ -1005,6 +945,11 @@ class _EmojiHint extends StatelessWidget {
               ),
           ],
         );
+
+      // 비교·규칙 찾기는 숫자 감각이 목적이라 그림 힌트가 없다.
+      case QuestionOp.compare:
+      case QuestionOp.pattern:
+        return const SizedBox.shrink();
     }
   }
 }

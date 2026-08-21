@@ -55,7 +55,7 @@ class Unit {
   Color get color => category.color;
 }
 
-/// 260단계 중 한 단계
+/// 전체 커리큘럼 중 한 단계
 class Level {
   const Level({
     required this.number,
@@ -147,6 +147,12 @@ class Curriculum {
               startMax: 6,
               endMax: 10),
           Unit(
+              title: '큰 수 찾기',
+              emoji: '⚖️',
+              mode: QuizMode.compare,
+              startMax: 5,
+              endMax: 10),
+          Unit(
               title: '덧셈 첫걸음',
               emoji: '🐞',
               mode: QuizMode.addition,
@@ -171,6 +177,12 @@ class Curriculum {
               emoji: '🦝',
               mode: QuizMode.mixed,
               startMax: 4,
+              endMax: 5),
+          Unit(
+              title: '듣고 풀기',
+              emoji: '👂',
+              mode: QuizMode.listen,
+              startMax: 3,
               endMax: 5),
           Unit(
               title: '스무까지 세기',
@@ -204,6 +216,12 @@ class Curriculum {
               mode: QuizMode.mixed,
               startMax: 7,
               endMax: 10),
+          Unit(
+              title: '빈칸 채우기',
+              emoji: '❓',
+              mode: QuizMode.fillBlank,
+              startMax: 6,
+              endMax: 10),
         ],
       ),
       AgeCategory(
@@ -224,6 +242,12 @@ class Curriculum {
               mode: QuizMode.subtraction,
               startMax: 11,
               endMax: 15),
+          Unit(
+              title: '10 만들기',
+              emoji: '🔟',
+              mode: QuizMode.makeTen,
+              startMax: 10,
+              endMax: 10),
           Unit(
               title: '받아올림 덧셈',
               emoji: '🐳',
@@ -286,6 +310,12 @@ class Curriculum {
               mode: QuizMode.subtraction,
               startMax: 25,
               endMax: 50),
+          Unit(
+              title: '규칙 찾기',
+              emoji: '🧩',
+              mode: QuizMode.pattern,
+              startMax: 2,
+              endMax: 5),
           Unit(
               title: '곱셈 첫걸음 (2~3단)',
               emoji: '🐹',

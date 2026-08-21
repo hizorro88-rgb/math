@@ -94,13 +94,17 @@ class StatsStore {
       {required bool correct}) async {
     final prefs = await SharedPreferences.getInstance();
 
-    final typeKey = Profiles.scoped(switch (question.op) {
+    final String? baseKey = switch (question.op) {
       QuestionOp.counting => correct ? _countCorrectKey : _countWrongKey,
       QuestionOp.add => correct ? _addCorrectKey : _addWrongKey,
       QuestionOp.sub => correct ? _subCorrectKey : _subWrongKey,
       QuestionOp.mul => correct ? _mulCorrectKey : _mulWrongKey,
       QuestionOp.div => correct ? _divCorrectKey : _divWrongKey,
-    });
+      // 비교·규칙 찾기는 아직 리포트 항목이 없어서 기록하지 않는다.
+      QuestionOp.compare || QuestionOp.pattern => null,
+    };
+    if (baseKey == null) return;
+    final typeKey = Profiles.scoped(baseKey);
     await prefs.setInt(typeKey, (prefs.getInt(typeKey) ?? 0) + 1);
 
     final bandKey = Profiles.scoped(correct ? _bandCorrectKey : _bandWrongKey);

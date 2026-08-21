@@ -58,19 +58,61 @@ Rank? nextRankFor(int points) {
 class ProgressStore {
   ProgressStore._();
 
-  // v2: 커리큘럼이 연령별 260단계로 재편되면서 단계 번호가 바뀌어 키를 올림
-  static const _starsKey = 'level_stars_v2';
+  // v3: 새 문제 유형 묶음이 커리큘럼 중간에 들어가며 단계 번호가 다시 바뀜
+  // (v2 기록은 묶음 제목 기준으로 새 번호에 옮겨 담는다)
+  static const _starsKey = 'level_stars_v3';
+  static const _starsKeyV2 = 'level_stars_v2';
+
   static const _pointsKey = 'total_points_v1';
   static const _coinsKey = 'coins_v1';
 
-  /// 100개 단계의 별 개수 목록 (인덱스 0 = 1단계)
+  /// 전체 단계의 별 개수 목록 (인덱스 0 = 1단계)
   static Future<List<int>> load() async {
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getStringList(Profiles.scoped(_starsKey)) ?? const [];
+    var saved = prefs.getStringList(Profiles.scoped(_starsKey));
+    if (saved == null) {
+      saved = _migrateFromV2(prefs.getStringList(Profiles.scoped(_starsKeyV2)));
+      if (saved != null) {
+        await prefs.setStringList(Profiles.scoped(_starsKey), saved);
+      }
+    }
+    final list = saved ?? const <String>[];
     return List.generate(
       Curriculum.totalLevels,
-      (i) => i < saved.length ? int.tryParse(saved[i]) ?? 0 : 0,
+      (i) => i < list.length ? int.tryParse(list[i]) ?? 0 : 0,
     );
+  }
+
+  /// v2 시절(신규 유형 묶음이 없던 30묶음) 순서
+  static const _v2UnitTitles = [
+    '수 세기 첫걸음', '다섯까지 세기', // 4살
+    '열까지 세기', '덧셈 첫걸음', // 5살
+    '뺄셈 첫걸음', '섞어서 연습', '스무까지 세기', // 6살
+    '덧셈 도전', '뺄셈 도전', '섞어서 도전', // 7살
+    '큰 수 덧셈', '큰 수 뺄셈', '받아올림 덧셈', '받아내림 뺄셈',
+    '세로 덧셈 첫걸음', '세로 뺄셈 첫걸음', '덧뺄셈 마스터', // 초1
+    '두 자리 덧셈', '받아올림 세로 덧셈', '받아내림 세로 뺄셈', '두 자리 뺄셈',
+    '곱셈 첫걸음 (2~3단)', '곱셈 쑥쑥 (4~5단)', '곱셈 점프 (6~7단)', '곱셈 완성 (8~9단)', // 초2
+    '나눗셈 첫걸음', '나눗셈 도전', '큰 수 곱셈', '세 자리 덧뺄셈', '수학 왕 되기', // 초3
+  ];
+
+  /// v2 별 기록을 묶음 제목으로 맞춰 새 단계 번호에 옮겨 담는다.
+  static List<String>? _migrateFromV2(List<String>? old) {
+    if (old == null) return null;
+    final stars = List.filled(Curriculum.totalLevels, '0');
+    for (var u = 0; u < _v2UnitTitles.length; u++) {
+      final matches =
+          Curriculum.units.where((x) => x.title == _v2UnitTitles[u]);
+      if (matches.isEmpty) continue;
+      final unit = matches.first;
+      for (var i = 0; i < Curriculum.levelsPerUnit; i++) {
+        final oldIndex = u * Curriculum.levelsPerUnit + i;
+        if (oldIndex < old.length) {
+          stars[unit.firstLevelNumber - 1 + i] = old[oldIndex];
+        }
+      }
+    }
+    return stars;
   }
 
   /// 더 좋은 기록일 때만 별을 저장한다.

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preschool_math/main.dart';
+import 'package:preschool_math/models/korean_data.dart';
 import 'package:preschool_math/models/profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -51,6 +52,7 @@ void main() {
   });
 
   testWidgets('통과한 기록이 있으면 다음 단계가 열리고 점수가 보인다', (tester) async {
+    // 일부러 예전 v2 키로 저장해서 마이그레이션도 함께 확인한다.
     SharedPreferences.setMockInitialValues({
       'level_stars_v2': ['3', '2'],
       'total_points_v1': 250,
@@ -217,14 +219,43 @@ void main() {
     expect(find.text('계속하기'), findsOneWidget);
   });
 
+  testWidgets('한글 탭으로 바꾸면 한글 카테고리가 보이고, 낱말→그림 퀴즈를 풀 수 있다',
+      (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    // 과목 탭을 한글로 바꾼다. (헤더가 스크롤로 가려질 수 있어 카테고리로 확인)
+    await scrollAndTap(tester, find.text('한글'));
+    expect(find.text('한글 첫걸음'), findsOneWidget);
+
+    // 첫 카테고리 → 1단계 (낱말 보고 그림 찾기)
+    await scrollAndTap(tester, find.text('한글 첫걸음'));
+    expect(find.text('낱말 보고 그림 찾기'), findsOneWidget);
+    await scrollAndTap(tester, find.text('1'));
+    expect(find.text('알맞은 그림을 찾아요'), findsOneWidget);
+
+    // 카드에 크게 보이는 낱말(fontSize 40)을 읽고 짝이 되는 그림을 누른다.
+    final wordText = tester
+        .widgetList<Text>(find.byWidgetPredicate(
+            (w) => w is Text && w.style?.fontSize == 40))
+        .first
+        .data!;
+    final answerEmoji =
+        krWords2.firstWhere((w) => w.word == wordText).emoji;
+    await tester.tap(find.text(answerEmoji));
+    await tester.pumpAndSettle();
+
+    expect(find.text('정답이에요! 🎉'), findsOneWidget);
+    expect(find.text('계속하기'), findsOneWidget);
+  });
+
   testWidgets('꾸미기 가게에서 코인으로 아이템을 산다', (tester) async {
     SharedPreferences.setMockInitialValues({'coins_v1': 100});
 
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('꾸미기 가게'));
-    await tester.pumpAndSettle();
+    await scrollAndTap(tester, find.text('꾸미기 가게'));
 
     expect(find.text('🪙 100'), findsOneWidget);
     expect(find.text('리본'), findsOneWidget);

@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/curriculum.dart';
 import '../models/daily.dart';
+import '../models/korean_curriculum.dart';
 import '../models/profile.dart';
 import '../models/progress.dart';
 import '../models/shop.dart';
@@ -9,6 +11,7 @@ import '../services/sounds.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/owl_avatar.dart';
 import 'category_screen.dart';
+import 'korean_category_screen.dart';
 import 'practice_screen.dart';
 import 'profile_screen.dart';
 import 'report_screen.dart';
@@ -26,6 +29,7 @@ class LevelMapScreen extends StatefulWidget {
 class _MapData {
   const _MapData({
     required this.stars,
+    required this.krStars,
     required this.points,
     required this.coins,
     required this.equipped,
@@ -34,6 +38,7 @@ class _MapData {
   });
 
   final List<int> stars;
+  final List<int> krStars;
   final int points;
   final int coins;
   final List<ShopItem> equipped;
@@ -44,14 +49,32 @@ class _MapData {
 class _LevelMapScreenState extends State<LevelMapScreen> {
   late Future<_MapData> _dataFuture;
 
+  /// 지금 보고 있는 과목 (false: 수학, true: 한글)
+  bool _korean = false;
+  static const _subjectKey = 'subject_korean_v1';
+
   @override
   void initState() {
     super.initState();
     _dataFuture = _load();
+    _loadSubject();
+  }
+
+  Future<void> _loadSubject() async {
+    final prefs = await SharedPreferences.getInstance();
+    final korean = prefs.getBool(Profiles.scoped(_subjectKey)) ?? false;
+    if (mounted && korean != _korean) setState(() => _korean = korean);
+  }
+
+  Future<void> _setSubject(bool korean) async {
+    setState(() => _korean = korean);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(Profiles.scoped(_subjectKey), korean);
   }
 
   Future<_MapData> _load() async => _MapData(
         stars: await ProgressStore.load(),
+        krStars: await KoreanProgressStore.load(),
         points: await ProgressStore.loadPoints(),
         coins: await ProgressStore.loadCoins(),
         equipped: await ShopStore.loadEquipped(),
@@ -64,11 +87,20 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     setState(() {
       _dataFuture = _load();
     });
+    _loadSubject(); // 프로필이 바뀌면 그 아이가 보던 과목으로
   }
 
   Future<void> _openCategory(AgeCategory category) async {
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => CategoryScreen(category: category)),
+    );
+    _refresh();
+  }
+
+  Future<void> _openKoreanCategory(KrCategory category) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+          builder: (_) => KoreanCategoryScreen(category: category)),
     );
     _refresh();
   }
@@ -112,12 +144,15 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           final stars = data.stars;
-          final totalStars = stars.fold<int>(0, (sum, s) => sum + s);
+          // 별 합계는 수학 + 한글
+          final totalStars = data.stars.fold<int>(0, (sum, s) => sum + s) +
+              data.krStars.fold<int>(0, (sum, s) => sum + s);
 
           return ListView(
             padding: EdgeInsets.zero,
             children: [
               _Header(
+                title: _korean ? '한글 놀이' : '수학 놀이',
                 totalStars: totalStars,
                 coins: data.coins,
                 equipped: data.equipped,
@@ -131,6 +166,29 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
+                    // 과목 고르기: 수학 ↔ 한글
+                    Row(
+                      children: [
+                        Expanded(
+                          child: _SubjectTab(
+                            emoji: '🧮',
+                            label: '수학',
+                            selected: !_korean,
+                            onTap: () => _setSubject(false),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: _SubjectTab(
+                            emoji: '📖',
+                            label: '한글',
+                            selected: _korean,
+                            onTap: () => _setSubject(true),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
                     _RankCard(points: data.points),
                     const SizedBox(height: 14),
                     _DailyCard(daily: data.daily),
@@ -155,15 +213,41 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                       ],
                     ),
                     const SizedBox(height: 14),
-                    // 나이·학년에 맞는 카테고리를 골라 들어간다.
-                    for (final category in Curriculum.categories) ...[
-                      _CategoryCard(
-                        category: category,
-                        stars: stars,
-                        onTap: () => _openCategory(category),
-                      ),
-                      const SizedBox(height: 12),
-                    ],
+                    // 나이·학년(수학) 또는 한글 카테고리를 골라 들어간다.
+                    if (_korean)
+                      for (final category in KoreanCurriculum.categories) ...[
+                        _CategoryCard(
+                          emoji: category.emoji,
+                          title: category.title,
+                          desc: category.desc,
+                          color: category.color,
+                          cleared: KoreanCurriculum.levels
+                              .where((l) =>
+                                  l.unit.category.index == category.index &&
+                                  data.krStars[l.number - 1] >= 1)
+                              .length,
+                          total: category.totalLevels,
+                          onTap: () => _openKoreanCategory(category),
+                        ),
+                        const SizedBox(height: 12),
+                      ]
+                    else
+                      for (final category in Curriculum.categories) ...[
+                        _CategoryCard(
+                          emoji: category.emoji,
+                          title: category.title,
+                          desc: category.desc,
+                          color: category.color,
+                          cleared: Curriculum.levels
+                              .where((l) =>
+                                  l.unit.category.index == category.index &&
+                                  stars[l.number - 1] >= 1)
+                              .length,
+                          total: category.totalLevels,
+                          onTap: () => _openCategory(category),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
                   ],
                 ),
               ),
@@ -179,6 +263,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
 /// 부엉이를 누르면 꾸미기 가게로 간다.
 class _Header extends StatelessWidget {
   const _Header({
+    required this.title,
     required this.totalStars,
     required this.coins,
     required this.equipped,
@@ -189,6 +274,7 @@ class _Header extends StatelessWidget {
     required this.onSoundChanged,
   });
 
+  final String title;
   final int totalStars;
   final int coins;
   final List<ShopItem> equipped;
@@ -218,9 +304,9 @@ class _Header extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Text(
-                  '수학 놀이',
-                  style: TextStyle(
+                Text(
+                  title,
+                  style: const TextStyle(
                     fontSize: 28,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
@@ -294,7 +380,7 @@ class _Header extends StatelessWidget {
                       borderRadius: BorderRadius.circular(18),
                     ),
                     child: Text(
-                      '${profile.name}, 오늘도\n신나게 수학 놀이 하자!',
+                      '${profile.name}, 오늘도\n신나게 놀면서 배우자!',
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
@@ -580,26 +666,80 @@ class _MenuCard extends StatelessWidget {
   }
 }
 
-/// 연령/학년 카테고리 카드: 진행률과 함께 상세 화면으로 들어간다.
-class _CategoryCard extends StatelessWidget {
-  const _CategoryCard({
-    required this.category,
-    required this.stars,
+/// 과목 전환 탭 (수학 / 한글)
+class _SubjectTab extends StatelessWidget {
+  const _SubjectTab({
+    required this.emoji,
+    required this.label,
+    required this.selected,
     required this.onTap,
   });
 
-  final AgeCategory category;
-  final List<int> stars;
+  final String emoji;
+  final String label;
+  final bool selected;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final cleared = Curriculum.levels
-        .where((l) =>
-            l.unit.category.index == category.index && stars[l.number - 1] >= 1)
-        .length;
-    final total = category.totalLevels;
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFD7FFB8) : Colors.white,
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(
+            color: selected ? const Color(0xFF58CC02) : Colors.grey.shade300,
+            width: 3,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: selected ? const Color(0xFFB5E48C) : Colors.grey.shade300,
+              offset: const Offset(0, 4),
+              blurRadius: 0,
+            ),
+          ],
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(emoji, style: const TextStyle(fontSize: 22)),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
+/// 카테고리 카드: 진행률과 함께 상세 화면으로 들어간다. (수학·한글 공용)
+class _CategoryCard extends StatelessWidget {
+  const _CategoryCard({
+    required this.emoji,
+    required this.title,
+    required this.desc,
+    required this.color,
+    required this.cleared,
+    required this.total,
+    required this.onTap,
+  });
+
+  final String emoji;
+  final String title;
+  final String desc;
+  final Color color;
+  final int cleared;
+  final int total;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
     return BouncyButton(
       color: Colors.white,
       shadowColor: Colors.grey.shade300,
@@ -612,11 +752,11 @@ class _CategoryCard extends StatelessWidget {
             width: 54,
             height: 54,
             decoration: BoxDecoration(
-              color: category.color.withValues(alpha: 0.15),
+              color: color.withValues(alpha: 0.15),
               borderRadius: BorderRadius.circular(16),
             ),
             child: Center(
-              child: Text(category.emoji, style: const TextStyle(fontSize: 28)),
+              child: Text(emoji, style: const TextStyle(fontSize: 28)),
             ),
           ),
           const SizedBox(width: 12),
@@ -625,7 +765,7 @@ class _CategoryCard extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  category.title,
+                  title,
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -633,7 +773,7 @@ class _CategoryCard extends StatelessWidget {
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  category.desc,
+                  desc,
                   style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                 ),
                 const SizedBox(height: 6),
@@ -646,7 +786,7 @@ class _CategoryCard extends StatelessWidget {
                           value: total == 0 ? 0 : cleared / total,
                           minHeight: 8,
                           backgroundColor: Colors.grey.shade200,
-                          color: category.color,
+                          color: color,
                         ),
                       ),
                     ),

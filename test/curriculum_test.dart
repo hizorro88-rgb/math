@@ -2,9 +2,11 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preschool_math/models/curriculum.dart';
+import 'package:preschool_math/models/profile.dart';
 import 'package:preschool_math/models/progress.dart';
 import 'package:preschool_math/models/question.dart';
 import 'package:preschool_math/models/quiz_config.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('Curriculum', () {
@@ -110,6 +112,26 @@ void main() {
       expect(ProgressStore.isUnlocked(stars, second), isFalse);
       stars[grade2.firstLevelNumber - 1] = 2;
       expect(ProgressStore.isUnlocked(stars, second), isTrue);
+    });
+
+    test('예전(v2) 별 기록이 새 단계 번호로 이사한다', () async {
+      // v2 시절: '덧셈 첫걸음'은 4번째 묶음(31~40단계)이었다.
+      final old = List.filled(40, '0');
+      old[0] = '3'; // 1단계 (수 세기 첫걸음)
+      old[30] = '2'; // 31단계 (덧셈 첫걸음 첫 단계)
+      SharedPreferences.setMockInitialValues({'level_stars_v2': old});
+      Profiles.activeId = 1;
+
+      final stars = await ProgressStore.load();
+      expect(stars[0], 3); // 첫 단계는 그대로
+
+      // '덧셈 첫걸음'은 이제 '큰 수 찾기' 뒤로 밀려났다.
+      final unit =
+          Curriculum.units.firstWhere((u) => u.title == '덧셈 첫걸음');
+      expect(stars[unit.firstLevelNumber - 1], 2);
+      // 옛 위치(31단계 자리)에는 별이 남아 있지 않아야 한다.
+      expect(unit.firstLevelNumber, isNot(31));
+      expect(stars[30], 0);
     });
   });
 }
