@@ -34,7 +34,13 @@ enum KrQuizType {
   listenConsonant('자음 소리 찾기', '자음 소리', '🎼'),
 
   /// 자음과 모음을 합쳐 글자를 만든다 (ㄱ + ㅏ = 가)
-  combine('글자 만들기', '글자 조합', '🧱');
+  combine('글자 만들기', '글자 조합', '🧱'),
+
+  /// 글자 타일을 순서대로 눌러 낱말을 조립한다 (쓰기 전 단계)
+  wordBuild('낱말 만들기', '낱말 조립', '🏗️'),
+
+  /// 받침이 있는 낱말 읽기 도전
+  batchim('받침 낱말', '받침', '💪');
 
   const KrQuizType(this.label, this.shortLabel, this.emoji);
 
@@ -57,6 +63,7 @@ class KoreanQuestion {
     required this.speech,
     this.subDisplay = '',
     this.emojiChoices = false,
+    this.tiles = const [],
     required this.dedupKey,
   });
 
@@ -85,6 +92,10 @@ class KoreanQuestion {
 
   /// 보기가 이모지(그림)인지 — 그림이면 더 크게 그린다.
   final bool emojiChoices;
+
+  /// 낱말 만들기용 글자 타일 (낱말 글자 + 함정 글자, 섞여 있음).
+  /// 비어 있지 않으면 4지선다 대신 타일 조립 UI로 푼다.
+  final List<String> tiles;
 
   /// 같은 문제가 연달아 나오는지 판정하는 키
   final String dedupKey;
@@ -115,10 +126,44 @@ class KoreanQuestionGenerator {
     switch (type) {
       case KrQuizType.pictureToWord:
         // 단계가 오를수록 낱말 풀이 넓어진다.
-        return _pictureToWord(krWords2.take(20 + stage * 4).toList());
+        return _pictureToWord(
+            krWords2.take(20 + stage * 4).toList(), KrQuizType.pictureToWord);
 
       case KrQuizType.longWord:
-        return _pictureToWord(krWords3);
+        return _pictureToWord(krWords3, KrQuizType.longWord);
+
+      case KrQuizType.batchim:
+        // 받침이 있는 낱말만 골라 읽기 연습을 한다.
+        final source = stage >= 5 ? krAllWords : krWords2;
+        final pool = [
+          for (final w in source)
+            if (w.word.codeUnits
+                .any((c) => c >= 0xAC00 && (c - 0xAC00) % 28 != 0))
+              w,
+        ];
+        return _pictureToWord(pool, KrQuizType.batchim);
+
+      case KrQuizType.wordBuild:
+        final pool = stage >= 5 ? krAllWords : krWords2;
+        final word = pool[_random.nextInt(pool.length)];
+        final syllables = word.word.split('');
+        // 함정 글자 2개: 낱말에 없는 글자로 고른다.
+        final decoys = <String>{
+          for (final w in krAllWords) ...w.word.split(''),
+        }..removeWhere(syllables.contains);
+        final decoyList = decoys.toList()..shuffle(_random);
+        final tiles = [...syllables, ...decoyList.take(2)]..shuffle(_random);
+        return KoreanQuestion(
+          type: type,
+          instruction: '글자를 순서대로 눌러 낱말을 만들어요',
+          display: word.emoji,
+          choices: tiles,
+          answer: word.word,
+          answerText: word.word,
+          speech: word.word,
+          tiles: tiles,
+          dedupKey: 'wb:${word.word}',
+        );
 
       case KrQuizType.wordToPicture:
         // 뒤 단계에서는 긴 낱말도 섞인다.
@@ -293,11 +338,11 @@ class KoreanQuestionGenerator {
     }
   }
 
-  KoreanQuestion _pictureToWord(List<KrWord> pool) {
+  KoreanQuestion _pictureToWord(List<KrWord> pool, KrQuizType type) {
     final picked = _pickWords(pool);
     final target = picked.first;
     return KoreanQuestion(
-      type: pool == krWords3 ? KrQuizType.longWord : KrQuizType.pictureToWord,
+      type: type,
       instruction: '그림에 맞는 낱말은?',
       display: target.emoji,
       choices: _shuffled([for (final w in picked) w.word]),

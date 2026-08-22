@@ -277,6 +277,31 @@ void main() {
     });
   });
 
+  group('QuestionGenerator 모양 세기', () {
+    test('정답 모양의 개수가 정답이고, 다른 모양이 섞여 있다', () {
+      final generator = QuestionGenerator(random: Random(43));
+      for (final maxNumber in [3, 5]) {
+        for (var round = 0; round < 30; round++) {
+          final questions = generator.generate(
+            QuizConfig(mode: QuizMode.shapeCount, maxNumber: maxNumber),
+          );
+          for (final q in questions) {
+            expect(q.op, QuestionOp.shape);
+            final targetCount =
+                q.shapeItems.where((s) => s == q.emoji).length;
+            expect(q.answer, targetCount);
+            expect(q.answer, greaterThanOrEqualTo(1));
+            expect(q.answer, lessThanOrEqualTo(maxNumber < 6 ? maxNumber : 6));
+            // 다른 모양도 섞여 있다.
+            expect(q.shapeItems.any((s) => s != q.emoji), isTrue);
+            expect(q.choices, contains(q.answer));
+            expect(q.choices.toSet(), hasLength(4));
+          }
+        }
+      }
+    });
+  });
+
   group('QuestionGenerator 덧셈·뺄셈', () {
     for (final mode in [
       QuizMode.addition,

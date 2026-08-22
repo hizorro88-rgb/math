@@ -132,6 +132,12 @@ class Curriculum {
               mode: QuizMode.counting,
               startMax: 4,
               endMax: 5),
+          Unit(
+              title: '모양 세기',
+              emoji: '🔺',
+              mode: QuizMode.shapeCount,
+              startMax: 3,
+              endMax: 5),
         ],
       ),
       AgeCategory(
@@ -272,6 +278,12 @@ class Curriculum {
               mode: QuizMode.verticalSub,
               startMax: 20,
               endMax: 40),
+          Unit(
+              title: '시계 보기',
+              emoji: '🕒',
+              mode: QuizMode.clock,
+              startMax: 12,
+              endMax: 12),
           Unit(
               title: '덧뺄셈 마스터',
               emoji: '🦄',

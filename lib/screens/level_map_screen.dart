@@ -11,12 +11,15 @@ import '../services/sounds.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/owl_avatar.dart';
 import '../widgets/parent_gate.dart';
+import '../models/boss.dart';
+import '../models/quiz_config.dart';
 import 'badge_screen.dart';
 import 'category_screen.dart';
 import 'korean_category_screen.dart';
 import 'onboarding_screen.dart';
 import 'practice_screen.dart';
 import 'profile_screen.dart';
+import 'quiz_screen.dart';
 import 'report_screen.dart';
 import 'shop_screen.dart';
 
@@ -39,6 +42,7 @@ class _MapData {
     required this.daily,
     required this.profile,
     required this.recommendedCategory,
+    required this.bossCleared,
   });
 
   final List<int> stars;
@@ -51,6 +55,9 @@ class _MapData {
 
   /// 온보딩에서 고른 나이에 맞는 수학 카테고리 (없으면 null)
   final int? recommendedCategory;
+
+  /// 이번 주 보스전을 이미 클리어했는지
+  final bool bossCleared;
 }
 
 class _LevelMapScreenState extends State<LevelMapScreen> {
@@ -91,7 +98,29 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       profile: await Profiles.active(),
       recommendedCategory:
           prefs.getInt(Profiles.scoped(OnboardingScreen.ageCategoryKey)),
+      bossCleared: await BossStore.isClearedThisWeek(),
     );
+  }
+
+  Future<void> _openBoss(bool cleared) async {
+    if (cleared) {
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(const SnackBar(
+          content: Text('이번 주 보스전은 벌써 클리어했어요! 다음 주에 또 만나요 👑'),
+          duration: Duration(seconds: 2),
+        ));
+      return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => const QuizScreen(
+          config: QuizConfig(mode: QuizMode.mixed, maxNumber: 10),
+          bossMode: true,
+        ),
+      ),
+    );
+    _refresh();
   }
 
   void _refresh() {
@@ -244,6 +273,50 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                     _RankCard(points: data.points),
                     const SizedBox(height: 14),
                     _DailyCard(daily: data.daily, onBuyFreeze: _buyFreeze),
+                    const SizedBox(height: 14),
+                    // 주간 보스전
+                    BouncyButton(
+                      color: data.bossCleared
+                          ? Colors.white
+                          : const Color(0xFFFFF6D8),
+                      shadowColor: data.bossCleared
+                          ? Colors.grey.shade300
+                          : const Color(0xFFFFD34D),
+                      borderRadius: 22,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 14),
+                      onTap: () => _openBoss(data.bossCleared),
+                      child: Row(
+                        children: [
+                          const Text('👑', style: TextStyle(fontSize: 30)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  '주간 보스전',
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  data.bossCleared
+                                      ? '이번 주 클리어! 다음 주에 또 만나요 ✅'
+                                      : '여러 유형 섞어 12문제 · 통과하면 +100 🪙',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right, color: Colors.grey),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 14),
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,

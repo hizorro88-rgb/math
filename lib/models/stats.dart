@@ -146,7 +146,10 @@ class StatsStore {
     final prefs = await SharedPreferences.getInstance();
 
     final typeKey = Profiles.scoped(switch (question.op) {
-      QuestionOp.counting => correct ? _countCorrectKey : _countWrongKey,
+      // 모양 세기는 수 세기 계열로 함께 집계한다.
+      QuestionOp.counting ||
+      QuestionOp.shape =>
+        correct ? _countCorrectKey : _countWrongKey,
       QuestionOp.add => correct ? _addCorrectKey : _addWrongKey,
       QuestionOp.sub => correct ? _subCorrectKey : _subWrongKey,
       QuestionOp.mul => correct ? _mulCorrectKey : _mulWrongKey,

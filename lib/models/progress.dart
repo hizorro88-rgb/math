@@ -58,9 +58,10 @@ Rank? nextRankFor(int points) {
 class ProgressStore {
   ProgressStore._();
 
-  // v3: 새 문제 유형 묶음이 커리큘럼 중간에 들어가며 단계 번호가 다시 바뀜
-  // (v2 기록은 묶음 제목 기준으로 새 번호에 옮겨 담는다)
-  static const _starsKey = 'level_stars_v3';
+  // v4: 새 묶음이 커리큘럼 중간에 들어갈 때마다 단계 번호가 바뀌어 키를 올린다.
+  // 옛 기록(v2·v3)은 묶음 제목 기준으로 새 번호에 옮겨 담는다.
+  static const _starsKey = 'level_stars_v4';
+  static const _starsKeyV3 = 'level_stars_v3';
   static const _starsKeyV2 = 'level_stars_v2';
 
   static const _pointsKey = 'total_points_v1';
@@ -71,7 +72,12 @@ class ProgressStore {
     final prefs = await SharedPreferences.getInstance();
     var saved = prefs.getStringList(Profiles.scoped(_starsKey));
     if (saved == null) {
-      saved = _migrateFromV2(prefs.getStringList(Profiles.scoped(_starsKeyV2)));
+      // 가장 최근 버전의 옛 기록부터 이사한다.
+      final v3 = prefs.getStringList(Profiles.scoped(_starsKeyV3));
+      final v2 = prefs.getStringList(Profiles.scoped(_starsKeyV2));
+      saved = v3 != null
+          ? _migrateByTitles(v3, _v3UnitTitles)
+          : _migrateByTitles(v2, _v2UnitTitles);
       if (saved != null) {
         await prefs.setStringList(Profiles.scoped(_starsKey), saved);
       }
@@ -83,7 +89,7 @@ class ProgressStore {
     );
   }
 
-  /// v2 시절(신규 유형 묶음이 없던 30묶음) 순서
+  /// v2 시절(30묶음) 순서
   static const _v2UnitTitles = [
     '수 세기 첫걸음', '다섯까지 세기', // 4살
     '열까지 세기', '덧셈 첫걸음', // 5살
@@ -96,13 +102,26 @@ class ProgressStore {
     '나눗셈 첫걸음', '나눗셈 도전', '큰 수 곱셈', '세 자리 덧뺄셈', '수학 왕 되기', // 초3
   ];
 
-  /// v2 별 기록을 묶음 제목으로 맞춰 새 단계 번호에 옮겨 담는다.
-  static List<String>? _migrateFromV2(List<String>? old) {
+  /// v3 시절(35묶음) 순서
+  static const _v3UnitTitles = [
+    '수 세기 첫걸음', '다섯까지 세기', // 4살
+    '열까지 세기', '큰 수 찾기', '덧셈 첫걸음', // 5살
+    '뺄셈 첫걸음', '섞어서 연습', '듣고 풀기', '스무까지 세기', // 6살
+    '덧셈 도전', '뺄셈 도전', '섞어서 도전', '빈칸 채우기', // 7살
+    '큰 수 덧셈', '큰 수 뺄셈', '10 만들기', '받아올림 덧셈', '받아내림 뺄셈',
+    '세로 덧셈 첫걸음', '세로 뺄셈 첫걸음', '덧뺄셈 마스터', // 초1
+    '두 자리 덧셈', '받아올림 세로 덧셈', '받아내림 세로 뺄셈', '두 자리 뺄셈', '규칙 찾기',
+    '곱셈 첫걸음 (2~3단)', '곱셈 쑥쑥 (4~5단)', '곱셈 점프 (6~7단)', '곱셈 완성 (8~9단)', // 초2
+    '나눗셈 첫걸음', '나눗셈 도전', '큰 수 곱셈', '세 자리 덧뺄셈', '수학 왕 되기', // 초3
+  ];
+
+  /// 옛 별 기록을 묶음 제목으로 맞춰 새 단계 번호에 옮겨 담는다.
+  static List<String>? _migrateByTitles(
+      List<String>? old, List<String> oldTitles) {
     if (old == null) return null;
     final stars = List.filled(Curriculum.totalLevels, '0');
-    for (var u = 0; u < _v2UnitTitles.length; u++) {
-      final matches =
-          Curriculum.units.where((x) => x.title == _v2UnitTitles[u]);
+    for (var u = 0; u < oldTitles.length; u++) {
+      final matches = Curriculum.units.where((x) => x.title == oldTitles[u]);
       if (matches.isEmpty) continue;
       final unit = matches.first;
       for (var i = 0; i < Curriculum.levelsPerUnit; i++) {

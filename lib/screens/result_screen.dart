@@ -14,6 +14,7 @@ class ResultScreen extends StatelessWidget {
     required this.earnedPoints,
     required this.retryBuilder,
     this.chestCoins = 0,
+    this.bossCleared = false,
     this.completedMissions = const [],
     this.milestoneDays = 0,
     this.milestoneCoins = 0,
@@ -33,6 +34,9 @@ class ResultScreen extends StatelessWidget {
 
   /// 보물상자에서 나온 보너스 코인 (0이면 상자 없음)
   final int chestCoins;
+
+  /// 주간 보스전을 통과했는지 (통과 보너스는 earnedPoints에 포함)
+  final bool bossCleared;
 
   /// 이번 판으로 새로 달성한 데일리 미션들
   final List<DailyMission> completedMissions;
@@ -145,6 +149,10 @@ class ResultScreen extends StatelessWidget {
                     ],
                     const SizedBox(height: 20),
                     _PointsCard(earnedPoints: earnedPoints),
+                    if (bossCleared) ...[
+                      const SizedBox(height: 12),
+                      const _BossBanner(),
+                    ],
                     if (chestCoins > 0) ...[
                       const SizedBox(height: 12),
                       _ChestBanner(coins: chestCoins),
@@ -282,6 +290,39 @@ class _ChestBanner extends StatelessWidget {
             fontSize: 17,
             fontWeight: FontWeight.bold,
             color: Color(0xFF6B2FB3),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 주간 보스전 클리어 축하 배너
+class _BossBanner extends StatelessWidget {
+  const _BossBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.4, end: 1),
+      duration: const Duration(milliseconds: 700),
+      curve: Curves.elasticOut,
+      builder: (context, value, child) =>
+          Transform.scale(scale: value, child: child),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFF6D8),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFB8860B), width: 2),
+        ),
+        child: const Text(
+          '👑 주간 보스전 클리어! 보너스 +100 🪙',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFF8B6F1F),
           ),
         ),
       ),

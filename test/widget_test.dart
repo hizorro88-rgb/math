@@ -307,6 +307,35 @@ void main() {
     expect(find.text('그림에 맞는 낱말은?'), findsOneWidget);
   });
 
+  testWidgets('주간 보스전에 들어가면 보스전 라벨과 문제가 보인다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await scrollAndTap(tester, find.text('주간 보스전'));
+
+    expect(find.text('👑 보스전'), findsOneWidget);
+    // 문제 진행 바와 점수 표시가 있는 퀴즈 화면이다.
+    expect(find.text('🪙 0'), findsOneWidget);
+
+    // 시작 전이면 X로 바로 나온다.
+    await tester.tap(find.byIcon(Icons.close));
+    await tester.pumpAndSettle();
+    expect(find.text('주간 보스전'), findsOneWidget);
+  });
+
+  testWidgets('자유 연습에서 낱말 만들기(타일 조립) 화면이 열린다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await scrollAndTap(tester, find.text('자유 연습'));
+    await scrollAndTap(tester, find.text('한글'));
+    await scrollAndTap(tester, find.text('낱말 만들기'));
+    await scrollAndTap(tester, find.text('시작하기'));
+
+    expect(find.text('글자를 순서대로 눌러 낱말을 만들어요'), findsOneWidget);
+    expect(find.byIcon(Icons.backspace_outlined), findsOneWidget);
+  });
+
   testWidgets('리포트는 부모 게이트(곱셈 문제)를 풀어야 열린다', (tester) async {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();

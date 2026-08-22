@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../services/reminders.dart';
+
 import '../models/korean_curriculum.dart';
 import '../models/korean_question.dart';
 import '../models/progress.dart';
@@ -59,6 +61,8 @@ class _ReportScreenState extends State<ReportScreen> {
               _KoreanCard(stats: stats),
               const SizedBox(height: 14),
               _AdviceCard(stats: stats),
+              const SizedBox(height: 14),
+              const _ReminderCard(),
               const SizedBox(height: 8),
             ],
           );
@@ -423,6 +427,89 @@ class _AdviceCard extends StatelessWidget {
                 height: 1.5,
               ),
             ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 매일 학습 알림 켜고 끄기 (부모 설정)
+class _ReminderCard extends StatefulWidget {
+  const _ReminderCard();
+
+  @override
+  State<_ReminderCard> createState() => _ReminderCardState();
+}
+
+class _ReminderCardState extends State<_ReminderCard> {
+  bool _enabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    Reminders.isEnabled().then((value) {
+      if (mounted) setState(() => _enabled = value);
+    });
+  }
+
+  Future<void> _toggle(bool value) async {
+    if (value) {
+      final ok = await Reminders.enable();
+      if (!mounted) return;
+      setState(() => _enabled = ok);
+      if (!ok) {
+        ScaffoldMessenger.of(context)
+          ..hideCurrentSnackBar()
+          ..showSnackBar(const SnackBar(
+            content: Text('알림 권한이 필요해요. 기기 설정에서 허용해 주세요.'),
+            duration: Duration(seconds: 2),
+          ));
+      }
+    } else {
+      await Reminders.disable();
+      if (mounted) setState(() => _enabled = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            offset: const Offset(0, 4),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Text('🔔', style: TextStyle(fontSize: 26)),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '매일 학습 알림',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                Text(
+                  '켠 시각쯤에 하루 한 번 "부엉이가 기다려요"',
+                  style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          ),
+          Switch(
+            value: _enabled,
+            activeTrackColor: const Color(0xFF58CC02),
+            onChanged: _toggle,
           ),
         ],
       ),

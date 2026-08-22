@@ -56,6 +56,10 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
   String? _selectedChoice;
   bool _finishing = false;
 
+  /// 낱말 만들기: 지금까지 누른 타일 인덱스 (문제가 바뀌면 새로 만든다)
+  List<int> _picked = [];
+  int _pickedIndex = -1;
+
   final _random = math.Random();
 
   KoreanQuestion get _question => _entries[_currentIndex].question;
@@ -90,6 +94,30 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
   }
 
   void _speakQuestion() => Speech.speak(_question.speech);
+
+  void _ensureTiles() {
+    if (_pickedIndex == _currentIndex) return;
+    _pickedIndex = _currentIndex;
+    _picked = [];
+  }
+
+  /// 낱말 만들기: 타일을 누르면 칸이 차고, 다 차면 자동으로 채점한다.
+  void _tapTile(int index) {
+    if (_answered) return;
+    _ensureTiles();
+    if (_picked.contains(index)) return;
+    setState(() => _picked.add(index));
+    if (_picked.length >= _question.answer.length) {
+      _selectChoice([for (final i in _picked) _question.tiles[i]].join());
+    }
+  }
+
+  void _tapTileBackspace() {
+    if (_answered) return;
+    _ensureTiles();
+    if (_picked.isEmpty) return;
+    setState(() => _picked.removeLast());
+  }
 
   void _selectChoice(String choice) {
     if (_answered) return;
@@ -230,7 +258,10 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
                           const SizedBox(height: 16),
                           _buildQuestionCard(),
                           const SizedBox(height: 24),
-                          _buildChoices(),
+                          if (_question.tiles.isNotEmpty)
+                            _buildTiles()
+                          else
+                            _buildChoices(),
                           const SizedBox(height: 16),
                         ],
                       ),
@@ -392,6 +423,55 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
                   ),
                 ),
               ],
+              // 낱말 만들기: 채워지는 글자 칸
+              if (_question.tiles.isNotEmpty) ...[
+                const SizedBox(height: 12),
+                Builder(builder: (context) {
+                  _ensureTiles();
+                  return Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      for (var i = 0; i < _question.answer.length; i++)
+                        Container(
+                          width: 46,
+                          height: 52,
+                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          decoration: BoxDecoration(
+                            color: _answered
+                                ? (_isCorrect
+                                    ? const Color(0xFFD7FFB8)
+                                    : const Color(0xFFFFDFE0))
+                                : i == _picked.length
+                                    ? _themeColor.withValues(alpha: 0.08)
+                                    : Colors.white,
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(
+                              color: _answered
+                                  ? (_isCorrect
+                                      ? const Color(0xFF58CC02)
+                                      : const Color(0xFFEA2B2B))
+                                  : i == _picked.length
+                                      ? _themeColor
+                                      : Colors.grey.shade300,
+                              width: i == _picked.length && !_answered ? 3 : 2,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(
+                              i < _picked.length
+                                  ? _question.tiles[_picked[i]]
+                                  : '',
+                              style: const TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                }),
+              ],
             ],
           ),
           Positioned(
@@ -408,6 +488,79 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
           ),
         ],
       ),
+    );
+  }
+
+  /// 낱말 만들기용 글자 타일 (누른 타일은 비활성화, 지우기 포함)
+  Widget _buildTiles() {
+    _ensureTiles();
+    Widget tile(int index) {
+      final used = _picked.contains(index);
+      return GestureDetector(
+        onTap: _answered || used ? null : () => _tapTile(index),
+        child: Container(
+          width: 60,
+          height: 60,
+          decoration: BoxDecoration(
+            color: used || _answered ? Colors.grey.shade100 : Colors.white,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(color: Colors.grey.shade300, width: 2),
+            boxShadow: used || _answered
+                ? null
+                : [
+                    BoxShadow(
+                      color: Colors.grey.shade300,
+                      offset: const Offset(0, 3),
+                      blurRadius: 0,
+                    ),
+                  ],
+          ),
+          child: Center(
+            child: Text(
+              _question.tiles[index],
+              style: TextStyle(
+                fontSize: 26,
+                fontWeight: FontWeight.bold,
+                color: used || _answered
+                    ? Colors.grey.shade400
+                    : Colors.black87,
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 8,
+          runSpacing: 8,
+          children: [
+            for (var i = 0; i < _question.tiles.length; i++) tile(i),
+            GestureDetector(
+              onTap: _answered ? null : _tapTileBackspace,
+              child: Container(
+                width: 60,
+                height: 60,
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(14),
+                  border: Border.all(color: Colors.grey.shade300, width: 2),
+                ),
+                child: Icon(
+                  Icons.backspace_outlined,
+                  size: 24,
+                  color: _answered
+                      ? Colors.grey.shade400
+                      : Colors.grey.shade600,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
     );
   }
 

@@ -43,9 +43,18 @@ void main() {
             generator.generate(level.unit.type, stage: level.stage);
         expect(questions, hasLength(10));
         for (final q in questions) {
-          expect(q.choices, hasLength(4));
-          expect(q.choices.toSet(), hasLength(4));
-          expect(q.choices, contains(q.answer));
+          if (q.tiles.isNotEmpty) {
+            // 낱말 만들기: 타일로 정답 낱말을 조립할 수 있어야 한다.
+            final remaining = [...q.tiles];
+            for (final ch in q.answer.split('')) {
+              expect(remaining.remove(ch), isTrue,
+                  reason: '$ch가 타일에 부족함 (${q.answer})');
+            }
+          } else {
+            expect(q.choices, hasLength(4));
+            expect(q.choices.toSet(), hasLength(4));
+            expect(q.choices, contains(q.answer));
+          }
         }
       }
     });

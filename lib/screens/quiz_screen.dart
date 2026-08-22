@@ -3,6 +3,7 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../models/boss.dart';
 import '../models/curriculum.dart';
 import '../models/daily.dart';
 import '../models/progress.dart';
@@ -21,12 +22,20 @@ import 'result_screen.dart';
 /// 정답은 +10점, 3연속 정답부터 🔥 콤보 보너스 +5점.
 /// 틀린 문제는 판 끝에 한 번 더 나온다 (다시 맞히면 +5점).
 class QuizScreen extends StatefulWidget {
-  const QuizScreen({super.key, required this.config, this.level});
+  const QuizScreen({
+    super.key,
+    required this.config,
+    this.level,
+    this.bossMode = false,
+  });
 
   final QuizConfig config;
 
   /// 단계 도전이면 해당 단계, 자유 연습이면 null
   final Level? level;
+
+  /// 주간 보스전: 여러 유형을 섞은 12문제, 통과하면 보너스 코인
+  final bool bossMode;
 
   @override
   State<QuizScreen> createState() => _QuizScreenState();
@@ -76,7 +85,9 @@ class _QuizScreenState extends State<QuizScreen> {
   @override
   void initState() {
     super.initState();
-    final questions = QuestionGenerator().generate(widget.config);
+    final questions = widget.bossMode
+        ? BossStore.buildQuestions()
+        : QuestionGenerator().generate(widget.config);
     _baseCount = questions.length;
     _entries.addAll(questions.map(_QuizEntry.new));
     WidgetsBinding.instance.addPostFrameCallback((_) => _start());
@@ -188,12 +199,17 @@ class _QuizScreenState extends State<QuizScreen> {
       _finishing = true;
       final level = widget.level;
       final stars = starsForScore(_correctCount, _baseCount);
-      final earned = _roundPoints + completionBonus(stars);
+      // 보스전을 통과하면 큰 보너스가 붙고, 이번 주는 잠긴다.
+      final bossCleared = widget.bossMode && stars >= 1;
+      final earned = _roundPoints +
+          completionBonus(stars) +
+          (bossCleared ? BossStore.reward : 0);
       // 통과하면 가끔 보물상자가 나온다 (3별이면 확률 업, 보너스 10~50코인)
       final chestCoins =
           _random.nextDouble() < (stars >= 3 ? 0.35 : (stars >= 1 ? 0.15 : 0))
               ? (2 + _random.nextInt(9)) * 5
               : 0;
+      if (bossCleared) await BossStore.markCleared();
       if (stars >= 1) Sounds.complete();
       if (level != null) {
         // 결과 화면으로 넘어가기 전에 기록을 저장한다.
@@ -219,20 +235,25 @@ class _QuizScreenState extends State<QuizScreen> {
             totalCount: _baseCount,
             earnedPoints: earned,
             chestCoins: chestCoins,
+            bossCleared: bossCleared,
             completedMissions: rewards.missions,
             milestoneDays: rewards.milestoneDays,
             milestoneCoins: rewards.milestoneCoins,
-            headerText: level != null
-                ? '${level.number}단계 · ${level.unit.emoji} ${level.unit.title}'
-                : null,
+            headerText: widget.bossMode
+                ? '👑 주간 보스전'
+                : level != null
+                    ? '${level.number}단계 · ${level.unit.emoji} ${level.unit.title}'
+                    : null,
             showUnlockHint: level != null && stars < 1,
             nextLabel:
                 nextLevel != null ? '다음 단계 (${nextLevel.number}단계)' : null,
             nextBuilder: nextLevel != null
                 ? () => QuizScreen(config: nextLevel.config, level: nextLevel)
                 : null,
-            retryBuilder: () =>
-                QuizScreen(config: widget.config, level: level),
+            retryBuilder: () => QuizScreen(
+                config: widget.config,
+                level: level,
+                bossMode: widget.bossMode),
             homeLabel: level != null ? '지도로' : '처음으로',
             homeIcon: level != null ? Icons.map_rounded : Icons.home_rounded,
           ),
@@ -310,6 +331,17 @@ class _QuizScreenState extends State<QuizScreen> {
             color: Colors.grey,
             onPressed: _confirmExit,
           ),
+          if (widget.bossMode) ...[
+            const Text(
+              '👑 보스전',
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFFB8860B),
+              ),
+            ),
+            const SizedBox(width: 8),
+          ],
           if (widget.level != null) ...[
             Text(
               '${widget.level!.number}단계',
@@ -965,6 +997,18 @@ class _EmojiHint extends StatelessWidget {
       case QuestionOp.compare:
       case QuestionOp.pattern:
         return const SizedBox.shrink();
+
+      // 모양 세기: 섞여 있는 모양들이 곧 문제다.
+      case QuestionOp.shape:
+        return Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 4,
+          runSpacing: 6,
+          children: [
+            for (final item in question.shapeItems)
+              Text(item, style: const TextStyle(fontSize: 30)),
+          ],
+        );
 
       // 시계 보기: 아날로그 시계 그림이 곧 문제다.
       case QuestionOp.clock:

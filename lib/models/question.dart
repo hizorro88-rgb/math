@@ -3,7 +3,16 @@ import 'dart:math';
 import 'quiz_config.dart';
 
 /// 문제의 연산 종류
-enum QuestionOp { counting, add, sub, mul, div, compare, pattern, clock }
+enum QuestionOp { counting, add, sub, mul, div, compare, pattern, clock, shape }
+
+/// 모양 세기에 쓰는 도형과 이름
+const List<({String emoji, String name})> shapeKinds = [
+  (emoji: '🔴', name: '동그라미'),
+  (emoji: '🔺', name: '세모'),
+  (emoji: '🟦', name: '네모'),
+  (emoji: '⭐', name: '별'),
+  (emoji: '💛', name: '하트'),
+];
 
 /// 사칙연산·수 세기·비교·규칙 찾기 한 문제
 class Question {
@@ -17,6 +26,7 @@ class Question {
     this.blankSide = 0,
     this.listenOnly = false,
     this.sequence = const [],
+    this.shapeItems = const [],
   });
 
   final QuestionOp op;
@@ -40,6 +50,9 @@ class Question {
   /// 규칙 찾기에서 보여주는 수 배열 (예: [2, 4, 6] → 정답 8)
   final List<int> sequence;
 
+  /// 모양 세기에서 화면에 흩어 놓는 모양들 (정답 모양 left개 포함)
+  final List<String> shapeItems;
+
   /// 정답 1개 + 오답 3개가 섞여 있는 보기 목록
   final List<int> choices;
 
@@ -62,6 +75,7 @@ class Question {
       QuestionOp.compare => left,
       QuestionOp.pattern => left,
       QuestionOp.clock => left,
+      QuestionOp.shape => left,
     };
   }
 
@@ -83,6 +97,7 @@ class Question {
       QuestionOp.compare => right == 1 ? '가장 큰 수는?' : '가장 작은 수는?',
       QuestionOp.pattern => '${sequence.join(', ')}, ?',
       QuestionOp.clock => '시계는 몇 시일까요?',
+      QuestionOp.shape => '$emoji 는 몇 개일까요?',
     };
   }
 
@@ -108,6 +123,8 @@ class Question {
       QuestionOp.compare => right == 1 ? '가장 큰 수를 찾아보세요' : '가장 작은 수를 찾아보세요',
       QuestionOp.pattern => '${sequence.join(', ')}, 다음 수는?',
       QuestionOp.clock => '시계가 가리키는 시각은 몇 시일까요?',
+      QuestionOp.shape =>
+        '${shapeKinds.firstWhere((s) => s.emoji == emoji).name}가 몇 개인지 세어 보세요',
     };
   }
 
@@ -115,6 +132,7 @@ class Question {
   /// 화면 표기가 같아지는 유형은 내용으로 구분한다.
   String get dedupKey => switch (op) {
         QuestionOp.counting => 'counting:$left',
+        QuestionOp.shape => 'shape:$emoji:$left',
         QuestionOp.compare =>
           'compare:$right:${([...choices]..sort()).join(',')}',
         QuestionOp.pattern => 'pattern:${sequence.join(',')}',
@@ -287,6 +305,28 @@ class QuestionGenerator {
           sequence: sequence,
           choices: _buildChoices(answer, answer + 2),
           emoji: _emoji,
+        );
+
+      // 모양 세기: 여러 모양이 섞인 그림에서 한 모양의 개수를 센다.
+      case QuizMode.shapeCount:
+        final maxCount = max < 2 ? 2 : (max > 6 ? 6 : max);
+        final kinds = [...shapeKinds]..shuffle(_random);
+        final target = kinds.first;
+        final count = 1 + _random.nextInt(maxCount); // 1..maxCount
+        final items = [
+          for (var i = 0; i < count; i++) target.emoji,
+          // 다른 모양 2종을 섞어 놓는다.
+          for (var k = 1; k <= 2; k++)
+            for (var i = 0; i < 1 + _random.nextInt(maxCount); i++)
+              kinds[k].emoji,
+        ]..shuffle(_random);
+        return Question(
+          op: QuestionOp.shape,
+          left: count,
+          right: 0,
+          shapeItems: items,
+          choices: _buildChoices(count, maxCount),
+          emoji: target.emoji,
         );
 
       // 시계 보기: 몇 시(정각)를 맞힌다. (난이도 값은 쓰지 않는다)

@@ -35,7 +35,10 @@ enum QuizMode {
   listen('듣고 풀기', '👂'),
 
   /// 아날로그 시계를 읽는다 (정각, 몇 시)
-  clock('시계 보기', '🕒');
+  clock('시계 보기', '🕒'),
+
+  /// 섞여 있는 모양 중에서 특정 모양의 개수를 센다 (도형 구분 + 세기)
+  shapeCount('모양 세기', '🔺');
 
   const QuizMode(this.label, this.emoji);
 

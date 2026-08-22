@@ -158,6 +158,40 @@ void main() {
       }
     });
 
+    test('낱말 만들기: 타일에 낱말 글자가 다 있고, 순서대로 이으면 낱말이 된다', () {
+      final generator = KoreanQuestionGenerator(random: Random(21));
+      for (final stage in [0, 9]) {
+        for (var round = 0; round < 20; round++) {
+          final questions =
+              generator.generate(KrQuizType.wordBuild, stage: stage);
+          for (final q in questions) {
+            expect(q.tiles, hasLength(q.answer.length + 2));
+            // 낱말의 글자가 (중복 포함) 타일에 모두 있어야 조립할 수 있다.
+            final remaining = [...q.tiles];
+            for (final ch in q.answer.split('')) {
+              expect(remaining.remove(ch), isTrue,
+                  reason: '$ch가 타일에 부족함 (${q.answer})');
+            }
+            final word = krAllWords.firstWhere((w) => w.word == q.answer);
+            expect(word.emoji, q.display);
+          }
+        }
+      }
+    });
+
+    test('받침 낱말: 받침이 있는 낱말만 나온다', () {
+      final generator = KoreanQuestionGenerator(random: Random(23));
+      for (final stage in [0, 9]) {
+        final questions = generator.generate(KrQuizType.batchim, stage: stage);
+        for (final q in questions) {
+          final hasBatchim = q.answer.codeUnits
+              .any((c) => c >= 0xAC00 && (c - 0xAC00) % 28 != 0);
+          expect(hasBatchim, isTrue, reason: '${q.answer}에 받침이 없음');
+          expect(q.choices, contains(q.answer));
+        }
+      }
+    });
+
     test('듣기 문제: 소리가 있고 정답이 보기에 있다', () {
       final generator = KoreanQuestionGenerator(random: Random(11));
       for (final type in [

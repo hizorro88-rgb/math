@@ -130,6 +130,8 @@ class KoreanCurriculum {
         units: [
           KrUnit(title: '글자 만들기', emoji: '🧱', type: KrQuizType.combine),
           KrUnit(title: '빈칸 채우기', emoji: '🧩', type: KrQuizType.fillBlank),
+          KrUnit(title: '낱말 만들기', emoji: '🏗️', type: KrQuizType.wordBuild),
+          KrUnit(title: '받침 낱말', emoji: '💪', type: KrQuizType.batchim),
           KrUnit(title: '긴 낱말 도전', emoji: '🚀', type: KrQuizType.longWord),
         ],
       ),
@@ -155,8 +157,10 @@ class KoreanCurriculum {
 class KoreanProgressStore {
   KoreanProgressStore._();
 
-  // v2: 자음 소리·글자 만들기 묶음이 중간에 들어가며 단계 번호가 바뀜
-  static const _starsKey = 'kr_level_stars_v2';
+  // v3: 새 묶음이 커리큘럼 중간에 들어갈 때마다 단계 번호가 바뀌어 키를 올린다.
+  // 옛 기록(v1·v2)은 묶음 제목 기준으로 새 번호에 옮겨 담는다.
+  static const _starsKey = 'kr_level_stars_v3';
+  static const _starsKeyV2 = 'kr_level_stars_v2';
   static const _starsKeyV1 = 'kr_level_stars_v1';
 
   /// v1 시절(8묶음) 순서
@@ -166,11 +170,22 @@ class KoreanProgressStore {
     '빈칸 채우기', '긴 낱말 도전',
   ];
 
+  /// v2 시절(10묶음) 순서
+  static const _v2UnitTitles = [
+    '낱말 보고 그림 찾기', '그림 보고 낱말 찾기', '모음 소리 찾기', //
+    '글자 소리 찾기', '자음 소리 찾기', '가나다 순서', '첫소리 찾기', //
+    '글자 만들기', '빈칸 채우기', '긴 낱말 도전',
+  ];
+
   static Future<List<int>> load() async {
     final prefs = await SharedPreferences.getInstance();
     var saved = prefs.getStringList(Profiles.scoped(_starsKey));
     if (saved == null) {
-      saved = _migrateFromV1(prefs.getStringList(Profiles.scoped(_starsKeyV1)));
+      final v2 = prefs.getStringList(Profiles.scoped(_starsKeyV2));
+      final v1 = prefs.getStringList(Profiles.scoped(_starsKeyV1));
+      saved = v2 != null
+          ? _migrateByTitles(v2, _v2UnitTitles)
+          : _migrateByTitles(v1, _v1UnitTitles);
       if (saved != null) {
         await prefs.setStringList(Profiles.scoped(_starsKey), saved);
       }
@@ -182,13 +197,14 @@ class KoreanProgressStore {
     );
   }
 
-  /// v1 별 기록을 묶음 제목으로 맞춰 새 단계 번호에 옮겨 담는다.
-  static List<String>? _migrateFromV1(List<String>? old) {
+  /// 옛 별 기록을 묶음 제목으로 맞춰 새 단계 번호에 옮겨 담는다.
+  static List<String>? _migrateByTitles(
+      List<String>? old, List<String> oldTitles) {
     if (old == null) return null;
     final stars = List.filled(KoreanCurriculum.totalLevels, '0');
-    for (var u = 0; u < _v1UnitTitles.length; u++) {
+    for (var u = 0; u < oldTitles.length; u++) {
       final matches =
-          KoreanCurriculum.units.where((x) => x.title == _v1UnitTitles[u]);
+          KoreanCurriculum.units.where((x) => x.title == oldTitles[u]);
       if (matches.isEmpty) continue;
       final unit = matches.first;
       for (var i = 0; i < KoreanCurriculum.levelsPerUnit; i++) {
