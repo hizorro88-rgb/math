@@ -5,32 +5,35 @@ import 'korean_data.dart';
 /// 한글 퀴즈의 문제 유형
 enum KrQuizType {
   /// 그림을 보고 알맞은 낱말을 고른다 (통문자 읽기)
-  pictureToWord('그림 보고 낱말 찾기', '🖼️'),
+  pictureToWord('그림 보고 낱말 찾기', '그림→낱말', '🖼️'),
 
   /// 낱말을 보고(듣고) 알맞은 그림을 고른다 — 글자를 몰라도 소리로 풀 수 있다
-  wordToPicture('낱말 보고 그림 찾기', '🔍'),
+  wordToPicture('낱말 보고 그림 찾기', '낱말→그림', '🔍'),
 
   /// 모음 소리를 듣고 글자를 찾는다 (아 → ㅏ)
-  listenVowel('모음 소리 찾기', '🎵'),
+  listenVowel('모음 소리 찾기', '모음 소리', '🎵'),
 
   /// 음절 소리를 듣고 글자를 찾는다 (가 → 가)
-  listenSyllable('글자 소리 찾기', '🔊'),
+  listenSyllable('글자 소리 찾기', '글자 소리', '🔊'),
 
   /// 가나다 순서에서 다음 글자를 찾는다 (가 나 다 ?)
-  syllableOrder('가나다 순서', '🐾'),
+  syllableOrder('가나다 순서', '가나다', '🐾'),
 
   /// 낱말의 첫소리(초성)를 찾는다 (사과 → ㅅ)
-  firstConsonant('첫소리 찾기', '🎯'),
+  firstConsonant('첫소리 찾기', '첫소리', '🎯'),
 
   /// 낱말의 가려진 글자를 채운다 (사□ → 과)
-  fillBlank('빈칸 채우기', '🧩'),
+  fillBlank('빈칸 채우기', '빈칸', '🧩'),
 
   /// 세 글자 낱말 읽기 도전
-  longWord('긴 낱말 도전', '🚀');
+  longWord('긴 낱말 도전', '긴 낱말', '🚀');
 
-  const KrQuizType(this.label, this.emoji);
+  const KrQuizType(this.label, this.shortLabel, this.emoji);
 
   final String label;
+
+  /// 리포트처럼 좁은 곳에 쓰는 짧은 이름
+  final String shortLabel;
   final String emoji;
 }
 

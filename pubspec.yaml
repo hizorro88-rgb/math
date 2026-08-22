@@ -1,7 +1,8 @@
 name: preschool_math
-description: "미취학 아동을 위한 덧셈·뺄셈 퀴즈 앱 (듀오링고 스타일)"
+description: "미취학~초3 아동을 위한 수학·한글 학습 게임 (듀오링고 스타일)"
 publish_to: "none"
-version: 1.0.0+1
+# 버전 규칙: 스토어 제출마다 +빌드번호 증가, 기능 릴리스마다 가운데 숫자 증가
+version: 1.1.0+2
 
 environment:
   sdk: ">=3.3.0 <4.0.0"

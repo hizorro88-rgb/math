@@ -90,6 +90,17 @@ class Profiles {
     return profile;
   }
 
+  /// 프로필의 아바타나 이름을 바꾼다.
+  static Future<void> update(int id, {String? emoji, String? name}) async {
+    final profiles = await load();
+    await _save([
+      for (final p in profiles)
+        p.id == id
+            ? Profile(id: p.id, emoji: emoji ?? p.emoji, name: name ?? p.name)
+            : p,
+    ]);
+  }
+
   /// 사용할 프로필을 바꾼다.
   static Future<void> setActive(int id) async {
     activeId = id;

@@ -11,6 +11,7 @@ import '../models/stats.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../widgets/bouncy_button.dart';
+import '../widgets/listen_guard.dart';
 import '../widgets/quiz_exit_dialog.dart';
 import '../widgets/sparkle_burst.dart';
 import 'result_screen.dart';
@@ -70,13 +71,32 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
         .generate(widget.type, stage: widget.stage);
     _baseCount = questions.length;
     _entries.addAll(questions.map(_KrEntry.new));
-    WidgetsBinding.instance.addPostFrameCallback((_) => _speakQuestion());
+    WidgetsBinding.instance.addPostFrameCallback((_) => _start());
+  }
+
+  /// 소리 찾기 유형은 소리가 있어야 풀 수 있으니 먼저 확인한다.
+  Future<void> _start() async {
+    final needsListening = widget.type == KrQuizType.listenVowel ||
+        widget.type == KrQuizType.listenSyllable;
+    if (needsListening) {
+      final ready = await ensureListenReady(context);
+      if (!ready) {
+        if (mounted) Navigator.of(context).pop();
+        return;
+      }
+    }
+    _speakQuestion();
   }
 
   void _speakQuestion() => Speech.speak(_question.speech);
 
   void _selectChoice(String choice) {
     if (_answered) return;
+    // 첫 시도만 학습 통계에 기록한다 (재출제 풀이는 제외).
+    if (!_isRetryQuestion) {
+      StatsStore.recordKoreanAnswer(widget.type,
+          correct: choice == _question.answer);
+    }
     setState(() {
       _selectedChoice = choice;
       if (choice == _question.answer) {

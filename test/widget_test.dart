@@ -3,12 +3,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:preschool_math/main.dart';
 import 'package:preschool_math/models/korean_data.dart';
 import 'package:preschool_math/models/profile.dart';
+import 'package:preschool_math/services/sounds.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   setUp(() {
     SharedPreferences.setMockInitialValues({});
     Profiles.activeId = 1;
+    Sounds.enabled = true;
   });
 
   /// 화면 밖에 있을 수 있는 위젯을 스크롤로 보이게 한 뒤 탭한다.
@@ -247,6 +249,62 @@ void main() {
 
     expect(find.text('정답이에요! 🎉'), findsOneWidget);
     expect(find.text('계속하기'), findsOneWidget);
+  });
+
+  testWidgets('첫 실행 온보딩: 이름·나이·소리를 고르고 홈으로 간다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp(showOnboarding: true));
+    await tester.pumpAndSettle();
+
+    // ① 아바타 + 이름
+    await scrollAndTap(tester, find.text('🦊'));
+    await tester.enterText(find.byType(TextField), '하늘');
+    await scrollAndTap(tester, find.text('다음'));
+
+    // ② 나이 고르기
+    await scrollAndTap(tester, find.textContaining('6살'));
+    await scrollAndTap(tester, find.text('다음'));
+
+    // ③ 소리 확인 후 시작
+    expect(find.text('소리를 확인해 볼까요?'), findsOneWidget);
+    await scrollAndTap(tester, find.text('잘 들려요! 시작하기'));
+
+    // 홈: 바뀐 프로필과 나이 추천 배지가 보인다.
+    expect(find.text('수학 놀이'), findsOneWidget);
+    expect(find.text('🦊 하늘'), findsOneWidget);
+    await tester.ensureVisible(find.text('👍 추천'));
+    expect(find.text('👍 추천'), findsOneWidget);
+    expect(Sounds.enabled, isTrue);
+  });
+
+  testWidgets('소리를 끈 채 듣고 풀기에 들어가면 안내 팝업이 뜬다', (tester) async {
+    Sounds.enabled = false;
+
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await scrollAndTap(tester, find.text('자유 연습'));
+    await scrollAndTap(tester, find.text('듣고 풀기'));
+    await scrollAndTap(tester, find.text('시작하기'));
+
+    expect(find.text('소리를 켜 볼까요?'), findsOneWidget);
+
+    // 소리를 켜면 퀴즈가 시작된다.
+    await tester.tap(find.text('소리 켜고 시작'));
+    await tester.pumpAndSettle();
+    expect(Sounds.enabled, isTrue);
+    expect(find.text('👂 잘 들어 보세요'), findsOneWidget);
+  });
+
+  testWidgets('자유 연습에서 한글 유형을 고를 수 있다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await scrollAndTap(tester, find.text('자유 연습'));
+    await scrollAndTap(tester, find.text('한글'));
+    await scrollAndTap(tester, find.text('그림 보고 낱말 찾기'));
+    await scrollAndTap(tester, find.text('시작하기'));
+
+    expect(find.text('그림에 맞는 낱말은?'), findsOneWidget);
   });
 
   testWidgets('꾸미기 가게에서 코인으로 아이템을 산다', (tester) async {

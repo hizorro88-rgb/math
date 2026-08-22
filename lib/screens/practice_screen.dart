@@ -1,10 +1,14 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
+import '../models/korean_question.dart';
 import '../models/quiz_config.dart';
 import '../widgets/bouncy_button.dart';
+import 'korean_quiz_screen.dart';
 import 'quiz_screen.dart';
 
-/// 자유 연습: 퀴즈 종류와 난이도를 직접 고르고 시작한다. (단계 진행과 무관)
+/// 자유 연습: 과목(수학/한글)과 종류·난이도를 직접 고르고 시작한다. (단계 진행과 무관)
 class PracticeScreen extends StatefulWidget {
   const PracticeScreen({super.key});
 
@@ -13,17 +17,39 @@ class PracticeScreen extends StatefulWidget {
 }
 
 class _PracticeScreenState extends State<PracticeScreen> {
+  bool _korean = false;
+
   QuizMode _mode = QuizMode.addition;
   Difficulty _difficulty = Difficulty.easy;
 
+  KrQuizType _krType = KrQuizType.pictureToWord;
+  bool _krHard = false;
+
   void _startQuiz() {
+    if (_korean) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => KoreanQuizScreen(
+            type: _krType,
+            stage: _krHard ? 9 : 0,
+          ),
+        ),
+      );
+      return;
+    }
+
+    // 구구단·수 세기는 그림·표 범위에 맞게 난이도 상한을 걸어 준다.
+    var maxNumber = _difficulty.maxNumber;
+    if (_mode == QuizMode.multiplication || _mode == QuizMode.division) {
+      maxNumber = math.min(maxNumber, 9);
+    } else if (_mode == QuizMode.counting) {
+      maxNumber = math.min(maxNumber, 20);
+    }
+
     Navigator.of(context).push(
       MaterialPageRoute(
         builder: (_) => QuizScreen(
-          config: QuizConfig(
-            mode: _mode,
-            maxNumber: _difficulty.maxNumber,
-          ),
+          config: QuizConfig(mode: _mode, maxNumber: maxNumber),
         ),
       ),
     );
@@ -40,104 +66,145 @@ class _PracticeScreenState extends State<PracticeScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      // 화면이 작으면 스크롤되고, 크면 위아래로 넉넉하게 펼쳐진다.
       body: SafeArea(
-        child: LayoutBuilder(
-          builder: (context, constraints) => SingleChildScrollView(
-            padding: const EdgeInsets.all(24),
-            child: ConstrainedBox(
-              constraints:
-                  BoxConstraints(minHeight: constraints.maxHeight - 48),
-              child: IntrinsicHeight(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              // 과목 고르기
+              Row(
+                children: [
+                  Expanded(
+                    child: _ChoiceCard(
+                      emoji: '🧮',
+                      label: '수학',
+                      selected: !_korean,
+                      onTap: () => setState(() => _korean = false),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _ChoiceCard(
+                      emoji: '📖',
+                      label: '한글',
+                      selected: _korean,
+                      onTap: () => setState(() => _korean = true),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+              const _SectionLabel('어떤 공부를 할까요?'),
+              const SizedBox(height: 8),
+              if (_korean)
+                ..._buildGrid(
+                  KrQuizType.values,
+                  (t) => _ChoiceCard(
+                    emoji: t.emoji,
+                    label: t.label,
+                    selected: _krType == t,
+                    onTap: () => setState(() => _krType = t),
+                  ),
+                )
+              else
+                ..._buildGrid(
+                  QuizMode.values,
+                  (m) => _ChoiceCard(
+                    emoji: m.emoji,
+                    label: m.label,
+                    selected: _mode == m,
+                    onTap: () => setState(() => _mode = m),
+                  ),
+                ),
+              const SizedBox(height: 24),
+              const _SectionLabel('얼마나 어려울까요?'),
+              const SizedBox(height: 8),
+              if (_korean)
+                Row(
                   children: [
-                    const Spacer(),
-                    const _SectionLabel('어떤 공부를 할까요?'),
-                    const SizedBox(height: 8),
-                    // 모드 2열 배치 (IntrinsicHeight 안이라 GridView 대신 Row 사용)
-                    for (var row = 0;
-                        row < (QuizMode.values.length + 1) ~/ 2;
-                        row++) ...[
-                      Row(
-                        children: [
-                          for (var col = 0; col < 2; col++) ...[
-                            Expanded(
-                              child: row * 2 + col < QuizMode.values.length
-                                  ? _ChoiceCard(
-                                      emoji:
-                                          QuizMode.values[row * 2 + col].emoji,
-                                      label:
-                                          QuizMode.values[row * 2 + col].label,
-                                      selected: _mode ==
-                                          QuizMode.values[row * 2 + col],
-                                      onTap: () => setState(() => _mode =
-                                          QuizMode.values[row * 2 + col]),
-                                    )
-                                  : const SizedBox(),
-                            ),
-                            if (col == 0) const SizedBox(width: 8),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 8),
-                    ],
-                    const SizedBox(height: 24),
-                    const _SectionLabel('얼마나 어려울까요?'),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        for (final difficulty in Difficulty.values) ...[
-                          Expanded(
-                            child: _ChoiceCard(
-                              emoji:
-                                  difficulty == Difficulty.easy ? '🐣' : '🐥',
-                              label:
-                                  '${difficulty.label}\n(${difficulty.description})',
-                              selected: _difficulty == difficulty,
-                              onTap: () =>
-                                  setState(() => _difficulty = difficulty),
-                            ),
-                          ),
-                          if (difficulty != Difficulty.values.last)
-                            const SizedBox(width: 8),
-                        ],
-                      ],
-                    ),
-                    const Spacer(),
-                    BouncyButton(
-                      color: const Color(0xFF58CC02),
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      onTap: _startQuiz,
-                      child: const Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            '시작하기',
-                            style: TextStyle(
-                              fontSize: 24,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.white,
-                            ),
-                          ),
-                          SizedBox(width: 8),
-                          Icon(
-                            Icons.play_arrow_rounded,
-                            size: 32,
-                            color: Colors.white,
-                          ),
-                        ],
+                    Expanded(
+                      child: _ChoiceCard(
+                        emoji: '🐣',
+                        label: '쉬워요',
+                        selected: !_krHard,
+                        onTap: () => setState(() => _krHard = false),
                       ),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: _ChoiceCard(
+                        emoji: '🦉',
+                        label: '어려워요',
+                        selected: _krHard,
+                        onTap: () => setState(() => _krHard = true),
+                      ),
+                    ),
+                  ],
+                )
+              else
+                ..._buildGrid(
+                  Difficulty.values,
+                  (d) => _ChoiceCard(
+                    emoji: d.emoji,
+                    label: '${d.label}\n(${d.description})',
+                    selected: _difficulty == d,
+                    onTap: () => setState(() => _difficulty = d),
+                  ),
+                ),
+              const SizedBox(height: 28),
+              BouncyButton(
+                color: const Color(0xFF58CC02),
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                onTap: _startQuiz,
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      '시작하기',
+                      style: TextStyle(
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    SizedBox(width: 8),
+                    Icon(
+                      Icons.play_arrow_rounded,
+                      size: 32,
+                      color: Colors.white,
+                    ),
                   ],
                 ),
               ),
-            ),
+              const SizedBox(height: 8),
+            ],
           ),
         ),
       ),
     );
+  }
+
+  /// 목록을 2열 카드로 배치한다.
+  List<Widget> _buildGrid<T>(List<T> items, Widget Function(T) card) {
+    return [
+      for (var row = 0; row < (items.length + 1) ~/ 2; row++) ...[
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            for (var col = 0; col < 2; col++) ...[
+              Expanded(
+                child: row * 2 + col < items.length
+                    ? card(items[row * 2 + col])
+                    : const SizedBox(),
+              ),
+              if (col == 0) const SizedBox(width: 8),
+            ],
+          ],
+        ),
+        const SizedBox(height: 8),
+      ],
+    ];
   }
 }
 

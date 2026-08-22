@@ -10,14 +10,21 @@ class Speech {
 
   static final FlutterTts _tts = FlutterTts();
 
+  /// 이 기기에서 한국어 음성을 쓸 수 있는지.
+  /// 듣기 유형(듣고 풀기, 소리 찾기)은 이 값이 false면 풀 수 없다.
+  static bool available = true;
+
   /// 앱 시작 시 한 번: 한국어, 아이가 듣기 좋게 천천히·살짝 높게.
   static Future<void> init() async {
     try {
+      final ok = await _tts.isLanguageAvailable('ko-KR');
+      if (ok is bool && !ok) available = false;
       await _tts.setLanguage('ko-KR');
       await _tts.setSpeechRate(0.45);
       await _tts.setPitch(1.05);
     } catch (_) {
-      // TTS를 못 써도 앱은 계속 동작한다.
+      // TTS를 못 써도 앱은 계속 동작한다 (듣기 유형만 입구에서 막는다).
+      available = false;
     }
   }
 

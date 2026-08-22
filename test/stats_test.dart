@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:preschool_math/models/korean_question.dart';
 import 'package:preschool_math/models/question.dart';
 import 'package:preschool_math/models/stats.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -59,6 +60,37 @@ void main() {
       final stats = await StatsStore.load();
       expect(stats.bandCorrect, [1, 0, 0, 0]);
       expect(stats.bandWrong, [0, 0, 1, 1]);
+    });
+
+    test('큰 수 찾기·규칙 찾기도 기록된다', () async {
+      await StatsStore.recordAnswer(
+          _q(left: 5, right: 1, op: QuestionOp.compare),
+          correct: true);
+      await StatsStore.recordAnswer(
+          _q(left: 8, right: 2, op: QuestionOp.pattern),
+          correct: false);
+
+      final stats = await StatsStore.load();
+      expect(stats.compareCorrect, 1);
+      expect(stats.compareWrong, 0);
+      expect(stats.patternWrong, 1);
+      expect(stats.totalAnswered, 2);
+    });
+
+    test('한글 유형별 기록이 누적되고 전체 합계에 들어간다', () async {
+      await StatsStore.recordKoreanAnswer(KrQuizType.pictureToWord,
+          correct: true);
+      await StatsStore.recordKoreanAnswer(KrQuizType.pictureToWord,
+          correct: true);
+      await StatsStore.recordKoreanAnswer(KrQuizType.fillBlank,
+          correct: false);
+
+      final stats = await StatsStore.load();
+      expect(stats.krCorrect[KrQuizType.pictureToWord.index], 2);
+      expect(stats.krWrong[KrQuizType.fillBlank.index], 1);
+      expect(stats.krTotalCorrect, 2);
+      expect(stats.krTotalWrong, 1);
+      expect(stats.totalAnswered, 3);
     });
 
     test('최근 7일 활동이 날짜별로 기록된다', () async {

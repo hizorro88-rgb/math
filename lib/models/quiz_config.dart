@@ -42,14 +42,17 @@ enum QuizMode {
 
 /// 자유 연습에서 고르는 난이도: 답이 최대 몇까지 나오는지
 enum Difficulty {
-  easy('쉬워요', '5까지', 5),
-  normal('보통이에요', '10까지', 10);
+  easy('쉬워요', '5까지', 5, '🐣'),
+  normal('보통이에요', '10까지', 10, '🐥'),
+  hard('어려워요', '20까지', 20, '🦉'),
+  expert('최고 도전', '100까지', 100, '🚀');
 
-  const Difficulty(this.label, this.description, this.maxNumber);
+  const Difficulty(this.label, this.description, this.maxNumber, this.emoji);
 
   final String label;
   final String description;
   final int maxNumber;
+  final String emoji;
 }
 
 /// 한 판의 설정

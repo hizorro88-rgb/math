@@ -12,6 +12,7 @@ import '../widgets/bouncy_button.dart';
 import '../widgets/owl_avatar.dart';
 import 'category_screen.dart';
 import 'korean_category_screen.dart';
+import 'onboarding_screen.dart';
 import 'practice_screen.dart';
 import 'profile_screen.dart';
 import 'report_screen.dart';
@@ -35,6 +36,7 @@ class _MapData {
     required this.equipped,
     required this.daily,
     required this.profile,
+    required this.recommendedCategory,
   });
 
   final List<int> stars;
@@ -44,6 +46,9 @@ class _MapData {
   final List<ShopItem> equipped;
   final DailyState daily;
   final Profile profile;
+
+  /// 온보딩에서 고른 나이에 맞는 수학 카테고리 (없으면 null)
+  final int? recommendedCategory;
 }
 
 class _LevelMapScreenState extends State<LevelMapScreen> {
@@ -72,15 +77,20 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     await prefs.setBool(Profiles.scoped(_subjectKey), korean);
   }
 
-  Future<_MapData> _load() async => _MapData(
-        stars: await ProgressStore.load(),
-        krStars: await KoreanProgressStore.load(),
-        points: await ProgressStore.loadPoints(),
-        coins: await ProgressStore.loadCoins(),
-        equipped: await ShopStore.loadEquipped(),
-        daily: await DailyStore.load(),
-        profile: await Profiles.active(),
-      );
+  Future<_MapData> _load() async {
+    final prefs = await SharedPreferences.getInstance();
+    return _MapData(
+      stars: await ProgressStore.load(),
+      krStars: await KoreanProgressStore.load(),
+      points: await ProgressStore.loadPoints(),
+      coins: await ProgressStore.loadCoins(),
+      equipped: await ShopStore.loadEquipped(),
+      daily: await DailyStore.load(),
+      profile: await Profiles.active(),
+      recommendedCategory:
+          prefs.getInt(Profiles.scoped(OnboardingScreen.ageCategoryKey)),
+    );
+  }
 
   void _refresh() {
     if (!mounted) return;
@@ -244,6 +254,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                                   stars[l.number - 1] >= 1)
                               .length,
                           total: category.totalLevels,
+                          recommended:
+                              data.recommendedCategory == category.index,
                           onTap: () => _openCategory(category),
                         ),
                         const SizedBox(height: 12),
@@ -728,6 +740,7 @@ class _CategoryCard extends StatelessWidget {
     required this.cleared,
     required this.total,
     required this.onTap,
+    this.recommended = false,
   });
 
   final String emoji;
@@ -737,6 +750,9 @@ class _CategoryCard extends StatelessWidget {
   final int cleared;
   final int total;
   final VoidCallback onTap;
+
+  /// 온보딩에서 고른 나이에 맞는 카테고리면 추천 표시
+  final bool recommended;
 
   @override
   Widget build(BuildContext context) {
@@ -764,12 +780,37 @@ class _CategoryCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
+                Row(
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    if (recommended) ...[
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF6D8),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(
+                              color: const Color(0xFFFFD34D), width: 1.5),
+                        ),
+                        child: const Text(
+                          '👍 추천',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                            color: Color(0xFFB8860B),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
                 const SizedBox(height: 2),
                 Text(

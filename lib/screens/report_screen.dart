@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../models/korean_curriculum.dart';
+import '../models/korean_question.dart';
 import '../models/progress.dart';
 import '../models/stats.dart';
 
@@ -12,10 +14,14 @@ class ReportScreen extends StatefulWidget {
 }
 
 class _ReportScreenState extends State<ReportScreen> {
-  late final Future<(LearningStats, List<int>)> _dataFuture = _loadData();
+  late final Future<(LearningStats, List<int>, List<int>)> _dataFuture =
+      _loadData();
 
-  static Future<(LearningStats, List<int>)> _loadData() async =>
-      (await StatsStore.load(), await ProgressStore.load());
+  static Future<(LearningStats, List<int>, List<int>)> _loadData() async => (
+        await StatsStore.load(),
+        await ProgressStore.load(),
+        await KoreanProgressStore.load(),
+      );
 
   @override
   Widget build(BuildContext context) {
@@ -29,15 +35,17 @@ class _ReportScreenState extends State<ReportScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: FutureBuilder<(LearningStats, List<int>)>(
+      body: FutureBuilder<(LearningStats, List<int>, List<int>)>(
         future: _dataFuture,
         builder: (context, snapshot) {
           final data = snapshot.data;
           if (data == null) {
             return const Center(child: CircularProgressIndicator());
           }
-          final (stats, levelStars) = data;
-          final clearedLevels = levelStars.where((s) => s >= 1).length;
+          final (stats, levelStars, krStars) = data;
+          // 통과한 단계는 수학 + 한글 합계
+          final clearedLevels = levelStars.where((s) => s >= 1).length +
+              krStars.where((s) => s >= 1).length;
 
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -47,6 +55,8 @@ class _ReportScreenState extends State<ReportScreen> {
               _WeekCard(stats: stats),
               const SizedBox(height: 14),
               _AccuracyCard(stats: stats),
+              const SizedBox(height: 14),
+              _KoreanCard(stats: stats),
               const SizedBox(height: 14),
               _AdviceCard(stats: stats),
               const SizedBox(height: 8),
@@ -229,12 +239,14 @@ class _AccuracyCard extends StatelessWidget {
       ('🔢 수 세기', stats.countCorrect, stats.countWrong),
       ('✖️ 곱셈', stats.mulCorrect, stats.mulWrong),
       ('➗ 나눗셈', stats.divCorrect, stats.divWrong),
+      ('⚖️ 큰 수', stats.compareCorrect, stats.compareWrong),
+      ('🧩 규칙', stats.patternCorrect, stats.patternWrong),
       for (var i = 0; i < statBandNames.length; i++)
         ('📏 ${statBandNames[i]}', stats.bandCorrect[i], stats.bandWrong[i]),
     ];
 
     return _reportCard(
-      title: '🎯 유형별 정답률',
+      title: '🧮 수학 정답률',
       child: Column(
         children: [
           for (final (label, correct, wrong) in rows) ...[
@@ -303,6 +315,41 @@ class _AccuracyRow extends StatelessWidget {
   }
 }
 
+/// 한글 유형별 정답률
+class _KoreanCard extends StatelessWidget {
+  const _KoreanCard({required this.stats});
+
+  final LearningStats stats;
+
+  @override
+  Widget build(BuildContext context) {
+    if (stats.krTotalCorrect + stats.krTotalWrong == 0) {
+      return _reportCard(
+        title: '📖 한글 정답률',
+        child: Text(
+          '아직 한글 퀴즈를 풀지 않았어요.\n홈에서 📖 한글 탭을 눌러 시작해 보세요!',
+          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+        ),
+      );
+    }
+    return _reportCard(
+      title: '📖 한글 정답률',
+      child: Column(
+        children: [
+          for (final type in KrQuizType.values) ...[
+            _AccuracyRow(
+              label: '${type.emoji} ${type.shortLabel}',
+              correct: stats.krCorrect[type.index],
+              wrong: stats.krWrong[type.index],
+            ),
+            const SizedBox(height: 10),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 /// 정답률이 가장 낮은 영역을 찾아 연습을 추천한다.
 class _AdviceCard extends StatelessWidget {
   const _AdviceCard({required this.stats});
@@ -320,10 +367,20 @@ class _AdviceCard extends StatelessWidget {
       ('수 세기', LearningStats.accuracy(stats.countCorrect, stats.countWrong)),
       ('곱셈', LearningStats.accuracy(stats.mulCorrect, stats.mulWrong)),
       ('나눗셈', LearningStats.accuracy(stats.divCorrect, stats.divWrong)),
+      ('큰 수 찾기',
+          LearningStats.accuracy(stats.compareCorrect, stats.compareWrong)),
+      ('규칙 찾기',
+          LearningStats.accuracy(stats.patternCorrect, stats.patternWrong)),
       for (var i = 0; i < statBandNames.length; i++)
         (
           '${statBandNames[i]} 수',
           LearningStats.accuracy(stats.bandCorrect[i], stats.bandWrong[i]),
+        ),
+      for (final type in KrQuizType.values)
+        (
+          '한글 ${type.shortLabel}',
+          LearningStats.accuracy(
+              stats.krCorrect[type.index], stats.krWrong[type.index]),
         ),
     ];
     (String, int)? weakest;

@@ -3,9 +3,10 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'profile.dart';
 
 import 'daily.dart';
+import 'korean_question.dart';
 import 'question.dart';
 
-/// 문제 유형(덧셈/뺄셈)과 수 범위별 정답/오답 횟수, 최근 활동 기록.
+/// 문제 유형과 수 범위별 정답/오답 횟수, 한글 유형별 기록, 최근 활동.
 /// 부모용 학습 리포트에 쓰인다.
 class LearningStats {
   const LearningStats({
@@ -19,8 +20,14 @@ class LearningStats {
     required this.mulWrong,
     required this.divCorrect,
     required this.divWrong,
+    required this.compareCorrect,
+    required this.compareWrong,
+    required this.patternCorrect,
+    required this.patternWrong,
     required this.bandCorrect,
     required this.bandWrong,
+    required this.krCorrect,
+    required this.krWrong,
     required this.recentDays,
   });
 
@@ -39,16 +46,46 @@ class LearningStats {
   final int divCorrect;
   final int divWrong;
 
-  /// 수 범위(0: 5까지, 1: 10까지, 2: 20까지)별 정답/오답
+  /// 큰 수 찾기 / 규칙 찾기 정답/오답
+  final int compareCorrect;
+  final int compareWrong;
+  final int patternCorrect;
+  final int patternWrong;
+
+  /// 수 범위(0: 5까지, 1: 10까지, 2: 20까지, 3: 큰 수)별 정답/오답
   final List<int> bandCorrect;
   final List<int> bandWrong;
+
+  /// 한글 유형별 정답/오답 (인덱스 = KrQuizType.index)
+  final List<int> krCorrect;
+  final List<int> krWrong;
 
   /// 최근 7일 동안 하루에 푼 판 수 (오래된 날 → 오늘 순)
   final List<({String day, int rounds})> recentDays;
 
-  int get totalCorrect =>
-      addCorrect + subCorrect + countCorrect + mulCorrect + divCorrect;
-  int get totalWrong => addWrong + subWrong + countWrong + mulWrong + divWrong;
+  int get mathCorrect =>
+      addCorrect +
+      subCorrect +
+      countCorrect +
+      mulCorrect +
+      divCorrect +
+      compareCorrect +
+      patternCorrect;
+  int get mathWrong =>
+      addWrong +
+      subWrong +
+      countWrong +
+      mulWrong +
+      divWrong +
+      compareWrong +
+      patternWrong;
+
+  int get krTotalCorrect => krCorrect.fold(0, (a, b) => a + b);
+  int get krTotalWrong => krWrong.fold(0, (a, b) => a + b);
+
+  /// 수학 + 한글 합계
+  int get totalCorrect => mathCorrect + krTotalCorrect;
+  int get totalWrong => mathWrong + krTotalWrong;
   int get totalAnswered => totalCorrect + totalWrong;
 
   /// 정답률(%). 푼 문제가 없으면 null.
@@ -85,32 +122,46 @@ class StatsStore {
   static const _mulWrongKey = 'stats_mul_wrong_v1';
   static const _divCorrectKey = 'stats_div_correct_v1';
   static const _divWrongKey = 'stats_div_wrong_v1';
+  static const _compareCorrectKey = 'stats_compare_correct_v1';
+  static const _compareWrongKey = 'stats_compare_wrong_v1';
+  static const _patternCorrectKey = 'stats_pattern_correct_v1';
+  static const _patternWrongKey = 'stats_pattern_wrong_v1';
   static const _bandCorrectKey = 'stats_band_correct_v1'; // 'a,b,c'
   static const _bandWrongKey = 'stats_band_wrong_v1';
+  static const _krCorrectKey = 'stats_kr_correct_v1'; // KrQuizType.index별 CSV
+  static const _krWrongKey = 'stats_kr_wrong_v1';
   static const _daysKey = 'stats_days_v1'; // ['2026-07-28:3', ...]
 
-  /// 문제 하나의 첫 시도 결과를 기록한다. (재출제 풀이는 세지 않음)
+  /// 수학 문제 하나의 첫 시도 결과를 기록한다. (재출제 풀이는 세지 않음)
   static Future<void> recordAnswer(Question question,
       {required bool correct}) async {
     final prefs = await SharedPreferences.getInstance();
 
-    final String? baseKey = switch (question.op) {
+    final typeKey = Profiles.scoped(switch (question.op) {
       QuestionOp.counting => correct ? _countCorrectKey : _countWrongKey,
       QuestionOp.add => correct ? _addCorrectKey : _addWrongKey,
       QuestionOp.sub => correct ? _subCorrectKey : _subWrongKey,
       QuestionOp.mul => correct ? _mulCorrectKey : _mulWrongKey,
       QuestionOp.div => correct ? _divCorrectKey : _divWrongKey,
-      // 비교·규칙 찾기는 아직 리포트 항목이 없어서 기록하지 않는다.
-      QuestionOp.compare || QuestionOp.pattern => null,
-    };
-    if (baseKey == null) return;
-    final typeKey = Profiles.scoped(baseKey);
+      QuestionOp.compare => correct ? _compareCorrectKey : _compareWrongKey,
+      QuestionOp.pattern => correct ? _patternCorrectKey : _patternWrongKey,
+    });
     await prefs.setInt(typeKey, (prefs.getInt(typeKey) ?? 0) + 1);
 
     final bandKey = Profiles.scoped(correct ? _bandCorrectKey : _bandWrongKey);
-    final bands = _parseBands(prefs.getString(bandKey));
+    final bands = _parseCsv(prefs.getString(bandKey), statBandNames.length);
     bands[statBandOf(question)]++;
     await prefs.setString(bandKey, bands.join(','));
+  }
+
+  /// 한글 문제 하나의 첫 시도 결과를 기록한다.
+  static Future<void> recordKoreanAnswer(KrQuizType type,
+      {required bool correct}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = Profiles.scoped(correct ? _krCorrectKey : _krWrongKey);
+    final counts = _parseCsv(prefs.getString(key), KrQuizType.values.length);
+    counts[type.index]++;
+    await prefs.setString(key, counts.join(','));
   }
 
   /// 판 완료를 오늘 날짜에 기록한다 (최근 14일만 보관).
@@ -133,20 +184,32 @@ class StatsStore {
     final entries = _parseDays(prefs.getStringList(Profiles.scoped(_daysKey)));
     final time = now ?? DateTime.now();
 
+    int intOf(String key) => prefs.getInt(Profiles.scoped(key)) ?? 0;
+
     return LearningStats(
-      addCorrect: prefs.getInt(Profiles.scoped(_addCorrectKey)) ?? 0,
-      addWrong: prefs.getInt(Profiles.scoped(_addWrongKey)) ?? 0,
-      subCorrect: prefs.getInt(Profiles.scoped(_subCorrectKey)) ?? 0,
-      subWrong: prefs.getInt(Profiles.scoped(_subWrongKey)) ?? 0,
-      countCorrect: prefs.getInt(Profiles.scoped(_countCorrectKey)) ?? 0,
-      countWrong: prefs.getInt(Profiles.scoped(_countWrongKey)) ?? 0,
-      mulCorrect: prefs.getInt(Profiles.scoped(_mulCorrectKey)) ?? 0,
-      mulWrong: prefs.getInt(Profiles.scoped(_mulWrongKey)) ?? 0,
-      divCorrect: prefs.getInt(Profiles.scoped(_divCorrectKey)) ?? 0,
-      divWrong: prefs.getInt(Profiles.scoped(_divWrongKey)) ?? 0,
-      bandCorrect:
-          _parseBands(prefs.getString(Profiles.scoped(_bandCorrectKey))),
-      bandWrong: _parseBands(prefs.getString(Profiles.scoped(_bandWrongKey))),
+      addCorrect: intOf(_addCorrectKey),
+      addWrong: intOf(_addWrongKey),
+      subCorrect: intOf(_subCorrectKey),
+      subWrong: intOf(_subWrongKey),
+      countCorrect: intOf(_countCorrectKey),
+      countWrong: intOf(_countWrongKey),
+      mulCorrect: intOf(_mulCorrectKey),
+      mulWrong: intOf(_mulWrongKey),
+      divCorrect: intOf(_divCorrectKey),
+      divWrong: intOf(_divWrongKey),
+      compareCorrect: intOf(_compareCorrectKey),
+      compareWrong: intOf(_compareWrongKey),
+      patternCorrect: intOf(_patternCorrectKey),
+      patternWrong: intOf(_patternWrongKey),
+      bandCorrect: _parseCsv(
+          prefs.getString(Profiles.scoped(_bandCorrectKey)),
+          statBandNames.length),
+      bandWrong: _parseCsv(prefs.getString(Profiles.scoped(_bandWrongKey)),
+          statBandNames.length),
+      krCorrect: _parseCsv(prefs.getString(Profiles.scoped(_krCorrectKey)),
+          KrQuizType.values.length),
+      krWrong: _parseCsv(prefs.getString(Profiles.scoped(_krWrongKey)),
+          KrQuizType.values.length),
       recentDays: [
         for (var i = 6; i >= 0; i--)
           () {
@@ -157,10 +220,11 @@ class StatsStore {
     );
   }
 
-  static List<int> _parseBands(String? raw) {
+  /// 'a,b,c' 형태의 CSV를 길이 [length]의 목록으로 읽는다 (모자라면 0으로 채움).
+  static List<int> _parseCsv(String? raw, int length) {
     final parts = (raw ?? '').split(',');
     return List.generate(
-      statBandNames.length,
+      length,
       (i) => i < parts.length ? int.tryParse(parts[i]) ?? 0 : 0,
     );
   }
