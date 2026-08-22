@@ -213,6 +213,16 @@ class DailyStore {
     );
   }
 
+  /// 지금까지 달성한 스트릭 마일스톤 일수들 (배지 판정용)
+  static Future<List<int>> claimedMilestones() async {
+    final prefs = await SharedPreferences.getInstance();
+    return [
+      for (final s
+          in prefs.getStringList(Profiles.scoped(_milestonesKey)) ?? const [])
+        if (int.tryParse(s) != null) int.parse(s),
+    ];
+  }
+
   /// 코인으로 스트릭 지킴이를 산다. 성공하면 true.
   static Future<bool> buyFreeze() async {
     final prefs = await SharedPreferences.getInstance();

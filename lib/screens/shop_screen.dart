@@ -148,6 +148,7 @@ class _ShopScreenState extends State<ShopScreen> {
                       ItemSlot.hat => '👒 머리에 쓰는 것',
                       ItemSlot.face => '🥸 얼굴에 쓰는 것',
                       ItemSlot.side => '🧸 같이 다니는 친구',
+                      ItemSlot.bg => '🖼️ 뒤에 깔리는 배경',
                     },
                     style: const TextStyle(
                       fontSize: 18,

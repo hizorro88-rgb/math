@@ -3,7 +3,7 @@ import 'dart:math';
 import 'quiz_config.dart';
 
 /// 문제의 연산 종류
-enum QuestionOp { counting, add, sub, mul, div, compare, pattern }
+enum QuestionOp { counting, add, sub, mul, div, compare, pattern, clock }
 
 /// 사칙연산·수 세기·비교·규칙 찾기 한 문제
 class Question {
@@ -61,6 +61,7 @@ class Question {
       QuestionOp.div => left ~/ right,
       QuestionOp.compare => left,
       QuestionOp.pattern => left,
+      QuestionOp.clock => left,
     };
   }
 
@@ -81,6 +82,7 @@ class Question {
       QuestionOp.div => '$left ÷ $right = ?',
       QuestionOp.compare => right == 1 ? '가장 큰 수는?' : '가장 작은 수는?',
       QuestionOp.pattern => '${sequence.join(', ')}, ?',
+      QuestionOp.clock => '시계는 몇 시일까요?',
     };
   }
 
@@ -105,6 +107,7 @@ class Question {
       QuestionOp.div => '$left 나누기 $right는?',
       QuestionOp.compare => right == 1 ? '가장 큰 수를 찾아보세요' : '가장 작은 수를 찾아보세요',
       QuestionOp.pattern => '${sequence.join(', ')}, 다음 수는?',
+      QuestionOp.clock => '시계가 가리키는 시각은 몇 시일까요?',
     };
   }
 
@@ -283,6 +286,21 @@ class QuestionGenerator {
           right: step,
           sequence: sequence,
           choices: _buildChoices(answer, answer + 2),
+          emoji: _emoji,
+        );
+
+      // 시계 보기: 몇 시(정각)를 맞힌다. (난이도 값은 쓰지 않는다)
+      case QuizMode.clock:
+        final hour = 1 + _random.nextInt(12); // 1..12
+        final choices = <int>{hour};
+        while (choices.length < 4) {
+          choices.add(1 + _random.nextInt(12));
+        }
+        return Question(
+          op: QuestionOp.clock,
+          left: hour,
+          right: 0,
+          choices: choices.toList()..shuffle(_random),
           emoji: _emoji,
         );
 

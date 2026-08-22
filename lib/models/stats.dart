@@ -24,6 +24,8 @@ class LearningStats {
     required this.compareWrong,
     required this.patternCorrect,
     required this.patternWrong,
+    required this.clockCorrect,
+    required this.clockWrong,
     required this.bandCorrect,
     required this.bandWrong,
     required this.krCorrect,
@@ -46,11 +48,13 @@ class LearningStats {
   final int divCorrect;
   final int divWrong;
 
-  /// 큰 수 찾기 / 규칙 찾기 정답/오답
+  /// 큰 수 찾기 / 규칙 찾기 / 시계 보기 정답/오답
   final int compareCorrect;
   final int compareWrong;
   final int patternCorrect;
   final int patternWrong;
+  final int clockCorrect;
+  final int clockWrong;
 
   /// 수 범위(0: 5까지, 1: 10까지, 2: 20까지, 3: 큰 수)별 정답/오답
   final List<int> bandCorrect;
@@ -70,7 +74,8 @@ class LearningStats {
       mulCorrect +
       divCorrect +
       compareCorrect +
-      patternCorrect;
+      patternCorrect +
+      clockCorrect;
   int get mathWrong =>
       addWrong +
       subWrong +
@@ -78,7 +83,8 @@ class LearningStats {
       mulWrong +
       divWrong +
       compareWrong +
-      patternWrong;
+      patternWrong +
+      clockWrong;
 
   int get krTotalCorrect => krCorrect.fold(0, (a, b) => a + b);
   int get krTotalWrong => krWrong.fold(0, (a, b) => a + b);
@@ -126,6 +132,8 @@ class StatsStore {
   static const _compareWrongKey = 'stats_compare_wrong_v1';
   static const _patternCorrectKey = 'stats_pattern_correct_v1';
   static const _patternWrongKey = 'stats_pattern_wrong_v1';
+  static const _clockCorrectKey = 'stats_clock_correct_v1';
+  static const _clockWrongKey = 'stats_clock_wrong_v1';
   static const _bandCorrectKey = 'stats_band_correct_v1'; // 'a,b,c'
   static const _bandWrongKey = 'stats_band_wrong_v1';
   static const _krCorrectKey = 'stats_kr_correct_v1'; // KrQuizType.index별 CSV
@@ -145,6 +153,7 @@ class StatsStore {
       QuestionOp.div => correct ? _divCorrectKey : _divWrongKey,
       QuestionOp.compare => correct ? _compareCorrectKey : _compareWrongKey,
       QuestionOp.pattern => correct ? _patternCorrectKey : _patternWrongKey,
+      QuestionOp.clock => correct ? _clockCorrectKey : _clockWrongKey,
     });
     await prefs.setInt(typeKey, (prefs.getInt(typeKey) ?? 0) + 1);
 
@@ -201,6 +210,8 @@ class StatsStore {
       compareWrong: intOf(_compareWrongKey),
       patternCorrect: intOf(_patternCorrectKey),
       patternWrong: intOf(_patternWrongKey),
+      clockCorrect: intOf(_clockCorrectKey),
+      clockWrong: intOf(_clockWrongKey),
       bandCorrect: _parseCsv(
           prefs.getString(Profiles.scoped(_bandCorrectKey)),
           statBandNames.length),

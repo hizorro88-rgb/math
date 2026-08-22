@@ -22,6 +22,7 @@ class OwlAvatar extends StatelessWidget {
     final hat = _bySlot(ItemSlot.hat);
     final face = _bySlot(ItemSlot.face);
     final side = _bySlot(ItemSlot.side);
+    final bg = _bySlot(ItemSlot.bg);
 
     return SizedBox(
       width: size * 1.5,
@@ -30,6 +31,15 @@ class OwlAvatar extends StatelessWidget {
         clipBehavior: Clip.none,
         alignment: Alignment.bottomCenter,
         children: [
+          // 배경은 부엉이 뒤에 은은하게 깔린다.
+          if (bg != null)
+            Positioned(
+              bottom: size * 0.18,
+              child: Opacity(
+                opacity: 0.55,
+                child: Text(bg.emoji, style: TextStyle(fontSize: size * 1.05)),
+              ),
+            ),
           Positioned(
             bottom: 0,
             child: Text('🦉', style: TextStyle(fontSize: size)),

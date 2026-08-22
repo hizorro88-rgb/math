@@ -255,6 +255,28 @@ void main() {
     });
   });
 
+  group('QuestionGenerator 시계 보기', () {
+    test('1~12시 정각이 나오고 보기가 시각 범위 안에 있다', () {
+      final generator = QuestionGenerator(random: Random(41));
+      for (var round = 0; round < 30; round++) {
+        final questions = generator.generate(
+          const QuizConfig(mode: QuizMode.clock, maxNumber: 10),
+        );
+        for (final q in questions) {
+          expect(q.op, QuestionOp.clock);
+          expect(q.left, greaterThanOrEqualTo(1));
+          expect(q.left, lessThanOrEqualTo(12));
+          expect(q.answer, q.left);
+          expect(q.expression, '시계는 몇 시일까요?');
+          expect(q.choices, hasLength(4));
+          expect(q.choices.toSet(), hasLength(4));
+          expect(q.choices, contains(q.answer));
+          expect(q.choices.every((c) => c >= 1 && c <= 12), isTrue);
+        }
+      }
+    });
+  });
+
   group('QuestionGenerator 덧셈·뺄셈', () {
     for (final mode in [
       QuizMode.addition,

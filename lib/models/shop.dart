@@ -4,11 +4,12 @@ import 'profile.dart';
 
 import 'progress.dart';
 
-/// 아이템을 다는 자리: 머리 위 / 얼굴 / 옆자리 친구
+/// 아이템을 다는 자리: 머리 위 / 얼굴 / 옆자리 친구 / 뒤 배경
 enum ItemSlot {
   hat('머리'),
   face('얼굴'),
-  side('친구');
+  side('친구'),
+  bg('배경');
 
   const ItemSlot(this.label);
 
@@ -40,10 +41,14 @@ const List<ShopItem> shopItems = [
       id: 'cap', emoji: '🧢', name: '야구 모자', cost: 150, slot: ItemSlot.hat),
   ShopItem(
       id: 'tophat', emoji: '🎩', name: '신사 모자', cost: 300, slot: ItemSlot.hat),
+  ShopItem(
+      id: 'gradcap', emoji: '🎓', name: '졸업 모자', cost: 450, slot: ItemSlot.hat),
   ShopItem(id: 'crown', emoji: '👑', name: '왕관', cost: 600, slot: ItemSlot.hat),
   // 얼굴
   ShopItem(
       id: 'glasses', emoji: '👓', name: '안경', cost: 100, slot: ItemSlot.face),
+  ShopItem(
+      id: 'goggles', emoji: '🥽', name: '물안경', cost: 200, slot: ItemSlot.face),
   ShopItem(
       id: 'sunglasses',
       emoji: '🕶️',
@@ -56,9 +61,18 @@ const List<ShopItem> shopItems = [
   ShopItem(
       id: 'flower', emoji: '🌷', name: '튤립', cost: 180, slot: ItemSlot.side),
   ShopItem(
+      id: 'chick', emoji: '🐥', name: '병아리 친구', cost: 250, slot: ItemSlot.side),
+  ShopItem(
       id: 'teddy', emoji: '🧸', name: '곰인형', cost: 400, slot: ItemSlot.side),
   ShopItem(
+      id: 'puppy', emoji: '🐶', name: '강아지 친구', cost: 550, slot: ItemSlot.side),
+  ShopItem(
       id: 'rainbow', emoji: '🌈', name: '무지개', cost: 800, slot: ItemSlot.side),
+  // 배경
+  ShopItem(id: 'grass', emoji: '🌿', name: '풀밭', cost: 300, slot: ItemSlot.bg),
+  ShopItem(id: 'sea', emoji: '🌊', name: '바다', cost: 450, slot: ItemSlot.bg),
+  ShopItem(id: 'space', emoji: '🌌', name: '우주', cost: 600, slot: ItemSlot.bg),
+  ShopItem(id: 'castle', emoji: '🏰', name: '성', cost: 800, slot: ItemSlot.bg),
 ];
 
 ShopItem? shopItemById(String id) {

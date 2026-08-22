@@ -32,7 +32,10 @@ enum QuizMode {
   pattern('규칙 찾기', '🧩'),
 
   /// 식을 보여주지 않고 소리로만 들려주는 암산 연습
-  listen('듣고 풀기', '👂');
+  listen('듣고 풀기', '👂'),
+
+  /// 아날로그 시계를 읽는다 (정각, 몇 시)
+  clock('시계 보기', '🕒');
 
   const QuizMode(this.label, this.emoji);
 

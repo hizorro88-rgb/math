@@ -241,6 +241,7 @@ class _AccuracyCard extends StatelessWidget {
       ('➗ 나눗셈', stats.divCorrect, stats.divWrong),
       ('⚖️ 큰 수', stats.compareCorrect, stats.compareWrong),
       ('🧩 규칙', stats.patternCorrect, stats.patternWrong),
+      ('🕒 시계', stats.clockCorrect, stats.clockWrong),
       for (var i = 0; i < statBandNames.length; i++)
         ('📏 ${statBandNames[i]}', stats.bandCorrect[i], stats.bandWrong[i]),
     ];
@@ -371,6 +372,8 @@ class _AdviceCard extends StatelessWidget {
           LearningStats.accuracy(stats.compareCorrect, stats.compareWrong)),
       ('규칙 찾기',
           LearningStats.accuracy(stats.patternCorrect, stats.patternWrong)),
+      ('시계 보기',
+          LearningStats.accuracy(stats.clockCorrect, stats.clockWrong)),
       for (var i = 0; i < statBandNames.length; i++)
         (
           '${statBandNames[i]} 수',

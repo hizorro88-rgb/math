@@ -11,6 +11,7 @@ import '../services/sounds.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/owl_avatar.dart';
 import '../widgets/parent_gate.dart';
+import 'badge_screen.dart';
 import 'category_screen.dart';
 import 'korean_category_screen.dart';
 import 'onboarding_screen.dart';
@@ -144,6 +145,12 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     _refresh();
   }
 
+  void _openBadges() {
+    Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const BadgeScreen()),
+    );
+  }
+
   Future<void> _openReport() async {
     // 부모용 화면이라 간단한 확인 관문을 거친다.
     final ok = await checkParentGate(context);
@@ -158,6 +165,22 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       MaterialPageRoute(builder: (_) => const ProfileScreen()),
     );
     _refresh(); // 프로필이 바뀌면 진행도·코인 등을 다시 불러온다.
+  }
+
+  /// 오늘 활동에 따라 부엉이 인사말이 달라진다.
+  String _greetingFor(_MapData data) {
+    final name = data.profile.name;
+    final daily = data.daily;
+    if (daily.rounds >= 3) {
+      return '$name, 오늘 벌써\n${daily.rounds}판이나 풀었어! 🎉';
+    }
+    if (daily.rounds >= 1) {
+      return '$name, 좋아!\n오늘 미션까지 가 보자 🎯';
+    }
+    if (daily.streak >= 3) {
+      return '$name, ${daily.streak}일째\n함께라니 최고야! 🔥';
+    }
+    return '$name, 오늘도\n신나게 놀면서 배우자!';
   }
 
   @override
@@ -181,6 +204,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
             children: [
               _Header(
                 title: _korean ? '한글 놀이' : '수학 놀이',
+                greeting: _greetingFor(data),
                 totalStars: totalStars,
                 coins: data.coins,
                 equipped: data.equipped,
@@ -222,21 +246,30 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                     _DailyCard(daily: data.daily, onBuyFreeze: _buyFreeze),
                     const SizedBox(height: 14),
                     Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
                             child: _MenuCard(
                           emoji: '🛍️',
                           title: '꾸미기 가게',
-                          subtitle: '코인으로 부엉이 꾸미기',
+                          subtitle: '부엉이 꾸미기',
                           onTap: _openShop,
                         )),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 10),
                         Expanded(
                             child: _MenuCard(
                           emoji: '🎨',
                           title: '자유 연습',
-                          subtitle: '원하는 방식으로 연습',
+                          subtitle: '골라서 연습',
                           onTap: _openPractice,
+                        )),
+                        const SizedBox(width: 10),
+                        Expanded(
+                            child: _MenuCard(
+                          emoji: '🏅',
+                          title: '배지 도감',
+                          subtitle: '모은 배지 보기',
+                          onTap: _openBadges,
                         )),
                       ],
                     ),
@@ -294,6 +327,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
 class _Header extends StatelessWidget {
   const _Header({
     required this.title,
+    required this.greeting,
     required this.totalStars,
     required this.coins,
     required this.equipped,
@@ -305,6 +339,7 @@ class _Header extends StatelessWidget {
   });
 
   final String title;
+  final String greeting;
   final int totalStars;
   final int coins;
   final List<ShopItem> equipped;
@@ -410,7 +445,7 @@ class _Header extends StatelessWidget {
                       borderRadius: BorderRadius.circular(18),
                     ),
                     child: Text(
-                      '${profile.name}, 오늘도\n신나게 놀면서 배우자!',
+                      greeting,
                       style: const TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,

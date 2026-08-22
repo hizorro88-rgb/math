@@ -965,6 +965,86 @@ class _EmojiHint extends StatelessWidget {
       case QuestionOp.compare:
       case QuestionOp.pattern:
         return const SizedBox.shrink();
+
+      // 시계 보기: 아날로그 시계 그림이 곧 문제다.
+      case QuestionOp.clock:
+        return SizedBox(
+          width: 170,
+          height: 170,
+          child: CustomPaint(painter: _ClockPainter(hour: question.left)),
+        );
     }
   }
+}
+
+/// 정각을 가리키는 아날로그 시계 (시침은 시각, 분침은 12)
+class _ClockPainter extends CustomPainter {
+  const _ClockPainter({required this.hour});
+
+  final int hour;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.width / 2;
+
+    // 시계판
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()..color = const Color(0xFFFFF6D8),
+    );
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..color = const Color(0xFF8B6F1F)
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 5,
+    );
+
+    // 숫자 1~12
+    for (var n = 1; n <= 12; n++) {
+      final angle = (n * 30 - 90) * math.pi / 180;
+      final pos = center +
+          Offset(math.cos(angle), math.sin(angle)) * (radius - 16);
+      final painter = TextPainter(
+        text: TextSpan(
+          text: '$n',
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            color: Colors.black87,
+          ),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      painter.paint(canvas, pos - Offset(painter.width / 2, painter.height / 2));
+    }
+
+    // 분침 (12를 가리킴)
+    canvas.drawLine(
+      center,
+      center + Offset(0, -(radius - 26)),
+      Paint()
+        ..color = const Color(0xFF1CB0F6)
+        ..strokeWidth = 5
+        ..strokeCap = StrokeCap.round,
+    );
+    // 시침
+    final hourAngle = ((hour % 12) * 30 - 90) * math.pi / 180;
+    canvas.drawLine(
+      center,
+      center +
+          Offset(math.cos(hourAngle), math.sin(hourAngle)) * (radius - 46),
+      Paint()
+        ..color = const Color(0xFFEA2B2B)
+        ..strokeWidth = 7
+        ..strokeCap = StrokeCap.round,
+    );
+    canvas.drawCircle(center, 6, Paint()..color = Colors.black87);
+  }
+
+  @override
+  bool shouldRepaint(_ClockPainter oldDelegate) => oldDelegate.hour != hour;
 }
