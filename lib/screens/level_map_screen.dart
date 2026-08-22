@@ -10,6 +10,7 @@ import '../models/shop.dart';
 import '../services/sounds.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/owl_avatar.dart';
+import '../widgets/parent_gate.dart';
 import 'category_screen.dart';
 import 'korean_category_screen.dart';
 import 'onboarding_screen.dart';
@@ -107,6 +108,20 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     _refresh();
   }
 
+  Future<void> _buyFreeze() async {
+    final ok = await DailyStore.buyFreeze();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(
+        content: Text(ok
+            ? '🧊 스트릭 지킴이를 샀어요! 하루 걸러도 스트릭이 이어져요'
+            : '코인이 부족하거나 이미 충분히 갖고 있어요'),
+        duration: const Duration(seconds: 2),
+      ));
+    if (ok) _refresh();
+  }
+
   Future<void> _openKoreanCategory(KrCategory category) async {
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -129,7 +144,10 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     _refresh();
   }
 
-  void _openReport() {
+  Future<void> _openReport() async {
+    // 부모용 화면이라 간단한 확인 관문을 거친다.
+    final ok = await checkParentGate(context);
+    if (!ok || !mounted) return;
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const ReportScreen()),
     );
@@ -201,7 +219,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                     const SizedBox(height: 14),
                     _RankCard(points: data.points),
                     const SizedBox(height: 14),
-                    _DailyCard(daily: data.daily),
+                    _DailyCard(daily: data.daily, onBuyFreeze: _buyFreeze),
                     const SizedBox(height: 14),
                     Row(
                       children: [
@@ -522,11 +540,12 @@ class _RankCard extends StatelessWidget {
   }
 }
 
-/// 오늘의 미션 카드: 진행 바와 보상, 연속 출석 🔥
+/// 오늘의 미션 카드: 진행 바와 보상, 연속 출석 🔥, 스트릭 지킴이 🧊
 class _DailyCard extends StatelessWidget {
-  const _DailyCard({required this.daily});
+  const _DailyCard({required this.daily, required this.onBuyFreeze});
 
   final DailyState daily;
+  final VoidCallback onBuyFreeze;
 
   @override
   Widget build(BuildContext context) {
@@ -572,10 +591,46 @@ class _DailyCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 10),
-          for (final mission in dailyMissions) ...[
+          for (final mission in daily.missions) ...[
             _MissionRow(mission: mission, daily: daily),
-            if (mission != dailyMissions.last) const SizedBox(height: 8),
+            if (mission != daily.missions.last) const SizedBox(height: 8),
           ],
+          const SizedBox(height: 10),
+          // 스트릭 지킴이: 하루 걸러도 스트릭이 이어진다.
+          Row(
+            children: [
+              Text(
+                '🧊 스트릭 지킴이 ×${daily.freezes}',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.grey.shade600,
+                ),
+              ),
+              const Spacer(),
+              if (daily.freezes < DailyStore.maxFreezes)
+                GestureDetector(
+                  onTap: onBuyFreeze,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFE3F4FF),
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: const Color(0xFF1CB0F6)),
+                    ),
+                    child: const Text(
+                      '사기 · 🪙 200',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF0B6FA0),
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
     );

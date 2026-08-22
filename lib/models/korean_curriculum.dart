@@ -113,6 +113,10 @@ class KoreanCurriculum {
         units: [
           KrUnit(
               title: '글자 소리 찾기', emoji: '🔊', type: KrQuizType.listenSyllable),
+          KrUnit(
+              title: '자음 소리 찾기',
+              emoji: '🎼',
+              type: KrQuizType.listenConsonant),
           KrUnit(title: '가나다 순서', emoji: '🐾', type: KrQuizType.syllableOrder),
           KrUnit(
               title: '첫소리 찾기', emoji: '🎯', type: KrQuizType.firstConsonant),
@@ -121,9 +125,10 @@ class KoreanCurriculum {
       KrCategory(
         title: '낱말 완성',
         emoji: '✏️',
-        desc: '글자를 채워서 낱말을 완성해요',
+        desc: '글자를 만들고 채워서 낱말을 완성해요',
         color: const Color(0xFFA560E8),
         units: [
+          KrUnit(title: '글자 만들기', emoji: '🧱', type: KrQuizType.combine),
           KrUnit(title: '빈칸 채우기', emoji: '🧩', type: KrQuizType.fillBlank),
           KrUnit(title: '긴 낱말 도전', emoji: '🚀', type: KrQuizType.longWord),
         ],
@@ -150,15 +155,50 @@ class KoreanCurriculum {
 class KoreanProgressStore {
   KoreanProgressStore._();
 
-  static const _starsKey = 'kr_level_stars_v1';
+  // v2: 자음 소리·글자 만들기 묶음이 중간에 들어가며 단계 번호가 바뀜
+  static const _starsKey = 'kr_level_stars_v2';
+  static const _starsKeyV1 = 'kr_level_stars_v1';
+
+  /// v1 시절(8묶음) 순서
+  static const _v1UnitTitles = [
+    '낱말 보고 그림 찾기', '그림 보고 낱말 찾기', '모음 소리 찾기', //
+    '글자 소리 찾기', '가나다 순서', '첫소리 찾기', //
+    '빈칸 채우기', '긴 낱말 도전',
+  ];
 
   static Future<List<int>> load() async {
     final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getStringList(Profiles.scoped(_starsKey)) ?? const [];
+    var saved = prefs.getStringList(Profiles.scoped(_starsKey));
+    if (saved == null) {
+      saved = _migrateFromV1(prefs.getStringList(Profiles.scoped(_starsKeyV1)));
+      if (saved != null) {
+        await prefs.setStringList(Profiles.scoped(_starsKey), saved);
+      }
+    }
+    final list = saved ?? const <String>[];
     return List.generate(
       KoreanCurriculum.totalLevels,
-      (i) => i < saved.length ? int.tryParse(saved[i]) ?? 0 : 0,
+      (i) => i < list.length ? int.tryParse(list[i]) ?? 0 : 0,
     );
+  }
+
+  /// v1 별 기록을 묶음 제목으로 맞춰 새 단계 번호에 옮겨 담는다.
+  static List<String>? _migrateFromV1(List<String>? old) {
+    if (old == null) return null;
+    final stars = List.filled(KoreanCurriculum.totalLevels, '0');
+    for (var u = 0; u < _v1UnitTitles.length; u++) {
+      final matches =
+          KoreanCurriculum.units.where((x) => x.title == _v1UnitTitles[u]);
+      if (matches.isEmpty) continue;
+      final unit = matches.first;
+      for (var i = 0; i < KoreanCurriculum.levelsPerUnit; i++) {
+        final oldIndex = u * KoreanCurriculum.levelsPerUnit + i;
+        if (oldIndex < old.length) {
+          stars[unit.firstLevelNumber - 1 + i] = old[oldIndex];
+        }
+      }
+    }
+    return stars;
   }
 
   /// 더 좋은 기록일 때만 별을 저장한다.

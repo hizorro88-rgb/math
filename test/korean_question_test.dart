@@ -93,9 +93,78 @@ void main() {
       }
     });
 
+    test('낱말 보기에는 그림이 헷갈리는 같은 그룹 낱말이 함께 나오지 않는다', () {
+      final generator = KoreanQuestionGenerator(random: Random(15));
+      for (var round = 0; round < 50; round++) {
+        for (final type in [
+          KrQuizType.pictureToWord,
+          KrQuizType.wordToPicture,
+          KrQuizType.longWord,
+        ]) {
+          final questions = generator.generate(type, stage: 9);
+          for (final q in questions) {
+            final words = [
+              for (final c in q.choices)
+                q.emojiChoices
+                    ? krAllWords.firstWhere((w) => w.emoji == c)
+                    : krAllWords.firstWhere((w) => w.word == c),
+            ];
+            final target = words.firstWhere(
+                (w) => (q.emojiChoices ? w.emoji : w.word) == q.answer);
+            if (target.group == null) continue;
+            final sameGroup = words
+                .where((w) => w.word != target.word)
+                .where((w) => w.group == target.group);
+            expect(sameGroup, isEmpty,
+                reason: '${target.word}와 같은 그룹이 보기에 있으면 안 됨');
+          }
+        }
+      }
+    });
+
+    test('자음 소리 찾기: 자음 이름이 소리로 나가고 글자가 정답이다', () {
+      final generator = KoreanQuestionGenerator(random: Random(17));
+      for (final stage in [0, 9]) {
+        final questions =
+            generator.generate(KrQuizType.listenConsonant, stage: stage);
+        for (final q in questions) {
+          final pair =
+              krConsonantNames.firstWhere((c) => c.letter == q.answer);
+          expect(q.speech, pair.name);
+          expect(q.choices, contains(q.answer));
+          for (final choice in q.choices) {
+            expect(krBasicConsonants, contains(choice));
+          }
+        }
+      }
+    });
+
+    test('글자 만들기: 자음+모음을 합친 글자가 정답이다', () {
+      final generator = KoreanQuestionGenerator(random: Random(19));
+      for (final stage in [0, 9]) {
+        for (var round = 0; round < 20; round++) {
+          final questions =
+              generator.generate(KrQuizType.combine, stage: stage);
+          for (final q in questions) {
+            final m = RegExp(r'^(.) \+ (.) = \?$').firstMatch(q.display)!;
+            expect(q.answer, krCombine(m.group(1)!, m.group(2)!));
+            expect(q.choices, contains(q.answer));
+            expect(q.choices.toSet(), hasLength(4));
+            for (final choice in q.choices) {
+              expect(choice.length, 1);
+            }
+          }
+        }
+      }
+    });
+
     test('듣기 문제: 소리가 있고 정답이 보기에 있다', () {
       final generator = KoreanQuestionGenerator(random: Random(11));
-      for (final type in [KrQuizType.listenVowel, KrQuizType.listenSyllable]) {
+      for (final type in [
+        KrQuizType.listenVowel,
+        KrQuizType.listenSyllable,
+        KrQuizType.listenConsonant,
+      ]) {
         for (final stage in [0, 9]) {
           final questions = generator.generate(type, stage: stage);
           for (final q in questions) {

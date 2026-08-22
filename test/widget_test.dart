@@ -307,6 +307,33 @@ void main() {
     expect(find.text('그림에 맞는 낱말은?'), findsOneWidget);
   });
 
+  testWidgets('리포트는 부모 게이트(곱셈 문제)를 풀어야 열린다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.insert_chart_rounded));
+    await tester.pumpAndSettle();
+
+    expect(find.text('부모님 확인'), findsOneWidget);
+
+    // 문제를 읽고 정답 버튼을 누르면 리포트가 열린다.
+    final expr = tester
+        .widget<Text>(find.textContaining('× '))
+        .data!; // '7 × 6 = ?'
+    final m = RegExp(r'(\d+) × (\d+)').firstMatch(expr)!;
+    final answer = int.parse(m.group(1)!) * int.parse(m.group(2)!);
+    await tester.tap(find.widgetWithText(OutlinedButton, '$answer'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('학습 리포트'), findsOneWidget);
+    await tester.dragUntilVisible(
+      find.text('📖 한글 정답률'),
+      find.byType(ListView).last,
+      const Offset(0, -300),
+    );
+    expect(find.text('📖 한글 정답률'), findsOneWidget);
+  });
+
   testWidgets('꾸미기 가게에서 코인으로 아이템을 산다', (tester) async {
     SharedPreferences.setMockInitialValues({'coins_v1': 100});
 

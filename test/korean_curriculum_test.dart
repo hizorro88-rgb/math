@@ -66,6 +66,23 @@ void main() {
       expect(KoreanProgressStore.isUnlocked(stars, 2), isTrue);
     });
 
+    test('예전(v1) 별 기록이 새 단계 번호로 이사한다', () async {
+      // v1 시절: '빈칸 채우기'는 7번째 묶음(61~70단계)이었다.
+      final old = List.filled(80, '0');
+      old[0] = '3'; // 1단계 (낱말 보고 그림 찾기)
+      old[60] = '2'; // 61단계 (빈칸 채우기 첫 단계)
+      SharedPreferences.setMockInitialValues({'kr_level_stars_v1': old});
+      Profiles.activeId = 1;
+
+      final stars = await KoreanProgressStore.load();
+      expect(stars[0], 3);
+
+      final unit =
+          KoreanCurriculum.units.firstWhere((u) => u.title == '빈칸 채우기');
+      expect(unit.firstLevelNumber, isNot(61)); // 글자 만들기 뒤로 밀림
+      expect(stars[unit.firstLevelNumber - 1], 2);
+    });
+
     test('별을 저장하면 더 좋은 기록만 남는다', () async {
       await KoreanProgressStore.saveStars(1, 2);
       expect((await KoreanProgressStore.load())[0], 2);

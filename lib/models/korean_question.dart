@@ -26,7 +26,15 @@ enum KrQuizType {
   fillBlank('빈칸 채우기', '빈칸', '🧩'),
 
   /// 세 글자 낱말 읽기 도전
-  longWord('긴 낱말 도전', '긴 낱말', '🚀');
+  longWord('긴 낱말 도전', '긴 낱말', '🚀'),
+
+  // 아래 유형은 통계 저장이 enum 순서 기반이라 끝에 추가한다.
+
+  /// 자음 이름 소리를 듣고 글자를 찾는다 (기역 → ㄱ)
+  listenConsonant('자음 소리 찾기', '자음 소리', '🎼'),
+
+  /// 자음과 모음을 합쳐 글자를 만든다 (ㄱ + ㅏ = 가)
+  combine('글자 만들기', '글자 조합', '🧱');
 
   const KrQuizType(this.label, this.shortLabel, this.emoji);
 
@@ -106,7 +114,8 @@ class KoreanQuestionGenerator {
   KoreanQuestion _generateOne(KrQuizType type, int stage) {
     switch (type) {
       case KrQuizType.pictureToWord:
-        return _pictureToWord(krWords2);
+        // 단계가 오를수록 낱말 풀이 넓어진다.
+        return _pictureToWord(krWords2.take(20 + stage * 4).toList());
 
       case KrQuizType.longWord:
         return _pictureToWord(krWords3);
@@ -114,7 +123,7 @@ class KoreanQuestionGenerator {
       case KrQuizType.wordToPicture:
         // 뒤 단계에서는 긴 낱말도 섞인다.
         final pool = stage >= 5 ? krAllWords : krWords2;
-        final picked = _pick(pool, 4);
+        final picked = _pickWords(pool);
         final target = picked.first;
         return KoreanQuestion(
           type: type,
@@ -160,11 +169,17 @@ class KoreanQuestionGenerator {
         );
 
       case KrQuizType.syllableOrder:
-        final start = _random.nextInt(krSyllablesA.length - 3);
-        final shown = krSyllablesA.sublist(start, start + 3);
-        final answer = krSyllablesA[start + 3];
+        // 뒤 단계에서는 ㅗ행(고노도…)도 섞여 문제 폭이 넓어진다.
+        final row = stage >= 6 && _random.nextBool()
+            ? krSyllablesO
+            : krSyllablesA;
+        // 앞 단계에서는 가나다 첫머리 위주로 나온다.
+        final maxStart = stage < 3 ? 5 : row.length - 3;
+        final start = _random.nextInt(maxStart);
+        final shown = row.sublist(start, start + 3);
+        final answer = row[start + 3];
         final wrong = _pick(
-          [for (final s in krSyllablesA) if (s != answer) s],
+          [for (final s in row) if (s != answer) s],
           3,
         );
         return KoreanQuestion(
@@ -175,13 +190,61 @@ class KoreanQuestionGenerator {
           answer: answer,
           answerText: answer,
           speech: '${shown.join(', ')}, 다음은?',
-          dedupKey: 'so:$start',
+          dedupKey: 'so:${row.first}:$start',
+        );
+
+      case KrQuizType.listenConsonant:
+        final pool = stage >= 5
+            ? krConsonantNames
+            : krConsonantNames.sublist(0, 7);
+        final picked = _pick(pool, 4);
+        final target = picked.first;
+        return KoreanQuestion(
+          type: type,
+          instruction: '무슨 자음일까요? 🔊를 눌러 다시 들어요',
+          display: '🔊',
+          choices: _shuffled([for (final c in picked) c.letter]),
+          answer: target.letter,
+          answerText: '${target.letter} (${target.name})',
+          speech: target.name,
+          dedupKey: 'lc:${target.letter}',
+        );
+
+      case KrQuizType.combine:
+        // 앞 단계는 아이가 익숙한 모음(ㅏㅗㅜㅣ)부터
+        final vowelPool = stage >= 5
+            ? krVowels
+            : [krVowels[0], krVowels[4], krVowels[6], krVowels[9]];
+        final consonant =
+            krBasicConsonants[_random.nextInt(krBasicConsonants.length)];
+        final vowel = vowelPool[_random.nextInt(vowelPool.length)];
+        final answer = krCombine(consonant, vowel.letter);
+        final consonantName = krConsonantNames
+            .firstWhere((c) => c.letter == consonant)
+            .name;
+        // 오답: 같은 자음+다른 모음, 다른 자음+같은 모음으로 헷갈리게
+        final candidates = <String>{
+          for (final v in krVowels) krCombine(consonant, v.letter),
+          for (final c in krBasicConsonants) krCombine(c, vowel.letter),
+        }..remove(answer);
+        final wrong = _pick(candidates.toList(), 3);
+        return KoreanQuestion(
+          type: type,
+          instruction: '글자를 합치면 무엇이 될까요?',
+          display: '$consonant + ${vowel.letter} = ?',
+          choices: _shuffled([answer, ...wrong]),
+          answer: answer,
+          answerText: answer,
+          speech: '$consonantName 하고 ${vowel.sound}를 합치면?',
+          dedupKey: 'cb:$consonant${vowel.letter}',
         );
 
       case KrQuizType.firstConsonant:
-        // 기본 자음으로 시작하는 낱말만 (ㄸ, ㄲ 등 쌍자음 제외)
+        // 기본 자음으로 시작하는 낱말만 (ㄸ, ㄲ 등 쌍자음 제외).
+        // 앞 단계는 두 글자 낱말 위주.
+        final source = stage >= 5 ? krAllWords : krWords2;
         final pool = [
-          for (final w in krAllWords)
+          for (final w in source)
             if (krBasicConsonants.contains(krFirstConsonant(w.word))) w,
         ];
         final word = pool[_random.nextInt(pool.length)];
@@ -231,7 +294,7 @@ class KoreanQuestionGenerator {
   }
 
   KoreanQuestion _pictureToWord(List<KrWord> pool) {
-    final picked = _pick(pool, 4);
+    final picked = _pickWords(pool);
     final target = picked.first;
     return KoreanQuestion(
       type: pool == krWords3 ? KrQuizType.longWord : KrQuizType.pictureToWord,
@@ -249,6 +312,19 @@ class KoreanQuestionGenerator {
   List<T> _pick<T>(List<T> pool, int n) {
     final copy = [...pool]..shuffle(_random);
     return copy.take(n).toList();
+  }
+
+  /// 낱말 4개를 고른다 (첫 번째가 정답).
+  /// 그림이 헷갈리는 같은 [KrWord.group] 낱말은 오답으로 넣지 않는다.
+  List<KrWord> _pickWords(List<KrWord> pool) {
+    final target = pool[_random.nextInt(pool.length)];
+    final others = [
+      for (final w in pool)
+        if (w.word != target.word &&
+            (w.group == null || w.group != target.group))
+          w,
+    ]..shuffle(_random);
+    return [target, ...others.take(3)];
   }
 
   List<String> _shuffled(List<String> items) => [...items]..shuffle(_random);

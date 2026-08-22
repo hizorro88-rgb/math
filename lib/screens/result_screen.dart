@@ -15,6 +15,8 @@ class ResultScreen extends StatelessWidget {
     required this.retryBuilder,
     this.chestCoins = 0,
     this.completedMissions = const [],
+    this.milestoneDays = 0,
+    this.milestoneCoins = 0,
     this.headerText,
     this.showUnlockHint = false,
     this.nextLabel,
@@ -34,6 +36,10 @@ class ResultScreen extends StatelessWidget {
 
   /// 이번 판으로 새로 달성한 데일리 미션들
   final List<DailyMission> completedMissions;
+
+  /// 스트릭 마일스톤(3·7·14·30일)에 막 도달했으면 그 일수와 보너스 코인
+  final int milestoneDays;
+  final int milestoneCoins;
 
   /// 단계 도전이면 '12단계 · 🐞 덧셈 첫걸음' 같은 안내문
   final String? headerText;
@@ -142,6 +148,11 @@ class ResultScreen extends StatelessWidget {
                     if (chestCoins > 0) ...[
                       const SizedBox(height: 12),
                       _ChestBanner(coins: chestCoins),
+                    ],
+                    if (milestoneDays > 0) ...[
+                      const SizedBox(height: 12),
+                      _MilestoneBanner(
+                          days: milestoneDays, coins: milestoneCoins),
                     ],
                     if (completedMissions.isNotEmpty) ...[
                       const SizedBox(height: 12),
@@ -271,6 +282,42 @@ class _ChestBanner extends StatelessWidget {
             fontSize: 17,
             fontWeight: FontWeight.bold,
             color: Color(0xFF6B2FB3),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 스트릭 마일스톤(3·7·14·30일 연속 출석) 축하 배너
+class _MilestoneBanner extends StatelessWidget {
+  const _MilestoneBanner({required this.days, required this.coins});
+
+  final int days;
+  final int coins;
+
+  @override
+  Widget build(BuildContext context) {
+    return TweenAnimationBuilder<double>(
+      tween: Tween(begin: 0.4, end: 1),
+      duration: const Duration(milliseconds: 700),
+      curve: Curves.elasticOut,
+      builder: (context, value, child) =>
+          Transform.scale(scale: value, child: child),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFFE9E0),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(color: const Color(0xFFFF7A00), width: 2),
+        ),
+        child: Text(
+          '🔥 $days일 연속 출석 달성! 보너스 +$coins 🪙',
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 17,
+            fontWeight: FontWeight.bold,
+            color: Color(0xFFC24A00),
           ),
         ),
       ),

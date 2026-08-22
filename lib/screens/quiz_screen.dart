@@ -201,7 +201,7 @@ class _QuizScreenState extends State<QuizScreen> {
       }
       await ProgressStore.addPoints(earned + chestCoins);
       // 데일리 미션·출석 기록 (새로 달성한 미션은 결과 화면에서 축하)
-      final completedMissions = await DailyStore.recordRound(
+      final rewards = await DailyStore.recordRound(
         correctCount: _correctCount,
         stars: stars,
       );
@@ -219,7 +219,9 @@ class _QuizScreenState extends State<QuizScreen> {
             totalCount: _baseCount,
             earnedPoints: earned,
             chestCoins: chestCoins,
-            completedMissions: completedMissions,
+            completedMissions: rewards.missions,
+            milestoneDays: rewards.milestoneDays,
+            milestoneCoins: rewards.milestoneCoins,
             headerText: level != null
                 ? '${level.number}단계 · ${level.unit.emoji} ${level.unit.title}'
                 : null,

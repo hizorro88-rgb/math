@@ -77,7 +77,8 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
   /// 소리 찾기 유형은 소리가 있어야 풀 수 있으니 먼저 확인한다.
   Future<void> _start() async {
     final needsListening = widget.type == KrQuizType.listenVowel ||
-        widget.type == KrQuizType.listenSyllable;
+        widget.type == KrQuizType.listenSyllable ||
+        widget.type == KrQuizType.listenConsonant;
     if (needsListening) {
       final ready = await ensureListenReady(context);
       if (!ready) {
@@ -153,9 +154,10 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
         await KoreanProgressStore.saveStars(level.number, stars);
       }
       await ProgressStore.addPoints(earned + chestCoins);
-      final completedMissions = await DailyStore.recordRound(
+      final rewards = await DailyStore.recordRound(
         correctCount: _correctCount,
         stars: stars,
+        korean: true,
       );
       await StatsStore.recordRoundDay();
       if (!mounted) return;
@@ -171,7 +173,9 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
             totalCount: _baseCount,
             earnedPoints: earned,
             chestCoins: chestCoins,
-            completedMissions: completedMissions,
+            completedMissions: rewards.missions,
+            milestoneDays: rewards.milestoneDays,
+            milestoneCoins: rewards.milestoneCoins,
             headerText: level != null
                 ? '한글 ${level.number}단계 · ${level.unit.emoji} ${level.unit.title}'
                 : null,
