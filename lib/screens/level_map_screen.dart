@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import '../models/curriculum.dart';
 import '../models/daily.dart';
+import '../models/english_curriculum.dart';
 import '../models/korean_curriculum.dart';
 import '../models/profile.dart';
 import '../models/progress.dart';
@@ -15,6 +16,7 @@ import '../models/boss.dart';
 import '../models/quiz_config.dart';
 import 'badge_screen.dart';
 import 'category_screen.dart';
+import 'english_category_screen.dart';
 import 'korean_category_screen.dart';
 import 'onboarding_screen.dart';
 import 'practice_screen.dart';
@@ -36,6 +38,7 @@ class _MapData {
   const _MapData({
     required this.stars,
     required this.krStars,
+    required this.enStars,
     required this.points,
     required this.coins,
     required this.equipped,
@@ -47,6 +50,7 @@ class _MapData {
 
   final List<int> stars;
   final List<int> krStars;
+  final List<int> enStars;
   final int points;
   final int coins;
   final List<ShopItem> equipped;
@@ -63,9 +67,10 @@ class _MapData {
 class _LevelMapScreenState extends State<LevelMapScreen> {
   late Future<_MapData> _dataFuture;
 
-  /// 지금 보고 있는 과목 (false: 수학, true: 한글)
-  bool _korean = false;
-  static const _subjectKey = 'subject_korean_v1';
+  /// 지금 보고 있는 과목 (0: 수학, 1: 한글, 2: 영어)
+  int _subject = 0;
+  static const _subjectKey = 'subject_v2';
+  static const _subjectKeyOld = 'subject_korean_v1'; // 예전 한글/수학 토글
 
   @override
   void initState() {
@@ -76,14 +81,16 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
 
   Future<void> _loadSubject() async {
     final prefs = await SharedPreferences.getInstance();
-    final korean = prefs.getBool(Profiles.scoped(_subjectKey)) ?? false;
-    if (mounted && korean != _korean) setState(() => _korean = korean);
+    var subject = prefs.getInt(Profiles.scoped(_subjectKey));
+    subject ??=
+        (prefs.getBool(Profiles.scoped(_subjectKeyOld)) ?? false) ? 1 : 0;
+    if (mounted && subject != _subject) setState(() => _subject = subject!);
   }
 
-  Future<void> _setSubject(bool korean) async {
-    setState(() => _korean = korean);
+  Future<void> _setSubject(int subject) async {
+    setState(() => _subject = subject);
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setBool(Profiles.scoped(_subjectKey), korean);
+    await prefs.setInt(Profiles.scoped(_subjectKey), subject);
   }
 
   Future<_MapData> _load() async {
@@ -91,6 +98,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     return _MapData(
       stars: await ProgressStore.load(),
       krStars: await KoreanProgressStore.load(),
+      enStars: await EnglishProgressStore.load(),
       points: await ProgressStore.loadPoints(),
       coins: await ProgressStore.loadCoins(),
       equipped: await ShopStore.loadEquipped(),
@@ -160,6 +168,14 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     _refresh();
   }
 
+  Future<void> _openEnglishCategory(EnCategory category) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+          builder: (_) => EnglishCategoryScreen(category: category)),
+    );
+    _refresh();
+  }
+
   Future<void> _openPractice() async {
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const PracticeScreen()),
@@ -224,15 +240,20 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
             return const Center(child: CircularProgressIndicator());
           }
           final stars = data.stars;
-          // 별 합계는 수학 + 한글
+          // 별 합계는 수학 + 한글 + 영어
           final totalStars = data.stars.fold<int>(0, (sum, s) => sum + s) +
-              data.krStars.fold<int>(0, (sum, s) => sum + s);
+              data.krStars.fold<int>(0, (sum, s) => sum + s) +
+              data.enStars.fold<int>(0, (sum, s) => sum + s);
 
           return ListView(
             padding: EdgeInsets.zero,
             children: [
               _Header(
-                title: _korean ? '한글 놀이' : '수학 놀이',
+                title: switch (_subject) {
+                  1 => '한글 놀이',
+                  2 => '영어 놀이',
+                  _ => '수학 놀이',
+                },
                 greeting: _greetingFor(data),
                 totalStars: totalStars,
                 coins: data.coins,
@@ -247,24 +268,33 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    // 과목 고르기: 수학 ↔ 한글
+                    // 과목 고르기: 수학 / 한글 / 영어
                     Row(
                       children: [
                         Expanded(
                           child: _SubjectTab(
                             emoji: '🧮',
                             label: '수학',
-                            selected: !_korean,
-                            onTap: () => _setSubject(false),
+                            selected: _subject == 0,
+                            onTap: () => _setSubject(0),
                           ),
                         ),
-                        const SizedBox(width: 10),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: _SubjectTab(
                             emoji: '📖',
                             label: '한글',
-                            selected: _korean,
-                            onTap: () => _setSubject(true),
+                            selected: _subject == 1,
+                            onTap: () => _setSubject(1),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: _SubjectTab(
+                            emoji: '🔤',
+                            label: '영어',
+                            selected: _subject == 2,
+                            onTap: () => _setSubject(2),
                           ),
                         ),
                       ],
@@ -347,8 +377,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                       ],
                     ),
                     const SizedBox(height: 14),
-                    // 나이·학년(수학) 또는 한글 카테고리를 골라 들어간다.
-                    if (_korean)
+                    // 고른 과목의 카테고리를 골라 들어간다.
+                    if (_subject == 1)
                       for (final category in KoreanCurriculum.categories) ...[
                         _CategoryCard(
                           emoji: category.emoji,
@@ -362,6 +392,23 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                               .length,
                           total: category.totalLevels,
                           onTap: () => _openKoreanCategory(category),
+                        ),
+                        const SizedBox(height: 12),
+                      ]
+                    else if (_subject == 2)
+                      for (final category in EnglishCurriculum.categories) ...[
+                        _CategoryCard(
+                          emoji: category.emoji,
+                          title: category.title,
+                          desc: category.desc,
+                          color: category.color,
+                          cleared: EnglishCurriculum.levels
+                              .where((l) =>
+                                  l.unit.category.index == category.index &&
+                                  data.enStars[l.number - 1] >= 1)
+                              .length,
+                          total: category.totalLevels,
+                          onTap: () => _openEnglishCategory(category),
                         ),
                         const SizedBox(height: 12),
                       ]

@@ -2,13 +2,15 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:preschool_math/models/badges.dart';
 import 'package:preschool_math/models/curriculum.dart';
 import 'package:preschool_math/models/daily.dart';
+import 'package:preschool_math/models/english_question.dart';
 import 'package:preschool_math/models/korean_curriculum.dart';
 import 'package:preschool_math/models/korean_question.dart';
 import 'package:preschool_math/models/profile.dart';
 import 'package:preschool_math/models/stats.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-LearningStats _stats({int addCorrect = 0, List<int>? krCorrect}) =>
+LearningStats _stats(
+        {int addCorrect = 0, List<int>? krCorrect, List<int>? enCorrect}) =>
     LearningStats(
       addCorrect: addCorrect,
       addWrong: 0,
@@ -31,6 +33,9 @@ LearningStats _stats({int addCorrect = 0, List<int>? krCorrect}) =>
       krCorrect:
           krCorrect ?? List.filled(KrQuizType.values.length, 0),
       krWrong: List.filled(KrQuizType.values.length, 0),
+      enCorrect:
+          enCorrect ?? List.filled(EnQuizType.values.length, 0),
+      enWrong: List.filled(EnQuizType.values.length, 0),
       recentDays: const [],
     );
 
@@ -76,6 +81,12 @@ void main() {
         _badge('kr_first').earnedBy(_data(
             stats: _stats(
                 krCorrect: [1, ...List.filled(KrQuizType.values.length - 1, 0)]))),
+        isTrue,
+      );
+      expect(
+        _badge('en_first').earnedBy(_data(
+            stats: _stats(
+                enCorrect: [1, ...List.filled(EnQuizType.values.length - 1, 0)]))),
         isTrue,
       );
       final stars = List.filled(Curriculum.totalLevels, 0);

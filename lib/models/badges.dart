@@ -27,6 +27,7 @@ class BadgeData {
 
   int get mathAnswered => stats.mathCorrect + stats.mathWrong;
   int get krAnswered => stats.krTotalCorrect + stats.krTotalWrong;
+  int get enAnswered => stats.enTotalCorrect + stats.enTotalWrong;
 
   /// 모든 단계를 통과한 카테고리가 하나라도 있는지 (수학·한글)
   bool get anyCategoryCleared {
@@ -143,10 +144,24 @@ final List<LearnBadge> allBadges = [
   ),
   LearnBadge(
     id: 'kr_first',
-    emoji: '🔤',
+    emoji: '📝',
     title: '한글과 인사',
     desc: '한글 문제 1개 풀기',
     earnedBy: (d) => d.krAnswered >= 1,
+  ),
+  LearnBadge(
+    id: 'en_first',
+    emoji: '🔤',
+    title: '영어와 인사',
+    desc: '영어 문제 1개 풀기',
+    earnedBy: (d) => d.enAnswered >= 1,
+  ),
+  LearnBadge(
+    id: 'en_sprout',
+    emoji: '🌍',
+    title: '영어 새싹',
+    desc: '영어 문제 50개 풀기',
+    earnedBy: (d) => d.enAnswered >= 50,
   ),
 ];
 

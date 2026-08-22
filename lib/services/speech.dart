@@ -28,12 +28,19 @@ class Speech {
     }
   }
 
+  static String _currentLang = 'ko-KR';
+
   /// 읽던 것을 멈추고 새로 읽는다. 실패해도(테스트 등) 조용히 넘어간다.
   /// 호출하는 쪽에서 기다릴 필요 없음(fire-and-forget).
-  static Future<void> speak(String text) async {
+  /// [lang]으로 언어를 바꿔 읽을 수 있다 (영어 낱말은 'en-US').
+  static Future<void> speak(String text, {String lang = 'ko-KR'}) async {
     if (!Sounds.enabled) return;
     try {
       await _tts.stop();
+      if (lang != _currentLang) {
+        await _tts.setLanguage(lang);
+        _currentLang = lang;
+      }
       await _tts.speak(text);
     } catch (_) {}
   }

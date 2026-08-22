@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preschool_math/main.dart';
+import 'package:preschool_math/models/english_data.dart';
 import 'package:preschool_math/models/korean_data.dart';
 import 'package:preschool_math/models/profile.dart';
 import 'package:preschool_math/services/sounds.dart';
@@ -361,6 +362,49 @@ void main() {
       const Offset(0, -300),
     );
     expect(find.text('📖 한글 정답률'), findsOneWidget);
+  });
+
+  testWidgets('착용한 아이템이 홈 헤더 부엉이에 보인다', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'owned_items_v1': ['ribbon', 'glasses', 'grass'],
+      'equipped_items_v1': ['ribbon', 'glasses', 'grass'],
+    });
+
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    // 부엉이 + 리본(머리), 안경(얼굴), 풀밭(배경)
+    expect(find.text('🦉'), findsOneWidget);
+    expect(find.text('🎀'), findsOneWidget);
+    expect(find.text('👓'), findsOneWidget);
+    expect(find.text('🌿'), findsOneWidget);
+  });
+
+  testWidgets('영어 탭에서 낱말 듣고 그림 찾기 퀴즈를 풀 수 있다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await scrollAndTap(tester, find.text('영어'));
+    expect(find.text('알파벳 첫걸음'), findsOneWidget);
+
+    // 영어 낱말 카테고리 → 첫 단계 (낱말 듣고 그림 찾기)
+    await scrollAndTap(tester, find.text('영어 낱말'));
+    expect(find.text('낱말 듣고 그림 찾기'), findsOneWidget);
+    await scrollAndTap(tester, find.text('31')); // 카테고리 첫 단계
+    expect(find.text('잘 듣고 알맞은 그림을 찾아요'), findsOneWidget);
+
+    // 카드에 크게 보이는 영어 낱말로 정답 그림을 찾아 누른다.
+    final wordText = tester
+        .widgetList<Text>(find.byWidgetPredicate(
+            (w) => w is Text && w.style?.fontSize == 40))
+        .first
+        .data!;
+    final answerEmoji =
+        enAllWords.firstWhere((w) => w.shown == wordText).emoji;
+    await tester.tap(find.text(answerEmoji));
+    await tester.pumpAndSettle();
+
+    expect(find.text('정답이에요! 🎉'), findsOneWidget);
   });
 
   testWidgets('꾸미기 가게에서 코인으로 아이템을 산다', (tester) async {

@@ -2,9 +2,11 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../models/english_question.dart';
 import '../models/korean_question.dart';
 import '../models/quiz_config.dart';
 import '../widgets/bouncy_button.dart';
+import 'english_quiz_screen.dart';
 import 'korean_quiz_screen.dart';
 import 'quiz_screen.dart';
 
@@ -17,21 +19,34 @@ class PracticeScreen extends StatefulWidget {
 }
 
 class _PracticeScreenState extends State<PracticeScreen> {
-  bool _korean = false;
+  /// 0: 수학, 1: 한글, 2: 영어
+  int _subject = 0;
 
   QuizMode _mode = QuizMode.addition;
   Difficulty _difficulty = Difficulty.easy;
 
   KrQuizType _krType = KrQuizType.pictureToWord;
-  bool _krHard = false;
+  EnQuizType _enType = EnQuizType.wordToPicture;
+  bool _langHard = false;
 
   void _startQuiz() {
-    if (_korean) {
+    if (_subject == 1) {
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => KoreanQuizScreen(
             type: _krType,
-            stage: _krHard ? 9 : 0,
+            stage: _langHard ? 9 : 0,
+          ),
+        ),
+      );
+      return;
+    }
+    if (_subject == 2) {
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => EnglishQuizScreen(
+            type: _enType,
+            stage: _langHard ? 9 : 0,
           ),
         ),
       );
@@ -79,8 +94,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
                     child: _ChoiceCard(
                       emoji: '🧮',
                       label: '수학',
-                      selected: !_korean,
-                      onTap: () => setState(() => _korean = false),
+                      selected: _subject == 0,
+                      onTap: () => setState(() => _subject = 0),
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -88,8 +103,17 @@ class _PracticeScreenState extends State<PracticeScreen> {
                     child: _ChoiceCard(
                       emoji: '📖',
                       label: '한글',
-                      selected: _korean,
-                      onTap: () => setState(() => _korean = true),
+                      selected: _subject == 1,
+                      onTap: () => setState(() => _subject = 1),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: _ChoiceCard(
+                      emoji: '🔤',
+                      label: '영어',
+                      selected: _subject == 2,
+                      onTap: () => setState(() => _subject = 2),
                     ),
                   ),
                 ],
@@ -97,7 +121,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
               const SizedBox(height: 24),
               const _SectionLabel('어떤 공부를 할까요?'),
               const SizedBox(height: 8),
-              if (_korean)
+              if (_subject == 1)
                 ..._buildGrid(
                   KrQuizType.values,
                   (t) => _ChoiceCard(
@@ -105,6 +129,16 @@ class _PracticeScreenState extends State<PracticeScreen> {
                     label: t.label,
                     selected: _krType == t,
                     onTap: () => setState(() => _krType = t),
+                  ),
+                )
+              else if (_subject == 2)
+                ..._buildGrid(
+                  EnQuizType.values,
+                  (t) => _ChoiceCard(
+                    emoji: t.emoji,
+                    label: t.label,
+                    selected: _enType == t,
+                    onTap: () => setState(() => _enType = t),
                   ),
                 )
               else
@@ -120,15 +154,15 @@ class _PracticeScreenState extends State<PracticeScreen> {
               const SizedBox(height: 24),
               const _SectionLabel('얼마나 어려울까요?'),
               const SizedBox(height: 8),
-              if (_korean)
+              if (_subject != 0)
                 Row(
                   children: [
                     Expanded(
                       child: _ChoiceCard(
                         emoji: '🐣',
                         label: '쉬워요',
-                        selected: !_krHard,
-                        onTap: () => setState(() => _krHard = false),
+                        selected: !_langHard,
+                        onTap: () => setState(() => _langHard = false),
                       ),
                     ),
                     const SizedBox(width: 8),
@@ -136,8 +170,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
                       child: _ChoiceCard(
                         emoji: '🦉',
                         label: '어려워요',
-                        selected: _krHard,
-                        onTap: () => setState(() => _krHard = true),
+                        selected: _langHard,
+                        onTap: () => setState(() => _langHard = true),
                       ),
                     ),
                   ],

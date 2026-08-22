@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'profile.dart';
 
 import 'daily.dart';
+import 'english_question.dart';
 import 'korean_question.dart';
 import 'question.dart';
 
@@ -30,6 +31,8 @@ class LearningStats {
     required this.bandWrong,
     required this.krCorrect,
     required this.krWrong,
+    required this.enCorrect,
+    required this.enWrong,
     required this.recentDays,
   });
 
@@ -64,6 +67,10 @@ class LearningStats {
   final List<int> krCorrect;
   final List<int> krWrong;
 
+  /// 영어 유형별 정답/오답 (인덱스 = EnQuizType.index)
+  final List<int> enCorrect;
+  final List<int> enWrong;
+
   /// 최근 7일 동안 하루에 푼 판 수 (오래된 날 → 오늘 순)
   final List<({String day, int rounds})> recentDays;
 
@@ -89,9 +96,12 @@ class LearningStats {
   int get krTotalCorrect => krCorrect.fold(0, (a, b) => a + b);
   int get krTotalWrong => krWrong.fold(0, (a, b) => a + b);
 
-  /// 수학 + 한글 합계
-  int get totalCorrect => mathCorrect + krTotalCorrect;
-  int get totalWrong => mathWrong + krTotalWrong;
+  int get enTotalCorrect => enCorrect.fold(0, (a, b) => a + b);
+  int get enTotalWrong => enWrong.fold(0, (a, b) => a + b);
+
+  /// 수학 + 한글 + 영어 합계
+  int get totalCorrect => mathCorrect + krTotalCorrect + enTotalCorrect;
+  int get totalWrong => mathWrong + krTotalWrong + enTotalWrong;
   int get totalAnswered => totalCorrect + totalWrong;
 
   /// 정답률(%). 푼 문제가 없으면 null.
@@ -138,6 +148,8 @@ class StatsStore {
   static const _bandWrongKey = 'stats_band_wrong_v1';
   static const _krCorrectKey = 'stats_kr_correct_v1'; // KrQuizType.index별 CSV
   static const _krWrongKey = 'stats_kr_wrong_v1';
+  static const _enCorrectKey = 'stats_en_correct_v1'; // EnQuizType.index별 CSV
+  static const _enWrongKey = 'stats_en_wrong_v1';
   static const _daysKey = 'stats_days_v1'; // ['2026-07-28:3', ...]
 
   /// 수학 문제 하나의 첫 시도 결과를 기록한다. (재출제 풀이는 세지 않음)
@@ -172,6 +184,16 @@ class StatsStore {
     final prefs = await SharedPreferences.getInstance();
     final key = Profiles.scoped(correct ? _krCorrectKey : _krWrongKey);
     final counts = _parseCsv(prefs.getString(key), KrQuizType.values.length);
+    counts[type.index]++;
+    await prefs.setString(key, counts.join(','));
+  }
+
+  /// 영어 문제 하나의 첫 시도 결과를 기록한다.
+  static Future<void> recordEnglishAnswer(EnQuizType type,
+      {required bool correct}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = Profiles.scoped(correct ? _enCorrectKey : _enWrongKey);
+    final counts = _parseCsv(prefs.getString(key), EnQuizType.values.length);
     counts[type.index]++;
     await prefs.setString(key, counts.join(','));
   }
@@ -224,6 +246,10 @@ class StatsStore {
           KrQuizType.values.length),
       krWrong: _parseCsv(prefs.getString(Profiles.scoped(_krWrongKey)),
           KrQuizType.values.length),
+      enCorrect: _parseCsv(prefs.getString(Profiles.scoped(_enCorrectKey)),
+          EnQuizType.values.length),
+      enWrong: _parseCsv(prefs.getString(Profiles.scoped(_enWrongKey)),
+          EnQuizType.values.length),
       recentDays: [
         for (var i = 6; i >= 0; i--)
           () {

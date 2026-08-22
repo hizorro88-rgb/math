@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../services/reminders.dart';
 
+import '../models/english_curriculum.dart';
+import '../models/english_question.dart';
 import '../models/korean_curriculum.dart';
 import '../models/korean_question.dart';
 import '../models/progress.dart';
@@ -16,14 +18,16 @@ class ReportScreen extends StatefulWidget {
 }
 
 class _ReportScreenState extends State<ReportScreen> {
-  late final Future<(LearningStats, List<int>, List<int>)> _dataFuture =
-      _loadData();
+  late final Future<(LearningStats, List<int>, List<int>, List<int>)>
+      _dataFuture = _loadData();
 
-  static Future<(LearningStats, List<int>, List<int>)> _loadData() async => (
-        await StatsStore.load(),
-        await ProgressStore.load(),
-        await KoreanProgressStore.load(),
-      );
+  static Future<(LearningStats, List<int>, List<int>, List<int>)>
+      _loadData() async => (
+            await StatsStore.load(),
+            await ProgressStore.load(),
+            await KoreanProgressStore.load(),
+            await EnglishProgressStore.load(),
+          );
 
   @override
   Widget build(BuildContext context) {
@@ -37,17 +41,18 @@ class _ReportScreenState extends State<ReportScreen> {
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
-      body: FutureBuilder<(LearningStats, List<int>, List<int>)>(
+      body: FutureBuilder<(LearningStats, List<int>, List<int>, List<int>)>(
         future: _dataFuture,
         builder: (context, snapshot) {
           final data = snapshot.data;
           if (data == null) {
             return const Center(child: CircularProgressIndicator());
           }
-          final (stats, levelStars, krStars) = data;
-          // 통과한 단계는 수학 + 한글 합계
+          final (stats, levelStars, krStars, enStars) = data;
+          // 통과한 단계는 수학 + 한글 + 영어 합계
           final clearedLevels = levelStars.where((s) => s >= 1).length +
-              krStars.where((s) => s >= 1).length;
+              krStars.where((s) => s >= 1).length +
+              enStars.where((s) => s >= 1).length;
 
           return ListView(
             padding: const EdgeInsets.all(16),
@@ -59,6 +64,8 @@ class _ReportScreenState extends State<ReportScreen> {
               _AccuracyCard(stats: stats),
               const SizedBox(height: 14),
               _KoreanCard(stats: stats),
+              const SizedBox(height: 14),
+              _EnglishCard(stats: stats),
               const SizedBox(height: 14),
               _AdviceCard(stats: stats),
               const SizedBox(height: 14),
@@ -355,6 +362,41 @@ class _KoreanCard extends StatelessWidget {
   }
 }
 
+/// 영어 유형별 정답률
+class _EnglishCard extends StatelessWidget {
+  const _EnglishCard({required this.stats});
+
+  final LearningStats stats;
+
+  @override
+  Widget build(BuildContext context) {
+    if (stats.enTotalCorrect + stats.enTotalWrong == 0) {
+      return _reportCard(
+        title: '🔤 영어 정답률',
+        child: Text(
+          '아직 영어 퀴즈를 풀지 않았어요.\n홈에서 🔤 영어 탭을 눌러 시작해 보세요!',
+          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+        ),
+      );
+    }
+    return _reportCard(
+      title: '🔤 영어 정답률',
+      child: Column(
+        children: [
+          for (final type in EnQuizType.values) ...[
+            _AccuracyRow(
+              label: '${type.emoji} ${type.shortLabel}',
+              correct: stats.enCorrect[type.index],
+              wrong: stats.enWrong[type.index],
+            ),
+            const SizedBox(height: 10),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 /// 정답률이 가장 낮은 영역을 찾아 연습을 추천한다.
 class _AdviceCard extends StatelessWidget {
   const _AdviceCard({required this.stats});
@@ -388,6 +430,12 @@ class _AdviceCard extends StatelessWidget {
           '한글 ${type.shortLabel}',
           LearningStats.accuracy(
               stats.krCorrect[type.index], stats.krWrong[type.index]),
+        ),
+      for (final type in EnQuizType.values)
+        (
+          '영어 ${type.shortLabel}',
+          LearningStats.accuracy(
+              stats.enCorrect[type.index], stats.enWrong[type.index]),
         ),
     ];
     (String, int)? weakest;

@@ -58,13 +58,15 @@ void main() {
     });
 
     test('충분히 풀면 오늘의 미션 3개가 모두 달성된다', () async {
-      // 수학 5판 + 한글 1판, 매판 10문제 정답·별 3개
+      // 수학 5판 + 한글 1판 + 영어 1판, 매판 10문제 정답·별 3개
       // → 어떤 조합이 뽑혀도 전부 충족된다.
       for (var i = 0; i < 5; i++) {
         await DailyStore.recordRound(correctCount: 10, stars: 3, now: day1);
       }
       await DailyStore.recordRound(
           correctCount: 10, stars: 3, korean: true, now: day1);
+      await DailyStore.recordRound(
+          correctCount: 10, stars: 3, english: true, now: day1);
 
       final state = await DailyStore.load(now: day1);
       for (final mission in state.missions) {
@@ -79,6 +81,8 @@ void main() {
       }
       await DailyStore.recordRound(
           correctCount: 10, stars: 3, korean: true, now: day1);
+      await DailyStore.recordRound(
+          correctCount: 10, stars: 3, english: true, now: day1);
       final coinsAfterDone = await ProgressStore.loadCoins();
 
       final rewards = await DailyStore.recordRound(
@@ -95,13 +99,16 @@ void main() {
       expect(nextDay.claimed, isEmpty);
     });
 
-    test('수학/한글 판 수가 따로 집계된다', () async {
+    test('수학/한글/영어 판 수가 따로 집계된다', () async {
       await DailyStore.recordRound(correctCount: 5, stars: 1, now: day1);
       await DailyStore.recordRound(
           correctCount: 5, stars: 1, korean: true, now: day1);
+      await DailyStore.recordRound(
+          correctCount: 5, stars: 1, english: true, now: day1);
       final state = await DailyStore.load(now: day1);
       expect(state.mathRounds, 1);
       expect(state.koreanRounds, 1);
+      expect(state.englishRounds, 1);
       expect(state.perfect, 0);
 
       await DailyStore.recordRound(correctCount: 10, stars: 3, now: day1);

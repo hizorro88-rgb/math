@@ -50,6 +50,8 @@ const List<DailyMission> dailyMissions = [
   DailyMission(
       id: 'korean1', emoji: '📖', title: '한글 1판 풀기', target: 1, reward: 20),
   DailyMission(
+      id: 'english1', emoji: '🔤', title: '영어 1판 풀기', target: 1, reward: 20),
+  DailyMission(
       id: 'rounds5', emoji: '🏃', title: '퀴즈 5판 풀기', target: 5, reward: 50),
 ];
 
@@ -81,6 +83,7 @@ class DailyState {
     required this.perfect,
     required this.mathRounds,
     required this.koreanRounds,
+    required this.englishRounds,
     required this.claimed,
     required this.streak,
     required this.freezes,
@@ -93,9 +96,10 @@ class DailyState {
   final int stars;
   final int perfect;
 
-  /// 오늘 푼 수학/한글 판 수
+  /// 오늘 푼 수학/한글/영어 판 수
   final int mathRounds;
   final int koreanRounds;
+  final int englishRounds;
 
   /// 오늘 보상을 받은 미션 id들
   final Set<String> claimed;
@@ -116,6 +120,7 @@ class DailyState {
         'perfect1' => perfect,
         'math1' => mathRounds,
         'korean1' => koreanRounds,
+        'english1' => englishRounds,
         _ => 0,
       };
 
@@ -133,6 +138,7 @@ class DailyStore {
   static const _perfectKey = 'daily_perfect_v1';
   static const _mathRoundsKey = 'daily_math_rounds_v1';
   static const _koreanRoundsKey = 'daily_korean_rounds_v1';
+  static const _englishRoundsKey = 'daily_english_rounds_v1';
   static const _claimedKey = 'daily_claimed_v1';
   static const _streakKey = 'streak_count_v1';
   static const _streakDayKey = 'streak_last_day_v1';
@@ -160,7 +166,7 @@ class DailyStore {
     }
     final random = Random(seed);
     const bucketB = ['correct20', 'correct30', 'stars5', 'perfect1'];
-    const bucketC = ['math1', 'korean1', 'rounds5'];
+    const bucketC = ['math1', 'korean1', 'english1', 'rounds5'];
     return [
       _missionById('rounds3'),
       _missionById(bucketB[random.nextInt(bucketB.length)]),
@@ -183,6 +189,7 @@ class DailyStore {
       await prefs.setInt(Profiles.scoped(_perfectKey), 0);
       await prefs.setInt(Profiles.scoped(_mathRoundsKey), 0);
       await prefs.setInt(Profiles.scoped(_koreanRoundsKey), 0);
+      await prefs.setInt(Profiles.scoped(_englishRoundsKey), 0);
       await prefs.setStringList(Profiles.scoped(_claimedKey), const []);
     }
 
@@ -205,6 +212,7 @@ class DailyStore {
       perfect: prefs.getInt(Profiles.scoped(_perfectKey)) ?? 0,
       mathRounds: prefs.getInt(Profiles.scoped(_mathRoundsKey)) ?? 0,
       koreanRounds: prefs.getInt(Profiles.scoped(_koreanRoundsKey)) ?? 0,
+      englishRounds: prefs.getInt(Profiles.scoped(_englishRoundsKey)) ?? 0,
       claimed: (prefs.getStringList(Profiles.scoped(_claimedKey)) ?? const [])
           .toSet(),
       streak: streak,
@@ -239,6 +247,7 @@ class DailyStore {
     required int correctCount,
     required int stars,
     bool korean = false,
+    bool english = false,
     DateTime? now,
   }) async {
     final before = await load(now: now); // 날짜 리셋 보장
@@ -250,14 +259,16 @@ class DailyStore {
     final correct = before.correct + correctCount;
     final starsTotal = before.stars + stars;
     final perfect = before.perfect + (stars >= 3 ? 1 : 0);
-    final mathRounds = before.mathRounds + (korean ? 0 : 1);
+    final mathRounds = before.mathRounds + (korean || english ? 0 : 1);
     final koreanRounds = before.koreanRounds + (korean ? 1 : 0);
+    final englishRounds = before.englishRounds + (english ? 1 : 0);
     await prefs.setInt(Profiles.scoped(_roundsKey), rounds);
     await prefs.setInt(Profiles.scoped(_correctKey), correct);
     await prefs.setInt(Profiles.scoped(_starsKey), starsTotal);
     await prefs.setInt(Profiles.scoped(_perfectKey), perfect);
     await prefs.setInt(Profiles.scoped(_mathRoundsKey), mathRounds);
     await prefs.setInt(Profiles.scoped(_koreanRoundsKey), koreanRounds);
+    await prefs.setInt(Profiles.scoped(_englishRoundsKey), englishRounds);
 
     // 출석 스트릭: 오늘 처음 완료했을 때만 갱신.
     // 어제 출석 → +1 / 하루 걸렀는데 지킴이가 있으면 하나 쓰고 이어감 / 아니면 1부터.
@@ -304,6 +315,7 @@ class DailyStore {
       perfect: perfect,
       mathRounds: mathRounds,
       koreanRounds: koreanRounds,
+      englishRounds: englishRounds,
       claimed: before.claimed,
       streak: 0,
       freezes: 0,
