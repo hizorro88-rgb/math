@@ -6,6 +6,7 @@ import '../models/english_curriculum.dart';
 import '../models/english_question.dart';
 import '../models/korean_curriculum.dart';
 import '../models/korean_question.dart';
+import '../models/language_packs.dart';
 import '../models/progress.dart';
 import '../models/stats.dart';
 
@@ -67,6 +68,10 @@ class _ReportScreenState extends State<ReportScreen> {
               const SizedBox(height: 14),
               _EnglishCard(stats: stats),
               const SizedBox(height: 14),
+              for (final pack in languagePacks) ...[
+                _LangCard(pack: pack, stats: stats),
+                const SizedBox(height: 14),
+              ],
               _AdviceCard(stats: stats),
               const SizedBox(height: 14),
               const _ReminderCard(),
@@ -397,6 +402,49 @@ class _EnglishCard extends StatelessWidget {
   }
 }
 
+/// 언어 팩(일본어·중국어…) 유형별 정답률
+class _LangCard extends StatelessWidget {
+  const _LangCard({required this.pack, required this.stats});
+
+  final LanguagePack pack;
+  final LearningStats stats;
+
+  @override
+  Widget build(BuildContext context) {
+    final correct = stats.langCorrect[pack.id] ??
+        List.filled(pack.types.length, 0);
+    final wrong =
+        stats.langWrong[pack.id] ?? List.filled(pack.types.length, 0);
+    final title = '${pack.emoji} ${pack.name} 정답률';
+
+    if (stats.langAnswered(pack.id) == 0) {
+      return _reportCard(
+        title: title,
+        child: Text(
+          '아직 ${pack.name} 퀴즈를 풀지 않았어요.\n'
+          '홈에서 ${pack.emoji} ${pack.name} 탭을 눌러 시작해 보세요!',
+          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+        ),
+      );
+    }
+    return _reportCard(
+      title: title,
+      child: Column(
+        children: [
+          for (var i = 0; i < pack.types.length; i++) ...[
+            _AccuracyRow(
+              label: '${pack.types[i].emoji} ${pack.types[i].shortLabel}',
+              correct: correct[i],
+              wrong: wrong[i],
+            ),
+            const SizedBox(height: 10),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
 /// 정답률이 가장 낮은 영역을 찾아 연습을 추천한다.
 class _AdviceCard extends StatelessWidget {
   const _AdviceCard({required this.stats});
@@ -437,6 +485,17 @@ class _AdviceCard extends StatelessWidget {
           LearningStats.accuracy(
               stats.enCorrect[type.index], stats.enWrong[type.index]),
         ),
+      for (final pack in languagePacks)
+        for (var i = 0; i < pack.types.length; i++)
+          (
+            '${pack.name} ${pack.types[i].shortLabel}',
+            LearningStats.accuracy(
+                (stats.langCorrect[pack.id] ?? const [])
+                    .elementAtOrNull(i) ??
+                    0,
+                (stats.langWrong[pack.id] ?? const []).elementAtOrNull(i) ??
+                    0),
+          ),
     ];
     (String, int)? weakest;
     for (final (name, acc) in candidates) {

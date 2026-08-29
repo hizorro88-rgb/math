@@ -248,6 +248,9 @@ class DailyStore {
     required int stars,
     bool korean = false,
     bool english = false,
+
+    /// 일본어·중국어 등 언어 팩 판 (전용 카운터는 없고 수학 판에서만 제외)
+    bool otherLang = false,
     DateTime? now,
   }) async {
     final before = await load(now: now); // 날짜 리셋 보장
@@ -259,7 +262,8 @@ class DailyStore {
     final correct = before.correct + correctCount;
     final starsTotal = before.stars + stars;
     final perfect = before.perfect + (stars >= 3 ? 1 : 0);
-    final mathRounds = before.mathRounds + (korean || english ? 0 : 1);
+    final mathRounds =
+        before.mathRounds + (korean || english || otherLang ? 0 : 1);
     final koreanRounds = before.koreanRounds + (korean ? 1 : 0);
     final englishRounds = before.englishRounds + (english ? 1 : 0);
     await prefs.setInt(Profiles.scoped(_roundsKey), rounds);

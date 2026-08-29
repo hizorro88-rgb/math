@@ -36,6 +36,8 @@ LearningStats _stats(
       enCorrect:
           enCorrect ?? List.filled(EnQuizType.values.length, 0),
       enWrong: List.filled(EnQuizType.values.length, 0),
+      langCorrect: const {},
+      langWrong: const {},
       recentDays: const [],
     );
 

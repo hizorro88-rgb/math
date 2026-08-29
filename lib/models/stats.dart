@@ -5,6 +5,8 @@ import 'profile.dart';
 import 'daily.dart';
 import 'english_question.dart';
 import 'korean_question.dart';
+import 'language_pack.dart';
+import 'language_packs.dart' show languagePacks;
 import 'question.dart';
 
 /// 문제 유형과 수 범위별 정답/오답 횟수, 한글 유형별 기록, 최근 활동.
@@ -33,6 +35,8 @@ class LearningStats {
     required this.krWrong,
     required this.enCorrect,
     required this.enWrong,
+    required this.langCorrect,
+    required this.langWrong,
     required this.recentDays,
   });
 
@@ -71,6 +75,10 @@ class LearningStats {
   final List<int> enCorrect;
   final List<int> enWrong;
 
+  /// 언어 팩(일본어·중국어…) 유형별 정답/오답. 키는 팩 id.
+  final Map<String, List<int>> langCorrect;
+  final Map<String, List<int>> langWrong;
+
   /// 최근 7일 동안 하루에 푼 판 수 (오래된 날 → 오늘 순)
   final List<({String day, int rounds})> recentDays;
 
@@ -99,9 +107,23 @@ class LearningStats {
   int get enTotalCorrect => enCorrect.fold(0, (a, b) => a + b);
   int get enTotalWrong => enWrong.fold(0, (a, b) => a + b);
 
-  /// 수학 + 한글 + 영어 합계
-  int get totalCorrect => mathCorrect + krTotalCorrect + enTotalCorrect;
-  int get totalWrong => mathWrong + krTotalWrong + enTotalWrong;
+  /// 언어 팩 하나의 푼 문제 수
+  int langAnswered(String packId) =>
+      (langCorrect[packId] ?? const []).fold(0, (a, b) => a + b) +
+      (langWrong[packId] ?? const []).fold(0, (a, b) => a + b);
+
+  int get _langTotalCorrect => [
+        for (final counts in langCorrect.values) ...counts,
+      ].fold(0, (a, b) => a + b);
+  int get _langTotalWrong => [
+        for (final counts in langWrong.values) ...counts,
+      ].fold(0, (a, b) => a + b);
+
+  /// 전 과목 합계
+  int get totalCorrect =>
+      mathCorrect + krTotalCorrect + enTotalCorrect + _langTotalCorrect;
+  int get totalWrong =>
+      mathWrong + krTotalWrong + enTotalWrong + _langTotalWrong;
   int get totalAnswered => totalCorrect + totalWrong;
 
   /// 정답률(%). 푼 문제가 없으면 null.
@@ -198,6 +220,17 @@ class StatsStore {
     await prefs.setString(key, counts.join(','));
   }
 
+  /// 언어 팩 문제 하나의 첫 시도 결과를 기록한다.
+  static Future<void> recordLangAnswer(LanguagePack pack, int typeIndex,
+      {required bool correct}) async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = Profiles.scoped(
+        correct ? 'stats_lang_${pack.id}_correct_v1' : 'stats_lang_${pack.id}_wrong_v1');
+    final counts = _parseCsv(prefs.getString(key), pack.types.length);
+    counts[typeIndex]++;
+    await prefs.setString(key, counts.join(','));
+  }
+
   /// 판 완료를 오늘 날짜에 기록한다 (최근 14일만 보관).
   static Future<void> recordRoundDay({DateTime? now}) async {
     final prefs = await SharedPreferences.getInstance();
@@ -250,6 +283,20 @@ class StatsStore {
           EnQuizType.values.length),
       enWrong: _parseCsv(prefs.getString(Profiles.scoped(_enWrongKey)),
           EnQuizType.values.length),
+      langCorrect: {
+        for (final pack in languagePacks)
+          pack.id: _parseCsv(
+              prefs.getString(
+                  Profiles.scoped('stats_lang_${pack.id}_correct_v1')),
+              pack.types.length),
+      },
+      langWrong: {
+        for (final pack in languagePacks)
+          pack.id: _parseCsv(
+              prefs.getString(
+                  Profiles.scoped('stats_lang_${pack.id}_wrong_v1')),
+              pack.types.length),
+      },
       recentDays: [
         for (var i = 6; i >= 0; i--)
           () {

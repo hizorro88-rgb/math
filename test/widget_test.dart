@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preschool_math/main.dart';
 import 'package:preschool_math/models/english_data.dart';
+import 'package:preschool_math/models/japanese_pack.dart';
 import 'package:preschool_math/models/korean_data.dart';
 import 'package:preschool_math/models/profile.dart';
 import 'package:preschool_math/services/sounds.dart';
@@ -405,6 +406,43 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('정답이에요! 🎉'), findsOneWidget);
+  });
+
+  testWidgets('일본어 탭에서 그림→낱말 퀴즈를 풀 수 있다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await scrollAndTap(tester, find.text('일본어'));
+    expect(find.text('かな 첫걸음'), findsOneWidget);
+
+    await scrollAndTap(tester, find.text('일본어 낱말'));
+    await scrollAndTap(tester, find.text('21')); // 낱말 듣고 그림 찾기 첫 단계
+    expect(find.text('잘 듣고 알맞은 그림을 찾아요'), findsOneWidget);
+
+    // 카드에 보이는 히라가나 낱말로 정답 그림을 찾아 누른다.
+    final wordText = tester
+        .widgetList<Text>(find.byWidgetPredicate(
+            (w) => w is Text && w.style?.fontSize == 40))
+        .first
+        .data!;
+    final answerEmoji =
+        jaWords.firstWhere((w) => w.word == wordText).emoji;
+    await tester.tap(find.text(answerEmoji));
+    await tester.pumpAndSettle();
+
+    expect(find.text('정답이에요! 🎉'), findsOneWidget);
+  });
+
+  testWidgets('자유 연습에서 중국어 숫자 한자를 연습할 수 있다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await scrollAndTap(tester, find.text('자유 연습'));
+    await scrollAndTap(tester, find.text('중국어'));
+    await scrollAndTap(tester, find.text('숫자 한자 찾기'));
+    await scrollAndTap(tester, find.text('시작하기'));
+
+    expect(find.text('숫자에 맞는 한자는?'), findsOneWidget);
   });
 
   testWidgets('꾸미기 가게에서 코인으로 아이템을 산다', (tester) async {

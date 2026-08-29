@@ -4,10 +4,12 @@ import 'package:flutter/material.dart';
 
 import '../models/english_question.dart';
 import '../models/korean_question.dart';
+import '../models/language_packs.dart';
 import '../models/quiz_config.dart';
 import '../widgets/bouncy_button.dart';
 import 'english_quiz_screen.dart';
 import 'korean_quiz_screen.dart';
+import 'language_quiz_screen.dart';
 import 'quiz_screen.dart';
 
 /// 자유 연습: 과목(수학/한글)과 종류·난이도를 직접 고르고 시작한다. (단계 진행과 무관)
@@ -19,14 +21,24 @@ class PracticeScreen extends StatefulWidget {
 }
 
 class _PracticeScreenState extends State<PracticeScreen> {
-  /// 0: 수학, 1: 한글, 2: 영어
+  /// 0: 수학, 1: 한글, 2: 영어, 3~: 언어 팩
   int _subject = 0;
+
+  static final List<(String, String)> _subjects = [
+    ('🧮', '수학'),
+    ('📖', '한글'),
+    ('🔤', '영어'),
+    for (final pack in languagePacks) (pack.emoji, pack.name),
+  ];
 
   QuizMode _mode = QuizMode.addition;
   Difficulty _difficulty = Difficulty.easy;
 
   KrQuizType _krType = KrQuizType.pictureToWord;
   EnQuizType _enType = EnQuizType.wordToPicture;
+
+  /// 언어 팩별로 고른 유형 번호
+  final Map<String, int> _langType = {};
   bool _langHard = false;
 
   void _startQuiz() {
@@ -46,6 +58,19 @@ class _PracticeScreenState extends State<PracticeScreen> {
         MaterialPageRoute(
           builder: (_) => EnglishQuizScreen(
             type: _enType,
+            stage: _langHard ? 9 : 0,
+          ),
+        ),
+      );
+      return;
+    }
+    if (_subject >= 3) {
+      final pack = languagePacks[_subject - 3];
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => LanguageQuizScreen(
+            pack: pack,
+            typeIndex: _langType[pack.id] ?? 0,
             stage: _langHard ? 9 : 0,
           ),
         ),
@@ -87,38 +112,17 @@ class _PracticeScreenState extends State<PracticeScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // 과목 고르기
-              Row(
-                children: [
-                  Expanded(
-                    child: _ChoiceCard(
-                      emoji: '🧮',
-                      label: '수학',
-                      selected: _subject == 0,
-                      onTap: () => setState(() => _subject = 0),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _ChoiceCard(
-                      emoji: '📖',
-                      label: '한글',
-                      selected: _subject == 1,
-                      onTap: () => setState(() => _subject = 1),
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: _ChoiceCard(
-                      emoji: '🔤',
-                      label: '영어',
-                      selected: _subject == 2,
-                      onTap: () => setState(() => _subject = 2),
-                    ),
-                  ),
-                ],
+              // 과목 고르기 (2열 카드)
+              ..._buildGrid(
+                [for (var i = 0; i < _subjects.length; i++) i],
+                (i) => _ChoiceCard(
+                  emoji: _subjects[i].$1,
+                  label: _subjects[i].$2,
+                  selected: _subject == i,
+                  onTap: () => setState(() => _subject = i),
+                ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               const _SectionLabel('어떤 공부를 할까요?'),
               const SizedBox(height: 8),
               if (_subject == 1)
@@ -140,6 +144,24 @@ class _PracticeScreenState extends State<PracticeScreen> {
                     selected: _enType == t,
                     onTap: () => setState(() => _enType = t),
                   ),
+                )
+              else if (_subject >= 3)
+                ..._buildGrid(
+                  [
+                    for (var i = 0;
+                        i < languagePacks[_subject - 3].types.length;
+                        i++)
+                      i,
+                  ],
+                  (i) {
+                    final pack = languagePacks[_subject - 3];
+                    return _ChoiceCard(
+                      emoji: pack.types[i].emoji,
+                      label: pack.types[i].label,
+                      selected: (_langType[pack.id] ?? 0) == i,
+                      onTap: () => setState(() => _langType[pack.id] = i),
+                    );
+                  },
                 )
               else
                 ..._buildGrid(

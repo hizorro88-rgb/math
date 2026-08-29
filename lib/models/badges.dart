@@ -163,6 +163,20 @@ final List<LearnBadge> allBadges = [
     desc: '영어 문제 50개 풀기',
     earnedBy: (d) => d.enAnswered >= 50,
   ),
+  LearnBadge(
+    id: 'ja_first',
+    emoji: '🎌',
+    title: '일본어와 인사',
+    desc: '일본어 문제 1개 풀기',
+    earnedBy: (d) => d.stats.langAnswered('ja') >= 1,
+  ),
+  LearnBadge(
+    id: 'zh_first',
+    emoji: '🀄',
+    title: '중국어와 인사',
+    desc: '중국어 문제 1개 풀기',
+    earnedBy: (d) => d.stats.langAnswered('zh') >= 1,
+  ),
 ];
 
 /// 지금까지의 기록을 불러와 배지 판정에 쓴다.
