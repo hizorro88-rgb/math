@@ -6,6 +6,7 @@ import '../models/daily.dart';
 import '../models/english_curriculum.dart';
 import '../models/korean_curriculum.dart';
 import '../models/language_packs.dart';
+import '../models/premium.dart';
 import '../models/profile.dart';
 import '../models/progress.dart';
 import '../models/shop.dart';
@@ -21,6 +22,7 @@ import 'english_category_screen.dart';
 import 'korean_category_screen.dart';
 import 'language_category_screen.dart';
 import 'onboarding_screen.dart';
+import 'pass_screen.dart';
 import 'practice_screen.dart';
 import 'profile_screen.dart';
 import 'quiz_screen.dart';
@@ -49,6 +51,7 @@ class _MapData {
     required this.profile,
     required this.recommendedCategory,
     required this.bossCleared,
+    required this.hasPass,
   });
 
   final List<int> stars;
@@ -68,6 +71,9 @@ class _MapData {
 
   /// 이번 주 보스전을 이미 클리어했는지
   final bool bossCleared;
+
+  /// 가족 이용권 보유 여부 (없으면 각 과목 첫 카테고리만 열림)
+  final bool hasPass;
 }
 
 class _LevelMapScreenState extends State<LevelMapScreen> {
@@ -124,7 +130,22 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       recommendedCategory:
           prefs.getInt(Profiles.scoped(OnboardingScreen.ageCategoryKey)),
       bossCleared: await BossStore.isClearedThisWeek(),
+      hasPass: await PremiumStore.hasPass(),
     );
+  }
+
+  /// 잠긴 카테고리면 부모 확인 뒤 이용권 화면을 열고 false를 돌려준다.
+  Future<bool> _checkAccess(int categoryIndex) async {
+    if (PremiumStore.isCategoryFree(categoryIndex)) return true;
+    if (await PremiumStore.hasPass()) return true;
+    if (!mounted) return false;
+    final ok = await checkParentGate(context);
+    if (!ok || !mounted) return false;
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const PassScreen()),
+    );
+    _refresh();
+    return false;
   }
 
   Future<void> _openBoss(bool cleared) async {
@@ -157,6 +178,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
   }
 
   Future<void> _openCategory(AgeCategory category) async {
+    if (!await _checkAccess(category.index)) return;
+    if (!mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => CategoryScreen(category: category)),
     );
@@ -178,6 +201,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
   }
 
   Future<void> _openKoreanCategory(KrCategory category) async {
+    if (!await _checkAccess(category.index)) return;
+    if (!mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute(
           builder: (_) => KoreanCategoryScreen(category: category)),
@@ -186,6 +211,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
   }
 
   Future<void> _openEnglishCategory(EnCategory category) async {
+    if (!await _checkAccess(category.index)) return;
+    if (!mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute(
           builder: (_) => EnglishCategoryScreen(category: category)),
@@ -195,6 +222,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
 
   Future<void> _openLangCategory(
       LanguagePack pack, LangCategory category) async {
+    if (!await _checkAccess(category.index)) return;
+    if (!mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute(
           builder: (_) =>
@@ -363,6 +392,56 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                       ),
                     ),
                     const SizedBox(height: 14),
+                    // 가족 이용권 안내 (이용권이 없을 때만)
+                    if (!data.hasPass) ...[
+                      BouncyButton(
+                        color: const Color(0xFFFFF6D8),
+                        shadowColor: const Color(0xFFFFD34D),
+                        borderRadius: 22,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 14),
+                        onTap: () async {
+                          final ok = await checkParentGate(context);
+                          if (!ok || !context.mounted) return;
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const PassScreen()),
+                          );
+                          _refresh();
+                        },
+                        child: Row(
+                          children: [
+                            const Text('👨‍👩‍👧',
+                                style: TextStyle(fontSize: 28)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    '가족 이용권',
+                                    style: TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    '한 번 결제로 모든 단계 + 프로필 4명 · 가족 공유',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right,
+                                color: Colors.grey),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -406,6 +485,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                                   data.krStars[l.number - 1] >= 1)
                               .length,
                           total: category.totalLevels,
+                          locked: !data.hasPass && category.index > 0,
                           onTap: () => _openKoreanCategory(category),
                         ),
                         const SizedBox(height: 12),
@@ -423,6 +503,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                                   data.enStars[l.number - 1] >= 1)
                               .length,
                           total: category.totalLevels,
+                          locked: !data.hasPass && category.index > 0,
                           onTap: () => _openEnglishCategory(category),
                         ),
                         const SizedBox(height: 12),
@@ -444,6 +525,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                                       1)
                               .length,
                           total: category.totalLevels,
+                          locked: !data.hasPass && category.index > 0,
                           onTap: () => _openLangCategory(
                               languagePacks[_subject - 3], category),
                         ),
@@ -464,6 +546,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                           total: category.totalLevels,
                           recommended:
                               data.recommendedCategory == category.index,
+                          locked: !data.hasPass && category.index > 0,
                           onTap: () => _openCategory(category),
                         ),
                         const SizedBox(height: 12),
@@ -992,6 +1075,7 @@ class _CategoryCard extends StatelessWidget {
     required this.total,
     required this.onTap,
     this.recommended = false,
+    this.locked = false,
   });
 
   final String emoji;
@@ -1004,6 +1088,9 @@ class _CategoryCard extends StatelessWidget {
 
   /// 온보딩에서 고른 나이에 맞는 카테고리면 추천 표시
   final bool recommended;
+
+  /// 가족 이용권이 없어서 잠긴 카테고리 (누르면 이용권 안내로)
+  final bool locked;
 
   @override
   Widget build(BuildContext context) {
@@ -1040,6 +1127,11 @@ class _CategoryCard extends StatelessWidget {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    if (locked) ...[
+                      const SizedBox(width: 6),
+                      Icon(Icons.lock_rounded,
+                          size: 16, color: Colors.grey.shade400),
+                    ],
                     if (recommended) ...[
                       const SizedBox(width: 6),
                       Container(

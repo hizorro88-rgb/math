@@ -101,6 +101,25 @@ class Profiles {
     ]);
   }
 
+  /// 프로필을 지우고, 그 프로필의 학습 기록도 함께 지운다.
+  /// 1번(기본) 프로필은 옛 키를 그대로 쓰고 있어서 지울 수 없다.
+  static Future<void> remove(int id) async {
+    if (id == 1) return;
+    final profiles = await load();
+    await _save([
+      for (final p in profiles)
+        if (p.id != id) p,
+    ]);
+    final prefs = await SharedPreferences.getInstance();
+    for (final key in prefs
+        .getKeys()
+        .where((k) => k.startsWith('p${id}_'))
+        .toList()) {
+      await prefs.remove(key);
+    }
+    if (activeId == id) await setActive(1);
+  }
+
   /// 사용할 프로필을 바꾼다.
   static Future<void> setActive(int id) async {
     activeId = id;

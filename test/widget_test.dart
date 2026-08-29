@@ -78,6 +78,7 @@ void main() {
   });
 
   testWidgets('초등 2학년 곱셈 카테고리는 바로 시작할 수 있다', (tester) async {
+    SharedPreferences.setMockInitialValues({'family_pass_v1': true});
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
@@ -382,6 +383,7 @@ void main() {
   });
 
   testWidgets('영어 탭에서 낱말 듣고 그림 찾기 퀴즈를 풀 수 있다', (tester) async {
+    SharedPreferences.setMockInitialValues({'family_pass_v1': true});
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
@@ -409,6 +411,7 @@ void main() {
   });
 
   testWidgets('일본어 탭에서 그림→낱말 퀴즈를 풀 수 있다', (tester) async {
+    SharedPreferences.setMockInitialValues({'family_pass_v1': true});
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
@@ -443,6 +446,71 @@ void main() {
     await scrollAndTap(tester, find.text('시작하기'));
 
     expect(find.text('숫자에 맞는 한자는?'), findsOneWidget);
+  });
+
+  testWidgets('이용권이 없으면 두 번째 카테고리는 부모 확인 → 이용권 안내로 간다',
+      (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    // 5살(두 번째 카테고리)은 잠겨 있다 → 부모 게이트가 뜬다.
+    await scrollAndTap(tester, find.text('5살'));
+    expect(find.text('부모님 확인'), findsOneWidget);
+
+    // 곱셈 문제를 풀면 이용권 화면이 열린다.
+    final expr = tester.widget<Text>(find.textContaining('× ')).data!;
+    final m = RegExp(r'(\d+) × (\d+)').firstMatch(expr)!;
+    final answer = int.parse(m.group(1)!) * int.parse(m.group(2)!);
+    await tester.tap(find.widgetWithText(OutlinedButton, '$answer'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('👨‍👩‍👧 가족 이용권'), findsOneWidget);
+    expect(find.textContaining('한 번 결제로'), findsWidgets);
+  });
+
+  testWidgets('이용권이 있으면 모든 카테고리에 바로 들어간다', (tester) async {
+    SharedPreferences.setMockInitialValues({'family_pass_v1': true});
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await scrollAndTap(tester, find.text('5살'));
+    expect(find.text('부모님 확인'), findsNothing);
+    expect(find.text('열까지 세기'), findsOneWidget);
+  });
+
+  testWidgets('프로필이 여럿이면 넷플릭스처럼 프로필 선택부터 시작한다', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'profiles_v1': ['1|🐣|하늘', '2|🦊|바다'],
+      'family_pass_v1': true,
+    });
+
+    await tester.pumpWidget(const PreschoolMathApp(showProfilePicker: true));
+    await tester.pumpAndSettle();
+
+    expect(find.text('누가 놀까요?'), findsOneWidget);
+    expect(find.text('하늘'), findsOneWidget);
+    expect(find.text('바다'), findsOneWidget);
+
+    // 바다를 고르면 바다의 홈으로 들어간다.
+    await scrollAndTap(tester, find.text('바다'));
+    expect(find.text('수학 놀이'), findsOneWidget);
+    expect(find.text('🦊 바다'), findsOneWidget);
+    expect(Profiles.activeId, 2);
+  });
+
+  testWidgets('이용권이 없으면 두 번째 프로필 만들기는 잠겨 있다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    // 홈 → 프로필 화면 (헤더의 프로필 칩)
+    await tester.tap(find.text('🐣 우리 아이'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('새 프로필 만들기 (가족 이용권)'), findsOneWidget);
+
+    // 누르면 부모 게이트가 먼저 뜬다.
+    await scrollAndTap(tester, find.text('새 프로필 만들기 (가족 이용권)'));
+    expect(find.text('부모님 확인'), findsOneWidget);
   });
 
   testWidgets('꾸미기 가게에서 코인으로 아이템을 산다', (tester) async {

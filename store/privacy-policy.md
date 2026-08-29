@@ -20,7 +20,8 @@
 
 ### 3. 광고 및 결제
 - 이 앱에는 **광고가 없습니다**.
-- 이 앱에는 **인앱 결제가 없습니다**.
+- 인앱 결제는 '가족 이용권' 1건(1회 결제)뿐이며,
+  결제는 구글 플레이/앱스토어가 처리하고 앱은 결제 정보를 저장하지 않습니다.
 
 ### 4. 제3자 서비스
 - 이 앱은 분석 도구, 광고 SDK 등 **어떠한 제3자 서비스도 사용하지 않습니다**.
@@ -47,7 +48,9 @@
 - All data entered in the app (child's nickname, learning progress) is stored
   **only on the user's device** and is never sent anywhere. Deleting the app deletes all data.
 - The app **does not use the internet permission** and works fully offline.
-- The app contains **no ads** and **no in-app purchases**.
+- The app contains **no ads**. It offers a single one-time in-app purchase
+  ("Family Pass"); payment is processed by Google Play / the App Store and
+  the app stores no payment information.
 - The app uses **no third-party services** (no analytics, no ad SDKs).
   Text-to-speech uses only the device's built-in system voice.
 - Although this app is designed for children, it collects no personal
