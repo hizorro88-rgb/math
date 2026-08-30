@@ -25,9 +25,17 @@ const List<LangWord> zhWords = [
   LangWord('花', '🌸'),
   LangWord('山', '⛰️'),
   LangWord('水', '💧'),
-  LangWord('太阳', '☀️'),
-  LangWord('月亮', '🌙'),
-  LangWord('星星', '⭐'),
+  LangWord('日', '☀️'),
+  LangWord('月', '🌙'),
+  LangWord('星', '⭐'),
+  LangWord('火', '🔥'),
+  LangWord('木', '🌲'),
+  LangWord('雨', '🌧️'),
+  LangWord('门', '🚪'),
+  LangWord('手', '✋'),
+  LangWord('羊', '🐑'),
+  LangWord('虎', '🐯'),
+  LangWord('猪', '🐷'),
   LangWord('苹果', '🍎'),
   LangWord('香蕉', '🍌'),
   LangWord('鸡蛋', '🥚'),
@@ -44,7 +52,39 @@ const List<LangWord> zhWords = [
   LangWord('飞机', '✈️', 'vehicle'),
 ];
 
-/// 중국어 팩: 소리 듣기 → 한자 낱말 → 숫자 한자
+/// 한 글자 기초 한자의 우리말 뜻 (한자 뜻 찾기용)
+const Map<String, String> zhMeanings = {
+  '猫': '고양이',
+  '狗': '강아지',
+  '鱼': '물고기',
+  '鸟': '새',
+  '牛': '소',
+  '马': '말',
+  '熊': '곰',
+  '羊': '양',
+  '虎': '호랑이',
+  '猪': '돼지',
+  '花': '꽃',
+  '山': '산',
+  '水': '물',
+  '火': '불',
+  '木': '나무',
+  '日': '해',
+  '月': '달',
+  '星': '별',
+  '雨': '비',
+  '门': '문',
+  '手': '손',
+  '书': '책',
+  '球': '공',
+  '家': '집',
+  '伞': '우산',
+  '车': '자동차',
+  '船': '배',
+  '鞋': '신발',
+};
+
+/// 중국어 팩: 소리 듣기 → 한자 낱말 → 숫자 한자 → 한자 박사
 final LanguagePack chinesePack = LanguagePack(
   id: 'zh',
   name: '중국어',
@@ -56,6 +96,8 @@ final LanguagePack chinesePack = LanguagePack(
     LangUnitType('한자 보고 그림 찾기', '한자→그림', '🔍', textDisplay: true), // 2
     LangUnitType('그림 보고 한자 찾기', '그림→한자', '🖼️'), // 3
     LangUnitType('숫자 한자 찾기', '숫자 한자', '🔢', textDisplay: true), // 4
+    LangUnitType('듣고 한자 찾기', '듣고 한자', '🎧', listening: true), // 5
+    LangUnitType('한자 뜻 찾기', '한자 뜻', '📜', textDisplay: true), // 6
   ],
   categories: [
     LangCategory(
@@ -85,6 +127,16 @@ final LanguagePack chinesePack = LanguagePack(
       color: const Color(0xFF2FB8A6),
       units: [
         LangUnit(title: '숫자 한자 찾기', emoji: '🔢', typeIndex: 4),
+      ],
+    ),
+    LangCategory(
+      title: '한자 박사',
+      emoji: '📜',
+      desc: '소리로 한자를 읽고, 우리말 뜻을 이어요',
+      color: const Color(0xFF8A5A2B),
+      units: [
+        LangUnit(title: '듣고 한자 찾기', emoji: '🎧', typeIndex: 5),
+        LangUnit(title: '한자 뜻 찾기', emoji: '📜', typeIndex: 6),
       ],
     ),
   ],
@@ -167,6 +219,53 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
         answerText: target.word,
         speech: target.word,
         dedupKey: 'ptw:${target.word}',
+      );
+
+    // 듣고 한자 찾기: 소리를 듣고 한자를 고른다 (읽기 연습)
+    case 5:
+      final pool = stage >= 5
+          ? zhWords
+          : [for (final w in zhWords) if (w.word.length == 1) w];
+      final picked = pickLangWords(pool, random);
+      final target = picked.first;
+      return LangQuestion(
+        typeIndex: 5,
+        instruction: '잘 듣고 알맞은 한자를 찾아요',
+        display: '🔊',
+        choices: [for (final w in picked) w.word]..shuffle(random),
+        answer: target.word,
+        answerText: '${target.word} ${target.emoji}',
+        speech: target.word,
+        dedupKey: 'lh:${target.word}',
+      );
+
+    // 한자 뜻 찾기: 山 → '산' (우리말 뜻 잇기)
+    case 6:
+      final pool = [
+        for (final w in zhWords)
+          if (zhMeanings.containsKey(w.word)) w,
+      ];
+      final word = pool[random.nextInt(pool.length)];
+      final answer = zhMeanings[word.word]!;
+      final wrong = pickLangItems(
+        [
+          for (final m in zhMeanings.values)
+            if (m != answer) m,
+        ],
+        3,
+        random,
+      );
+      return LangQuestion(
+        typeIndex: 6,
+        instruction: '이 한자의 뜻은 무엇일까요?',
+        display: word.word,
+        // 앞 단계에서는 그림 힌트를 보여주고, 뒤 단계에서는 한자만 보고 푼다.
+        subDisplay: stage >= 5 ? '' : word.emoji,
+        choices: [answer, ...wrong]..shuffle(random),
+        answer: answer,
+        answerText: '${word.word} = $answer',
+        speech: word.word,
+        dedupKey: 'hm:${word.word}',
       );
 
     // 숫자 한자 찾기: 3 → 三

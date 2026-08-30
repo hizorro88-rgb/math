@@ -93,6 +93,61 @@ void main() {
     });
   });
 
+  group('일본어 팩 — 가타카나', () {
+    test('히라가나·가타카나 목록이 같은 순서로 짝을 이룬다', () {
+      expect(jaKatakana, hasLength(jaKana.length));
+    });
+
+    test('짝 맞추기: 보여준 글자와 정답이 같은 자리의 짝이다', () {
+      final random = Random(31);
+      for (final stage in [0, 9]) {
+        for (var round = 0; round < 40; round++) {
+          final q = japanesePack.generateOne(7, stage, random);
+          final hiraIndex = jaKana.indexOf(q.display);
+          final kataIndex = jaKatakana.indexOf(q.display);
+          if (hiraIndex >= 0) {
+            expect(q.answer, jaKatakana[hiraIndex]);
+          } else {
+            expect(kataIndex, greaterThanOrEqualTo(0));
+            expect(q.answer, jaKana[kataIndex]);
+          }
+          expect(q.choices, contains(q.answer));
+        }
+      }
+    });
+
+    test('가타카나 낱말: 그림에 맞는 낱말이 정답이다', () {
+      final random = Random(33);
+      for (var round = 0; round < 30; round++) {
+        final q = japanesePack.generateOne(8, 0, random);
+        final word = jaKataWords.firstWhere((w) => w.emoji == q.display);
+        expect(q.answer, word.word);
+      }
+    });
+  });
+
+  group('중국어 팩 — 한자 박사', () {
+    test('듣고 한자 찾기: 들려준 한자가 정답이다', () {
+      final random = Random(35);
+      for (final stage in [0, 9]) {
+        final q = chinesePack.generateOne(5, stage, random);
+        expect(q.display, '🔊');
+        expect(q.speech, q.answer);
+        expect(q.choices, contains(q.answer));
+      }
+    });
+
+    test('한자 뜻 찾기: 우리말 뜻이 정답이다', () {
+      final random = Random(37);
+      for (var round = 0; round < 40; round++) {
+        final q = chinesePack.generateOne(6, 0, random);
+        expect(q.answer, zhMeanings[q.display]);
+        expect(q.choices, contains(q.answer));
+        expect(q.choices.toSet(), hasLength(4));
+      }
+    });
+  });
+
   group('일본어 팩', () {
     test('첫 글자 찾기·낱말 문제가 규칙에 맞는다', () {
       final random = Random(5);

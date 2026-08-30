@@ -18,6 +18,44 @@ const List<String> jaKana = [
   'わ', 'を', 'ん',
 ];
 
+/// 가타카나 오십음 (히라가나와 같은 순서, 짝 맞추기용)
+const List<String> jaKatakana = [
+  'ア', 'イ', 'ウ', 'エ', 'オ', //
+  'カ', 'キ', 'ク', 'ケ', 'コ', //
+  'サ', 'シ', 'ス', 'セ', 'ソ', //
+  'タ', 'チ', 'ツ', 'テ', 'ト', //
+  'ナ', 'ニ', 'ヌ', 'ネ', 'ノ', //
+  'ハ', 'ヒ', 'フ', 'ヘ', 'ホ', //
+  'マ', 'ミ', 'ム', 'メ', 'モ', //
+  'ヤ', 'ユ', 'ヨ', //
+  'ラ', 'リ', 'ル', 'レ', 'ロ', //
+  'ワ', 'ヲ', 'ン',
+];
+
+/// 가타카나 낱말 (외래어 중심, 그림 짝)
+const List<LangWord> jaKataWords = [
+  LangWord('バナナ', '🍌'),
+  LangWord('トマト', '🍅'),
+  LangWord('メロン', '🍈'),
+  LangWord('ケーキ', '🎂'),
+  LangWord('ピザ', '🍕'),
+  LangWord('パン', '🍞'),
+  LangWord('ジュース', '🧃'),
+  LangWord('アイス', '🍦'),
+  LangWord('パンダ', '🐼'),
+  LangWord('ライオン', '🦁'),
+  LangWord('ペンギン', '🐧'),
+  LangWord('コアラ', '🐨'),
+  LangWord('ロボット', '🤖'),
+  LangWord('テレビ', '📺'),
+  LangWord('カメラ', '📷'),
+  LangWord('ピアノ', '🎹'),
+  LangWord('ペン', '🖊️'),
+  LangWord('ボール', '⚽'),
+  LangWord('バス', '🚌', 'vehicle'),
+  LangWord('タクシー', '🚕', 'vehicle'),
+];
+
 /// 히라가나 낱말 (그림 짝)
 const List<LangWord> jaWords = [
   LangWord('ねこ', '🐱'),
@@ -69,6 +107,9 @@ final LanguagePack japanesePack = LanguagePack(
     LangUnitType('그림 보고 낱말 찾기', '그림→낱말', '🖼️'), // 3
     LangUnitType('첫 글자 찾기', '첫 글자', '🎯'), // 4
     LangUnitType('낱말 만들기', '낱말 조립', '🏗️'), // 5
+    LangUnitType('カナ 소리 찾기', 'カナ 소리', '🎧', listening: true), // 6
+    LangUnitType('히라가나·가타카나 짝', 'かな 짝', '🀄', textDisplay: true), // 7
+    LangUnitType('가타카나 낱말', 'カナ 낱말', '🍦'), // 8
   ],
   categories: [
     LangCategory(
@@ -99,6 +140,17 @@ final LanguagePack japanesePack = LanguagePack(
       color: const Color(0xFF2FB8A6),
       units: [
         LangUnit(title: '낱말 만들기', emoji: '🏗️', typeIndex: 5),
+      ],
+    ),
+    LangCategory(
+      title: 'カタカナ 도전',
+      emoji: '🗼',
+      desc: '가타카나 소리·짝·낱말을 익혀요',
+      color: const Color(0xFFE0637C),
+      units: [
+        LangUnit(title: 'カナ 소리 찾기', emoji: '🎧', typeIndex: 6),
+        LangUnit(title: '히라가나·가타카나 짝', emoji: '🀄', typeIndex: 7),
+        LangUnit(title: '가타카나 낱말', emoji: '🍦', typeIndex: 8),
       ],
     ),
   ],
@@ -195,6 +247,58 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
         answerText: answer,
         speech: word.word,
         dedupKey: 'fk:${word.word}',
+      );
+
+    // カナ 소리 찾기: 소리를 듣고 가타카나를 고른다
+    case 6:
+      final pool = stage >= 5 ? jaKatakana : jaKatakana.sublist(0, 15);
+      final picked = pickLangItems(pool, 4, random);
+      final target = picked.first;
+      return LangQuestion(
+        typeIndex: 6,
+        instruction: '무슨 글자일까요? 🔊를 눌러 다시 들어요',
+        display: '🔊',
+        choices: [...picked]..shuffle(random),
+        answer: target,
+        answerText: target,
+        speech: target,
+        dedupKey: 'kk:$target',
+      );
+
+    // 히라가나·가타카나 짝 맞추기 (あ ↔ ア)
+    case 7:
+      final upper = stage >= 5 ? jaKana.length : 15;
+      final indexes = pickLangItems(
+          [for (var i = 0; i < upper; i++) i], 4, random);
+      final target = indexes.first;
+      // 뒤 단계에서는 가타카나를 보여주고 히라가나를 찾기도 한다.
+      final showKata = stage >= 5 && random.nextBool();
+      return LangQuestion(
+        typeIndex: 7,
+        instruction: showKata ? '짝이 되는 히라가나는?' : '짝이 되는 가타카나는?',
+        display: showKata ? jaKatakana[target] : jaKana[target],
+        choices: [
+          for (final i in indexes) showKata ? jaKana[i] : jaKatakana[i],
+        ]..shuffle(random),
+        answer: showKata ? jaKana[target] : jaKatakana[target],
+        answerText: '${jaKana[target]} (${jaKatakana[target]})',
+        speech: jaKana[target],
+        dedupKey: 'pk:$target:$showKata',
+      );
+
+    // 가타카나 낱말: 그림 보고 낱말 찾기
+    case 8:
+      final picked = pickLangWords(jaKataWords, random);
+      final target = picked.first;
+      return LangQuestion(
+        typeIndex: 8,
+        instruction: '그림에 맞는 낱말은?',
+        display: target.emoji,
+        choices: [for (final w in picked) w.word]..shuffle(random),
+        answer: target.word,
+        answerText: target.word,
+        speech: target.word,
+        dedupKey: 'kw:${target.word}',
       );
 
     // 낱말 만들기: 글자 타일 조립
