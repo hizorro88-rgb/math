@@ -310,6 +310,29 @@ void main() {
     expect(find.text('그림에 맞는 낱말은?'), findsOneWidget);
   });
 
+  testWidgets('어려워한 유형이 있으면 홈에 맞춤 복습 카드가 뜨고 바로 풀 수 있다', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'stats_sub_correct_v1': 3,
+      'stats_sub_wrong_v1': 7, // 뺄셈 30% → 복습 제안
+    });
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    expect(find.text('수학 ➖ 뺄셈 · 조금 어려웠죠? 한 판 더!'), findsOneWidget);
+    await scrollAndTap(tester, find.text('맞춤 복습'));
+
+    // 뺄셈 연습 한 판이 바로 열린다.
+    expect(find.text('🪙 0'), findsOneWidget);
+    expect(find.text('맞춤 복습'), findsNothing);
+  });
+
+  testWidgets('충분히 풀지 않았으면 맞춤 복습 카드가 없다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    expect(find.text('맞춤 복습'), findsNothing);
+  });
+
   testWidgets('주간 보스전에 들어가면 보스전 라벨과 문제가 보인다', (tester) async {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();

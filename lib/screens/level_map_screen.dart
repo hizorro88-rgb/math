@@ -9,7 +9,9 @@ import '../models/language_packs.dart';
 import '../models/premium.dart';
 import '../models/profile.dart';
 import '../models/progress.dart';
+import '../models/review.dart';
 import '../models/shop.dart';
+import '../models/stats.dart';
 import '../services/sounds.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/owl_avatar.dart';
@@ -19,8 +21,11 @@ import '../models/quiz_config.dart';
 import 'badge_screen.dart';
 import 'category_screen.dart';
 import 'english_category_screen.dart';
+import 'english_quiz_screen.dart';
 import 'korean_category_screen.dart';
+import 'korean_quiz_screen.dart';
 import 'language_category_screen.dart';
+import 'language_quiz_screen.dart';
 import 'onboarding_screen.dart';
 import 'pass_screen.dart';
 import 'practice_screen.dart';
@@ -52,6 +57,7 @@ class _MapData {
     required this.recommendedCategory,
     required this.bossCleared,
     required this.hasPass,
+    required this.review,
   });
 
   final List<int> stars;
@@ -74,6 +80,9 @@ class _MapData {
 
   /// 가족 이용권 보유 여부 (없으면 각 과목 첫 카테고리만 열림)
   final bool hasPass;
+
+  /// 요즘 어려워한 유형이 있으면 맞춤 복습 제안 (없으면 null)
+  final ReviewSuggestion? review;
 }
 
 class _LevelMapScreenState extends State<LevelMapScreen> {
@@ -131,6 +140,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
           prefs.getInt(Profiles.scoped(OnboardingScreen.ageCategoryKey)),
       bossCleared: await BossStore.isClearedThisWeek(),
       hasPass: await PremiumStore.hasPass(),
+      review: Review.suggest(await StatsStore.load()),
     );
   }
 
@@ -175,6 +185,37 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       _dataFuture = _load();
     });
     _loadSubject(); // 프로필이 바뀌면 그 아이가 보던 과목으로
+  }
+
+  /// 맞춤 복습: 어려워한 유형의 연습 한 판을 바로 연다 (단계 진행과 무관)
+  Future<void> _openReview(ReviewSuggestion review) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) {
+          if (review.krType != null) {
+            return KoreanQuizScreen(type: review.krType!);
+          }
+          if (review.enType != null) {
+            return EnglishQuizScreen(type: review.enType!);
+          }
+          if (review.packId != null) {
+            return LanguageQuizScreen(
+              pack: languagePackById(review.packId!),
+              typeIndex: review.langTypeIndex,
+            );
+          }
+          final mode = review.mathMode!;
+          // 구구단은 표 범위(9까지)에 맞춘다.
+          final maxNumber = mode == QuizMode.multiplication ||
+                  mode == QuizMode.division
+              ? 9
+              : 10;
+          return QuizScreen(
+              config: QuizConfig(mode: mode, maxNumber: maxNumber));
+        },
+      ),
+    );
+    _refresh();
   }
 
   Future<void> _openCategory(AgeCategory category) async {
@@ -392,6 +433,47 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                       ),
                     ),
                     const SizedBox(height: 14),
+                    // 맞춤 복습: 요즘 어려워한 유형을 한 판 더
+                    if (data.review != null) ...[
+                      BouncyButton(
+                        color: const Color(0xFFF3E8FF),
+                        shadowColor: const Color(0xFFD8B4FE),
+                        borderRadius: 22,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 14),
+                        onTap: () => _openReview(data.review!),
+                        child: Row(
+                          children: [
+                            const Text('🩹', style: TextStyle(fontSize: 30)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    '맞춤 복습',
+                                    style: TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    '${data.review!.subject} ${data.review!.emoji} '
+                                    '${data.review!.label} · 조금 어려웠죠? 한 판 더!',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right, color: Colors.grey),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
                     // 가족 이용권 안내 (이용권이 없을 때만)
                     if (!data.hasPass) ...[
                       BouncyButton(
