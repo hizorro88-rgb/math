@@ -120,8 +120,8 @@ class _BackupScreenState extends State<BackupScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Text(
-              '이 앱은 서버 없이 모든 기록을 폰 안에만 저장해요.\n'
-              '백업 코드를 만들어 메모장이나 메신저(나에게 보내기)에 보관해 두면,\n'
+              '이 앱은 서버 없이 모든 기록을 폰 안에만 저장해요. '
+              '백업 코드를 만들어 메모장이나 메신저(나에게 보내기)에 보관해 두면, '
               '앱을 지웠거나 폰을 바꿔도 코드를 붙여넣어 진도를 그대로 되살릴 수 있어요.',
               style: TextStyle(fontSize: 13.5, height: 1.5),
             ),

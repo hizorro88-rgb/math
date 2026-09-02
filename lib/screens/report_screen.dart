@@ -649,13 +649,14 @@ class _BackupCard extends StatelessWidget {
               style: FilledButton.styleFrom(
                 backgroundColor: const Color(0xFF5A78D6),
                 padding: const EdgeInsets.symmetric(vertical: 12),
-                textStyle:
-                    const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
               ),
               onPressed: () => Navigator.of(context).push(
                 MaterialPageRoute(builder: (_) => const BackupScreen()),
               ),
-              child: const Text('백업 화면 열기'),
+              child: const Text(
+                '백업 화면 열기',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
             ),
           ),
         ],
