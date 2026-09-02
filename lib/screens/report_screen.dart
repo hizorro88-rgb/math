@@ -9,6 +9,7 @@ import '../models/korean_question.dart';
 import '../models/language_packs.dart';
 import '../models/progress.dart';
 import '../models/stats.dart';
+import 'backup_screen.dart';
 
 /// 부모용 학습 리포트: 이번 주 활동, 유형·수 범위별 정답률, 연습 추천.
 class ReportScreen extends StatefulWidget {
@@ -75,6 +76,8 @@ class _ReportScreenState extends State<ReportScreen> {
               _AdviceCard(stats: stats),
               const SizedBox(height: 14),
               const _ReminderCard(),
+              const SizedBox(height: 14),
+              const _BackupCard(),
               const SizedBox(height: 8),
             ],
           );
@@ -617,6 +620,43 @@ class _ReminderCardState extends State<_ReminderCard> {
             value: _enabled,
             activeTrackColor: const Color(0xFF58CC02),
             onChanged: _toggle,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 진도 백업·복원 안내 카드 → 백업 화면으로 이동
+class _BackupCard extends StatelessWidget {
+  const _BackupCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _reportCard(
+      title: '💾 진도 백업·옮기기',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            '백업 코드를 만들어 두면 앱을 지웠거나 폰을 바꿔도\n진도·별·코인을 그대로 되살릴 수 있어요.',
+            style: TextStyle(fontSize: 13.5, height: 1.5, color: Colors.black54),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF5A78D6),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                textStyle:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+              ),
+              onPressed: () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const BackupScreen()),
+              ),
+              child: const Text('백업 화면 열기'),
+            ),
           ),
         ],
       ),
