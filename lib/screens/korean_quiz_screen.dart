@@ -8,6 +8,7 @@ import '../models/korean_curriculum.dart';
 import '../models/korean_question.dart';
 import '../models/progress.dart';
 import '../models/stats.dart';
+import '../models/wrong_notes.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../widgets/bouncy_button.dart';
@@ -143,6 +144,10 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
         _lastGained = 0;
         if (!_isRetryQuestion) {
           _entries.add(_KrEntry(_question, isRetry: true));
+          // 보기 고르기 문제는 오답 노트에 담아 나중에 다시 푼다.
+          if (_question.tiles.isEmpty) {
+            WrongNoteStore.add(WrongNote.fromKorean(_question));
+          }
         }
       }
     });

@@ -12,6 +12,7 @@ import '../models/progress.dart';
 import '../models/review.dart';
 import '../models/shop.dart';
 import '../models/stats.dart';
+import '../models/wrong_notes.dart';
 import '../services/sounds.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/owl_avatar.dart';
@@ -33,6 +34,7 @@ import 'profile_screen.dart';
 import 'quiz_screen.dart';
 import 'report_screen.dart';
 import 'shop_screen.dart';
+import 'wrong_notes_screen.dart';
 
 /// 홈 화면: 마스코트 인사, 칭호 카드, 오늘의 미션,
 /// 그리고 나이·학년별(4살~초3) 학습 카테고리.
@@ -58,6 +60,7 @@ class _MapData {
     required this.bossCleared,
     required this.hasPass,
     required this.review,
+    required this.wrongCount,
   });
 
   final List<int> stars;
@@ -83,6 +86,9 @@ class _MapData {
 
   /// 요즘 어려워한 유형이 있으면 맞춤 복습 제안 (없으면 null)
   final ReviewSuggestion? review;
+
+  /// 오답 노트에 쌓인 문제 수
+  final int wrongCount;
 }
 
 class _LevelMapScreenState extends State<LevelMapScreen> {
@@ -141,6 +147,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       bossCleared: await BossStore.isClearedThisWeek(),
       hasPass: await PremiumStore.hasPass(),
       review: Review.suggest(await StatsStore.load()),
+      wrongCount: await WrongNoteStore.count(),
     );
   }
 
@@ -460,6 +467,52 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                                   Text(
                                     '${data.review!.subject} ${data.review!.emoji} '
                                     '${data.review!.label} · 조금 어려웠죠? 한 판 더!',
+                                    style: TextStyle(
+                                      fontSize: 12,
+                                      color: Colors.grey.shade700,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const Icon(Icons.chevron_right, color: Colors.grey),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+                    // 오답 노트: 틀린 낱말이 쌓여 있으면 다시 풀기 제안
+                    if (data.wrongCount > 0) ...[
+                      BouncyButton(
+                        color: const Color(0xFFFDE8F4),
+                        shadowColor: const Color(0xFFF2A9D4),
+                        borderRadius: 22,
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 14, vertical: 14),
+                        onTap: () async {
+                          await Navigator.of(context).push(
+                            MaterialPageRoute(
+                                builder: (_) => const WrongNotesScreen()),
+                          );
+                          _refresh();
+                        },
+                        child: Row(
+                          children: [
+                            const Text('📒', style: TextStyle(fontSize: 30)),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text(
+                                    '오답 노트',
+                                    style: TextStyle(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                  Text(
+                                    '틀린 낱말 ${data.wrongCount}개 · 맞히면 노트에서 사라져요',
                                     style: TextStyle(
                                       fontSize: 12,
                                       color: Colors.grey.shade700,
