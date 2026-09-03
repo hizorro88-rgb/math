@@ -14,6 +14,7 @@ import '../models/shop.dart';
 import '../models/stats.dart';
 import '../models/wrong_notes.dart';
 import '../services/sounds.dart';
+import '../services/speech.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/owl_avatar.dart';
 import '../widgets/parent_gate.dart';
@@ -33,6 +34,7 @@ import 'practice_screen.dart';
 import 'profile_screen.dart';
 import 'quiz_screen.dart';
 import 'report_screen.dart';
+import 'settings_screen.dart';
 import 'shop_screen.dart';
 import 'wrong_notes_screen.dart';
 
@@ -309,6 +311,13 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     );
   }
 
+  Future<void> _openSettings() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const SettingsScreen()),
+    );
+    if (mounted) setState(() {}); // 소리 설정이 바뀌었을 수 있다
+  }
+
   Future<void> _openProfiles() async {
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const ProfileScreen()),
@@ -369,6 +378,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 onOwlTap: _openShop,
                 onProfileTap: _openProfiles,
                 onReportTap: _openReport,
+                onSettingsTap: _openSettings,
                 onSoundChanged: () => setState(() {}),
               ),
               Padding(
@@ -710,6 +720,7 @@ class _Header extends StatelessWidget {
     required this.onOwlTap,
     required this.onProfileTap,
     required this.onReportTap,
+    required this.onSettingsTap,
     required this.onSoundChanged,
   });
 
@@ -722,6 +733,7 @@ class _Header extends StatelessWidget {
   final VoidCallback onOwlTap;
   final VoidCallback onProfileTap;
   final VoidCallback onReportTap;
+  final VoidCallback onSettingsTap;
   final VoidCallback onSoundChanged;
 
   @override
@@ -780,23 +792,37 @@ class _Header extends StatelessWidget {
                 ),
                 IconButton(
                   onPressed: onReportTap,
+                  visualDensity: VisualDensity.compact,
                   icon: const Icon(
                     Icons.insert_chart_rounded,
                     color: Colors.white,
-                    size: 28,
+                    size: 26,
                   ),
                 ),
+                // 한 번에 전부 끄기/켜기 (효과음+읽어주기)
                 IconButton(
                   onPressed: () async {
-                    await Sounds.setEnabled(!Sounds.enabled);
+                    final anyOn = Sounds.enabled || Speech.enabled;
+                    await Sounds.setEnabled(!anyOn);
+                    await Speech.setEnabled(!anyOn);
                     onSoundChanged();
                   },
+                  visualDensity: VisualDensity.compact,
                   icon: Icon(
-                    Sounds.enabled
+                    Sounds.enabled || Speech.enabled
                         ? Icons.volume_up_rounded
                         : Icons.volume_off_rounded,
                     color: Colors.white,
-                    size: 28,
+                    size: 26,
+                  ),
+                ),
+                IconButton(
+                  onPressed: onSettingsTap,
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(
+                    Icons.settings_rounded,
+                    color: Colors.white,
+                    size: 26,
                   ),
                 ),
               ],

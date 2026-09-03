@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-import '../services/sounds.dart';
 import '../services/speech.dart';
 import 'bouncy_button.dart';
 
@@ -38,7 +37,7 @@ Future<bool> ensureListenReady(BuildContext context) async {
     return false;
   }
 
-  if (Sounds.enabled) return true;
+  if (Speech.enabled) return true;
 
   final turnOn = await showDialog<bool>(
     context: context,
@@ -81,7 +80,7 @@ Future<bool> ensureListenReady(BuildContext context) async {
     ),
   );
   if (turnOn == true) {
-    await Sounds.setEnabled(true);
+    await Speech.setEnabled(true);
     return true;
   }
   return false;

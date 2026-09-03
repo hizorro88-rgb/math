@@ -37,6 +37,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Future<void> _finish({required bool soundOn}) async {
     await Sounds.setEnabled(soundOn);
+    await Speech.setEnabled(soundOn);
     final name = _nameController.text.trim();
     await Profiles.update(
       Profiles.activeId,

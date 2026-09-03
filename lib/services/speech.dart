@@ -1,31 +1,67 @@
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'sounds.dart';
-
-/// 문제와 정답을 한국어 음성으로 읽어 준다.
+/// 문제와 정답을 음성으로 읽어 준다.
 /// 글을 모르는 아이도 혼자 풀 수 있게 하는 게 목적.
-/// 소리 켬/끔 설정(Sounds.enabled)을 함께 따른다.
+/// 효과음(Sounds)과 따로 켜고 끌 수 있다 (설정 화면).
 class Speech {
   Speech._();
 
   static final FlutterTts _tts = FlutterTts();
 
+  static const _enabledKey = 'speech_enabled_v1';
+  static const _rateKey = 'speech_rate_v1';
+
+  /// 아이가 듣기 좋은 두 가지 빠르기
+  static const rateSlow = 0.35;
+  static const rateNormal = 0.45;
+
   /// 이 기기에서 한국어 음성을 쓸 수 있는지.
   /// 듣기 유형(듣고 풀기, 소리 찾기)은 이 값이 false면 풀 수 없다.
   static bool available = true;
 
+  /// 문제 읽어주기 켬/끔 (설정 화면에서 바꾼다)
+  static bool enabled = true;
+
+  /// 말 빠르기 (rateSlow 또는 rateNormal)
+  static double rate = rateNormal;
+
   /// 앱 시작 시 한 번: 한국어, 아이가 듣기 좋게 천천히·살짝 높게.
   static Future<void> init() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      // 예전 버전에서는 효과음·말소리가 한 스위치였다 → 그 값을 기본으로 물려받는다.
+      enabled = prefs.getBool(_enabledKey) ??
+          (prefs.getBool('sound_enabled_v1') ?? true);
+      rate = prefs.getDouble(_rateKey) ?? rateNormal;
+    } catch (_) {}
     try {
       final ok = await _tts.isLanguageAvailable('ko-KR');
       if (ok is bool && !ok) available = false;
       await _tts.setLanguage('ko-KR');
-      await _tts.setSpeechRate(0.45);
+      await _tts.setSpeechRate(rate);
       await _tts.setPitch(1.05);
     } catch (_) {
       // TTS를 못 써도 앱은 계속 동작한다 (듣기 유형만 입구에서 막는다).
       available = false;
     }
+  }
+
+  static Future<void> setEnabled(bool value) async {
+    enabled = value;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool(_enabledKey, value);
+    } catch (_) {}
+  }
+
+  static Future<void> setRate(double value) async {
+    rate = value;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble(_rateKey, value);
+      await _tts.setSpeechRate(value);
+    } catch (_) {}
   }
 
   static String _currentLang = 'ko-KR';
@@ -34,7 +70,7 @@ class Speech {
   /// 호출하는 쪽에서 기다릴 필요 없음(fire-and-forget).
   /// [lang]으로 언어를 바꿔 읽을 수 있다 (영어 낱말은 'en-US').
   static Future<void> speak(String text, {String lang = 'ko-KR'}) async {
-    if (!Sounds.enabled) return;
+    if (!enabled) return;
     try {
       await _tts.stop();
       if (lang != _currentLang) {

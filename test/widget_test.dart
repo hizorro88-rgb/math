@@ -6,6 +6,7 @@ import 'package:preschool_math/models/japanese_pack.dart';
 import 'package:preschool_math/models/korean_data.dart';
 import 'package:preschool_math/models/profile.dart';
 import 'package:preschool_math/services/sounds.dart';
+import 'package:preschool_math/services/speech.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
@@ -13,6 +14,8 @@ void main() {
     SharedPreferences.setMockInitialValues({});
     Profiles.activeId = 1;
     Sounds.enabled = true;
+    Speech.enabled = true;
+    Speech.rate = Speech.rateNormal;
   });
 
   /// 화면 밖에 있을 수 있는 위젯을 스크롤로 보이게 한 뒤 탭한다.
@@ -280,7 +283,7 @@ void main() {
   });
 
   testWidgets('소리를 끈 채 듣고 풀기에 들어가면 안내 팝업이 뜬다', (tester) async {
-    Sounds.enabled = false;
+    Speech.enabled = false;
 
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
@@ -294,7 +297,7 @@ void main() {
     // 소리를 켜면 퀴즈가 시작된다.
     await tester.tap(find.text('소리 켜고 시작'));
     await tester.pumpAndSettle();
-    expect(Sounds.enabled, isTrue);
+    expect(Speech.enabled, isTrue);
     expect(find.text('👂 잘 들어 보세요'), findsOneWidget);
   });
 
@@ -331,6 +334,38 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('맞춤 복습'), findsNothing);
+  });
+
+  testWidgets('설정에서 효과음과 읽어주기를 따로 끄고, 말 빠르기를 바꾼다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.settings_rounded));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('문제 읽어주기'));
+    await tester.pumpAndSettle();
+    expect(Speech.enabled, isFalse);
+    expect(Sounds.enabled, isTrue); // 효과음은 그대로
+
+    await tester.tap(find.text('천천히'));
+    await tester.pumpAndSettle();
+    expect(Speech.rate, Speech.rateSlow);
+  });
+
+  testWidgets('헤더 소리 버튼은 효과음·읽어주기를 한 번에 껐다 켠다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byIcon(Icons.volume_up_rounded));
+    await tester.pumpAndSettle();
+    expect(Sounds.enabled, isFalse);
+    expect(Speech.enabled, isFalse);
+
+    await tester.tap(find.byIcon(Icons.volume_off_rounded));
+    await tester.pumpAndSettle();
+    expect(Sounds.enabled, isTrue);
+    expect(Speech.enabled, isTrue);
   });
 
   testWidgets('주간 보스전에 들어가면 보스전 라벨과 문제가 보인다', (tester) async {
