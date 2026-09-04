@@ -78,12 +78,18 @@ class _PracticeScreenState extends State<PracticeScreen> {
       return;
     }
 
-    // 구구단·수 세기는 그림·표 범위에 맞게 난이도 상한을 걸어 준다.
+    // 구구단·수 세기·심화 유형은 각자의 범위에 맞게 난이도 상한을 걸어 준다.
     var maxNumber = _difficulty.maxNumber;
     if (_mode == QuizMode.multiplication || _mode == QuizMode.division) {
       maxNumber = math.min(maxNumber, 9);
     } else if (_mode == QuizMode.counting) {
       maxNumber = math.min(maxNumber, 20);
+    } else if (_mode == QuizMode.fraction) {
+      maxNumber = math.min(maxNumber, 9);
+    } else if (_mode == QuizMode.decimal) {
+      maxNumber = math.min(maxNumber, 19);
+    } else if (_mode == QuizMode.timeCalc) {
+      maxNumber = math.min(maxNumber, 12);
     }
 
     Navigator.of(context).push(

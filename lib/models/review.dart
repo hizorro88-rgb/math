@@ -67,6 +67,9 @@ class Review {
       (stats.compareCorrect, stats.compareWrong, QuizMode.compare),
       (stats.patternCorrect, stats.patternWrong, QuizMode.pattern),
       (stats.clockCorrect, stats.clockWrong, QuizMode.clock),
+      (stats.fractionCorrect, stats.fractionWrong, QuizMode.fraction),
+      (stats.decimalCorrect, stats.decimalWrong, QuizMode.decimal),
+      (stats.timeCorrect, stats.timeWrong, QuizMode.timeCalc),
     ];
     for (final (correct, wrong, mode) in mathBuckets) {
       consider(

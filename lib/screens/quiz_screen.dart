@@ -178,7 +178,7 @@ class _QuizScreenState extends State<QuizScreen> {
     } else {
       Sounds.wrong();
       HapticFeedback.heavyImpact().ignore();
-      Speech.speak('아쉬워요. 정답은 ${_question.answer}이에요.');
+      Speech.speak('아쉬워요. 정답은 ${_question.answerSpeech}이에요.');
     }
   }
 
@@ -555,7 +555,7 @@ class _QuizScreenState extends State<QuizScreen> {
       children: [
         for (final choice in _question.choices)
           _ChoiceButton(
-            value: choice,
+            label: _question.labelFor(choice),
             state: _choiceState(choice),
             onTap: () => _selectChoice(choice),
           ),
@@ -578,7 +578,8 @@ class _QuizScreenState extends State<QuizScreen> {
         _isCorrect ? const Color(0xFFD7FFB8) : const Color(0xFFFFDFE0);
     final textColor =
         _isCorrect ? const Color(0xFF58A700) : const Color(0xFFEA2B2B);
-    final message = _isCorrect ? '정답이에요! 🎉' : '아쉬워요! 정답은 ${_question.answer}';
+    final message =
+        _isCorrect ? '정답이에요! 🎉' : '아쉬워요! 정답은 ${_question.answerLabel}';
 
     final isLast = _currentIndex + 1 >= _entries.length;
 
@@ -785,12 +786,12 @@ enum _ChoiceState { idle, correct, wrong, disabled }
 /// 큼직한 3D 보기 버튼
 class _ChoiceButton extends StatelessWidget {
   const _ChoiceButton({
-    required this.value,
+    required this.label,
     required this.state,
     required this.onTap,
   });
 
-  final int value;
+  final String label;
   final _ChoiceState state;
   final VoidCallback onTap;
 
@@ -832,12 +833,18 @@ class _ChoiceButton extends StatelessWidget {
             : null,
       ),
       child: Center(
-        child: Text(
-          '$value',
-          style: TextStyle(
-            fontSize: 36,
-            fontWeight: FontWeight.bold,
-            color: textColor,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              label,
+              style: TextStyle(
+                fontSize: 36,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
+            ),
           ),
         ),
       ),
@@ -1017,6 +1024,26 @@ class _EmojiHint extends StatelessWidget {
           height: 170,
           child: CustomPaint(painter: _ClockPainter(hour: question.left)),
         );
+
+      // 분수 이름 붙이기: 색칠한 조각/전체 조각을 네모로 보여준다.
+      case QuestionOp.fraction:
+        if (question.variant != 0) return const SizedBox.shrink();
+        final numerator = question.left ~/ 100;
+        final denominator = question.left % 100;
+        return Wrap(
+          alignment: WrapAlignment.center,
+          spacing: 3,
+          children: [
+            for (var i = 0; i < denominator; i++)
+              Text(i < numerator ? '🟧' : '⬜',
+                  style: const TextStyle(fontSize: 26)),
+          ],
+        );
+
+      // 소수·시간 계산은 문장이 곧 문제라 그림 힌트가 없다.
+      case QuestionOp.decimal:
+      case QuestionOp.timeCalc:
+        return const SizedBox.shrink();
     }
   }
 }

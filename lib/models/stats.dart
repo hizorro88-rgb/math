@@ -29,6 +29,12 @@ class LearningStats {
     required this.patternWrong,
     required this.clockCorrect,
     required this.clockWrong,
+    this.fractionCorrect = 0,
+    this.fractionWrong = 0,
+    this.decimalCorrect = 0,
+    this.decimalWrong = 0,
+    this.timeCorrect = 0,
+    this.timeWrong = 0,
     required this.bandCorrect,
     required this.bandWrong,
     required this.krCorrect,
@@ -63,6 +69,14 @@ class LearningStats {
   final int clockCorrect;
   final int clockWrong;
 
+  /// 분수 / 소수 / 시간 계산 정답/오답 (초3·4 심화)
+  final int fractionCorrect;
+  final int fractionWrong;
+  final int decimalCorrect;
+  final int decimalWrong;
+  final int timeCorrect;
+  final int timeWrong;
+
   /// 수 범위(0: 5까지, 1: 10까지, 2: 20까지, 3: 큰 수)별 정답/오답
   final List<int> bandCorrect;
   final List<int> bandWrong;
@@ -90,7 +104,10 @@ class LearningStats {
       divCorrect +
       compareCorrect +
       patternCorrect +
-      clockCorrect;
+      clockCorrect +
+      fractionCorrect +
+      decimalCorrect +
+      timeCorrect;
   int get mathWrong =>
       addWrong +
       subWrong +
@@ -99,7 +116,10 @@ class LearningStats {
       divWrong +
       compareWrong +
       patternWrong +
-      clockWrong;
+      clockWrong +
+      fractionWrong +
+      decimalWrong +
+      timeWrong;
 
   int get krTotalCorrect => krCorrect.fold(0, (a, b) => a + b);
   int get krTotalWrong => krWrong.fold(0, (a, b) => a + b);
@@ -166,6 +186,12 @@ class StatsStore {
   static const _patternWrongKey = 'stats_pattern_wrong_v1';
   static const _clockCorrectKey = 'stats_clock_correct_v1';
   static const _clockWrongKey = 'stats_clock_wrong_v1';
+  static const _fractionCorrectKey = 'stats_fraction_correct_v1';
+  static const _fractionWrongKey = 'stats_fraction_wrong_v1';
+  static const _decimalCorrectKey = 'stats_decimal_correct_v1';
+  static const _decimalWrongKey = 'stats_decimal_wrong_v1';
+  static const _timeCorrectKey = 'stats_time_correct_v1';
+  static const _timeWrongKey = 'stats_time_wrong_v1';
   static const _bandCorrectKey = 'stats_band_correct_v1'; // 'a,b,c'
   static const _bandWrongKey = 'stats_band_wrong_v1';
   static const _krCorrectKey = 'stats_kr_correct_v1'; // KrQuizType.index별 CSV
@@ -191,9 +217,19 @@ class StatsStore {
       QuestionOp.compare => correct ? _compareCorrectKey : _compareWrongKey,
       QuestionOp.pattern => correct ? _patternCorrectKey : _patternWrongKey,
       QuestionOp.clock => correct ? _clockCorrectKey : _clockWrongKey,
+      QuestionOp.fraction =>
+        correct ? _fractionCorrectKey : _fractionWrongKey,
+      QuestionOp.decimal => correct ? _decimalCorrectKey : _decimalWrongKey,
+      QuestionOp.timeCalc => correct ? _timeCorrectKey : _timeWrongKey,
     });
     await prefs.setInt(typeKey, (prefs.getInt(typeKey) ?? 0) + 1);
 
+    // 분수·소수·시간은 값이 부호화돼 있어 수 범위 통계에서 뺀다.
+    if (question.op == QuestionOp.fraction ||
+        question.op == QuestionOp.decimal ||
+        question.op == QuestionOp.timeCalc) {
+      return;
+    }
     final bandKey = Profiles.scoped(correct ? _bandCorrectKey : _bandWrongKey);
     final bands = _parseCsv(prefs.getString(bandKey), statBandNames.length);
     bands[statBandOf(question)]++;
@@ -270,6 +306,12 @@ class StatsStore {
       patternWrong: intOf(_patternWrongKey),
       clockCorrect: intOf(_clockCorrectKey),
       clockWrong: intOf(_clockWrongKey),
+      fractionCorrect: intOf(_fractionCorrectKey),
+      fractionWrong: intOf(_fractionWrongKey),
+      decimalCorrect: intOf(_decimalCorrectKey),
+      decimalWrong: intOf(_decimalWrongKey),
+      timeCorrect: intOf(_timeCorrectKey),
+      timeWrong: intOf(_timeWrongKey),
       bandCorrect: _parseCsv(
           prefs.getString(Profiles.scoped(_bandCorrectKey)),
           statBandNames.length),

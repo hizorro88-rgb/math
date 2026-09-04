@@ -10,11 +10,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   group('Curriculum', () {
-    test('연령/학년 7개 카테고리, 묶음마다 10단계로 구성된다', () {
-      expect(Curriculum.categories, hasLength(7));
+    test('연령/학년 8개 카테고리, 묶음마다 10단계로 구성된다', () {
+      expect(Curriculum.categories, hasLength(8));
       expect(
         Curriculum.categories.map((c) => c.title).toList(),
-        ['4살', '5살', '6살', '7살', '초등 1학년', '초등 2학년', '초등 3학년'],
+        ['4살', '5살', '6살', '7살', '초등 1학년', '초등 2학년', '초등 3학년', '초3·4 심화'],
       );
 
       // 전체 단계 수 = 묶음 수 × 10

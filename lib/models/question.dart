@@ -2,8 +2,21 @@ import 'dart:math';
 
 import 'quiz_config.dart';
 
-/// 문제의 연산 종류
-enum QuestionOp { counting, add, sub, mul, div, compare, pattern, clock, shape }
+/// 문제의 연산 종류 (통계 저장 키와 이어지므로 새 값은 끝에만 추가한다)
+enum QuestionOp {
+  counting,
+  add,
+  sub,
+  mul,
+  div,
+  compare,
+  pattern,
+  clock,
+  shape,
+  fraction,
+  decimal,
+  timeCalc,
+}
 
 /// 모양 세기에 쓰는 도형과 이름
 const List<({String emoji, String name})> shapeKinds = [
@@ -27,6 +40,9 @@ class Question {
     this.listenOnly = false,
     this.sequence = const [],
     this.shapeItems = const [],
+    this.prompt = '',
+    this.promptSpeech = '',
+    this.variant = 0,
   });
 
   final QuestionOp op;
@@ -59,6 +75,16 @@ class Question {
   /// 개수 세기를 도와주는 그림 이모지 (예: 🍎)
   final String emoji;
 
+  /// 분수·소수·시간 계산처럼 문장으로 내는 문제의 질문.
+  /// 비어 있지 않으면 [expression] 대신 이 문장이 보인다.
+  final String prompt;
+
+  /// [prompt] 문제를 읽어 줄 문장 (비면 prompt를 그대로 읽는다)
+  final String promptSpeech;
+
+  /// 같은 연산 안의 세부 유형 (예: 시간 계산에서 0=몇 시, 1=몇 분)
+  final int variant;
+
   bool get isCounting => op == QuestionOp.counting;
   bool get isAddition => op == QuestionOp.add;
 
@@ -76,10 +102,36 @@ class Question {
       QuestionOp.pattern => left,
       QuestionOp.clock => left,
       QuestionOp.shape => left,
+      // 심화 유형은 부호화한 정답을 left에 담는다.
+      QuestionOp.fraction => left,
+      QuestionOp.decimal => left,
+      QuestionOp.timeCalc => left,
     };
   }
 
+  /// 보기·정답 숫자를 화면에 보여줄 글자로 바꾼다.
+  /// 분수는 분자×100+분모, 소수는 0.1 단위 개수, 시간은 분으로 부호화돼 있다.
+  String labelFor(int value) => switch (op) {
+        QuestionOp.fraction => '${value ~/ 100}/${value % 100}',
+        QuestionOp.decimal => (value / 10).toStringAsFixed(1),
+        QuestionOp.timeCalc => variant == 1
+            ? '$value분'
+            : value % 60 == 0
+                ? '${value ~/ 60}시'
+                : '${value ~/ 60}시 ${value % 60}분',
+        _ => '$value',
+      };
+
+  String get answerLabel => labelFor(answer);
+
+  /// 정답을 읽어 줄 때 쓰는 말 (분수는 "5분의 3"처럼 읽는다)
+  String get answerSpeech => switch (op) {
+        QuestionOp.fraction => '${answer % 100}분의 ${answer ~/ 100}',
+        _ => answerLabel,
+      };
+
   String get expression {
+    if (prompt.isNotEmpty) return prompt;
     if (listenOnly) return '👂 잘 들어 보세요';
     if (blankSide != 0) {
       final opSign = op == QuestionOp.add ? '+' : '-';
@@ -98,11 +150,18 @@ class Question {
       QuestionOp.pattern => '${sequence.join(', ')}, ?',
       QuestionOp.clock => '시계는 몇 시일까요?',
       QuestionOp.shape => '$emoji 는 몇 개일까요?',
+      QuestionOp.fraction ||
+      QuestionOp.decimal ||
+      QuestionOp.timeCalc =>
+        prompt,
     };
   }
 
   /// 음성으로 읽어 줄 문장 (예: "3 더하기 2는?")
   String get speechText {
+    if (prompt.isNotEmpty) {
+      return promptSpeech.isNotEmpty ? promptSpeech : prompt;
+    }
     if (blankSide != 0) {
       final total = op == QuestionOp.add ? left + right : left - right;
       if (op == QuestionOp.add) {
@@ -125,6 +184,10 @@ class Question {
       QuestionOp.clock => '시계가 가리키는 시각은 몇 시일까요?',
       QuestionOp.shape =>
         '${shapeKinds.firstWhere((s) => s.emoji == emoji).name}가 몇 개인지 세어 보세요',
+      QuestionOp.fraction ||
+      QuestionOp.decimal ||
+      QuestionOp.timeCalc =>
+        prompt,
     };
   }
 
@@ -136,6 +199,10 @@ class Question {
         QuestionOp.compare =>
           'compare:$right:${([...choices]..sort()).join(',')}',
         QuestionOp.pattern => 'pattern:${sequence.join(',')}',
+        QuestionOp.fraction ||
+        QuestionOp.decimal ||
+        QuestionOp.timeCalc =>
+          '${op.name}:$variant:$prompt:$left',
         _ => '${op.name}:$left:$right:$blankSide',
       };
 }
@@ -166,9 +233,11 @@ class QuestionGenerator {
     for (var i = 0; i < config.questionCount; i++) {
       Question question;
       // 바로 앞 문제와 똑같은 문제는 피한다.
+      // (만들 수 있는 문제가 하나뿐이어도 멈추지 않게 시도 횟수를 제한한다)
+      var attempts = 0;
       do {
         question = _generateOne(config);
-      } while (question.dedupKey == previousKey);
+      } while (question.dedupKey == previousKey && ++attempts < 30);
       previousKey = question.dedupKey;
       questions.add(question);
     }
@@ -355,6 +424,217 @@ class QuestionGenerator {
           choices: base.choices,
           emoji: base.emoji,
         );
+
+      // 분수: 똑같이 나누기(이름 붙이기) → 같은 분모 비교 → 같은 분모 덧셈
+      case QuizMode.fraction:
+        final m = max.clamp(2, 9);
+        final forms = [0, if (m >= 5) 1, if (m >= 6) 2];
+        switch (forms[_random.nextInt(forms.length)]) {
+          // 이름 붙이기: b조각 중 한 조각 = 1/b
+          // (분모가 한 종류뿐이면 연속 중복을 못 피하므로 최소 2~3은 나오게 한다)
+          case 0:
+            final dMax = m < 3 ? 3 : m;
+            final d = 2 + _random.nextInt(dMax - 1); // 2..dMax
+            final wrong = <int>{};
+            while (wrong.length < 3) {
+              final other = 2 + _random.nextInt(8); // 2..9
+              if (other != d) wrong.add(100 + other);
+            }
+            return Question(
+              op: QuestionOp.fraction,
+              left: 100 + d,
+              right: 0,
+              prompt: '피자 한 판을 $d조각으로 똑같이 나눴어요.\n한 조각은 전체의 얼마일까요?',
+              promptSpeech: '피자 한 판을 $d조각으로 똑같이 나누면, 한 조각은 전체의 얼마일까요?',
+              choices: [100 + d, ...wrong]..shuffle(_random),
+              emoji: '',
+            );
+
+          // 같은 분모 비교: 분자가 클수록 크다
+          case 1:
+            final d = 5 + _random.nextInt(5); // 5..9
+            final numerators = <int>{};
+            while (numerators.length < 4) {
+              numerators.add(1 + _random.nextInt(d - 1)); // 1..d-1
+            }
+            final top = numerators.reduce((a, b) => a > b ? a : b);
+            return Question(
+              op: QuestionOp.fraction,
+              variant: 1,
+              left: top * 100 + d,
+              right: 0,
+              prompt: '가장 큰 분수는 어느 것일까요?',
+              promptSpeech: '가장 큰 분수를 찾아보세요',
+              choices: [for (final n in numerators) n * 100 + d]
+                ..shuffle(_random),
+              emoji: '',
+            );
+
+          // 같은 분모 덧셈: a/d + b/d = (a+b)/d
+          // (오답 3개를 1..d-1에서 뽑으므로 분모는 5 이상이어야 한다)
+          default:
+            final d = 5 + _random.nextInt(5); // 5..9
+            final a = 1 + _random.nextInt(d - 2); // 1..d-2
+            final b = 1 + _random.nextInt(d - 1 - a); // a+b <= d-1
+            final sum = a + b;
+            final wrong = <int>{};
+            while (wrong.length < 3) {
+              final n = 1 + _random.nextInt(d - 1);
+              if (n != sum) wrong.add(n * 100 + d);
+            }
+            return Question(
+              op: QuestionOp.fraction,
+              variant: 2,
+              left: sum * 100 + d,
+              right: 0,
+              prompt: '$a/$d + $b/$d = ?',
+              promptSpeech: '$d분의 $a 더하기 $d분의 $b는?',
+              choices: [sum * 100 + d, ...wrong]..shuffle(_random),
+              emoji: '',
+            );
+        }
+
+      // 소수: 0.1 모으기 → 비교 → 덧셈 (값은 0.1 단위 개수로 부호화)
+      case QuizMode.decimal:
+        final upper = max.clamp(2, 19); // 최대 1.9
+        final forms = [0, 1, if (upper >= 10) 2];
+        switch (forms[_random.nextInt(forms.length)]) {
+          // 0.1이 k개 = 0.k
+          case 0:
+            final k = 1 + _random.nextInt(upper.clamp(2, 9));
+            final wrong = <int>{};
+            while (wrong.length < 3) {
+              final n = 1 + _random.nextInt(upper.clamp(4, 19));
+              if (n != k) wrong.add(n);
+            }
+            return Question(
+              op: QuestionOp.decimal,
+              left: k,
+              right: 0,
+              prompt: '0.1이 $k개 모이면 얼마일까요?',
+              promptSpeech: '영 점 일이 $k개 모이면 얼마일까요?',
+              choices: [k, ...wrong]..shuffle(_random),
+              emoji: '',
+            );
+
+          // 소수 비교 (서로 다른 보기 4개가 나오게 범위 하한을 보정)
+          case 1:
+            final range = upper.clamp(4, 19);
+            final pool = <int>{};
+            while (pool.length < 4) {
+              pool.add(1 + _random.nextInt(range));
+            }
+            final top = pool.reduce((a, b) => a > b ? a : b);
+            return Question(
+              op: QuestionOp.decimal,
+              variant: 1,
+              left: top,
+              right: 0,
+              prompt: '가장 큰 소수는 어느 것일까요?',
+              promptSpeech: '가장 큰 소수를 찾아보세요',
+              choices: pool.toList()..shuffle(_random),
+              emoji: '',
+            );
+
+          // 소수 덧셈: 합이 1.9 이하
+          default:
+            final a = 1 + _random.nextInt(9); // 0.1..0.9
+            final b = 1 + _random.nextInt((upper - a).clamp(1, 9));
+            final sum = a + b;
+            final wrong = <int>{};
+            while (wrong.length < 3) {
+              final n = 1 + _random.nextInt(19);
+              if (n != sum) wrong.add(n);
+            }
+            String lab(int v) => (v / 10).toStringAsFixed(1);
+            return Question(
+              op: QuestionOp.decimal,
+              variant: 2,
+              left: sum,
+              right: 0,
+              prompt: '${lab(a)} + ${lab(b)} = ?',
+              promptSpeech: '${lab(a)} 더하기 ${lab(b)}는?',
+              choices: [sum, ...wrong]..shuffle(_random),
+              emoji: '',
+            );
+        }
+
+      // 시간 계산: 몇 시간 뒤 시각 → 시간↔분 → 30분 단위 (값은 분으로 부호화)
+      case QuizMode.timeCalc:
+        final m = max.clamp(3, 12);
+        final forms = [0, if (m >= 5) 1, if (m >= 8) 2];
+        switch (forms[_random.nextInt(forms.length)]) {
+          // h시에서 dur시간 뒤는? (12시를 넘지 않게)
+          case 0:
+            final hour = 1 + _random.nextInt(9); // 1..9
+            final dur = 1 + _random.nextInt((12 - hour).clamp(1, m - 1));
+            final answer = (hour + dur) * 60;
+            final wrong = <int>{};
+            while (wrong.length < 3) {
+              final h = 1 + _random.nextInt(12);
+              if (h * 60 != answer) wrong.add(h * 60);
+            }
+            return Question(
+              op: QuestionOp.timeCalc,
+              left: answer,
+              right: 0,
+              prompt: '시계가 $hour시예요.\n$dur시간이 지나면 몇 시일까요?',
+              promptSpeech: '$hour시에서 $dur시간이 지나면 몇 시일까요?',
+              choices: [answer, ...wrong]..shuffle(_random),
+              emoji: '',
+            );
+
+          // 시간 → 분 환산
+          case 1:
+            const pairs = [
+              ('1시간', 60),
+              ('2시간', 120),
+              ('3시간', 180),
+              ('1시간 30분', 90),
+              ('반 시간', 30),
+            ];
+            final picked = pairs[_random.nextInt(pairs.length)];
+            final options = <int>{30, 60, 90, 120, 180};
+            final wrong = ([
+              for (final v in options)
+                if (v != picked.$2) v,
+            ]..shuffle(_random))
+                .take(3);
+            return Question(
+              op: QuestionOp.timeCalc,
+              variant: 1,
+              left: picked.$2,
+              right: 0,
+              prompt: '${picked.$1}은 몇 분일까요?',
+              choices: [picked.$2, ...wrong]..shuffle(_random),
+              emoji: '',
+            );
+
+          // 30분 단위: h시 30분에서 dur 뒤는?
+          default:
+            final hour = 1 + _random.nextInt(9); // 1..9
+            final start = hour * 60 + 30;
+            const durations = [('30분', 30), ('1시간', 60), ('1시간 30분', 90)];
+            final dur = durations[_random.nextInt(durations.length)];
+            final answer = start + dur.$2;
+            final wrong = <int>{};
+            while (wrong.length < 3) {
+              final cand = answer + (30 + _random.nextInt(3) * 30) *
+                  (_random.nextBool() ? 1 : -1);
+              if (cand >= 60 && cand <= 12 * 60 && cand != answer) {
+                wrong.add(cand);
+              }
+            }
+            return Question(
+              op: QuestionOp.timeCalc,
+              left: answer,
+              right: 0,
+              prompt: '$hour시 30분에서 ${dur.$1}이 지나면\n몇 시일까요?',
+              promptSpeech: '$hour시 30분에서 ${dur.$1}이 지나면 몇 시일까요?',
+              choices: [answer, ...wrong]..shuffle(_random),
+              emoji: '',
+            );
+        }
 
       case QuizMode.addition:
       case QuizMode.subtraction:

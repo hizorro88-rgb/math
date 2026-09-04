@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:preschool_math/models/curriculum.dart';
 import 'package:preschool_math/models/question.dart';
 import 'package:preschool_math/models/quiz_config.dart';
 
@@ -345,5 +346,112 @@ void main() {
         });
       }
     }
+  });
+
+  group('QuestionGenerator 초3·4 심화', () {
+    test('분수: 부호화·보기·읽어주기가 규칙에 맞는다', () {
+      final generator = QuestionGenerator(random: Random(21));
+      for (final maxNumber in [2, 5, 9]) {
+        for (var round = 0; round < 20; round++) {
+          final questions = generator.generate(
+            QuizConfig(mode: QuizMode.fraction, maxNumber: maxNumber),
+          );
+          for (final q in questions) {
+            expect(q.op, QuestionOp.fraction);
+            expect(q.choices, hasLength(4));
+            expect(q.choices.toSet(), hasLength(4));
+            expect(q.choices, contains(q.answer));
+            final n = q.answer ~/ 100;
+            final d = q.answer % 100;
+            expect(d, inInclusiveRange(2, 9));
+            expect(n, inInclusiveRange(1, d - 1 == 0 ? 1 : d - 1));
+            expect(q.answerLabel, '$n/$d');
+            expect(q.answerSpeech, '$d분의 $n');
+            expect(q.prompt, isNotEmpty);
+            if (q.variant == 1) {
+              // 비교: 같은 분모 중 분자가 가장 큰 것
+              for (final c in q.choices) {
+                expect(c % 100, d);
+                expect(c ~/ 100, lessThanOrEqualTo(n));
+              }
+            }
+            if (q.variant == 2) {
+              // 덧셈: a/d + b/d 문장에서 답을 다시 계산해 확인
+              final match =
+                  RegExp(r'^(\d+)/(\d+) \+ (\d+)/\d+ = \?$').firstMatch(q.prompt);
+              expect(match, isNotNull, reason: q.prompt);
+              expect(
+                int.parse(match!.group(1)!) + int.parse(match.group(3)!),
+                n,
+              );
+              expect(int.parse(match.group(2)!), d);
+            }
+          }
+        }
+      }
+    });
+
+    test('소수: 0.1 단위 부호화와 표기가 맞는다', () {
+      final generator = QuestionGenerator(random: Random(23));
+      for (final maxNumber in [4, 9, 19]) {
+        for (var round = 0; round < 20; round++) {
+          final questions = generator.generate(
+            QuizConfig(mode: QuizMode.decimal, maxNumber: maxNumber),
+          );
+          for (final q in questions) {
+            expect(q.op, QuestionOp.decimal);
+            expect(q.answer, inInclusiveRange(1, 19));
+            expect(q.answerLabel, (q.answer / 10).toStringAsFixed(1));
+            expect(q.choices, contains(q.answer));
+            expect(q.choices.toSet(), hasLength(4));
+            if (q.variant == 1) {
+              // 비교: 정답이 보기 중 가장 크다
+              expect(q.answer, q.choices.reduce((a, b) => a > b ? a : b));
+            }
+          }
+        }
+      }
+    });
+
+    test('시간 계산: 분 부호화와 시각 표기가 맞는다', () {
+      final generator = QuestionGenerator(random: Random(25));
+      for (final maxNumber in [3, 8, 12]) {
+        for (var round = 0; round < 20; round++) {
+          final questions = generator.generate(
+            QuizConfig(mode: QuizMode.timeCalc, maxNumber: maxNumber),
+          );
+          for (final q in questions) {
+            expect(q.op, QuestionOp.timeCalc);
+            expect(q.choices, contains(q.answer));
+            expect(q.choices.toSet(), hasLength(4));
+            if (q.variant == 1) {
+              expect(q.answerLabel, '${q.answer}분');
+            } else {
+              // 시각: 12시를 넘지 않고, 정시는 'h시'·30분은 'h시 30분'
+              expect(q.answer, lessThanOrEqualTo(12 * 60));
+              final h = q.answer ~/ 60;
+              final min = q.answer % 60;
+              expect(q.answerLabel, min == 0 ? '$h시' : '$h시 $min분');
+            }
+          }
+        }
+      }
+    });
+
+    test('심화 단계도 커리큘럼에서 문제를 만들 수 있다', () {
+      final generator = QuestionGenerator(random: Random(27));
+      final advanced = Curriculum.categories.last;
+      expect(advanced.title, '초3·4 심화');
+      for (final unit in advanced.units) {
+        for (var i = 0; i < Curriculum.levelsPerUnit; i++) {
+          final level = Curriculum.levelAt(unit.firstLevelNumber + i);
+          final questions = generator.generate(level.config);
+          expect(questions, hasLength(10));
+          for (var k = 1; k < questions.length; k++) {
+            expect(questions[k].dedupKey, isNot(questions[k - 1].dedupKey));
+          }
+        }
+      }
+    });
   });
 }

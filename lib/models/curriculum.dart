@@ -392,6 +392,45 @@ class Curriculum {
               endMax: 300),
         ],
       ),
+      // 초3~4 심화: 분수·소수·시간 계산 (기존 기록 보존을 위해 항상 끝에 추가)
+      AgeCategory(
+        title: '초3·4 심화',
+        emoji: '📙',
+        desc: '분수 · 소수 · 시간 계산',
+        color: const Color(0xFF7E57C2),
+        units: [
+          Unit(
+              title: '분수 첫걸음',
+              emoji: '🍕',
+              mode: QuizMode.fraction,
+              startMax: 2,
+              endMax: 5),
+          Unit(
+              title: '분수 도전',
+              emoji: '🧀',
+              mode: QuizMode.fraction,
+              startMax: 6,
+              endMax: 9),
+          Unit(
+              title: '소수 첫걸음',
+              emoji: '💧',
+              mode: QuizMode.decimal,
+              startMax: 4,
+              endMax: 9),
+          Unit(
+              title: '소수 도전',
+              emoji: '🌊',
+              mode: QuizMode.decimal,
+              startMax: 10,
+              endMax: 19),
+          Unit(
+              title: '시간 계산',
+              emoji: '⏱️',
+              mode: QuizMode.timeCalc,
+              startMax: 3,
+              endMax: 12),
+        ],
+      ),
     ];
 
     // 전체 번호와 소속을 이어 붙인다.
