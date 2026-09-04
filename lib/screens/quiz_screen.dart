@@ -443,6 +443,22 @@ class _QuizScreenState extends State<QuizScreen> {
                     themeColor: _themeColor,
                   );
                 }),
+              ] else if (_question.prompt.isNotEmpty) ...[
+                // 문장 문제(분수·소수·시간)는 여러 줄 그대로 보여준다.
+                // (오른쪽 여백은 다시 듣기 버튼 자리)
+                Padding(
+                  padding: const EdgeInsets.only(right: 30),
+                  child: Text(
+                    _question.expression,
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                _EmojiHint(question: _question),
               ] else ...[
                 // 세 자리 수처럼 긴 식은 자동으로 줄어들어 카드 안에 들어간다.
                 FittedBox(
