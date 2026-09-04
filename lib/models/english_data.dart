@@ -35,6 +35,12 @@ const List<EnWord> enWordsShort = [
   EnWord('cup', '🥤'),
   EnWord('bus', '🚌', 'vehicle'),
   EnWord('car', '🚗', 'vehicle'),
+  EnWord('bat', '🦇'),
+  EnWord('hen', '🐔', 'bird'),
+  EnWord('ice', '🧊'),
+  EnWord('map', '🗺️'),
+  EnWord('bag', '🎒'),
+  EnWord('van', '🚐', 'vehicle'),
 ];
 
 /// 긴 낱말 (4글자 이상)
@@ -52,7 +58,7 @@ const List<EnWord> enWordsLong = [
   EnWord('bear', '🐻'),
   EnWord('fish', '🐟'),
   EnWord('frog', '🐸'),
-  EnWord('duck', '🦆'),
+  EnWord('duck', '🦆', 'bird'),
   EnWord('star', '⭐'),
   EnWord('moon', '🌙'),
   EnWord('book', '📕'),
@@ -66,6 +72,21 @@ const List<EnWord> enWordsLong = [
   EnWord('sock', '🧦'),
   EnWord('clock', '⏰'),
   EnWord('crown', '👑'),
+  EnWord('horse', '🐴'),
+  EnWord('sheep', '🐑'),
+  EnWord('snake', '🐍'),
+  EnWord('whale', '🐳'),
+  EnWord('panda', '🐼'),
+  EnWord('rabbit', '🐰'),
+  EnWord('monkey', '🐵'),
+  EnWord('bread', '🍞'),
+  EnWord('juice', '🧃'),
+  EnWord('melon', '🍈'),
+  EnWord('cherry', '🍒'),
+  EnWord('orange', '🍊'),
+  EnWord('chair', '🪑'),
+  EnWord('boat', '🚤', 'vehicle'),
+  EnWord('bike', '🚲', 'vehicle'),
 ];
 
 /// 모든 영어 낱말

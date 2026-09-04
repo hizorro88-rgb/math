@@ -5,6 +5,12 @@ import 'package:preschool_math/models/korean_data.dart';
 import 'package:preschool_math/models/korean_question.dart';
 
 void main() {
+  test('한글 낱말 데이터: 낱말과 이모지가 겹치지 않는다', () {
+    expect(krAllWords.map((w) => w.word).toSet(), hasLength(krAllWords.length));
+    expect(
+        krAllWords.map((w) => w.emoji).toSet(), hasLength(krAllWords.length));
+  });
+
   group('KoreanQuestionGenerator', () {
     test('그림→낱말: 그림에 맞는 낱말이 정답이다', () {
       final generator = KoreanQuestionGenerator(random: Random(1));

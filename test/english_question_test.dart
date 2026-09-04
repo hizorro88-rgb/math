@@ -5,6 +5,12 @@ import 'package:preschool_math/models/english_data.dart';
 import 'package:preschool_math/models/english_question.dart';
 
 void main() {
+  test('영어 낱말 데이터: 낱말과 이모지가 겹치지 않는다', () {
+    expect(enAllWords.map((w) => w.word).toSet(), hasLength(enAllWords.length));
+    expect(
+        enAllWords.map((w) => w.emoji).toSet(), hasLength(enAllWords.length));
+  });
+
   group('EnglishQuestionGenerator', () {
     test('낱말 듣기: 낱말에 맞는 그림이 정답이고 발음은 영어다', () {
       final generator = EnglishQuestionGenerator(random: Random(1));
