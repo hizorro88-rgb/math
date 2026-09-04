@@ -10,6 +10,7 @@ import '../models/progress.dart';
 import '../models/question.dart';
 import '../models/quiz_config.dart';
 import '../models/stats.dart';
+import '../models/wrong_notes.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../widgets/bouncy_button.dart';
@@ -168,6 +169,22 @@ class _QuizScreenState extends State<QuizScreen> {
         // 처음 틀린 문제는 판 끝에 한 번 더 나온다.
         if (!_isRetryQuestion) {
           _entries.add(_QuizEntry(_question, isRetry: true));
+          // 분수·소수·시간 같은 문장 문제는 오답 노트에도 담는다.
+          if (_question.prompt.isNotEmpty) {
+            WrongNoteStore.add(WrongNote(
+              subject: 'math',
+              subjectEmoji: '🧮',
+              subjectName: '수학',
+              instruction: _question.prompt.replaceAll('\n', ' '),
+              display: '',
+              choices: [
+                for (final c in _question.choices) _question.labelFor(c),
+              ],
+              answer: _question.answerLabel,
+              answerText: _question.answerLabel,
+              speech: _question.speechText,
+            ));
+          }
         }
       }
     });

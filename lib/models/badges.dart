@@ -177,6 +177,20 @@ final List<LearnBadge> allBadges = [
     desc: '중국어 문제 1개 풀기',
     earnedBy: (d) => d.stats.langAnswered('zh') >= 1,
   ),
+  LearnBadge(
+    id: 'advanced_sprout',
+    emoji: '📙',
+    title: '심화 새싹',
+    desc: '분수·소수·시간 계산 문제 10개 풀기',
+    earnedBy: (d) =>
+        d.stats.fractionCorrect +
+            d.stats.fractionWrong +
+            d.stats.decimalCorrect +
+            d.stats.decimalWrong +
+            d.stats.timeCorrect +
+            d.stats.timeWrong >=
+        10,
+  ),
 ];
 
 /// 지금까지의 기록을 불러와 배지 판정에 쓴다.
