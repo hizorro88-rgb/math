@@ -197,5 +197,9 @@ class WrongNoteStore {
     await _save(notes);
   }
 
-  static Future<int> count() async => (await load()).length;
+  /// 노트에 쌓인 문제 수 (홈 배너용 — json 해석 없이 줄 수만 센다)
+  static Future<int> count() async {
+    final prefs = await SharedPreferences.getInstance();
+    return (prefs.getStringList(Profiles.scoped(_key)) ?? const []).length;
+  }
 }

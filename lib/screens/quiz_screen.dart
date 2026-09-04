@@ -181,7 +181,8 @@ class _QuizScreenState extends State<QuizScreen> {
                 for (final c in _question.choices) _question.labelFor(c),
               ],
               answer: _question.answerLabel,
-              answerText: _question.answerLabel,
+              // 다시 풀 때 정답을 읽어 주는 문장 ("5분의 3"처럼)
+              answerText: _question.answerSpeech,
               speech: _question.speechText,
             ));
           }

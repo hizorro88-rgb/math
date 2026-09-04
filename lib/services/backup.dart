@@ -23,11 +23,32 @@ class BackupInfo {
 class BackupService {
   static const _prefix = 'OWL1.';
 
+  /// 백업에 넣지 않는 키: 결제 권한은 코드로 옮기거나 지울 수 없어야 한다.
+  /// (이용권은 스토어 [구매 복원]으로만 옮긴다)
+  static const _excludedKeys = {'family_pass_v1'};
+
+  /// 지금 쓰는 별 목록 키들 (미리보기의 '통과한 단계' 계산용).
+  /// 마이그레이션이 남겨 둔 옛 버전 키를 이중으로 세지 않도록 이름을 못 박는다.
+  static const _currentStarsKeys = [
+    'level_stars_v4',
+    'kr_level_stars_v3',
+    'en_level_stars_v1',
+  ];
+
+  static bool _isCurrentStarsKey(String key) {
+    // 프로필 접두사(p2_ 등)를 떼고 비교한다.
+    final core = key.replaceFirst(RegExp(r'^p\d+_'), '');
+    if (_currentStarsKeys.contains(core)) return true;
+    // 언어 팩: lang_<id>_stars_v1
+    return core.startsWith('lang_') && core.endsWith('_stars_v1');
+  }
+
   /// 현재 저장소 전체를 백업 코드로 만든다.
   static Future<String> export({DateTime? now}) async {
     final prefs = await SharedPreferences.getInstance();
     final data = <String, dynamic>{};
     for (final key in prefs.getKeys()) {
+      if (_excludedKeys.contains(key)) continue;
       final value = prefs.get(key);
       // 타입을 함께 적어 두어야 복원할 때 같은 타입으로 넣을 수 있다.
       if (value is bool) {
@@ -63,8 +84,7 @@ class BackupService {
     var coins = 0;
     for (final entry in data.entries) {
       final value = entry.value as Map<String, dynamic>;
-      // 별 목록 키(level_stars, kr/en/lang stars)에서 통과 단계를 센다.
-      if (entry.key.contains('stars') && value['t'] == 'l') {
+      if (_isCurrentStarsKey(entry.key) && value['t'] == 'l') {
         for (final s in (value['v'] as List)) {
           if ((int.tryParse('$s') ?? 0) >= 1) cleared++;
         }
@@ -82,31 +102,53 @@ class BackupService {
   }
 
   /// 백업 코드로 저장소를 통째로 되돌린다. 성공하면 true.
-  /// 지금 기록은 모두 백업 내용으로 바뀐다.
+  /// 지금 기록은 모두 백업 내용으로 바뀐다 (이용권 상태는 이 기기 것을 유지).
   static Future<bool> restore(String code) async {
     final map = _decode(code);
     if (map == null) return false;
     final data = map['data'] as Map<String, dynamic>? ?? {};
     if (data.isEmpty) return false;
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.clear();
+    // 지우기 전에 쓸 값을 전부 만들어 검증한다.
+    // 중간에 형식 오류가 나면 기존 기록을 건드리지 않고 실패한다.
+    final writes = <(String, Object)>[];
     for (final entry in data.entries) {
-      final value = entry.value as Map<String, dynamic>;
-      switch (value['t']) {
-        case 'b':
-          await prefs.setBool(entry.key, value['v'] as bool);
-        case 'i':
-          await prefs.setInt(entry.key, value['v'] as int);
-        case 'd':
-          await prefs.setDouble(entry.key, (value['v'] as num).toDouble());
-        case 's':
-          await prefs.setString(entry.key, value['v'] as String);
-        case 'l':
-          await prefs.setStringList(
-              entry.key, [for (final e in value['v'] as List) '$e']);
+      if (_excludedKeys.contains(entry.key)) continue; // 옛 코드에 섞여 있어도 무시
+      final value = entry.value;
+      if (value is! Map<String, dynamic>) return false;
+      final typed = switch (value['t']) {
+        'b' => value['v'] is bool ? value['v'] as bool : null,
+        'i' => value['v'] is int ? value['v'] as int : null,
+        'd' => value['v'] is num ? (value['v'] as num).toDouble() : null,
+        's' => value['v'] is String ? value['v'] as String : null,
+        'l' => value['v'] is List
+            ? [for (final e in value['v'] as List) '$e']
+            : null,
+        _ => null,
+      };
+      if (typed == null) return false;
+      writes.add((entry.key, typed));
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    final hadPass = prefs.getBool('family_pass_v1') ?? false;
+    await prefs.clear();
+    for (final (key, value) in writes) {
+      switch (value) {
+        case bool v:
+          await prefs.setBool(key, v);
+        case int v:
+          await prefs.setInt(key, v);
+        case double v:
+          await prefs.setDouble(key, v);
+        case String v:
+          await prefs.setString(key, v);
+        case List<String> v:
+          await prefs.setStringList(key, v);
       }
     }
+    // 이 기기에서 산 이용권은 백업과 무관하게 유지한다.
+    if (hadPass) await prefs.setBool('family_pass_v1', true);
     return true;
   }
 

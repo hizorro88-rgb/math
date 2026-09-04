@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../models/profile.dart';
 import '../services/backup.dart';
+import '../services/sounds.dart';
+import '../services/speech.dart';
 import '../widgets/bouncy_button.dart';
 import 'level_map_screen.dart';
 
@@ -42,6 +45,7 @@ class _BackupScreenState extends State<BackupScreen> {
 
   Future<void> _pasteCode() async {
     final data = await Clipboard.getData(Clipboard.kTextPlain);
+    if (!mounted) return;
     final text = data?.text?.trim() ?? '';
     if (text.isEmpty) {
       _snack('붙여넣을 내용이 없어요. 백업 코드를 먼저 복사해 주세요');
@@ -85,6 +89,12 @@ class _BackupScreenState extends State<BackupScreen> {
 
     setState(() => _restoring = true);
     final done = await BackupService.restore(code);
+    if (done) {
+      // 메모리에 남아 있는 프로필·소리 설정을 복원된 값으로 다시 읽는다.
+      await Profiles.init();
+      await Sounds.init();
+      await Speech.reloadSettings();
+    }
     if (!mounted) return;
     setState(() => _restoring = false);
     if (!done) {

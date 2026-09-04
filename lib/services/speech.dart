@@ -47,6 +47,18 @@ class Speech {
     }
   }
 
+  /// 백업 복원 뒤처럼 저장된 설정만 다시 읽을 때.
+  /// (TTS 채널 응답은 기다리지 않는다 — 테스트 환경에서는 응답이 오지 않는다)
+  static Future<void> reloadSettings() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      enabled = prefs.getBool(_enabledKey) ??
+          (prefs.getBool('sound_enabled_v1') ?? true);
+      rate = prefs.getDouble(_rateKey) ?? rateNormal;
+    } catch (_) {}
+    _tts.setSpeechRate(rate).ignore();
+  }
+
   static Future<void> setEnabled(bool value) async {
     enabled = value;
     try {

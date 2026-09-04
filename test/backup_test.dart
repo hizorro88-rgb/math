@@ -87,6 +87,42 @@ void main() {
     expect(await BackupService.restore(' $code '), isTrue);
   });
 
+  test('가족 이용권은 백업 코드로 옮겨지지도, 지워지지도 않는다', () async {
+    // 이용권이 있는 기기의 백업 → 코드에 이용권이 담기지 않는다.
+    SharedPreferences.setMockInitialValues({
+      'family_pass_v1': true,
+      'coins_v1': 10,
+    });
+    final codeWithPass = await BackupService.export();
+
+    SharedPreferences.setMockInitialValues({});
+    await BackupService.restore(codeWithPass);
+    var prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('family_pass_v1'), isNull); // 결제 없이 안 열림
+    expect(prefs.getInt('coins_v1'), 10);
+
+    // 이용권이 없는 백업을 이용권 있는 기기에 복원해도 이용권은 유지된다.
+    SharedPreferences.setMockInitialValues({'coins_v1': 1});
+    final codeNoPass = await BackupService.export();
+    SharedPreferences.setMockInitialValues({'family_pass_v1': true});
+    await BackupService.restore(codeNoPass);
+    prefs = await SharedPreferences.getInstance();
+    expect(prefs.getBool('family_pass_v1'), isTrue);
+    expect(prefs.getInt('coins_v1'), 1);
+  });
+
+  test('미리보기는 마이그레이션이 남긴 옛 별 기록을 이중으로 세지 않는다', () async {
+    SharedPreferences.setMockInitialValues({
+      'level_stars_v4': ['3', '1', '0'],
+      'level_stars_v3': ['3', '1', '0'], // 옛 키가 남아 있어도
+      'kr_level_stars_v1': ['2'],
+      'p2_lang_ja_stars_v1': ['1', '0'],
+    });
+    final code = await BackupService.export();
+    final info = BackupService.peek(code)!;
+    expect(info.clearedLevels, 3); // 수학 2 + 일본어(프로필2) 1
+  });
+
   testWidgets('백업 화면에서 코드를 만들면 화면에 나타난다', (tester) async {
     SharedPreferences.setMockInitialValues({'coins_v1': 42});
     await tester.pumpWidget(const MaterialApp(home: BackupScreen()));
@@ -126,6 +162,9 @@ void main() {
 
     expect(find.text('이 백업으로 되돌릴까요?'), findsOneWidget);
     await tester.tap(find.text('복원하기'));
+    // 복원 → 설정 다시 읽기 → 홈 이동의 비동기 사슬을 끝까지 돌린다.
+    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 50));
     await tester.pumpAndSettle();
 
     final prefs = await SharedPreferences.getInstance();

@@ -150,6 +150,7 @@ class Question {
       QuestionOp.pattern => '${sequence.join(', ')}, ?',
       QuestionOp.clock => '시계는 몇 시일까요?',
       QuestionOp.shape => '$emoji 는 몇 개일까요?',
+      // 심화 유형은 항상 prompt가 있어 위에서 먼저 반환된다 (완전성 유지용).
       QuestionOp.fraction ||
       QuestionOp.decimal ||
       QuestionOp.timeCalc =>
@@ -184,6 +185,7 @@ class Question {
       QuestionOp.clock => '시계가 가리키는 시각은 몇 시일까요?',
       QuestionOp.shape =>
         '${shapeKinds.firstWhere((s) => s.emoji == emoji).name}가 몇 개인지 세어 보세요',
+      // 심화 유형은 항상 prompt가 있어 위에서 먼저 반환된다 (완전성 유지용).
       QuestionOp.fraction ||
       QuestionOp.decimal ||
       QuestionOp.timeCalc =>
