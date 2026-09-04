@@ -66,6 +66,23 @@ class PreschoolMathApp extends StatelessWidget {
           ),
         ),
       ),
+      // 태블릿·가로 화면: 콘텐츠가 흉하게 늘어나지 않게 폰 폭으로 제한해
+      // 가운데 정렬한다 (좌우는 은은한 배경으로 채움).
+      builder: (context, child) {
+        final content = child;
+        if (content == null) return const SizedBox.shrink();
+        return LayoutBuilder(
+          builder: (context, constraints) {
+            if (constraints.maxWidth <= maxContentWidth) return content;
+            return ColoredBox(
+              color: const Color(0xFFDDEAD2),
+              child: Center(
+                child: SizedBox(width: maxContentWidth, child: content),
+              ),
+            );
+          },
+        );
+      },
       home: showOnboarding
           ? const OnboardingScreen()
           : showProfilePicker
@@ -73,4 +90,7 @@ class PreschoolMathApp extends StatelessWidget {
               : const LevelMapScreen(),
     );
   }
+
+  /// 이 폭을 넘는 화면(태블릿·가로 모드)에서는 콘텐츠를 가운데로 모은다.
+  static const double maxContentWidth = 640;
 }
