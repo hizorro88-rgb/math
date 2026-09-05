@@ -90,4 +90,21 @@ class Reminders {
       await prefs.setBool(_enabledKey, false);
     } catch (_) {}
   }
+
+  /// 백업 복원 뒤: 저장된 스위치 값에 실제 알림 예약을 맞춘다.
+  /// 플러그인 호출은 기다리지 않는다 (실패하면 스위치를 꺼서 상태를 일치시킨다).
+  static Future<void> syncWithSavedSetting() async {
+    final want = await isEnabled();
+    if (want) {
+      enable().then((ok) async {
+        if (ok) return;
+        try {
+          final prefs = await SharedPreferences.getInstance();
+          await prefs.setBool(_enabledKey, false);
+        } catch (_) {}
+      }).ignore();
+    } else {
+      disable().ignore();
+    }
+  }
 }

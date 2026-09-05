@@ -159,7 +159,10 @@ const List<String> statBandNames = ['5까지', '10까지', '20까지', '큰 수'
 
 /// 문제가 속하는 수 범위: 등장하는 가장 큰 수 기준
 int statBandOf(Question q) {
-  final biggest = [q.left, q.right, q.answer].reduce((a, b) => a > b ? a : b);
+  // 비교 문제는 left가 정답, right가 방향 표시라 실제 보인 수(보기)로 판정한다.
+  final biggest = q.op == QuestionOp.compare
+      ? q.choices.reduce((a, b) => a > b ? a : b)
+      : [q.left, q.right, q.answer].reduce((a, b) => a > b ? a : b);
   if (biggest <= 5) return 0;
   if (biggest <= 10) return 1;
   if (biggest <= 20) return 2;

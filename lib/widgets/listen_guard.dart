@@ -4,19 +4,23 @@ import '../services/speech.dart';
 import 'bouncy_button.dart';
 
 /// 듣기 유형(소리로 문제를 내는 퀴즈)에 들어갈 수 있는지 확인한다.
-/// - 기기에 한국어 음성이 없으면: 안내 후 false (풀 수 없음)
+/// - 기기에 [lang] 음성이 없으면: 안내 후 false (풀 수 없음)
 /// - 소리가 꺼져 있으면: "소리 켜고 시작" 팝업을 띄우고 선택을 따른다
 /// true를 돌려주면 퀴즈를 진행해도 된다.
-Future<bool> ensureListenReady(BuildContext context) async {
-  if (!Speech.available) {
+Future<bool> ensureListenReady(
+  BuildContext context, {
+  String lang = 'ko-KR',
+  String langName = '한국어',
+}) async {
+  if (!Speech.isLangAvailable(lang)) {
     await showDialog<void>(
       context: context,
       builder: (context) => _guardDialog(
         context,
         emoji: '🙉',
         title: '음성을 쓸 수 없어요',
-        message: '이 기기에는 한국어 읽어주기 음성이 없어서\n듣기 문제를 풀 수 없어요.\n'
-            '기기 설정에서 한국어 TTS를 설치해 주세요.',
+        message: '이 기기에는 $langName 읽어주기 음성이 없어서\n듣기 문제를 풀 수 없어요.\n'
+            '기기 설정에서 $langName TTS를 설치해 주세요.',
         buttons: [
           BouncyButton(
             color: const Color(0xFF58CC02),

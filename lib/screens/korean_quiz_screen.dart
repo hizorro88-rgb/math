@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../models/daily.dart';
 import '../models/korean_curriculum.dart';
 import '../models/korean_question.dart';
+import '../models/premium.dart';
 import '../models/progress.dart';
 import '../models/stats.dart';
 import '../models/wrong_notes.dart';
@@ -65,6 +66,15 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
 
   KoreanQuestion get _question => _entries[_currentIndex].question;
   bool get _isRetryQuestion => _entries[_currentIndex].isRetry;
+
+  /// 진행 바 값: 틀린 문제가 뒤에 추가돼 분모가 늘어도 바가 뒤로 가지 않게 한다.
+  double _barShown = 0;
+  double get _barProgress {
+    final p = (_currentIndex + (_answered ? 1 : 0)) / _entries.length;
+    if (p > _barShown) _barShown = p;
+    return _barShown;
+  }
+
   bool get _answered => _selectedChoice != null;
   bool get _isCorrect => _selectedChoice == _question.answer;
   Color get _themeColor => widget.level?.unit.color ?? const Color(0xFF1CB0F6);
@@ -193,12 +203,21 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
         korean: true,
       );
       await StatsStore.recordRoundDay();
-      if (!mounted) return;
-      final nextLevel = (level != null &&
+      var nextLevel = (level != null &&
               stars >= 1 &&
               level.number < KoreanCurriculum.totalLevels)
           ? KoreanCurriculum.levelAt(level.number + 1)
           : null;
+      // 다음 단계가 이용권으로 잠긴 카테고리면 버튼을 숨긴다
+      // (홈에서 부모 확인 → 이용권 안내를 거치게 한다).
+      if (nextLevel != null &&
+          !PremiumStore.isCategoryFree(nextLevel.unit.category.index) &&
+          !await PremiumStore.hasPass()) {
+        nextLevel = null;
+      }
+      // 클로저 안에서 널 아님이 유지되게 final로 다시 담는다.
+      final next = nextLevel;
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => ResultScreen(
@@ -214,12 +233,12 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
                 : null,
             showUnlockHint: level != null && stars < 1,
             nextLabel:
-                nextLevel != null ? '다음 단계 (${nextLevel.number}단계)' : null,
-            nextBuilder: nextLevel != null
+                next != null ? '다음 단계 (${next.number}단계)' : null,
+            nextBuilder: next != null
                 ? () => KoreanQuizScreen(
-                      type: nextLevel.unit.type,
-                      stage: nextLevel.stage,
-                      level: nextLevel,
+                      type: next.unit.type,
+                      stage: next.stage,
+                      level: next,
                     )
                 : null,
             retryBuilder: () => KoreanQuizScreen(
@@ -314,7 +333,7 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
               borderRadius: BorderRadius.circular(8),
               child: TweenAnimationBuilder<double>(
                 tween: Tween(
-                  end: (_currentIndex + (_answered ? 1 : 0)) / _entries.length,
+                  end: _barProgress,
                 ),
                 duration: const Duration(milliseconds: 300),
                 builder: (context, value, _) => LinearProgressIndicator(

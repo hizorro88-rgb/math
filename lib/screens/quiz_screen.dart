@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import '../models/boss.dart';
 import '../models/curriculum.dart';
 import '../models/daily.dart';
+import '../models/premium.dart';
 import '../models/progress.dart';
 import '../models/question.dart';
 import '../models/quiz_config.dart';
@@ -79,6 +80,15 @@ class _QuizScreenState extends State<QuizScreen> {
 
   Question get _question => _entries[_currentIndex].question;
   bool get _isRetryQuestion => _entries[_currentIndex].isRetry;
+
+  /// 진행 바 값: 틀린 문제가 뒤에 추가돼 분모가 늘어도 바가 뒤로 가지 않게 한다.
+  double _barShown = 0;
+  double get _barProgress {
+    final p = (_currentIndex + (_answered ? 1 : 0)) / _entries.length;
+    if (p > _barShown) _barShown = p;
+    return _barShown;
+  }
+
   bool get _answered => _selectedChoice != null;
   bool get _isCorrect => _selectedChoice == _question.answer;
   Color get _themeColor => widget.level?.unit.color ?? const Color(0xFF58CC02);
@@ -218,7 +228,10 @@ class _QuizScreenState extends State<QuizScreen> {
       final level = widget.level;
       final stars = starsForScore(_correctCount, _baseCount);
       // 보스전을 통과하면 큰 보너스가 붙고, 이번 주는 잠긴다.
-      final bossCleared = widget.bossMode && stars >= 1;
+      // 이미 이번 주에 클리어했으면 (결과 화면의 '다시 하기' 등) 보상을 또 주지 않는다.
+      final bossCleared = widget.bossMode &&
+          stars >= 1 &&
+          !await BossStore.isClearedThisWeek();
       final earned = _roundPoints +
           completionBonus(stars) +
           (bossCleared ? BossStore.reward : 0);
@@ -241,11 +254,20 @@ class _QuizScreenState extends State<QuizScreen> {
       );
       // 리포트용 주간 활동 기록
       await StatsStore.recordRoundDay();
-      if (!mounted) return;
-      final nextLevel =
+      var nextLevel =
           (level != null && stars >= 1 && level.number < Curriculum.totalLevels)
               ? Curriculum.levelAt(level.number + 1)
               : null;
+      // 다음 단계가 이용권으로 잠긴 카테고리면 버튼을 숨긴다
+      // (홈에서 부모 확인 → 이용권 안내를 거치게 한다).
+      if (nextLevel != null &&
+          !PremiumStore.isCategoryFree(nextLevel.unit.category.index) &&
+          !await PremiumStore.hasPass()) {
+        nextLevel = null;
+      }
+      // 클로저 안에서 널 아님이 유지되게 final로 다시 담는다.
+      final next = nextLevel;
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => ResultScreen(
@@ -264,9 +286,9 @@ class _QuizScreenState extends State<QuizScreen> {
                     : null,
             showUnlockHint: level != null && stars < 1,
             nextLabel:
-                nextLevel != null ? '다음 단계 (${nextLevel.number}단계)' : null,
-            nextBuilder: nextLevel != null
-                ? () => QuizScreen(config: nextLevel.config, level: nextLevel)
+                next != null ? '다음 단계 (${next.number}단계)' : null,
+            nextBuilder: next != null
+                ? () => QuizScreen(config: next.config, level: next)
                 : null,
             retryBuilder: () => QuizScreen(
                 config: widget.config,
@@ -376,7 +398,7 @@ class _QuizScreenState extends State<QuizScreen> {
               borderRadius: BorderRadius.circular(8),
               child: TweenAnimationBuilder<double>(
                 tween: Tween(
-                  end: (_currentIndex + (_answered ? 1 : 0)) / _entries.length,
+                  end: _barProgress,
                 ),
                 duration: const Duration(milliseconds: 300),
                 builder: (context, value, _) => LinearProgressIndicator(

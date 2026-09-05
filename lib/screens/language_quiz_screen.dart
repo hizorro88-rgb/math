@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 
 import '../models/daily.dart';
 import '../models/language_pack.dart';
+import '../models/premium.dart';
 import '../models/progress.dart';
 import '../models/stats.dart';
 import '../models/wrong_notes.dart';
@@ -68,6 +69,15 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
 
   LangQuestion get _question => _entries[_currentIndex].question;
   bool get _isRetryQuestion => _entries[_currentIndex].isRetry;
+
+  /// 진행 바 값: 틀린 문제가 뒤에 추가돼 분모가 늘어도 바가 뒤로 가지 않게 한다.
+  double _barShown = 0;
+  double get _barProgress {
+    final p = (_currentIndex + (_answered ? 1 : 0)) / _entries.length;
+    if (p > _barShown) _barShown = p;
+    return _barShown;
+  }
+
   bool get _answered => _selectedChoice != null;
   bool get _isCorrect => _selectedChoice == _question.answer;
   Color get _themeColor =>
@@ -87,7 +97,11 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
   Future<void> _start() async {
     final needsListening = widget.pack.types[widget.typeIndex].listening;
     if (needsListening) {
-      final ready = await ensureListenReady(context);
+      final ready = await ensureListenReady(
+        context,
+        lang: widget.pack.ttsLang,
+        langName: widget.pack.name,
+      );
       if (!ready) {
         if (mounted) Navigator.of(context).pop();
         return;
@@ -196,12 +210,21 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
         otherLang: true,
       );
       await StatsStore.recordRoundDay();
-      if (!mounted) return;
-      final nextLevel = (level != null &&
+      var nextLevel = (level != null &&
               stars >= 1 &&
               level.number < widget.pack.totalLevels)
           ? widget.pack.levelAt(level.number + 1)
           : null;
+      // 다음 단계가 이용권으로 잠긴 카테고리면 버튼을 숨긴다
+      // (홈에서 부모 확인 → 이용권 안내를 거치게 한다).
+      if (nextLevel != null &&
+          !PremiumStore.isCategoryFree(nextLevel.unit.category.index) &&
+          !await PremiumStore.hasPass()) {
+        nextLevel = null;
+      }
+      // 클로저 안에서 널 아님이 유지되게 final로 다시 담는다.
+      final next = nextLevel;
+      if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => ResultScreen(
@@ -218,13 +241,13 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
                 : null,
             showUnlockHint: level != null && stars < 1,
             nextLabel:
-                nextLevel != null ? '다음 단계 (${nextLevel.number}단계)' : null,
-            nextBuilder: nextLevel != null
+                next != null ? '다음 단계 (${next.number}단계)' : null,
+            nextBuilder: next != null
                 ? () => LanguageQuizScreen(
                       pack: widget.pack,
-                      typeIndex: nextLevel.unit.typeIndex,
-                      stage: nextLevel.stage,
-                      level: nextLevel,
+                      typeIndex: next.unit.typeIndex,
+                      stage: next.stage,
+                      level: next,
                     )
                 : null,
             retryBuilder: () => LanguageQuizScreen(
@@ -320,7 +343,7 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
               borderRadius: BorderRadius.circular(8),
               child: TweenAnimationBuilder<double>(
                 tween: Tween(
-                  end: (_currentIndex + (_answered ? 1 : 0)) / _entries.length,
+                  end: _barProgress,
                 ),
                 duration: const Duration(milliseconds: 300),
                 builder: (context, value, _) => LinearProgressIndicator(

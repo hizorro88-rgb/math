@@ -20,6 +20,14 @@ class Speech {
   /// 듣기 유형(듣고 풀기, 소리 찾기)은 이 값이 false면 풀 수 없다.
   static bool available = true;
 
+  /// 언어별 음성 지원 여부 (앱 시작 시 한 번 확인).
+  /// 확인 전이거나 항목이 없으면 낙관적으로 지원한다고 본다.
+  static final Map<String, bool> langAvailable = {};
+
+  /// [lang] 음성을 쓸 수 있는지 (ko-KR는 [available]).
+  static bool isLangAvailable(String lang) =>
+      lang == 'ko-KR' ? available : (langAvailable[lang] ?? true);
+
   /// 문제 읽어주기 켬/끔 (설정 화면에서 바꾼다)
   static bool enabled = true;
 
@@ -41,6 +49,11 @@ class Speech {
       await _tts.setLanguage('ko-KR');
       await _tts.setSpeechRate(rate);
       await _tts.setPitch(1.05);
+      // 외국어 음성 지원 여부도 확인해 둔다 (듣기 유형 입구에서 안내용).
+      for (final lang in ['en-US', 'ja-JP', 'zh-CN']) {
+        final langOk = await _tts.isLanguageAvailable(lang);
+        langAvailable[lang] = langOk is bool ? langOk : true;
+      }
     } catch (_) {
       // TTS를 못 써도 앱은 계속 동작한다 (듣기 유형만 입구에서 막는다).
       available = false;
