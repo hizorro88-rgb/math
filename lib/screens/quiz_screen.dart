@@ -1059,19 +1059,18 @@ class _EmojiHint extends StatelessWidget {
           child: CustomPaint(painter: _ClockPainter(hour: question.left)),
         );
 
-      // 분수 이름 붙이기: 색칠한 조각/전체 조각을 네모로 보여준다.
+      // 분수 이름 붙이기: 피자처럼 나눈 원에서 색칠한 조각을 보여준다.
       case QuestionOp.fraction:
         if (question.variant != 0) return const SizedBox.shrink();
-        final numerator = question.left ~/ 100;
-        final denominator = question.left % 100;
-        return Wrap(
-          alignment: WrapAlignment.center,
-          spacing: 3,
-          children: [
-            for (var i = 0; i < denominator; i++)
-              Text(i < numerator ? '🟧' : '⬜',
-                  style: const TextStyle(fontSize: 26)),
-          ],
+        return SizedBox(
+          width: 120,
+          height: 120,
+          child: CustomPaint(
+            painter: _PiePainter(
+              filled: question.left ~/ 100,
+              slices: question.left % 100,
+            ),
+          ),
         );
 
       // 소수·시간 계산은 문장이 곧 문제라 그림 힌트가 없다.
@@ -1080,6 +1079,56 @@ class _EmojiHint extends StatelessWidget {
         return const SizedBox.shrink();
     }
   }
+}
+
+/// 분수 힌트: 원을 [slices]조각으로 나누고 [filled]조각을 색칠한 피자 그림
+class _PiePainter extends CustomPainter {
+  const _PiePainter({required this.filled, required this.slices});
+
+  final int filled;
+  final int slices;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width / 2, size.height / 2);
+    final radius = size.shortestSide / 2 - 4;
+    final rect = Rect.fromCircle(center: center, radius: radius);
+    final sweep = 2 * math.pi / slices;
+
+    final fillPaint = Paint()..color = const Color(0xFFFFA726);
+    final emptyPaint = Paint()..color = const Color(0xFFFFF3E0);
+    final linePaint = Paint()
+      ..color = const Color(0xFFE65100)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.5;
+
+    // 12시 방향부터 시계 방향으로 조각을 그린다.
+    for (var i = 0; i < slices; i++) {
+      canvas.drawArc(
+        rect,
+        -math.pi / 2 + i * sweep,
+        sweep,
+        true,
+        i < filled ? fillPaint : emptyPaint,
+      );
+    }
+    // 테두리와 조각 나누는 선
+    canvas.drawCircle(center, radius, linePaint);
+    if (slices > 1) {
+      for (var i = 0; i < slices; i++) {
+        final angle = -math.pi / 2 + i * sweep;
+        canvas.drawLine(
+          center,
+          center + Offset(math.cos(angle), math.sin(angle)) * radius,
+          linePaint,
+        );
+      }
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PiePainter oldDelegate) =>
+      oldDelegate.filled != filled || oldDelegate.slices != slices;
 }
 
 /// 정각을 가리키는 아날로그 시계 (시침은 시각, 분침은 12)
