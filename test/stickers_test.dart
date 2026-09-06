@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preschool_math/models/profile.dart';
 import 'package:preschool_math/models/progress.dart';
+import 'package:preschool_math/models/sticker_canvas.dart';
 import 'package:preschool_math/models/stickers.dart';
 import 'package:preschool_math/screens/sticker_book_screen.dart';
 import 'package:preschool_math/services/sounds.dart';
@@ -83,7 +84,11 @@ void main() {
 
     expect(find.text('🎟️ 붙일 수 있는 스티커 1장!'), findsOneWidget);
 
-    // 첫 페이지의 '사자' 자리를 골라 누른다.
+    // 첫 페이지의 '사자' 자리까지 내려가서 골라 누른다.
+    await tester.scrollUntilVisible(find.text('사자'), 200,
+        scrollable: find.byType(Scrollable).first);
+    await tester.ensureVisible(find.text('사자'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('사자'));
     await tester.pumpAndSettle();
 
@@ -92,10 +97,72 @@ void main() {
     expect((await StickerStore.load())[0], {0});
   });
 
+  test('꾸미기 판: 붙이고 옮기고 지운 상태가 저장된다', () async {
+    await CanvasStore.save([
+      const PlacedSticker(emoji: '🦁', x: 100, y: 200),
+      const PlacedSticker(emoji: '🚀', x: 900, y: 300),
+    ]);
+    var placed = await CanvasStore.load();
+    expect(placed, hasLength(2));
+    expect(placed[0].emoji, '🦁');
+
+    // 옮기기 (범위 밖은 잘라낸다)
+    placed[0] = placed[0].moveTo(1200, -5);
+    await CanvasStore.save(placed);
+    placed = await CanvasStore.load();
+    expect((placed[0].x, placed[0].y), (1000, 0));
+
+    // 지우기
+    placed.removeAt(0);
+    await CanvasStore.save(placed);
+    expect(await CanvasStore.load(), hasLength(1));
+  });
+
+  test('한 번 모은 스티커는 앨범이 리셋돼도 꾸미기 팔레트에 남는다', () async {
+    await StickerStore.addTickets(1);
+    await StickerStore.place(0, 0); // 사자
+    // 앨범 리셋 흉내: 수집 기록만 비운다.
+    SharedPreferences.setMockInitialValues({
+      'sticker_seen_v1': ['0:0'],
+    });
+    final palette = await StickerStore.collectedStickers();
+    expect(palette.map((s) => s.name), ['사자']);
+  });
+
+  testWidgets('꾸미기 판에서 스티커를 골라 원하는 곳에 붙인다', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'stickers_v1': ['0:0'], // 사자를 모아 둔 상태
+    });
+    await tester.pumpWidget(const MaterialApp(home: StickerBookScreen()));
+    await tester.pumpAndSettle();
+
+    // 팔레트에서 사자를 고르고 캔버스를 톡 누른다.
+    await tester.ensureVisible(find.byKey(const ValueKey('palette:🦁')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('palette:🦁')));
+    await tester.pump();
+    final canvas = find.byKey(const ValueKey('sticker-canvas'));
+    await tester.ensureVisible(canvas);
+    await tester.pumpAndSettle();
+    await tester.tapAt(tester.getCenter(canvas));
+    await tester.pumpAndSettle();
+
+    final placed = await CanvasStore.load();
+    expect(placed, hasLength(1));
+    expect(placed.first.emoji, '🦁');
+    // 가운데쯤 붙었다.
+    expect(placed.first.x, inInclusiveRange(400, 600));
+    expect(placed.first.y, inInclusiveRange(400, 600));
+  });
+
   testWidgets('붙일 스티커가 없으면 안내만 나온다', (tester) async {
     await tester.pumpWidget(const MaterialApp(home: StickerBookScreen()));
     await tester.pumpAndSettle();
 
+    await tester.scrollUntilVisible(find.text('사자'), 200,
+        scrollable: find.byType(Scrollable).first);
+    await tester.ensureVisible(find.text('사자'));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('사자'));
     await tester.pumpAndSettle();
 

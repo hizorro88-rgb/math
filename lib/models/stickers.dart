@@ -156,6 +156,7 @@ class StickerStore {
   static const _key = 'stickers_v1'; // ['page:sticker', ...]
   static const _ticketsKey = 'sticker_tickets_v1'; // 아직 안 붙인 스티커 수
   static const _albumKey = 'sticker_album_v1'; // 완성한 앨범 수
+  static const _seenKey = 'sticker_seen_v1'; // 한 번이라도 모아 본 스티커 (앨범 리셋과 무관)
 
   /// 페이지를 다 채우면 주는 보너스 코인
   static const pageBonus = 50;
@@ -193,6 +194,27 @@ class StickerStore {
   static Future<int> count() async {
     final collected = await load();
     return collected.fold<int>(0, (sum, page) => sum + page.length);
+  }
+
+  /// 꾸미기 판에서 쓸 수 있는 스티커들:
+  /// 지금 앨범에 모은 것 + 예전 앨범에서 모아 봤던 것 (페이지 순서대로)
+  static Future<List<Sticker>> collectedStickers() async {
+    final prefs = await SharedPreferences.getInstance();
+    final ids = (prefs.getStringList(Profiles.scoped(_seenKey)) ?? const [])
+        .toSet();
+    final collected = await load();
+    for (var p = 0; p < collected.length; p++) {
+      for (final s in collected[p]) {
+        ids.add('$p:$s');
+      }
+    }
+    final result = <Sticker>[];
+    for (var p = 0; p < stickerPages.length; p++) {
+      for (var s = 0; s < stickerPages[p].stickers.length; s++) {
+        if (ids.contains('$p:$s')) result.add(stickerPages[p].stickers[s]);
+      }
+    }
+    return result;
   }
 
   /// 아직 붙이지 않고 들고 있는 스티커 수
@@ -233,6 +255,11 @@ class StickerStore {
         (e) => e.$2.length == stickerPages[e.$1].stickers.length);
 
     await prefs.setInt(Profiles.scoped(_ticketsKey), have - 1);
+    // 꾸미기 판 팔레트용: 한 번 모은 스티커는 앨범이 새로 시작돼도 기억한다.
+    final seen = (prefs.getStringList(Profiles.scoped(_seenKey)) ?? const [])
+        .toSet()
+      ..add('$pageIndex:$stickerIndex');
+    await prefs.setStringList(Profiles.scoped(_seenKey), seen.toList());
     if (albumCompleted) {
       // 새 앨범 시작: 스티커북을 비운다.
       await prefs.setStringList(Profiles.scoped(_key), const []);

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../models/sticker_canvas.dart';
 import '../models/stickers.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
@@ -21,6 +22,12 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
   int _albums = 0;
   bool _placing = false;
 
+  /// 꾸미기 판 상태
+  List<PlacedSticker> _canvas = [];
+  List<Sticker> _palette = [];
+  String? _brush; // 팔레트에서 고른 스티커
+  bool _erasing = false;
+
   @override
   void initState() {
     super.initState();
@@ -31,12 +38,93 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
     final collected = await StickerStore.load();
     final tickets = await StickerStore.tickets();
     final albums = await StickerStore.completedAlbums();
+    final canvas = await CanvasStore.load();
+    final palette = await StickerStore.collectedStickers();
     if (!mounted) return;
     setState(() {
       _collected = collected;
       _tickets = tickets;
       _albums = albums;
+      _canvas = canvas;
+      _palette = palette;
+      if (_brush != null && !palette.any((s) => s.emoji == _brush)) {
+        _brush = null;
+      }
     });
+  }
+
+  // ── 꾸미기 판 ──────────────────────────────────────────────
+
+  void _pickBrush(Sticker sticker) {
+    Speech.speak(sticker.name);
+    setState(() {
+      _brush = sticker.emoji;
+      _erasing = false;
+    });
+  }
+
+  void _tapCanvas(Offset fraction) {
+    final brush = _brush;
+    if (_erasing || brush == null) return;
+    if (_canvas.length >= CanvasStore.maxPlaced) {
+      _snack('꾸미기 판이 가득 찼어요! 🧽 지우개로 조금 정리해 볼까요?');
+      return;
+    }
+    Sounds.correct(1);
+    setState(() {
+      _canvas.add(PlacedSticker(
+        emoji: brush,
+        x: (fraction.dx * 1000).round().clamp(0, 1000),
+        y: (fraction.dy * 1000).round().clamp(0, 1000),
+      ));
+    });
+    CanvasStore.save(_canvas);
+  }
+
+  void _dragCanvasSticker(int index, Offset fractionDelta) {
+    final current = _canvas[index];
+    setState(() {
+      _canvas[index] = current.moveTo(
+        (current.x + fractionDelta.dx * 1000).round().clamp(0, 1000),
+        (current.y + fractionDelta.dy * 1000).round().clamp(0, 1000),
+      );
+    });
+  }
+
+  void _dragEnd() => CanvasStore.save(_canvas);
+
+  void _tapCanvasSticker(int index) {
+    if (!_erasing) return;
+    Sounds.wrong();
+    setState(() => _canvas.removeAt(index));
+    CanvasStore.save(_canvas);
+  }
+
+  Future<void> _clearCanvas() async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('꾸미기 판을 다 지울까요?'),
+        content: const Text('붙인 스티커가 모두 떨어져요.\n(모은 스티커는 그대로예요!)'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('다 지우기'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    setState(() {
+      _canvas = [];
+      _erasing = false;
+    });
+    CanvasStore.save(_canvas);
   }
 
   void _snack(String message) {
@@ -202,6 +290,21 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
                       ),
                     ],
                   ),
+                ),
+                const SizedBox(height: 14),
+                // 모은 스티커를 골라 원하는 곳에 붙이는 꾸미기 판
+                _CanvasCard(
+                  placed: _canvas,
+                  palette: _palette,
+                  brush: _brush,
+                  erasing: _erasing,
+                  onPickBrush: _pickBrush,
+                  onTapCanvas: _tapCanvas,
+                  onDragSticker: _dragCanvasSticker,
+                  onDragEnd: _dragEnd,
+                  onTapSticker: _tapCanvasSticker,
+                  onToggleErase: () => setState(() => _erasing = !_erasing),
+                  onClear: _clearCanvas,
                 ),
                 const SizedBox(height: 14),
                 for (var p = 0; p < stickerPages.length; p++) ...[
@@ -370,6 +473,263 @@ class _StickerSlot extends StatelessWidget {
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 꾸미기 판: 모은 스티커를 골라 원하는 자리에 자유롭게 붙인다.
+class _CanvasCard extends StatelessWidget {
+  const _CanvasCard({
+    required this.placed,
+    required this.palette,
+    required this.brush,
+    required this.erasing,
+    required this.onPickBrush,
+    required this.onTapCanvas,
+    required this.onDragSticker,
+    required this.onDragEnd,
+    required this.onTapSticker,
+    required this.onToggleErase,
+    required this.onClear,
+  });
+
+  final List<PlacedSticker> placed;
+  final List<Sticker> palette;
+  final String? brush;
+  final bool erasing;
+  final void Function(Sticker) onPickBrush;
+  final void Function(Offset fraction) onTapCanvas;
+  final void Function(int index, Offset fractionDelta) onDragSticker;
+  final VoidCallback onDragEnd;
+  final void Function(int index) onTapSticker;
+  final VoidCallback onToggleErase;
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            offset: const Offset(0, 4),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('🖼️', style: TextStyle(fontSize: 24)),
+              const SizedBox(width: 8),
+              const Text(
+                '내 꾸미기 판',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+              ),
+              const Spacer(),
+              // 지우개 모드
+              GestureDetector(
+                onTap: onToggleErase,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: erasing
+                        ? const Color(0xFFFFDFE0)
+                        : Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                      color: erasing
+                          ? const Color(0xFFEA2B2B)
+                          : Colors.grey.shade300,
+                      width: 1.5,
+                    ),
+                  ),
+                  child: Text(
+                    '🧽 지우개',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                      color: erasing
+                          ? const Color(0xFFEA2B2B)
+                          : Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              GestureDetector(
+                onTap: onClear,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade100,
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(color: Colors.grey.shade300, width: 1.5),
+                  ),
+                  child: Text(
+                    '🗑️ 정리',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          // 캔버스: 하늘·잔디 배경 위에 스티커를 붙인다.
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final width = constraints.maxWidth;
+              final height = width * 0.72;
+              Offset toFraction(Offset local) =>
+                  Offset(local.dx / width, local.dy / height);
+              return GestureDetector(
+                key: const ValueKey('sticker-canvas'),
+                behavior: HitTestBehavior.opaque,
+                onTapUp: (details) =>
+                    onTapCanvas(toFraction(details.localPosition)),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: SizedBox(
+                    width: width,
+                    height: height,
+                    child: Stack(
+                      children: [
+                        // 배경: 하늘 + 잔디
+                        Container(
+                          decoration: const BoxDecoration(
+                            gradient: LinearGradient(
+                              begin: Alignment.topCenter,
+                              end: Alignment.bottomCenter,
+                              colors: [Color(0xFFBBE3FF), Color(0xFFE3F4FF)],
+                            ),
+                          ),
+                        ),
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          height: height * 0.22,
+                          child: Container(color: const Color(0xFFA5D96C)),
+                        ),
+                        const Positioned(
+                          right: 12,
+                          top: 8,
+                          child: Opacity(
+                            opacity: 0.7,
+                            child:
+                                Text('☀️', style: TextStyle(fontSize: 28)),
+                          ),
+                        ),
+                        const Positioned(
+                          left: 16,
+                          top: 14,
+                          child: Opacity(
+                            opacity: 0.6,
+                            child:
+                                Text('☁️', style: TextStyle(fontSize: 24)),
+                          ),
+                        ),
+                        // 붙인 스티커들 (끌어서 옮길 수 있다)
+                        for (var i = 0; i < placed.length; i++)
+                          Positioned(
+                            left: placed[i].x / 1000 * width - 17,
+                            top: placed[i].y / 1000 * height - 17,
+                            child: GestureDetector(
+                              onTap: () => onTapSticker(i),
+                              onPanUpdate: (details) => onDragSticker(
+                                i,
+                                Offset(details.delta.dx / width,
+                                    details.delta.dy / height),
+                              ),
+                              onPanEnd: (_) => onDragEnd(),
+                              child: Text(
+                                placed[i].emoji,
+                                style: const TextStyle(fontSize: 34),
+                              ),
+                            ),
+                          ),
+                        // 아직 아무것도 없을 때 안내
+                        if (placed.isEmpty)
+                          Center(
+                            child: Text(
+                              palette.isEmpty
+                                  ? '퀴즈를 통과해 스티커를 모으면\n여기를 마음껏 꾸밀 수 있어요!'
+                                  : brush == null
+                                      ? '아래에서 스티커를 고르고\n원하는 곳을 톡! 눌러 붙여요'
+                                      : '원하는 곳을 톡! 눌러 붙여요',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 14,
+                                height: 1.5,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.blueGrey.shade400,
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
+              );
+            },
+          ),
+          const SizedBox(height: 10),
+          // 팔레트: 모은 스티커 중에서 골라 도장처럼 쓴다.
+          if (palette.isEmpty)
+            Text(
+              '모은 스티커가 아직 없어요. 퀴즈 한 판 통과하면 시작!',
+              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            )
+          else
+            SizedBox(
+              height: 52,
+              child: ListView.separated(
+                scrollDirection: Axis.horizontal,
+                itemCount: palette.length,
+                separatorBuilder: (context, index) => const SizedBox(width: 8),
+                itemBuilder: (context, i) {
+                  final sticker = palette[i];
+                  final selected = !erasing && brush == sticker.emoji;
+                  return GestureDetector(
+                    key: ValueKey('palette:${sticker.emoji}'),
+                    onTap: () => onPickBrush(sticker),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 150),
+                      width: 52,
+                      decoration: BoxDecoration(
+                        color: selected
+                            ? const Color(0xFFFFF3C4)
+                            : Colors.grey.shade50,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(
+                          color: selected
+                              ? const Color(0xFFFFC107)
+                              : Colors.grey.shade300,
+                          width: selected ? 2.5 : 1.5,
+                        ),
+                      ),
+                      child: Center(
+                        child: Text(sticker.emoji,
+                            style: const TextStyle(fontSize: 28)),
+                      ),
+                    ),
+                  );
+                },
+              ),
+            ),
+        ],
       ),
     );
   }
