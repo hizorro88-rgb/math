@@ -105,6 +105,15 @@ class ShopStore {
     ];
   }
 
+  /// 아이템을 선물로 준다 (코인 차감 없음, 칭찬 스티커판 보상용).
+  static Future<void> grant(ShopItem item) async {
+    final owned = await loadOwned();
+    if (owned.contains(item.id)) return;
+    owned.add(item.id);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setStringList(Profiles.scoped(_ownedKey), owned.toList());
+  }
+
   /// 코인이 충분하면 사고 바로 착용한다. 성공 여부를 돌려준다.
   static Future<bool> buy(ShopItem item) async {
     final owned = await loadOwned();

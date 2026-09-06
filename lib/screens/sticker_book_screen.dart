@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 
+import '../models/reward_board.dart';
 import '../models/sticker_canvas.dart';
 import '../models/stickers.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../widgets/bouncy_button.dart';
+import '../widgets/parent_gate.dart';
 
 /// 스티커북: 퀴즈를 통과하면 받은 스티커를
 /// 아이가 원하는 자리에 직접 골라 붙인다.
@@ -28,6 +30,11 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
   String? _brush; // 팔레트에서 고른 스티커
   bool _erasing = false;
 
+  /// 칭찬 스티커판 상태
+  List<String?> _board = List.filled(RewardBoardStore.slots, null);
+  String? _promise;
+  int _boards = 0;
+
   @override
   void initState() {
     super.initState();
@@ -40,6 +47,9 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
     final albums = await StickerStore.completedAlbums();
     final canvas = await CanvasStore.load();
     final palette = await StickerStore.collectedStickers();
+    final board = await RewardBoardStore.load();
+    final promise = await RewardBoardStore.promise();
+    final boards = await RewardBoardStore.completedBoards();
     if (!mounted) return;
     setState(() {
       _collected = collected;
@@ -47,10 +57,151 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
       _albums = albums;
       _canvas = canvas;
       _palette = palette;
+      _board = board;
+      _promise = promise;
+      _boards = boards;
       if (_brush != null && !palette.any((s) => s.emoji == _brush)) {
         _brush = null;
       }
     });
+  }
+
+  // ── 칭찬 스티커판 ──────────────────────────────────────────
+
+  /// 붙일 스티커 그림을 고르는 바텀 시트 (60종 전체 중에서)
+  Future<String?> _pickStickerDesign() {
+    return showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                '어떤 스티커를 붙일까요?',
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 12),
+              Flexible(
+                child: GridView.count(
+                  crossAxisCount: 6,
+                  shrinkWrap: true,
+                  mainAxisSpacing: 8,
+                  crossAxisSpacing: 8,
+                  children: [
+                    for (final page in stickerPages)
+                      for (final sticker in page.stickers)
+                        GestureDetector(
+                          key: ValueKey('design:${sticker.emoji}'),
+                          onTap: () =>
+                              Navigator.of(context).pop(sticker.emoji),
+                          child: Container(
+                            decoration: BoxDecoration(
+                              color: Colors.grey.shade50,
+                              borderRadius: BorderRadius.circular(12),
+                              border:
+                                  Border.all(color: Colors.grey.shade200),
+                            ),
+                            child: Center(
+                              child: Text(sticker.emoji,
+                                  style: const TextStyle(fontSize: 26)),
+                            ),
+                          ),
+                        ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _tapBoardSlot(int slot) async {
+    if (_board[slot] != null) return; // 이미 붙은 칸
+    if (_tickets < 1) {
+      _snack('🎟️ 붙일 스티커가 없어요. 퀴즈 한 판을 통과하면 1장을 받아요!');
+      return;
+    }
+    final emoji = await _pickStickerDesign();
+    if (emoji == null || !mounted) return;
+
+    final result = await RewardBoardStore.place(slot, emoji);
+    if (result == null || !mounted) return;
+    Sounds.correct(1);
+    await _load();
+    if (!mounted) return;
+
+    if (result.completed) {
+      final lines = [
+        if (result.promise != null) '🎁 약속한 선물: ${result.promise}',
+        if (result.gift != null)
+          '앱 선물: ${result.gift!.emoji} ${result.gift!.name}을(를) 받았어요!'
+        else
+          '보너스 🪙 ${result.bonusCoins}을 받았어요!',
+        '반짝반짝 새 스티커판이 시작돼요!',
+      ];
+      await _celebrate(
+        emoji: '🏆',
+        title: '스티커판 완성!',
+        message: lines.join('\n'),
+      );
+    }
+  }
+
+  /// 부모 확인 뒤, 판을 다 채우면 줄 선물 약속을 적는다.
+  Future<void> _editPromise() async {
+    final ok = await checkParentGate(context);
+    if (!ok || !mounted) return;
+    final controller = TextEditingController(text: _promise ?? '');
+    final saved = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('🎁 선물 약속 정하기'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              '아이가 스티커 20개를 다 모으면 주기로 한\n약속을 적어 주세요. (비우면 약속 없음)',
+              style: TextStyle(fontSize: 13.5, height: 1.4),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              autofocus: true,
+              maxLength: 30,
+              decoration: InputDecoration(
+                hintText: '예: 아이스크림 사 먹기 🍦',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, controller.text),
+            child: const Text('저장'),
+          ),
+        ],
+      ),
+    );
+    if (saved == null || !mounted) return;
+    await RewardBoardStore.setPromise(saved);
+    await _load();
   }
 
   // ── 꾸미기 판 ──────────────────────────────────────────────
@@ -290,6 +441,16 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
                       ),
                     ],
                   ),
+                ),
+                const SizedBox(height: 14),
+                // 칭찬 스티커판: 1~20 숫자 위에 스티커를 붙이고 다 모으면 선물!
+                _RewardBoardCard(
+                  board: _board,
+                  boards: _boards,
+                  promise: _promise,
+                  canPlace: _tickets > 0,
+                  onTapSlot: _tapBoardSlot,
+                  onEditPromise: _editPromise,
                 ),
                 const SizedBox(height: 14),
                 // 모은 스티커를 골라 원하는 곳에 붙이는 꾸미기 판
@@ -729,6 +890,148 @@ class _CanvasCard extends StatelessWidget {
                 },
               ),
             ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 칭찬 스티커판: 1~20 숫자가 희미하게 적힌 판.
+/// 빈 숫자 칸을 누르면 스티커를 골라 그 위에 붙인다.
+class _RewardBoardCard extends StatelessWidget {
+  const _RewardBoardCard({
+    required this.board,
+    required this.boards,
+    required this.promise,
+    required this.canPlace,
+    required this.onTapSlot,
+    required this.onEditPromise,
+  });
+
+  final List<String?> board;
+  final int boards;
+  final String? promise;
+  final bool canPlace;
+  final void Function(int slot) onTapSlot;
+  final VoidCallback onEditPromise;
+
+  @override
+  Widget build(BuildContext context) {
+    final filled = board.where((s) => s != null).length;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: const Color(0xFFFFD34D), width: 2.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            offset: const Offset(0, 4),
+            blurRadius: 10,
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Text('🏆', style: TextStyle(fontSize: 24)),
+              const SizedBox(width: 8),
+              const Text(
+                '칭찬 스티커판',
+                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                '${boards + 1}번째 판 · $filled/${RewardBoardStore.slots}',
+                style: TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade600),
+              ),
+              const Spacer(),
+              // 부모가 선물 약속을 적는 버튼 (부모 확인 뒤)
+              GestureDetector(
+                onTap: onEditPromise,
+                child: Container(
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 10, vertical: 6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF3C4),
+                    borderRadius: BorderRadius.circular(999),
+                    border: Border.all(
+                        color: const Color(0xFFFFD34D), width: 1.5),
+                  ),
+                  child: const Text(
+                    '🎁 선물 정하기',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFFB05E00),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            promise != null
+                ? '20칸을 다 채우면 → 🎁 $promise'
+                : '20칸을 다 채우면 → 깜짝 선물 + 부엉이 꾸미기 아이템!',
+            style: TextStyle(
+                fontSize: 13.5,
+                fontWeight: FontWeight.bold,
+                color: Colors.brown.shade400),
+          ),
+          const SizedBox(height: 12),
+          GridView.count(
+            crossAxisCount: 5,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            mainAxisSpacing: 8,
+            crossAxisSpacing: 8,
+            children: [
+              for (var i = 0; i < RewardBoardStore.slots; i++)
+                GestureDetector(
+                  key: ValueKey('board:$i'),
+                  onTap: () => onTapSlot(i),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      color: board[i] != null
+                          ? const Color(0xFFFFF9E5)
+                          : Colors.grey.shade50,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(
+                        color: board[i] != null
+                            ? const Color(0xFFFFD34D)
+                            : canPlace
+                                ? const Color(0xFFFFC107)
+                                : Colors.grey.shade300,
+                        width: board[i] != null || canPlace ? 2 : 1.5,
+                      ),
+                    ),
+                    child: Center(
+                      child: board[i] != null
+                          ? Text(board[i]!,
+                              style: const TextStyle(fontSize: 26))
+                          // 아직 안 붙인 칸: 숫자가 희미하게 보인다.
+                          : Text(
+                              '${i + 1}',
+                              style: TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.grey.shade300,
+                              ),
+                            ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
         ],
       ),
     );

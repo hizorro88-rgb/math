@@ -223,6 +223,15 @@ class StickerStore {
     return prefs.getInt(Profiles.scoped(_ticketsKey)) ?? 0;
   }
 
+  /// 스티커 1장을 쓴다 (칭찬판·스티커북에 붙일 때). 없으면 false.
+  static Future<bool> useTicket() async {
+    final prefs = await SharedPreferences.getInstance();
+    final have = prefs.getInt(Profiles.scoped(_ticketsKey)) ?? 0;
+    if (have < 1) return false;
+    await prefs.setInt(Profiles.scoped(_ticketsKey), have - 1);
+    return true;
+  }
+
   /// 퀴즈를 통과하면 붙일 수 있는 스티커를 준다.
   static Future<int> addTickets(int count) async {
     final prefs = await SharedPreferences.getInstance();
