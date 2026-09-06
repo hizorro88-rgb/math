@@ -8,6 +8,7 @@ import '../models/language_pack.dart';
 import '../models/premium.dart';
 import '../models/progress.dart';
 import '../models/stats.dart';
+import '../models/stickers.dart';
 import '../models/wrong_notes.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
@@ -210,6 +211,8 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
         otherLang: true,
       );
       await StatsStore.recordRoundDay();
+      // 통과하면 스티커북에 붙일 스티커 1장을 준다.
+      if (stars >= 1) await StickerStore.addTickets(1);
       var nextLevel = (level != null &&
               stars >= 1 &&
               level.number < widget.pack.totalLevels)
@@ -232,6 +235,7 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
             totalCount: _baseCount,
             earnedPoints: earned,
             chestCoins: chestCoins,
+            stickerEarned: stars >= 1,
             completedMissions: rewards.missions,
             milestoneDays: rewards.milestoneDays,
             milestoneCoins: rewards.milestoneCoins,

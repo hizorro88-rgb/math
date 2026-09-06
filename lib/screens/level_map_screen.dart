@@ -11,6 +11,7 @@ import '../models/profile.dart';
 import '../models/progress.dart';
 import '../models/review.dart';
 import '../models/shop.dart';
+import '../models/stickers.dart';
 import '../models/stats.dart';
 import '../models/wrong_notes.dart';
 import '../services/sounds.dart';
@@ -36,6 +37,7 @@ import 'quiz_screen.dart';
 import 'report_screen.dart';
 import 'settings_screen.dart';
 import 'shop_screen.dart';
+import 'sticker_book_screen.dart';
 import 'wrong_notes_screen.dart';
 
 /// 홈 화면: 마스코트 인사, 칭호 카드, 오늘의 미션,
@@ -63,6 +65,7 @@ class _MapData {
     required this.hasPass,
     required this.review,
     required this.wrongCount,
+    required this.stickerTickets,
   });
 
   final List<int> stars;
@@ -91,6 +94,9 @@ class _MapData {
 
   /// 오답 노트에 쌓인 문제 수
   final int wrongCount;
+
+  /// 아직 스티커북에 안 붙인 스티커 수
+  final int stickerTickets;
 }
 
 class _LevelMapScreenState extends State<LevelMapScreen> {
@@ -150,6 +156,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       hasPass: await PremiumStore.hasPass(),
       review: Review.suggest(await StatsStore.load()),
       wrongCount: await WrongNoteStore.count(),
+      stickerTickets: await StickerStore.tickets(),
     );
   }
 
@@ -309,6 +316,13 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const ReportScreen()),
     );
+  }
+
+  Future<void> _openStickerBook() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const StickerBookScreen()),
+    );
+    _refresh(); // 붙인 스티커·보너스 코인 반영
   }
 
   Future<void> _openSettings() async {
@@ -604,6 +618,21 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                           title: '자유 연습',
                           subtitle: '골라서 연습',
                           onTap: _openPractice,
+                        )),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                            child: _MenuCard(
+                          emoji: '📔',
+                          title: '스티커북',
+                          subtitle: data.stickerTickets > 0
+                              ? '🎟️ 붙일 스티커 ${data.stickerTickets}장!'
+                              : '골라 붙이기',
+                          onTap: _openStickerBook,
                         )),
                         const SizedBox(width: 10),
                         Expanded(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/daily.dart';
 import '../models/progress.dart';
 import '../widgets/bouncy_button.dart';
+import 'sticker_book_screen.dart';
 
 /// 결과 화면: 별·점수·칭호를 보여주고 다음 단계 또는 다시 도전으로 이어진다.
 /// 수학·한글 어느 과목이든 쓸 수 있도록 다음/다시 화면은 빌더로 받는다.
@@ -14,6 +15,7 @@ class ResultScreen extends StatelessWidget {
     required this.earnedPoints,
     required this.retryBuilder,
     this.chestCoins = 0,
+    this.stickerEarned = false,
     this.bossCleared = false,
     this.completedMissions = const [],
     this.milestoneDays = 0,
@@ -34,6 +36,9 @@ class ResultScreen extends StatelessWidget {
 
   /// 보물상자에서 나온 보너스 코인 (0이면 상자 없음)
   final int chestCoins;
+
+  /// 이번 판을 통과해서 스티커북에 붙일 스티커 1장을 받았는지
+  final bool stickerEarned;
 
   /// 주간 보스전을 통과했는지 (통과 보너스는 earnedPoints에 포함)
   final bool bossCleared;
@@ -156,6 +161,10 @@ class ResultScreen extends StatelessWidget {
                     if (chestCoins > 0) ...[
                       const SizedBox(height: 12),
                       _ChestBanner(coins: chestCoins),
+                    ],
+                    if (stickerEarned) ...[
+                      const SizedBox(height: 12),
+                      const _StickerBanner(),
                     ],
                     if (milestoneDays > 0) ...[
                       const SizedBox(height: 12),
@@ -291,6 +300,61 @@ class _ChestBanner extends StatelessWidget {
             fontWeight: FontWeight.bold,
             color: Color(0xFF6B2FB3),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 스티커 획득 배너: 누르면 스티커북으로 가서 직접 골라 붙인다
+class _StickerBanner extends StatelessWidget {
+  const _StickerBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const StickerBookScreen()),
+      ),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: const Color(0xFFFDE8F4),
+          borderRadius: BorderRadius.circular(18),
+          border: Border.all(color: const Color(0xFFF2A9D4), width: 2),
+        ),
+        child: Row(
+          children: [
+            const Text('🎟️', style: TextStyle(fontSize: 26)),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
+                '스티커 1장을 받았어요!\n스티커북에서 골라 붙여 보세요',
+                style: TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.bold,
+                  height: 1.3,
+                  color: Color(0xFFC2185B),
+                ),
+              ),
+            ),
+            Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: const Color(0xFFEC7CA5),
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: const Text(
+                '붙이러 가기',
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
     );

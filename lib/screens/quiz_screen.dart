@@ -11,6 +11,7 @@ import '../models/progress.dart';
 import '../models/question.dart';
 import '../models/quiz_config.dart';
 import '../models/stats.dart';
+import '../models/stickers.dart';
 import '../models/wrong_notes.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
@@ -254,6 +255,8 @@ class _QuizScreenState extends State<QuizScreen> {
       );
       // 리포트용 주간 활동 기록
       await StatsStore.recordRoundDay();
+      // 통과하면 스티커북에 붙일 스티커 1장을 준다.
+      if (stars >= 1) await StickerStore.addTickets(1);
       var nextLevel =
           (level != null && stars >= 1 && level.number < Curriculum.totalLevels)
               ? Curriculum.levelAt(level.number + 1)
@@ -275,6 +278,7 @@ class _QuizScreenState extends State<QuizScreen> {
             totalCount: _baseCount,
             earnedPoints: earned,
             chestCoins: chestCoins,
+            stickerEarned: stars >= 1,
             bossCleared: bossCleared,
             completedMissions: rewards.missions,
             milestoneDays: rewards.milestoneDays,
