@@ -181,13 +181,23 @@ class _QuizScreenState extends State<QuizScreen> {
         // 처음 틀린 문제는 판 끝에 한 번 더 나온다.
         if (!_isRetryQuestion) {
           _entries.add(_QuizEntry(_question, isRetry: true));
-          // 분수·소수·시간 같은 문장 문제는 오답 노트에도 담는다.
-          if (_question.prompt.isNotEmpty) {
+          // 글로 다시 보여줄 수 있는 문제는 오답 노트에도 담는다.
+          // (그림·소리로만 내는 세기/모양/시계/듣기 유형은 제외)
+          const noteOps = {
+            QuestionOp.add,
+            QuestionOp.sub,
+            QuestionOp.mul,
+            QuestionOp.div,
+            QuestionOp.pattern,
+            QuestionOp.compare,
+          };
+          if (_question.prompt.isNotEmpty ||
+              (!_question.listenOnly && noteOps.contains(_question.op))) {
             WrongNoteStore.add(WrongNote(
               subject: 'math',
               subjectEmoji: '🧮',
               subjectName: '수학',
-              instruction: _question.prompt.replaceAll('\n', ' '),
+              instruction: _question.expression.replaceAll('\n', ' '),
               display: '',
               choices: [
                 for (final c in _question.choices) _question.labelFor(c),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preschool_math/main.dart';
+import 'package:preschool_math/models/wrong_notes.dart';
 import 'package:preschool_math/models/english_data.dart';
 import 'package:preschool_math/models/japanese_pack.dart';
 import 'package:preschool_math/models/korean_data.dart';
@@ -190,6 +191,11 @@ void main() {
     // 2초 막대가 다 줄면 자동으로 결과 화면으로 넘어간다.
     await tester.pumpAndSettle();
     expect(find.text('10문제 중에 9문제를 맞혔어요!'), findsOneWidget);
+
+    // 틀렸던 연산 문제는 오답 노트에 담기고, 결과 화면이 복습을 권한다.
+    expect(await WrongNoteStore.count(), 1);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('틀렸던 문제'), findsOneWidget);
   });
 
   testWidgets('세로 덧셈: 키패드로 일의 자리부터 채워서 맞힌다', (tester) async {

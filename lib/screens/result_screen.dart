@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../models/daily.dart';
 import '../models/progress.dart';
+import '../models/wrong_notes.dart';
 import '../widgets/bouncy_button.dart';
 import 'sticker_book_screen.dart';
+import 'wrong_notes_screen.dart';
 
 /// 결과 화면: 별·점수·칭호를 보여주고 다음 단계 또는 다시 도전으로 이어진다.
 /// 수학·한글 어느 과목이든 쓸 수 있도록 다음/다시 화면은 빌더로 받는다.
@@ -166,6 +168,7 @@ class ResultScreen extends StatelessWidget {
                       const SizedBox(height: 12),
                       const _StickerBanner(),
                     ],
+                    const _WrongNotesBanner(),
                     if (milestoneDays > 0) ...[
                       const SizedBox(height: 12),
                       _MilestoneBanner(
@@ -357,6 +360,72 @@ class _StickerBanner extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// 오답 노트에 틀린 문제가 남아 있으면 복습을 권하는 배너
+class _WrongNotesBanner extends StatelessWidget {
+  const _WrongNotesBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<int>(
+      future: WrongNoteStore.count(),
+      builder: (context, snapshot) {
+        final count = snapshot.data ?? 0;
+        if (count == 0) return const SizedBox.shrink();
+        return Padding(
+          padding: const EdgeInsets.only(top: 12),
+          child: GestureDetector(
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const WrongNotesScreen()),
+            ),
+            child: Container(
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              decoration: BoxDecoration(
+                color: const Color(0xFFFFF3E0),
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: const Color(0xFFFFB74D), width: 2),
+              ),
+              child: Row(
+                children: [
+                  const Text('📝', style: TextStyle(fontSize: 26)),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      '틀렸던 문제 $count개가 기다려요!\n한 번 더 풀면 오답 노트에서 사라져요',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        height: 1.3,
+                        color: Color(0xFFE65100),
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFF9800),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Text(
+                      '복습하기',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
