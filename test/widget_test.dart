@@ -171,11 +171,9 @@ void main() {
     await tester.tap(find.text('계속하기'));
     await tester.pumpAndSettle();
 
-    // 나머지 9문제는 전부 맞힌다.
+    // 나머지 9문제는 전부 맞힌다. (정답이면 2초 뒤 자동으로 다음 문제로)
     for (var i = 0; i < 9; i++) {
       await answer(correct: true);
-      await tester.tap(find.text('계속하기'));
-      await tester.pumpAndSettle();
     }
 
     // 11번째로 틀렸던 문제가 다시 나온다.
@@ -183,9 +181,13 @@ void main() {
     expect(expr(), wrongExpr);
 
     // 다시 맞히면 +5점 보너스, 별점은 첫 시도 기준(9/10)
-    await answer(correct: true);
+    final retryAns = answerOf(expr());
+    await tester.ensureVisible(find.text('$retryAns'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('$retryAns'));
+    await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('+5점'), findsOneWidget);
-    await tester.tap(find.text('결과 보기'));
+    // 2초 막대가 다 줄면 자동으로 결과 화면으로 넘어간다.
     await tester.pumpAndSettle();
     expect(find.text('10문제 중에 9문제를 맞혔어요!'), findsOneWidget);
   });
@@ -219,7 +221,7 @@ void main() {
       await tester.ensureVisible(keyFinder);
       await tester.pumpAndSettle();
       await tester.tap(keyFinder);
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 300));
     }
 
     // 다 채우면 자동 채점되어 정답 피드백이 뜬다.
@@ -251,7 +253,7 @@ void main() {
     final answerEmoji =
         krWords2.firstWhere((w) => w.word == wordText).emoji;
     await tester.tap(find.text(answerEmoji));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('정답이에요! 🎉'), findsOneWidget);
     expect(find.text('계속하기'), findsOneWidget);
@@ -463,7 +465,7 @@ void main() {
     final answerEmoji =
         enAllWords.firstWhere((w) => w.shown == wordText).emoji;
     await tester.tap(find.text(answerEmoji));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('정답이에요! 🎉'), findsOneWidget);
   });
@@ -489,7 +491,7 @@ void main() {
     final answerEmoji =
         jaWords.firstWhere((w) => w.word == wordText).emoji;
     await tester.tap(find.text(answerEmoji));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(find.text('정답이에요! 🎉'), findsOneWidget);
   });

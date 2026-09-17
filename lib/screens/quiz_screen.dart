@@ -15,6 +15,7 @@ import '../models/stickers.dart';
 import '../models/wrong_notes.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
+import '../widgets/auto_next_bar.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/listen_guard.dart';
 import '../widgets/quiz_exit_dialog.dart';
@@ -719,6 +720,15 @@ class _QuizScreenState extends State<QuizScreen> {
                 ],
               ),
             ),
+            if (_isCorrect) ...[
+              const SizedBox(height: 10),
+              // 2초 동안 줄어드는 막대: 다 줄면 자동으로 다음 문제로
+              AutoNextBar(
+                key: ValueKey('auto-next-$_currentIndex'),
+                color: const Color(0xFF58CC02),
+                onDone: _next,
+              ),
+            ],
           ],
         ),
       ),
