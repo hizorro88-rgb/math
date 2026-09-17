@@ -1,0 +1,29 @@
+# 푸시할 때마다 웹 버전을 빌드해서 GitHub Pages로 배포한다.
+# 커스텀 도메인: dopamingo.dopamine.me.kr (DNS CNAME → hizorro88-rgb.github.io)
+name: Deploy web
+
+on:
+  push:
+    branches: [claude/preschool-math-quiz-app-pvy4y4]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+      - run: flutter pub get
+      - run: flutter build web --release
+      - name: Publish to gh-pages
+        uses: peaceiris/actions-gh-pages@v4
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: build/web
+          cname: dopamingo.dopamine.me.kr

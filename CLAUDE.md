@@ -8,6 +8,8 @@
 1. `flutter analyze` + `flutter test` 전부 통과 확인
 2. pubspec.yaml 버전 올리고 커밋 → `claude/preschool-math-quiz-app-pvy4y4` 브랜치에 푸시
 3. **웹 버전도 같은 링크로 재게시** — 사용자가 매 기능마다 웹 업데이트를 요청함
+   - 공개 웹은 GitHub Pages가 푸시마다 자동 배포한다
+     (.github/workflows/deploy-web.yml → https://dopamingo.dopamine.me.kr)
    - 아티팩트 URL: https://claude.ai/artifact/1xyFQtr5HJfyj7gVvMtKVH
    - 순서 (임시 패치라 빌드 후 반드시 원상복구):
      a. 한글·이모지 폰트를 assets/fonts/에 복사 (스크래치패드 fonts/ 캐시,
