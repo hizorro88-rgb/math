@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'models/premium.dart';
 import 'models/profile.dart';
 import 'screens/level_map_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -14,6 +15,7 @@ Future<void> main() async {
   await Profiles.init();
   await Sounds.init();
   await Speech.init();
+  await PremiumStore.init(); // 전체 열기 상태를 자물쇠 검사 전에 읽어 둔다
   Purchases.init(); // 스토어 연결은 기다리지 않는다 (결과는 스트림으로)
   var onboarded = false;
   var profileCount = 1;

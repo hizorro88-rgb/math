@@ -3,6 +3,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'premium.dart';
 import 'profile.dart';
 
 /// 언어 과목(일본어·중국어…) 한 문제.
@@ -217,6 +218,7 @@ class LangProgressStore {
 
   /// 별 1개 이상이면 통과. 카테고리 첫 단계는 항상 열려 있다.
   static bool isUnlocked(LanguagePack pack, List<int> stars, int levelNumber) {
+    if (PremiumStore.allUnlocked) return true;
     final level = pack.levelAt(levelNumber);
     if (levelNumber == level.unit.category.firstLevelNumber) return true;
     return stars[levelNumber - 2] >= 1;

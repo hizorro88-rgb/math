@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'english_question.dart';
+import 'premium.dart';
 import 'profile.dart';
 
 /// 영어 과목의 카테고리. 첫 단계는 항상 열려 있다.
@@ -172,6 +173,7 @@ class EnglishProgressStore {
 
   /// 별 1개 이상이면 통과. 카테고리 첫 단계는 항상 열려 있다.
   static bool isUnlocked(List<int> stars, int levelNumber) {
+    if (PremiumStore.allUnlocked) return true;
     final level = EnglishCurriculum.levelAt(levelNumber);
     if (levelNumber == level.unit.category.firstLevelNumber) return true;
     return stars[levelNumber - 2] >= 1;

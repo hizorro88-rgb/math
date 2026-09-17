@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'korean_question.dart';
+import 'premium.dart';
 import 'profile.dart';
 
 /// 한글 과목의 카테고리. 수학과 마찬가지로 첫 단계는 항상 열려 있다.
@@ -231,6 +232,7 @@ class KoreanProgressStore {
   /// 별 1개 이상이면 통과. 카테고리 첫 단계는 항상 열려 있고,
   /// 그 뒤로는 같은 카테고리 안에서 앞 단계를 통과해야 열린다.
   static bool isUnlocked(List<int> stars, int levelNumber) {
+    if (PremiumStore.allUnlocked) return true;
     final level = KoreanCurriculum.levelAt(levelNumber);
     if (levelNumber == level.unit.category.firstLevelNumber) return true;
     return stars[levelNumber - 2] >= 1;

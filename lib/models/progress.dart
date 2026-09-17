@@ -3,6 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'profile.dart';
 
 import 'curriculum.dart';
+import 'premium.dart';
 
 /// 맞힌 개수로 별(0~3개)을 계산한다.
 int starsForScore(int correctCount, int totalCount) {
@@ -188,6 +189,7 @@ class ProgressStore {
   /// 각 연령 카테고리의 첫 단계는 항상 열려 있고(나이에 맞게 바로 시작),
   /// 그 뒤로는 같은 카테고리 안에서 앞 단계를 통과해야 열린다.
   static bool isUnlocked(List<int> stars, int levelNumber) {
+    if (PremiumStore.allUnlocked) return true;
     final level = Curriculum.levelAt(levelNumber);
     if (levelNumber == level.unit.category.firstLevelNumber) return true;
     return stars[levelNumber - 2] >= 1;

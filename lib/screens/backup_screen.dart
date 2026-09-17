@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
+import '../models/premium.dart';
 import '../models/profile.dart';
 import '../services/backup.dart';
 import '../services/reminders.dart';
@@ -95,6 +96,7 @@ class _BackupScreenState extends State<BackupScreen> {
       await Profiles.init();
       await Sounds.init();
       await Speech.reloadSettings();
+      await PremiumStore.init();
       // 복원된 알림 스위치 값에 실제 예약을 맞춘다 (응답은 기다리지 않음).
       await Reminders.syncWithSavedSetting();
     }

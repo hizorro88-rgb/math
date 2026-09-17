@@ -25,7 +25,7 @@ class BackupService {
 
   /// 백업에 넣지 않는 키: 결제 권한은 코드로 옮기거나 지울 수 없어야 한다.
   /// (이용권은 스토어 [구매 복원]으로만 옮긴다)
-  static const _excludedKeys = {'family_pass_v1'};
+  static const _excludedKeys = {'family_pass_v1', 'all_unlock_v1'};
 
   /// 지금 쓰는 별 목록 키들 (미리보기의 '통과한 단계' 계산용).
   /// 마이그레이션이 남겨 둔 옛 버전 키를 이중으로 세지 않도록 이름을 못 박는다.
@@ -132,6 +132,7 @@ class BackupService {
 
     final prefs = await SharedPreferences.getInstance();
     final hadPass = prefs.getBool('family_pass_v1') ?? false;
+    final hadUnlock = prefs.getBool('all_unlock_v1') ?? false;
     await prefs.clear();
     for (final (key, value) in writes) {
       switch (value) {
@@ -149,6 +150,7 @@ class BackupService {
     }
     // 이 기기에서 산 이용권은 백업과 무관하게 유지한다.
     if (hadPass) await prefs.setBool('family_pass_v1', true);
+    if (hadUnlock) await prefs.setBool('all_unlock_v1', true);
     return true;
   }
 
