@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 
 import '../models/premium.dart';
+import '../models/profile.dart';
+import '../services/cloud_sync.dart';
+import '../services/reminders.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../widgets/parent_gate.dart';
 import 'backup_screen.dart';
+import 'level_map_screen.dart';
 
 /// 설정: 효과음·말소리(문제 읽어주기)·말 빠르기, 진도 백업 바로가기.
 class SettingsScreen extends StatefulWidget {
@@ -15,6 +19,148 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  DateTime? _lastSync;
+  bool _syncing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadSyncTime();
+  }
+
+  Future<void> _loadSyncTime() async {
+    final at = await CloudSync.lastSyncedAt();
+    if (mounted) setState(() => _lastSync = at);
+  }
+
+  /// 클라우드 로그인: 부모 확인 → 이메일/비밀번호 입력 → 로그인 또는 가입.
+  /// 로그인하면 클라우드 기록을 반영해 홈부터 다시 연다.
+  Future<void> _cloudLogin() async {
+    final ok = await checkParentGate(context);
+    if (!ok || !mounted) return;
+
+    final emailController = TextEditingController();
+    final pwController = TextEditingController();
+    final action = await showDialog<String>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('☁️ 클라우드 로그인'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: emailController,
+              autofocus: true,
+              keyboardType: TextInputType.emailAddress,
+              decoration: const InputDecoration(
+                labelText: '이메일',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 10),
+            TextField(
+              controller: pwController,
+              obscureText: true,
+              decoration: const InputDecoration(
+                labelText: '비밀번호 (6자 이상)',
+                border: OutlineInputBorder(),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              '처음이면 [새 계정]으로 가입하세요.\n'
+              '같은 계정으로 로그인한 기기끼리 진도가 이어져요.',
+              style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(),
+            child: const Text('취소'),
+          ),
+          OutlinedButton(
+            onPressed: () => Navigator.of(context).pop('signup'),
+            child: const Text('새 계정'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop('signin'),
+            child: const Text('로그인'),
+          ),
+        ],
+      ),
+    );
+    if (action == null || !mounted) return;
+
+    setState(() => _syncing = true);
+    final error = action == 'signup'
+        ? await CloudSync.signUp(emailController.text, pwController.text)
+        : await CloudSync.signIn(emailController.text, pwController.text);
+    if (!mounted) return;
+    setState(() => _syncing = false);
+
+    if (error != null) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      return;
+    }
+    // 클라우드 기록이 복원됐을 수 있으니 캐시를 새로 읽고 홈부터 다시 연다.
+    await Profiles.init();
+    await Sounds.init();
+    await Speech.reloadSettings();
+    await PremiumStore.init();
+    await Reminders.syncWithSavedSetting();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('☁️ 클라우드와 연결됐어요!')),
+    );
+    Navigator.of(context).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LevelMapScreen()),
+      (route) => false,
+    );
+  }
+
+  Future<void> _cloudUpload() async {
+    setState(() => _syncing = true);
+    final ok = await CloudSync.uploadNow();
+    if (!mounted) return;
+    setState(() => _syncing = false);
+    await _loadSyncTime();
+    if (!mounted) return;
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      content: Text(ok ? '지금 기록을 클라우드에 올렸어요.' : '올리지 못했어요. 인터넷을 확인해 주세요.'),
+    ));
+  }
+
+  Future<void> _cloudSignOut() async {
+    final leave = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('로그아웃할까요?'),
+        content: const Text('이 기기의 기록은 그대로 남고,\n클라우드 저장만 멈춰요.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            child: const Text('로그아웃'),
+          ),
+        ],
+      ),
+    );
+    if (leave != true || !mounted) return;
+    await CloudSync.signOut();
+    if (mounted) setState(() {});
+  }
+
+  String _syncTimeLabel() {
+    final at = _lastSync;
+    if (at == null) return '아직 동기화한 적 없어요';
+    return '마지막 동기화: ${at.month}/${at.day} '
+        '${at.hour.toString().padLeft(2, '0')}:${at.minute.toString().padLeft(2, '0')}';
+  }
+
   Future<void> _openBackup() async {
     // 복원은 기록을 통째로 바꾸는 일이라 부모 확인을 거친다.
     final ok = await checkParentGate(context);
@@ -201,6 +347,64 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ],
           ),
+          if (CloudSync.available) ...[
+            const SizedBox(height: 14),
+            _card(
+              children: [
+                if (!CloudSync.signedIn)
+                  ListTile(
+                    leading: const Text('☁️', style: TextStyle(fontSize: 26)),
+                    title: const Text(
+                      '클라우드 동기화',
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: const Text('로그인하면 다른 기기와 진도가 이어져요'),
+                    trailing: _syncing
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2.5),
+                          )
+                        : const Icon(Icons.chevron_right),
+                    onTap: _syncing ? null : _cloudLogin,
+                  )
+                else ...[
+                  ListTile(
+                    leading: const Text('☁️', style: TextStyle(fontSize: 26)),
+                    title: Text(
+                      CloudSync.email ?? '클라우드 동기화',
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.bold),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    subtitle: Text(_syncTimeLabel()),
+                    trailing: _syncing
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(strokeWidth: 2.5),
+                          )
+                        : null,
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.cloud_upload_rounded,
+                        color: Color(0xFF1CB0F6)),
+                    title: const Text('지금 동기화'),
+                    onTap: _syncing ? null : _cloudUpload,
+                  ),
+                  const Divider(height: 1),
+                  ListTile(
+                    leading: const Icon(Icons.logout_rounded,
+                        color: Colors.grey),
+                    title: const Text('로그아웃'),
+                    onTap: _syncing ? null : _cloudSignOut,
+                  ),
+                ],
+              ],
+            ),
+          ],
           const SizedBox(height: 14),
           Text(
             '매일 학습 알림은 리포트 화면에서 켤 수 있어요.\n'

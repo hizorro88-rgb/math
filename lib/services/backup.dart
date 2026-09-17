@@ -25,7 +25,7 @@ class BackupService {
 
   /// 백업에 넣지 않는 키: 결제 권한은 코드로 옮기거나 지울 수 없어야 한다.
   /// (이용권은 스토어 [구매 복원]으로만 옮긴다)
-  static const _excludedKeys = {'family_pass_v1', 'all_unlock_v1'};
+  static const _excludedKeys = {'family_pass_v1', 'all_unlock_v1', 'cloud_sync_at_v1'};
 
   /// 지금 쓰는 별 목록 키들 (미리보기의 '통과한 단계' 계산용).
   /// 마이그레이션이 남겨 둔 옛 버전 키를 이중으로 세지 않도록 이름을 못 박는다.
@@ -43,8 +43,8 @@ class BackupService {
     return core.startsWith('lang_') && core.endsWith('_stars_v1');
   }
 
-  /// 현재 저장소 전체를 백업 코드로 만든다.
-  static Future<String> export({DateTime? now}) async {
+  /// 저장소 전체를 {키: {t, v}} 꼴로 만든다 (백업 코드·클라우드 동기화 공용).
+  static Future<Map<String, dynamic>> exportData() async {
     final prefs = await SharedPreferences.getInstance();
     final data = <String, dynamic>{};
     for (final key in prefs.getKeys()) {
@@ -63,6 +63,12 @@ class BackupService {
         data[key] = {'t': 'l', 'v': [for (final e in value) '$e']};
       }
     }
+    return data;
+  }
+
+  /// 현재 저장소 전체를 백업 코드로 만든다.
+  static Future<String> export({DateTime? now}) async {
+    final data = await exportData();
     final body = jsonEncode({
       'v': 1,
       'saved': (now ?? DateTime.now()).toIso8601String(),
@@ -107,6 +113,11 @@ class BackupService {
     final map = _decode(code);
     if (map == null) return false;
     final data = map['data'] as Map<String, dynamic>? ?? {};
+    return restoreData(data);
+  }
+
+  /// {키: {t, v}} 데이터로 저장소를 되돌린다 (백업 코드·클라우드 공용).
+  static Future<bool> restoreData(Map<String, dynamic> data) async {
     if (data.isEmpty) return false;
 
     // 지우기 전에 쓸 값을 전부 만들어 검증한다.

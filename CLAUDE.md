@@ -32,3 +32,8 @@
   벽시계 기준으로 되돌리면 소리 재생 랙 때문에 즉시 넘어가는 버그가 재발한다.
 - 전체 열기 코드는 lib/models/premium.dart의 unlockCode.
 - 사용자의 빌드 PC(Windows, D:\math)는 JDK 21(Temurin) + NDK 30.0.16248370 고정.
+- 클라우드 동기화(lib/services/cloud_sync.dart): lib/firebase_options.dart가
+  TODO 자리표시자면 조용히 꺼진다. 사용자가 Firebase 콘솔 구성값을 주면
+  그 파일만 채워서 푸시하면 켜진다. Firestore 규칙은 families/{uid}를
+  본인(uid)만 읽고 쓰게 제한할 것. 데이터는 백업 코드와 같은 형식을
+  JSON 문자열로 묶어 families/{uid} 문서 하나에 저장 (나중 저장이 이김).

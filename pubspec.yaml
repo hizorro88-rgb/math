@@ -2,7 +2,7 @@ name: preschool_math
 description: "미취학~초등 저학년 아동을 위한 수학·한글 학습 게임 (듀오링고 스타일)"
 publish_to: "none"
 # 버전 규칙: 스토어 제출마다 +빌드번호 증가, 기능 릴리스마다 가운데 숫자 증가
-version: 1.14.0+23
+version: 1.15.0+24
 
 environment:
   sdk: ">=3.3.0 <4.0.0"
@@ -16,6 +16,9 @@ dependencies:
   flutter_tts: ^4.2.0
   in_app_purchase: ^3.2.0
   shared_preferences: ^2.2.0
+  firebase_core: ^4.15.0
+  firebase_auth: ^6.7.0
+  cloud_firestore: ^6.10.0
 
 dev_dependencies:
   flutter_test:

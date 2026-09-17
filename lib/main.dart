@@ -6,12 +6,18 @@ import 'models/profile.dart';
 import 'screens/level_map_screen.dart';
 import 'screens/onboarding_screen.dart';
 import 'screens/profile_screen.dart';
+import 'services/cloud_sync.dart';
 import 'services/purchases.dart';
 import 'services/sounds.dart';
 import 'services/speech.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await CloudSync.init(); // 설정이 없으면 조용히 꺼진다
+  if (CloudSync.signedIn) {
+    // 다른 기기에서 더 최신 기록을 올렸으면 홈을 그리기 전에 내려받는다.
+    await CloudSync.pullIfNewer();
+  }
   await Profiles.init();
   await Sounds.init();
   await Speech.init();

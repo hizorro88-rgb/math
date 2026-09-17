@@ -11,6 +11,7 @@ import '../models/progress.dart';
 import '../models/stats.dart';
 import '../models/stickers.dart';
 import '../models/wrong_notes.dart';
+import '../services/cloud_sync.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../widgets/auto_next_bar.dart';
@@ -205,6 +206,7 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
         korean: true,
       );
       await StatsStore.recordRoundDay();
+      CloudSync.scheduleUpload(); // 로그인돼 있으면 잠시 뒤 클라우드에 저장
       // 통과하면 스티커북에 붙일 스티커 1장을 준다.
       if (stars >= 1) await StickerStore.addTickets(1);
       var nextLevel = (level != null &&
