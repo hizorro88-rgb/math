@@ -18,7 +18,8 @@ val hasReleaseKey = keystoreProperties.containsKey("storeFile")
 android {
     namespace = "com.hizorro.preschool_math"
     compileSdk = flutter.compileSdkVersion
-    ndkVersion = flutter.ndkVersion
+    // 빌드 PC에 설치된 NDK 버전 (Android Studio SDK Manager 기준)
+    ndkVersion = "30.0.16248370"
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
