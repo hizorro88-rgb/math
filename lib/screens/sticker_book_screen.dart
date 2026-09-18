@@ -5,6 +5,7 @@ import '../models/sticker_canvas.dart';
 import '../models/stickers.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
+import '../theme.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/parent_gate.dart';
 
@@ -390,12 +391,9 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
     final owned = collected?.fold(0, (sum, set) => sum + set.length) ?? 0;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F7F0),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFEC7CA5),
-        foregroundColor: Colors.white,
         title: const Text(
-          '📔 스티커북',
+          '스티커북',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
@@ -896,7 +894,7 @@ class _CanvasCard extends StatelessWidget {
   }
 }
 
-/// 칭찬 스티커판: 1~20 숫자가 희미하게 적힌 판.
+/// 칭찬 스티커판: 스티커를 채워 가는 판 (다음 칸만 물음표가 빛난다).
 /// 빈 숫자 칸을 누르면 스티커를 골라 그 위에 붙인다.
 class _RewardBoardCard extends StatelessWidget {
   const _RewardBoardCard({
@@ -917,6 +915,7 @@ class _RewardBoardCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final nextSlot = board.indexWhere((slot) => slot == null);
     final filled = board.where((s) => s != null).length;
 
     return Container(
@@ -1015,16 +1014,21 @@ class _RewardBoardCard extends StatelessWidget {
                       ),
                     ),
                     child: Center(
+                      // 붙인 스티커는 살짝 비뚤게 — 진짜 붙인 것처럼.
                       child: board[i] != null
-                          ? Text(board[i]!,
-                              style: const TextStyle(fontSize: 26))
-                          // 아직 안 붙인 칸: 숫자가 희미하게 보인다.
+                          ? Transform.rotate(
+                              angle: (i.isEven ? 1 : -1) * 0.07,
+                              child: Text(board[i]!,
+                                  style: const TextStyle(fontSize: 26)),
+                            )
+                          // 빈 칸은 "다음엔 뭐가 올까?" — 다음 칸만 노랗게 빛난다.
                           : Text(
-                              '${i + 1}',
-                              style: TextStyle(
+                              '?',
+                              style: displayStyle(
                                 fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.grey.shade300,
+                                color: i == nextSlot
+                                    ? AppColors.amber
+                                    : const Color(0xFFDCD5C7),
                               ),
                             ),
                     ),

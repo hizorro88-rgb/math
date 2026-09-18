@@ -116,12 +116,9 @@ class _BackupScreenState extends State<BackupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F7F0),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF5A78D6),
-        foregroundColor: Colors.white,
         title: const Text(
-          '💾 진도 백업·옮기기',
+          '진도 백업·옮기기',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),

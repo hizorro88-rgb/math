@@ -105,10 +105,8 @@ class _PracticeScreenState extends State<PracticeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        backgroundColor: const Color(0xFF58CC02),
-        foregroundColor: Colors.white,
         title: const Text(
-          '🎨 자유 연습',
+          '자유 연습',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),

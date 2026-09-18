@@ -16,6 +16,7 @@ import '../models/wrong_notes.dart';
 import '../services/cloud_sync.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
+import '../theme.dart';
 import '../widgets/auto_next_bar.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/listen_guard.dart';
@@ -345,20 +346,33 @@ class _QuizScreenState extends State<QuizScreen> {
             Column(
               children: [
                 _buildTopBar(),
+                // 문제는 위, 답은 아이 엄지가 닿는 아래쪽에.
+                // 화면이 작으면 스크롤되고, 크면 답이 바닥에 붙는다.
                 Expanded(
-                  child: SingleChildScrollView(
-                    padding: const EdgeInsets.symmetric(horizontal: 24),
-                    child: Column(
-                      children: [
-                        const SizedBox(height: 16),
-                        _buildQuestionCard(),
-                        const SizedBox(height: 24),
-                        if (_question.vertical)
-                          _buildKeypad()
-                        else
-                          _buildChoices(),
-                        const SizedBox(height: 16),
-                      ],
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 24),
+                      child: ConstrainedBox(
+                        constraints:
+                            BoxConstraints(minHeight: constraints.maxHeight),
+                        child: IntrinsicHeight(
+                          child: Column(
+                            children: [
+                              const SizedBox(height: 16),
+                              _buildQuestionCard(),
+                              const SizedBox(height: 12),
+                              _buildOwlCheer(),
+                              const Spacer(),
+                              const SizedBox(height: 12),
+                              if (_question.vertical)
+                                _buildKeypad()
+                              else
+                                _buildChoices(),
+                              const SizedBox(height: 16),
+                            ],
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -375,6 +389,34 @@ class _QuizScreenState extends State<QuizScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  /// 문제 카드 아래의 작은 부엉이 응원
+  Widget _buildOwlCheer() {
+    final line = _answered
+        ? (_isCorrect ? '부엉부엉! 잘했어!' : '괜찮아, 다시 해 보자!')
+        : '잘 보고 골라 봐!';
+    return Row(
+      children: [
+        const Text('🦉', style: TextStyle(fontSize: 30)),
+        const SizedBox(width: 8),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+          decoration: BoxDecoration(
+            color: AppColors.brownSurface,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Text(
+            line,
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.brown,
+            ),
+          ),
+        ),
+      ],
     );
   }
 
@@ -504,7 +546,7 @@ class _QuizScreenState extends State<QuizScreen> {
                 // 문장 문제(분수·소수·시간)는 여러 줄 그대로 보여준다.
                 // (오른쪽 여백은 다시 듣기 버튼 자리)
                 Padding(
-                  padding: const EdgeInsets.only(right: 30),
+                  padding: const EdgeInsets.only(right: 44),
                   child: Text(
                     _question.expression,
                     style: const TextStyle(
@@ -533,16 +575,24 @@ class _QuizScreenState extends State<QuizScreen> {
               ],
             ],
           ),
-          // 문제를 다시 읽어 주는 버튼
+          // 문제를 다시 읽어 주는 버튼 (텍스트와 겹치지 않게 카드 모서리 고정)
           Positioned(
-            top: -6,
-            right: -6,
-            child: IconButton(
-              onPressed: _speakQuestion,
-              icon: Icon(
-                Icons.volume_up_rounded,
-                size: 30,
-                color: _themeColor,
+            top: -8,
+            right: -8,
+            child: GestureDetector(
+              onTap: _speakQuestion,
+              child: Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: _themeColor.withValues(alpha: 0.14),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.volume_up_rounded,
+                  size: 26,
+                  color: _themeColor,
+                ),
               ),
             ),
           ),
@@ -618,20 +668,26 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Widget _buildChoices() {
-    return GridView.count(
-      crossAxisCount: 2,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      mainAxisSpacing: 14,
-      crossAxisSpacing: 12,
-      childAspectRatio: 1.75,
-      children: [
-        for (final choice in _question.choices)
-          _ChoiceButton(
+    Widget cell(int index) {
+      final choice = _question.choices[index];
+      return Expanded(
+        child: SizedBox(
+          height: 100,
+          child: _ChoiceButton(
             label: _question.labelFor(choice),
             state: _choiceState(choice),
+            fillIndex: index,
             onTap: () => _selectChoice(choice),
           ),
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        Row(children: [cell(0), const SizedBox(width: 12), cell(1)]),
+        const SizedBox(height: 12),
+        Row(children: [cell(2), const SizedBox(width: 12), cell(3)]),
       ],
     );
   }
@@ -693,8 +749,8 @@ class _QuizScreenState extends State<QuizScreen> {
                     ),
                     child: Text(
                       !_isRetryQuestion && _combo >= 3
-                          ? '+$_lastGained점 🔥'
-                          : '+$_lastGained점',
+                          ? '+$_lastGained코인 🔥'
+                          : '+$_lastGained코인',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -871,16 +927,24 @@ class _ChoiceButton extends StatelessWidget {
     required this.label,
     required this.state,
     required this.onTap,
+    this.fillIndex = 0,
   });
 
   final String label;
   final _ChoiceState state;
   final VoidCallback onTap;
 
+  /// 보기 위치(0~3)별 파스텔 색
+  final int fillIndex;
+
   @override
   Widget build(BuildContext context) {
     final (background, border, textColor) = switch (state) {
-      _ChoiceState.idle => (Colors.white, Colors.grey.shade300, Colors.black87),
+      _ChoiceState.idle => (
+          AppColors.choiceFills[fillIndex % 4],
+          AppColors.choiceBorders[fillIndex % 4],
+          AppColors.ink,
+        ),
       _ChoiceState.correct => (
           const Color(0xFFD7FFB8),
           const Color(0xFF58CC02),

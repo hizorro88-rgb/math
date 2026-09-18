@@ -9,6 +9,7 @@ import '../services/speech.dart';
 import '../widgets/parent_gate.dart';
 import 'backup_screen.dart';
 import 'level_map_screen.dart';
+import 'pass_screen.dart';
 
 /// 설정: 효과음·말소리(문제 읽어주기)·말 빠르기, 진도 백업 바로가기.
 class SettingsScreen extends StatefulWidget {
@@ -249,12 +250,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F7F0),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF6B7280),
-        foregroundColor: Colors.white,
         title: const Text(
-          '⚙️ 설정',
+          '설정',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
@@ -318,9 +316,38 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.only(left: 8, bottom: 8),
+            child: Text(
+              '부모님 메뉴',
+              style: TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade600,
+              ),
+            ),
+          ),
           _card(
             children: [
+              ListTile(
+                leading: const Icon(Icons.family_restroom_rounded,
+                    color: Color(0xFF8C5A2B)),
+                title: const Text(
+                  '가족 이용권',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                subtitle: const Text('모든 단계 열기 · 프로필 4명'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () async {
+                  final ok = await checkParentGate(context);
+                  if (!ok || !context.mounted) return;
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const PassScreen()),
+                  );
+                },
+              ),
+              const Divider(height: 1),
               ListTile(
                 leading: const Text('💾', style: TextStyle(fontSize: 26)),
                 title: const Text(

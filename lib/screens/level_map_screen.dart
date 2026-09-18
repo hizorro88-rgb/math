@@ -16,6 +16,7 @@ import '../models/stats.dart';
 import '../models/wrong_notes.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
+import '../theme.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/owl_avatar.dart';
 import '../widgets/parent_gate.dart';
@@ -352,13 +353,15 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     if (daily.streak >= 3) {
       return '$name, ${daily.streak}일째\n함께라니 최고야! 🔥';
     }
-    return '$name, 오늘도\n신나게 놀면서 배우자!';
+    final hour = DateTime.now().hour;
+    if (hour < 12) return '$name, 좋은 아침이야!\n부기랑 놀면서 배우자!';
+    if (hour < 18) return '$name, 오늘도 왔구나!\n부기가 기다렸어!';
+    return '$name, 자기 전에\n한 판 어때? 부엉!';
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F7F0),
       body: FutureBuilder<_MapData>(
         future: _dataFuture,
         builder: (context, snapshot) {
@@ -378,12 +381,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
             padding: EdgeInsets.zero,
             children: [
               _Header(
-                title: switch (_subject) {
-                  0 => '수학 놀이',
-                  1 => '한글 놀이',
-                  2 => '영어 놀이',
-                  _ => '${languagePacks[_subject - 3].name} 놀이',
-                },
+                title: '부엉이 학교',
                 greeting: _greetingFor(data),
                 totalStars: totalStars,
                 coins: data.coins,
@@ -546,56 +544,6 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                               ),
                             ),
                             const Icon(Icons.chevron_right, color: Colors.grey),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                    ],
-                    // 가족 이용권 안내 (이용권이 없을 때만)
-                    if (!data.hasPass) ...[
-                      BouncyButton(
-                        color: const Color(0xFFFFF6D8),
-                        shadowColor: const Color(0xFFFFD34D),
-                        borderRadius: 22,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 14),
-                        onTap: () async {
-                          final ok = await checkParentGate(context);
-                          if (!ok || !context.mounted) return;
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (_) => const PassScreen()),
-                          );
-                          _refresh();
-                        },
-                        child: Row(
-                          children: [
-                            const Text('👨‍👩‍👧',
-                                style: TextStyle(fontSize: 28)),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    '가족 이용권',
-                                    style: TextStyle(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    '한 번 결제로 모든 단계 + 프로필 4명 · 가족 공유',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Icon(Icons.chevron_right,
-                                color: Colors.grey),
                           ],
                         ),
                       ),
@@ -769,16 +717,27 @@ class _Header extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(20, 8, 20, 22),
       decoration: const BoxDecoration(
         gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [Color(0xFF58CC02), Color(0xFF2EC4B6)],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFF57BE78), AppColors.green],
         ),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
       ),
-      child: SafeArea(
+      child: Stack(
+        children: [
+          // 숲속 학교 배경: 구름과 언덕
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius:
+                  const BorderRadius.vertical(bottom: Radius.circular(32)),
+              child: CustomPaint(painter: _HeaderScenePainter()),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 8, 20, 22),
+            child: SafeArea(
         bottom: false,
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -787,11 +746,7 @@ class _Header extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                  style: displayStyle(fontSize: 26, color: Colors.white),
                 ),
                 const Spacer(),
                 // 프로필 바꾸기
@@ -861,27 +816,47 @@ class _Header extends StatelessWidget {
               children: [
                 GestureDetector(
                   onTap: onOwlTap,
-                  child: OwlAvatar(size: 52, equipped: equipped),
+                  child: _OwlBounce(
+                    child: OwlAvatar(size: 68, equipped: equipped),
+                  ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 12),
                 Expanded(
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 14,
-                      vertical: 10,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(18),
-                    ),
-                    child: Text(
-                      greeting,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF4B4B4B),
+                  child: Stack(
+                    clipBehavior: Clip.none,
+                    children: [
+                      // 말풍선 꼬리
+                      Positioned(
+                        left: -5,
+                        top: 20,
+                        child: Transform.rotate(
+                          angle: 0.785,
+                          child: Container(
+                            width: 12,
+                            height: 12,
+                            color: Colors.white,
+                          ),
+                        ),
                       ),
-                    ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 14,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(18),
+                        ),
+                        child: Text(
+                          greeting,
+                          style: const TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.ink,
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -896,7 +871,90 @@ class _Header extends StatelessWidget {
             ),
           ],
         ),
+            ),
+          ),
+        ],
       ),
+    );
+  }
+}
+
+/// 헤더 배경: 구름 두 점과 겹친 언덕 — "부엉이 학교"의 앞마당
+class _HeaderScenePainter extends CustomPainter {
+  @override
+  void paint(Canvas canvas, Size size) {
+    final cloud = Paint()..color = Colors.white.withValues(alpha: 0.35);
+    void drawCloud(double cx, double cy, double r) {
+      canvas.drawCircle(Offset(cx, cy), r, cloud);
+      canvas.drawCircle(Offset(cx + r * 1.1, cy + r * 0.25), r * 0.75, cloud);
+      canvas.drawCircle(Offset(cx - r * 1.0, cy + r * 0.3), r * 0.65, cloud);
+    }
+
+    drawCloud(size.width * 0.78, size.height * 0.20, 13);
+    drawCloud(size.width * 0.30, size.height * 0.10, 9);
+
+    // 뒷 언덕
+    final back = Paint()..color = Colors.white.withValues(alpha: 0.10);
+    final backPath = Path()
+      ..moveTo(0, size.height)
+      ..quadraticBezierTo(
+          size.width * 0.3, size.height * 0.62, size.width * 0.62, size.height)
+      ..close();
+    canvas.drawPath(backPath, back);
+
+    // 앞 언덕
+    final front = Paint()..color = Colors.white.withValues(alpha: 0.14);
+    final frontPath = Path()
+      ..moveTo(size.width * 0.35, size.height)
+      ..quadraticBezierTo(
+          size.width * 0.75, size.height * 0.55, size.width, size.height * 0.9)
+      ..lineTo(size.width, size.height)
+      ..close();
+    canvas.drawPath(frontPath, front);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// 부엉이가 2초 주기로 살짝 숨 쉬듯 움직인다.
+class _OwlBounce extends StatefulWidget {
+  const _OwlBounce({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_OwlBounce> createState() => _OwlBounceState();
+}
+
+class _OwlBounceState extends State<_OwlBounce>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 2000),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    if (AppMotion.loops) _controller.repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) => Transform.translate(
+        offset: Offset(0, -3 * _controller.value),
+        child: child,
+      ),
+      child: widget.child,
     );
   }
 }
@@ -993,7 +1051,7 @@ class _RankCard extends StatelessWidget {
                 Text(
                   next == null
                       ? '최고 칭호까지 다 모았어요! 🎉'
-                      : '${next.emoji} ${next.title}까지 ${next.minPoints - points}점',
+                      : '${next.emoji} ${next.title}까지 ${next.minPoints - points}코인',
                   style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                 ),
               ],
@@ -1085,7 +1143,7 @@ class _DailyCard extends StatelessWidget {
                       border: Border.all(color: const Color(0xFF1CB0F6)),
                     ),
                     child: const Text(
-                      '사기 · 🪙 200',
+                      '받기 · 🪙 200',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.bold,

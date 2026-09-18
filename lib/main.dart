@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'models/premium.dart';
+import 'theme.dart';
 import 'models/profile.dart';
 import 'screens/level_map_screen.dart';
 import 'screens/onboarding_screen.dart';
@@ -53,15 +54,28 @@ class PreschoolMathApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '수학·한글 놀이',
+      title: '부엉이 학교',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF58CC02),
+          seedColor: AppColors.green,
           brightness: Brightness.light,
         ),
-        scaffoldBackgroundColor: const Color(0xFFF7F7F7),
+        scaffoldBackgroundColor: AppColors.cream,
+        fontFamily: 'NotoSansKR',
+        textTheme: Typography.material2021().black.apply(
+          fontFamily: 'NotoSansKR',
+          fontFamilyFallback: const ['NotoSansKR', 'NotoColorEmoji'],
+          bodyColor: AppColors.ink,
+          displayColor: AppColors.ink,
+        ),
+        // 앱바는 전 화면 브랜드 그린 하나로 통일 (과목색은 칩·카드에만)
+        appBarTheme: AppBarTheme(
+          backgroundColor: AppColors.green,
+          foregroundColor: Colors.white,
+          titleTextStyle: displayStyle(fontSize: 22, color: Colors.white),
+        ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
             shape: RoundedRectangleBorder(
@@ -83,7 +97,7 @@ class PreschoolMathApp extends StatelessWidget {
           builder: (context, constraints) {
             if (constraints.maxWidth <= maxContentWidth) return content;
             return ColoredBox(
-              color: const Color(0xFFDDEAD2),
+              color: AppColors.brownSurface,
               child: Center(
                 child: SizedBox(width: maxContentWidth, child: content),
               ),

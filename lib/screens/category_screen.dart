@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/curriculum.dart';
 import '../models/progress.dart';
-import '../widgets/bouncy_button.dart';
+import '../widgets/level_bubble.dart';
 import 'quiz_screen.dart';
 
 /// 연령/학년 카테고리 상세: 그 나이에 배우는 묶음들과 단계 지도.
@@ -41,12 +41,9 @@ class _CategoryScreenState extends State<CategoryScreen> {
     final category = widget.category;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F7F0),
       appBar: AppBar(
-        backgroundColor: category.color,
-        foregroundColor: Colors.white,
         title: Text(
-          '${category.emoji} ${category.title}',
+          '${category.title} · 수학',
           style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
@@ -196,8 +193,8 @@ class _UnitSection extends StatelessWidget {
             runSpacing: 10,
             children: [
               for (final level in unitLevels)
-                _LevelBubble(
-                  level: level,
+                LevelBubble(
+                  number: level.number - unit.firstLevelNumber + 1,
                   stars: stars[level.number - 1],
                   unlocked: ProgressStore.isUnlocked(stars, level.number),
                   color: unit.color,
@@ -211,98 +208,3 @@ class _UnitSection extends StatelessWidget {
   }
 }
 
-/// 동그란 3D 단계 버튼: 잠김 🔒 / 도전 가능(통통) / 통과(별 표시)
-class _LevelBubble extends StatelessWidget {
-  const _LevelBubble({
-    required this.level,
-    required this.stars,
-    required this.unlocked,
-    required this.color,
-    required this.onTap,
-  });
-
-  final Level level;
-  final int stars;
-  final bool unlocked;
-  final Color color;
-  final VoidCallback onTap;
-
-  bool get _cleared => stars >= 1;
-  bool get _isCurrent => unlocked && !_cleared;
-
-  @override
-  Widget build(BuildContext context) {
-    final bubble = GestureDetector(
-      onTap: unlocked ? onTap : null,
-      child: Container(
-        width: 56,
-        height: 56,
-        decoration: BoxDecoration(
-          gradient: _cleared
-              ? LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [color, BouncyButton.darken(color, 0.08)],
-                )
-              : null,
-          color: _cleared
-              ? null
-              : unlocked
-                  ? Colors.white
-                  : Colors.grey.shade200,
-          shape: BoxShape.circle,
-          border: Border.all(
-            color: unlocked ? color : Colors.grey.shade300,
-            width: 3,
-          ),
-          boxShadow: unlocked
-              ? [
-                  BoxShadow(
-                    color: _cleared
-                        ? BouncyButton.darken(color, 0.15)
-                        : Colors.grey.shade300,
-                    offset: const Offset(0, 3),
-                    blurRadius: 0,
-                  ),
-                ]
-              : null,
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (!unlocked)
-              const Opacity(
-                opacity: 0.6,
-                child: Text('🔒', style: TextStyle(fontSize: 18)),
-              )
-            else ...[
-              Text(
-                '${level.number}',
-                style: TextStyle(
-                  fontSize: level.number >= 100 ? 15 : 18,
-                  fontWeight: FontWeight.bold,
-                  color: _cleared ? Colors.white : color,
-                ),
-              ),
-              if (_cleared)
-                Text('⭐' * stars, style: const TextStyle(fontSize: 7)),
-            ],
-          ],
-        ),
-      ),
-    );
-
-    // 지금 도전할 단계는 통! 하고 커지면서 나타난다.
-    if (_isCurrent) {
-      return TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0.6, end: 1),
-        duration: const Duration(milliseconds: 700),
-        curve: Curves.elasticOut,
-        builder: (context, value, child) =>
-            Transform.scale(scale: value, child: child),
-        child: bubble,
-      );
-    }
-    return bubble;
-  }
-}

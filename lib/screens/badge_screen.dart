@@ -16,12 +16,9 @@ class _BadgeScreenState extends State<BadgeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F7F0),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFA560E8),
-        foregroundColor: Colors.white,
         title: const Text(
-          '🏅 배지 도감',
+          '배지 도감',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),

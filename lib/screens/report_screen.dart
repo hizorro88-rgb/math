@@ -34,10 +34,7 @@ class _ReportScreenState extends State<ReportScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F7F0),
       appBar: AppBar(
-        backgroundColor: const Color(0xFF2EC4B6),
-        foregroundColor: Colors.white,
         title: const Text(
           '학습 리포트',
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -128,17 +125,22 @@ class _SummaryCard extends StatelessWidget {
         LearningStats.accuracy(stats.totalCorrect, stats.totalWrong);
 
     return _reportCard(
-      title: '📋 전체 요약',
+      title: '전체 요약',
       child: Row(
         children: [
           _SummaryItem(
-              emoji: '✏️', value: '${stats.totalAnswered}', label: '푼 문제'),
+              icon: Icons.edit_rounded,
+              value: '${stats.totalAnswered}',
+              label: '푼 문제'),
           _SummaryItem(
-            emoji: '🎯',
+            icon: Icons.track_changes_rounded,
             value: accuracy == null ? '-' : '$accuracy%',
             label: '정답률',
           ),
-          _SummaryItem(emoji: '🗺️', value: '$clearedLevels', label: '통과한 단계'),
+          _SummaryItem(
+              icon: Icons.flag_rounded,
+              value: '$clearedLevels',
+              label: '통과한 단계'),
         ],
       ),
     );
@@ -147,12 +149,12 @@ class _SummaryCard extends StatelessWidget {
 
 class _SummaryItem extends StatelessWidget {
   const _SummaryItem({
-    required this.emoji,
+    required this.icon,
     required this.value,
     required this.label,
   });
 
-  final String emoji;
+  final IconData icon;
   final String value;
   final String label;
 
@@ -161,7 +163,7 @@ class _SummaryItem extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 24)),
+          Icon(icon, size: 26, color: const Color(0xFF3DA35D)),
           const SizedBox(height: 4),
           Text(
             value,
@@ -188,9 +190,20 @@ class _WeekCard extends StatelessWidget {
     final maxRounds = stats.recentDays
         .map((d) => d.rounds)
         .fold<int>(1, (m, r) => r > m ? r : m);
+    final hasAny = stats.recentDays.any((d) => d.rounds > 0);
+
+    if (!hasAny) {
+      return _reportCard(
+        title: '최근 7일 활동',
+        child: Text(
+          '이번 주 첫 기록을 기다리고 있어요!\n퀴즈 한 판이 끝나면 막대가 자라나요.',
+          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+        ),
+      );
+    }
 
     return _reportCard(
-      title: '📅 최근 7일 활동',
+      title: '최근 7일 활동',
       child: SizedBox(
         height: 110,
         child: Row(
@@ -268,14 +281,29 @@ class _AccuracyCard extends StatelessWidget {
         ('📏 ${statBandNames[i]}', stats.bandCorrect[i], stats.bandWrong[i]),
     ];
 
+    final learned = rows.where((r) => r.$2 + r.$3 > 0).toList();
+    final unlearnedCount = rows.length - learned.length;
+
     return _reportCard(
-      title: '🧮 수학 정답률',
+      title: '수학 정답률',
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          for (final (label, correct, wrong) in rows) ...[
-            _AccuracyRow(label: label, correct: correct, wrong: wrong),
-            const SizedBox(height: 10),
-          ],
+          if (learned.isEmpty)
+            Text(
+              '아직 수학 퀴즈를 풀지 않았어요.\n첫 판을 끝내면 여기에 정답률이 쌓여요!',
+              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+            )
+          else
+            for (final (label, correct, wrong) in learned) ...[
+              _AccuracyRow(label: label, correct: correct, wrong: wrong),
+              const SizedBox(height: 10),
+            ],
+          if (learned.isNotEmpty && unlearnedCount > 0)
+            Text(
+              '아직 안 배운 유형 $unlearnedCount개는 배우면 나타나요.',
+              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+            ),
         ],
       ),
     );
@@ -327,9 +355,10 @@ class _AccuracyRow extends StatelessWidget {
           width: 84,
           child: Text(
             accuracy == null
-                ? '아직 안 풀었어요'
+                ? '미학습'
                 : '$accuracy% ($correct/${correct + wrong})',
             textAlign: TextAlign.right,
+            maxLines: 1,
             style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
           ),
         ),
@@ -348,7 +377,7 @@ class _KoreanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (stats.krTotalCorrect + stats.krTotalWrong == 0) {
       return _reportCard(
-        title: '📖 한글 정답률',
+        title: '한글 정답률',
         child: Text(
           '아직 한글 퀴즈를 풀지 않았어요.\n홈에서 📖 한글 탭을 눌러 시작해 보세요!',
           style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
@@ -356,7 +385,7 @@ class _KoreanCard extends StatelessWidget {
       );
     }
     return _reportCard(
-      title: '📖 한글 정답률',
+      title: '한글 정답률',
       child: Column(
         children: [
           for (final type in KrQuizType.values) ...[

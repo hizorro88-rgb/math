@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preschool_math/main.dart';
+import 'package:preschool_math/theme.dart';
 import 'package:preschool_math/models/wrong_notes.dart';
 import 'package:preschool_math/models/english_data.dart';
 import 'package:preschool_math/models/japanese_pack.dart';
@@ -12,6 +13,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   setUp(() {
+    AppMotion.loops = false; // pumpAndSettle이 끝나도록 반복 애니메이션 정지
     SharedPreferences.setMockInitialValues({});
     Profiles.activeId = 1;
     Sounds.enabled = true;
@@ -31,7 +33,7 @@ void main() {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('수학 놀이'), findsOneWidget);
+    expect(find.text('부엉이 학교'), findsOneWidget);
     expect(find.text('자유 연습'), findsOneWidget);
     expect(find.text('지금 나는 알!'), findsOneWidget);
 
@@ -50,10 +52,11 @@ void main() {
 
     await scrollAndTap(tester, find.text('4살'));
     expect(find.text('수 세기 첫걸음'), findsOneWidget);
-    expect(find.text('1'), findsOneWidget);
-    expect(find.text('🔒'), findsWidgets);
+    expect(find.text('1').first, findsOneWidget);
+    // 잠긴 단계는 자물쇠 대신 조용한 점선 원으로 보인다.
+    expect(find.text('🔒'), findsNothing);
 
-    await scrollAndTap(tester, find.text('1'));
+    await scrollAndTap(tester, find.text('1').first);
     expect(find.text('1단계'), findsOneWidget);
     expect(find.text('몇 개일까요?'), findsOneWidget); // 4살 첫 단계는 수 세기
     expect(find.text('🪙 0'), findsOneWidget);
@@ -75,8 +78,8 @@ void main() {
     expect(find.text('지금 나는 병아리!'), findsOneWidget);
 
     await scrollAndTap(tester, find.text('4살'));
-    expect(find.text('3'), findsOneWidget);
-    await scrollAndTap(tester, find.text('3'));
+    expect(find.text('3').first, findsOneWidget);
+    await scrollAndTap(tester, find.text('3').first);
 
     expect(find.text('3단계'), findsOneWidget);
   });
@@ -104,13 +107,13 @@ void main() {
 
     // 4살 → 1단계 입장, 아무것도 안 풀었으면 X로 바로 나간다.
     await scrollAndTap(tester, find.text('4살'));
-    await scrollAndTap(tester, find.text('1'));
+    await scrollAndTap(tester, find.text('1').first);
     await tester.tap(find.byIcon(Icons.close));
     await tester.pumpAndSettle();
     expect(find.textContaining('몇 개일까요?'), findsNothing); // 지도로 돌아옴
 
     // 다시 들어가서 한 문제를 풀면, X를 눌렀을 때 확인 팝업이 뜬다.
-    await scrollAndTap(tester, find.text('1'));
+    await scrollAndTap(tester, find.text('1').first);
     final choice = find.byWidgetPredicate(
       (w) => w is Text && RegExp(r'^\d+$').hasMatch(w.data ?? ''),
     );
@@ -187,7 +190,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('$retryAns'));
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('+5점'), findsOneWidget);
+    expect(find.text('+5코인'), findsOneWidget);
     // 2초 막대가 다 줄면 자동으로 결과 화면으로 넘어간다.
     await tester.pumpAndSettle();
     expect(find.text('10문제 중에 9문제를 맞혔어요!'), findsOneWidget);
@@ -247,7 +250,7 @@ void main() {
     // 첫 카테고리 → 1단계 (낱말 보고 그림 찾기)
     await scrollAndTap(tester, find.text('한글 첫걸음'));
     expect(find.text('낱말 보고 그림 찾기'), findsOneWidget);
-    await scrollAndTap(tester, find.text('1'));
+    await scrollAndTap(tester, find.text('1').first);
     expect(find.text('알맞은 그림을 찾아요'), findsOneWidget);
 
     // 카드에 크게 보이는 낱말(fontSize 40)을 읽고 짝이 되는 그림을 누른다.
@@ -283,7 +286,7 @@ void main() {
     await scrollAndTap(tester, find.text('잘 들려요! 시작하기'));
 
     // 홈: 바뀐 프로필과 나이 추천 배지가 보인다.
-    expect(find.text('수학 놀이'), findsOneWidget);
+    expect(find.text('부엉이 학교'), findsOneWidget);
     expect(find.text('🦊 하늘'), findsOneWidget);
     await tester.ensureVisible(find.text('👍 추천'));
     expect(find.text('👍 추천'), findsOneWidget);
@@ -425,11 +428,11 @@ void main() {
 
     expect(find.text('학습 리포트'), findsOneWidget);
     await tester.dragUntilVisible(
-      find.text('📖 한글 정답률'),
+      find.text('한글 정답률'),
       find.byType(ListView).last,
       const Offset(0, -300),
     );
-    expect(find.text('📖 한글 정답률'), findsOneWidget);
+    expect(find.text('한글 정답률'), findsOneWidget);
   });
 
   testWidgets('착용한 아이템이 홈 헤더 부엉이에 보인다', (tester) async {
@@ -459,7 +462,7 @@ void main() {
     // 영어 낱말 카테고리 → 첫 단계 (낱말 듣고 그림 찾기)
     await scrollAndTap(tester, find.text('영어 낱말'));
     expect(find.text('낱말 듣고 그림 찾기'), findsOneWidget);
-    await scrollAndTap(tester, find.text('31')); // 카테고리 첫 단계
+    await scrollAndTap(tester, find.text('1').first); // 카테고리 첫 단계
     expect(find.text('잘 듣고 알맞은 그림을 찾아요'), findsOneWidget);
 
     // 카드에 크게 보이는 영어 낱말로 정답 그림을 찾아 누른다.
@@ -485,7 +488,7 @@ void main() {
     expect(find.text('かな 첫걸음'), findsOneWidget);
 
     await scrollAndTap(tester, find.text('일본어 낱말'));
-    await scrollAndTap(tester, find.text('21')); // 낱말 듣고 그림 찾기 첫 단계
+    await scrollAndTap(tester, find.text('1').first); // 낱말 듣고 그림 찾기 첫 단계
     expect(find.text('잘 듣고 알맞은 그림을 찾아요'), findsOneWidget);
 
     // 카드에 보이는 히라가나 낱말로 정답 그림을 찾아 누른다.
@@ -530,7 +533,7 @@ void main() {
     await tester.tap(find.widgetWithText(OutlinedButton, '$answer'));
     await tester.pumpAndSettle();
 
-    expect(find.text('👨‍👩‍👧 가족 이용권'), findsOneWidget);
+    expect(find.text('가족 이용권'), findsOneWidget);
     expect(find.textContaining('한 번 결제로'), findsWidgets);
   });
 
@@ -559,7 +562,7 @@ void main() {
 
     // 바다를 고르면 바다의 홈으로 들어간다.
     await scrollAndTap(tester, find.text('바다'));
-    expect(find.text('수학 놀이'), findsOneWidget);
+    expect(find.text('부엉이 학교'), findsOneWidget);
     expect(find.text('🦊 바다'), findsOneWidget);
     expect(Profiles.activeId, 2);
   });
@@ -572,10 +575,10 @@ void main() {
     await tester.tap(find.text('🐣 우리 아이'));
     await tester.pumpAndSettle();
 
-    expect(find.text('새 프로필 만들기 (가족 이용권)'), findsOneWidget);
+    expect(find.text('새 프로필 만들기'), findsOneWidget);
 
     // 누르면 부모 게이트가 먼저 뜬다.
-    await scrollAndTap(tester, find.text('새 프로필 만들기 (가족 이용권)'));
+    await scrollAndTap(tester, find.text('새 프로필 만들기'));
     expect(find.text('부모님 확인'), findsOneWidget);
   });
 

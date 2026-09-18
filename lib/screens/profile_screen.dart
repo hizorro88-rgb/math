@@ -107,11 +107,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F7F0),
       appBar: AppBar(
         automaticallyImplyLeading: !widget.asLauncher,
-        backgroundColor: const Color(0xFFA560E8),
-        foregroundColor: Colors.white,
         title: const Text(
           '누가 놀까요?',
           style: TextStyle(fontWeight: FontWeight.bold),
@@ -119,9 +116,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       ),
       body: !_loaded
           ? const Center(child: CircularProgressIndicator())
-          : ListView(
-              padding: const EdgeInsets.all(16),
-              children: [
+          : Center(
+              child: SingleChildScrollView(
+              padding: const EdgeInsets.all(20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                 if (widget.asLauncher) ...[
                   const Center(
                       child: Text('🦉', style: TextStyle(fontSize: 52))),
@@ -143,13 +144,23 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     padding: const EdgeInsets.all(14),
                     border: !widget.asLauncher &&
                             profile.id == Profiles.activeId
-                        ? Border.all(color: const Color(0xFFA560E8), width: 3)
+                        ? Border.all(color: const Color(0xFF3DA35D), width: 3)
                         : null,
                     onTap: () => _select(profile),
                     child: Row(
                       children: [
-                        Text(profile.emoji,
-                            style: const TextStyle(fontSize: 36)),
+                        Container(
+                          width: 64,
+                          height: 64,
+                          decoration: const BoxDecoration(
+                            color: Color(0xFFF0F7EC),
+                            shape: BoxShape.circle,
+                          ),
+                          child: Center(
+                            child: Text(profile.emoji,
+                                style: const TextStyle(fontSize: 38)),
+                          ),
+                        ),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -168,7 +179,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFFA560E8),
+                              color: const Color(0xFF3DA35D),
                               borderRadius: BorderRadius.circular(999),
                             ),
                             child: const Text(
@@ -198,38 +209,34 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ],
                 if (_profiles.length < Profiles.maxProfiles)
                   BouncyButton(
-                    color: const Color(0xFFF3EAFD),
-                    shadowColor: const Color(0xFFD9C2F5),
+                    color: const Color(0xFFF0F7EC),
+                    shadowColor: const Color(0xFFC9E3BF),
                     borderRadius: 22,
                     padding: const EdgeInsets.all(16),
                     onTap: _addProfile,
-                    child: Row(
+                    child: const Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          !_hasPass &&
-                                  _profiles.length >= PremiumStore.freeProfiles
-                              ? Icons.lock_rounded
-                              : Icons.add_circle_rounded,
-                          color: const Color(0xFFA560E8),
+                          Icons.add_circle_rounded,
+                          color: Color(0xFF3DA35D),
                           size: 26,
                         ),
-                        const SizedBox(width: 8),
+                        SizedBox(width: 8),
                         Text(
-                          !_hasPass &&
-                                  _profiles.length >= PremiumStore.freeProfiles
-                              ? '새 프로필 만들기 (가족 이용권)'
-                              : '새 프로필 만들기',
-                          style: const TextStyle(
+                          '새 프로필 만들기',
+                          style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFFA560E8),
+                            color: Color(0xFF3DA35D),
                           ),
                         ),
                       ],
                     ),
                   ),
               ],
+              ),
+            ),
             ),
     );
   }

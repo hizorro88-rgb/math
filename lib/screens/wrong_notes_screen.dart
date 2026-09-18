@@ -99,12 +99,9 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F7F0),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFB05CCC),
-        foregroundColor: Colors.white,
         title: const Text(
-          '📒 오답 노트',
+          '오답 노트',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
@@ -123,16 +120,31 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('🎉', style: TextStyle(fontSize: 60)),
+          const Text('🦉📒', style: TextStyle(fontSize: 52)),
           const SizedBox(height: 12),
           const Text(
-            '오답 노트가 비었어요!',
+            '오답 노트가 비었어요! 🎉',
             style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6),
           Text(
-            '퀴즈에서 틀린 낱말·글자가 여기에 모여요',
+            '틀린 게 하나도 없다니, 부기가 깜짝 놀랐어!\n틀린 문제가 생기면 여기 모아 뒀다가 같이 복습해요.',
+            textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+          ),
+          const SizedBox(height: 20),
+          FilledButton.icon(
+            onPressed: () => Navigator.of(context).pop(),
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFF3DA35D),
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 22, vertical: 12),
+            ),
+            icon: const Icon(Icons.play_arrow_rounded),
+            label: const Text(
+              '퀴즈 풀러 가기',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),

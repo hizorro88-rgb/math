@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preschool_math/screens/backup_screen.dart';
+import 'package:preschool_math/theme.dart';
 import 'package:preschool_math/services/backup.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
+
+  setUp(() {
+    AppMotion.loops = false; // 홈의 반복 애니메이션이 pumpAndSettle을 막지 않게
+  });
 
   test('백업 코드 왕복: 모든 타입이 그대로 복원된다', () async {
     SharedPreferences.setMockInitialValues({

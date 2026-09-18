@@ -82,10 +82,7 @@ class _ShopScreenState extends State<ShopScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F7F0),
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFC800),
-        foregroundColor: Colors.white,
         title: const Text(
           '꾸미기 가게',
           style: TextStyle(fontWeight: FontWeight.bold),

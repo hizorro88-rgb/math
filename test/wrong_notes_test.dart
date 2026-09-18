@@ -101,6 +101,7 @@ void main() {
     await tester.pumpWidget(const MaterialApp(home: WrongNotesScreen()));
     await tester.pumpAndSettle();
 
-    expect(find.text('오답 노트가 비었어요!'), findsOneWidget);
+    expect(find.text('오답 노트가 비었어요! 🎉'), findsOneWidget);
+    expect(find.text('퀴즈 풀러 가기'), findsOneWidget);
   });
 }

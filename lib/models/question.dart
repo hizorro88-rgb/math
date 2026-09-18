@@ -149,7 +149,7 @@ class Question {
       QuestionOp.compare => right == 1 ? '가장 큰 수는?' : '가장 작은 수는?',
       QuestionOp.pattern => '${sequence.join(', ')}, ?',
       QuestionOp.clock => '시계는 몇 시일까요?',
-      QuestionOp.shape => '$emoji 는 몇 개일까요?',
+      QuestionOp.shape => '$emoji 몇 개일까요?',
       // 심화 유형은 항상 prompt가 있어 위에서 먼저 반환된다 (완전성 유지용).
       QuestionOp.fraction ||
       QuestionOp.decimal ||

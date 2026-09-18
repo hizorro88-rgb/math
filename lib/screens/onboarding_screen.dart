@@ -5,6 +5,7 @@ import '../models/curriculum.dart';
 import '../models/profile.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
+import '../theme.dart';
 import '../widgets/bouncy_button.dart';
 import 'level_map_screen.dart';
 
@@ -59,16 +60,21 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF3F7F0),
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: Center(
+          child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const SizedBox(height: 16),
               const Text('🦉', textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 64)),
+              Text(
+                '부엉이 학교',
+                textAlign: TextAlign.center,
+                style: displayStyle(fontSize: 20, color: AppColors.brown),
+              ),
               const SizedBox(height: 8),
               // 단계마다 키를 줘서 버튼 상태(연타 방지 타이머)가 이월되지 않게 한다.
               KeyedSubtree(
@@ -80,6 +86,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 },
               ),
             ],
+          ),
           ),
         ),
       ),
@@ -147,7 +154,27 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               ),
           ],
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: 10),
+        Text(
+          switch (_emoji) {
+            '🐣' => '병아리 친구구나! 반가워!',
+            '🐰' => '깡충깡충 토끼 친구네!',
+            '🦊' => '똑똑한 여우 친구!',
+            '🐻' => '든든한 곰 친구야!',
+            '🐯' => '용감한 호랑이 친구!',
+            '🦄' => '반짝반짝 유니콘 친구!',
+            '🐬' => '헤엄치는 돌고래 친구!',
+            '🦖' => '으르렁 공룡 친구다!',
+            _ => '마음에 드는 얼굴을 골라 봐!',
+          },
+          textAlign: TextAlign.center,
+          style: const TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.bold,
+            color: AppColors.brown,
+          ),
+        ),
+        const SizedBox(height: 14),
         TextField(
           controller: _nameController,
           maxLength: 8,

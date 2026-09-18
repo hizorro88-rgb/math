@@ -671,8 +671,8 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
                     ),
                     child: Text(
                       !_isRetryQuestion && _combo >= 3
-                          ? '+$_lastGained점 🔥'
-                          : '+$_lastGained점',
+                          ? '+$_lastGained코인 🔥'
+                          : '+$_lastGained코인',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
