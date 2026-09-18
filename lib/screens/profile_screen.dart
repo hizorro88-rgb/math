@@ -110,7 +110,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       appBar: AppBar(
         automaticallyImplyLeading: !widget.asLauncher,
         title: const Text(
-          '누가 놀까요?',
+          '누가 배울까요?',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
@@ -129,7 +129,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 6),
                   Center(
                     child: Text(
-                      '프로필을 골라서 내 진도로 시작해요',
+                      '내 얼굴을 고르면 내 진도로 이어져요!',
                       style: TextStyle(
                           fontSize: 14, color: Colors.grey.shade600),
                     ),
@@ -219,7 +219,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         Icon(
                           Icons.add_circle_rounded,
-                          color: Color(0xFF3DA35D),
+                          color: Color(0xFF2E7D46),
                           size: 26,
                         ),
                         SizedBox(width: 8),
@@ -228,7 +228,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF3DA35D),
+                            color: Color(0xFF2E7D46),
                           ),
                         ),
                       ],

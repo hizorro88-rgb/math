@@ -397,26 +397,31 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    // 과목 고르기: 수학 / 한글 / 영어 / 언어 팩들
-                    Row(
-                      children: [
-                        for (var i = 0; i < _subjects.length; i++) ...[
-                          if (i > 0) const SizedBox(width: 6),
-                          Expanded(
-                            child: _SubjectTab(
-                              emoji: _subjects[i].$1,
-                              label: _subjects[i].$2,
-                              selected: _subject == i,
-                              onTap: () => _setSubject(i),
-                            ),
-                          ),
-                        ],
-                      ],
+                    // 과목 고르기: 가로 스크롤 칩 (끝에 여백을 둬서
+                    // 더 있다는 것이 보이게)
+                    SizedBox(
+                      height: 56,
+                      child: ListView.separated(
+                        scrollDirection: Axis.horizontal,
+                        padding: const EdgeInsets.only(right: 28),
+                        itemCount: _subjects.length,
+                        separatorBuilder: (context, index) =>
+                            const SizedBox(width: 8),
+                        itemBuilder: (context, i) => _SubjectTab(
+                          emoji: _subjects[i].$1,
+                          label: _subjects[i].$2,
+                          selected: _subject == i,
+                          onTap: () => _setSubject(i),
+                        ),
+                      ),
                     ),
                     const SizedBox(height: 14),
                     _RankCard(points: data.points),
                     const SizedBox(height: 14),
-                    _DailyCard(daily: data.daily, onBuyFreeze: _buyFreeze),
+                    _DailyCard(
+                        daily: data.daily,
+                        coins: data.coins,
+                        onBuyFreeze: _buyFreeze),
                     const SizedBox(height: 14),
                     // 주간 보스전
                     BouncyButton(
@@ -1066,9 +1071,11 @@ class _RankCard extends StatelessWidget {
 
 /// 오늘의 미션 카드: 진행 바와 보상, 연속 출석 🔥, 스트릭 지킴이 🧊
 class _DailyCard extends StatelessWidget {
-  const _DailyCard({required this.daily, required this.onBuyFreeze});
+  const _DailyCard(
+      {required this.daily, required this.coins, required this.onBuyFreeze});
 
   final DailyState daily;
+  final int coins;
   final VoidCallback onBuyFreeze;
 
   @override
@@ -1123,36 +1130,59 @@ class _DailyCard extends StatelessWidget {
           // 스트릭 지킴이: 하루 걸러도 스트릭이 이어진다.
           Row(
             children: [
-              Text(
-                '🛡️ 스트릭 지킴이 ×${daily.freezes}',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey.shade600,
+              // 누르면 스트릭 지킴이가 뭔지 알려준다.
+              Builder(
+                builder: (context) => GestureDetector(
+                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(
+                      content:
+                          Text('🛡️ 스트릭 지킴이: 하루 못 놀아도 연속 기록을 지켜줘요!'),
+                    ),
+                  ),
+                  child: Text(
+                    '🛡️ 스트릭 지킴이 ×${daily.freezes}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade600,
+                    ),
+                  ),
                 ),
               ),
               const Spacer(),
               if (daily.freezes < DailyStore.maxFreezes)
-                GestureDetector(
-                  onTap: onBuyFreeze,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFEAF4E6),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: AppColors.green),
-                    ),
-                    child: const Text(
-                      '받기 · 🪙 200',
-                      style: TextStyle(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF0B6FA0),
+                Builder(builder: (context) {
+                  // 코인이 모자라면 상태가 보이게 회색으로 가라앉힌다.
+                  final affordable = coins >= DailyStore.freezeCost;
+                  return GestureDetector(
+                    onTap: onBuyFreeze,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: affordable
+                            ? const Color(0xFFEAF4E6)
+                            : const Color(0xFFF0EBE1),
+                        borderRadius: BorderRadius.circular(999),
+                        border: Border.all(
+                          color: affordable
+                              ? AppColors.green
+                              : const Color(0xFFCFC6B5),
+                        ),
+                      ),
+                      child: Text(
+                        affordable ? '받기 · 🪙 200' : '🪙 200 모으면 받아요',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: affordable
+                              ? AppColors.green
+                              : const Color(0xFF8F8574),
+                        ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                }),
             ],
           ),
         ],
@@ -1193,7 +1223,7 @@ class _MissionRow extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: progress / mission.target,
                   minHeight: 7,
-                  backgroundColor: Colors.grey.shade200,
+                  backgroundColor: const Color(0xFFEBE3D2),
                   color:
                       done ? const Color(0xFF3DA35D) : const Color(0xFFFF9600),
                 ),
@@ -1418,7 +1448,7 @@ class _CategoryCard extends StatelessWidget {
                         child: LinearProgressIndicator(
                           value: total == 0 ? 0 : cleared / total,
                           minHeight: 8,
-                          backgroundColor: Colors.grey.shade200,
+                          backgroundColor: const Color(0xFFEBE3D2),
                           color: color,
                         ),
                       ),

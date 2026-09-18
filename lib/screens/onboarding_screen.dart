@@ -76,6 +76,25 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 style: displayStyle(fontSize: 20, color: AppColors.brown),
               ),
               const SizedBox(height: 8),
+              // 몇 단계짜리 절차인지 한눈에 (● ○ ○)
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (var i = 0; i < 3; i++)
+                    Container(
+                      width: 8,
+                      height: 8,
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
+                      decoration: BoxDecoration(
+                        color: i == _step
+                            ? AppColors.green
+                            : const Color(0xFFD8CFBE),
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 8),
               // 단계마다 키를 줘서 버튼 상태(연타 방지 타이머)가 이월되지 않게 한다.
               KeyedSubtree(
                 key: ValueKey(_step),
@@ -121,7 +140,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _title('만나서 반가워요!\n누가 공부할 건가요?'),
+        _title('만나서 반가워요!\n누가 배울 건가요?'),
         const SizedBox(height: 20),
         Wrap(
           alignment: WrapAlignment.center,

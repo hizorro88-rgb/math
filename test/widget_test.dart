@@ -427,12 +427,13 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('학습 리포트'), findsOneWidget);
+    // 아직 아무것도 안 풀었으면 과목별 빈 카드 5장 대신 안내 1장으로 접힌다.
     await tester.dragUntilVisible(
-      find.text('📖 한글 정답률'),
+      find.text('과목별 정답률'),
       find.byType(ListView).last,
       const Offset(0, -300),
     );
-    expect(find.text('📖 한글 정답률'), findsOneWidget);
+    expect(find.textContaining('첫 퀴즈를 풀면'), findsOneWidget);
   });
 
   testWidgets('착용한 아이템이 홈 헤더 부엉이에 보인다', (tester) async {
@@ -556,7 +557,7 @@ void main() {
     await tester.pumpWidget(const PreschoolMathApp(showProfilePicker: true));
     await tester.pumpAndSettle();
 
-    expect(find.text('누가 놀까요?'), findsOneWidget);
+    expect(find.text('누가 배울까요?'), findsOneWidget);
     expect(find.text('하늘'), findsOneWidget);
     expect(find.text('바다'), findsOneWidget);
 

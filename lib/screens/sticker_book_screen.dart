@@ -979,8 +979,8 @@ class _RewardBoardCard extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             promise != null
-                ? '20칸을 다 채우면 → 🎁 $promise'
-                : '20칸을 다 채우면 → 깜짝 선물 + 부엉이 꾸미기 아이템!',
+                ? '20칸을 다 채우면 🎁 $promise!'
+                : '20칸을 다 채우면 깜짝 선물이 와요!',
             style: TextStyle(
                 fontSize: 13.5,
                 fontWeight: FontWeight.bold,

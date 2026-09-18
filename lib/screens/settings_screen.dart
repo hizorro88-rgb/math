@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../models/premium.dart';
+import '../theme.dart';
 import '../models/profile.dart';
 import '../services/cloud_sync.dart';
 import '../services/reminders.dart';
@@ -10,6 +11,7 @@ import '../widgets/parent_gate.dart';
 import 'backup_screen.dart';
 import 'level_map_screen.dart';
 import 'pass_screen.dart';
+import 'report_screen.dart';
 
 /// 설정: 효과음·말소리(문제 읽어주기)·말 빠르기, 진도 백업 바로가기.
 class SettingsScreen extends StatefulWidget {
@@ -289,7 +291,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   '문제 읽어주기',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                subtitle: const Text('글을 몰라도 풀 수 있게 문제·정답을 읽어줘요'),
+                subtitle: Text(keepAll('글을 몰라도 풀 수 있게 문제·정답을 읽어줘요')),
                 activeTrackColor: const Color(0xFF3DA35D),
               ),
               const Divider(height: 1),
@@ -349,12 +351,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const Divider(height: 1),
               ListTile(
+                leading: const Icon(Icons.notifications_rounded,
+                    color: Color(0xFFF4B740)),
+                title: const Text(
+                  '매일 학습 알림',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(keepAll('리포트 화면 오른쪽 위 종 모양에서 켜고 꺼요')),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () async {
+                  final ok = await checkParentGate(context);
+                  if (!ok || !context.mounted) return;
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ReportScreen()),
+                  );
+                },
+              ),
+              const Divider(height: 1),
+              ListTile(
                 leading: const Text('💾', style: TextStyle(fontSize: 26)),
                 title: const Text(
                   '진도 백업·옮기기',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                subtitle: const Text('부모 확인 뒤 백업 코드로 진도를 지키고 옮겨요'),
+                subtitle: Text(keepAll('부모 확인 뒤 백업 코드로 진도를 지키고 옮겨요')),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: _openBackup,
               ),
@@ -386,7 +406,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    subtitle: const Text('로그인하면 다른 기기와 진도가 이어져요'),
+                    subtitle: Text(keepAll('로그인하면 다른 기기와 진도가 이어져요')),
                     trailing: _syncing
                         ? const SizedBox(
                             width: 22,
@@ -434,7 +454,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
           const SizedBox(height: 14),
           Text(
-            '매일 학습 알림은 리포트 화면에서 켤 수 있어요.\n'
+            '매일 학습 알림은 부모님 메뉴의 알림 설정에서 켤 수 있어요.\n'
             '이 앱은 서버 없이 모든 기록을 폰 안에만 저장하고,\n'
             '아이의 개인정보를 수집하지 않아요.',
             textAlign: TextAlign.center,

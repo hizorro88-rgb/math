@@ -82,3 +82,18 @@ class AppMotion {
 
   static bool loops = true;
 }
+
+/// 한국어 어절 단위 줄바꿈: 어절(한글 연속 구간) 안에서 줄이 끊기지 않게
+/// 글자 사이에 줄바꿈 금지 문자(U+2060)를 끼운다. 이모지·영문은 건드리지 않는다.
+String keepAll(String text) {
+  final buf = StringBuffer();
+  int? prev;
+  for (final r in text.runes) {
+    final isHangul = r >= 0xAC00 && r <= 0xD7A3;
+    final prevHangul = prev != null && prev >= 0xAC00 && prev <= 0xD7A3;
+    if (isHangul && prevHangul) buf.write('\u2060');
+    buf.writeCharCode(r);
+    prev = r;
+  }
+  return buf.toString();
+}

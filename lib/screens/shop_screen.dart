@@ -258,7 +258,7 @@ class _ItemCard extends StatelessWidget {
                   color: equipped
                       ? Colors.white
                       : dimmed
-                          ? Colors.grey
+                          ? const Color(0xFF6B6B6B)
                           : const Color(0xFF7A6200),
                 ),
               ),

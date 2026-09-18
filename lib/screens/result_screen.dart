@@ -288,6 +288,11 @@ class ResultScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         TextButton.icon(
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(48, 48),
+                            padding: const EdgeInsets.symmetric(
+                                horizontal: 16, vertical: 12),
+                          ),
                           onPressed: () => Navigator.of(context)
                               .popUntil((route) => route.isFirst),
                           icon: Icon(homeIcon,
@@ -384,7 +389,7 @@ class _StickerBanner extends StatelessWidget {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
               decoration: BoxDecoration(
-                color: const Color(0xFFEC7CA5),
+                color: const Color(0xFFD45C8E),
                 borderRadius: BorderRadius.circular(999),
               ),
               child: const Text(

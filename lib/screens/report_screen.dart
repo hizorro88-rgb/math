@@ -60,15 +60,37 @@ class _ReportScreenState extends State<ReportScreen> {
               const SizedBox(height: 14),
               _WeekCard(stats: stats),
               const SizedBox(height: 14),
-              _AccuracyCard(stats: stats),
-              const SizedBox(height: 14),
-              _KoreanCard(stats: stats),
-              const SizedBox(height: 14),
-              _EnglishCard(stats: stats),
-              const SizedBox(height: 14),
-              for (final pack in languagePacks) ...[
-                _LangCard(pack: pack, stats: stats),
+              // 과목별 정답률: 기록이 있는 과목만 카드로 보여준다.
+              // 아무것도 없으면 빈 카드 5장 대신 안내 1장으로 접는다.
+              if (stats.totalAnswered == 0) ...[
+                _reportCard(
+                  title: '과목별 정답률',
+                  child: Text(
+                    '첫 퀴즈를 풀면 과목별 리포트가 열려요!\n'
+                    '홈에서 과목 탭을 골라 시작해 보세요.',
+                    style:
+                        TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                  ),
+                ),
                 const SizedBox(height: 14),
+              ] else ...[
+                if (stats.mathCorrect + stats.mathWrong > 0) ...[
+                  _AccuracyCard(stats: stats),
+                  const SizedBox(height: 14),
+                ],
+                if (stats.krTotalCorrect + stats.krTotalWrong > 0) ...[
+                  _KoreanCard(stats: stats),
+                  const SizedBox(height: 14),
+                ],
+                if (stats.enTotalCorrect + stats.enTotalWrong > 0) ...[
+                  _EnglishCard(stats: stats),
+                  const SizedBox(height: 14),
+                ],
+                for (final pack in languagePacks)
+                  if (stats.langAnswered(pack.id) > 0) ...[
+                    _LangCard(pack: pack, stats: stats),
+                    const SizedBox(height: 14),
+                  ],
               ],
               _AdviceCard(stats: stats),
               const SizedBox(height: 14),
@@ -134,7 +156,7 @@ class _SummaryCard extends StatelessWidget {
               label: '푼 문제'),
           _SummaryItem(
             icon: Icons.track_changes_rounded,
-            value: accuracy == null ? '-' : '$accuracy%',
+            value: accuracy == null ? '없음' : '$accuracy%',
             label: '정답률',
           ),
           _SummaryItem(

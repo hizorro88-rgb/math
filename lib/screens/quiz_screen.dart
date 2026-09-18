@@ -362,8 +362,7 @@ class _QuizScreenState extends State<QuizScreen> {
                               _buildQuestionCard(),
                               const Spacer(),
                               _buildOwlCheer(),
-                              const Spacer(),
-                              const SizedBox(height: 12),
+                              const SizedBox(height: 14),
                               if (_question.vertical)
                                 _buildKeypad()
                               else
@@ -481,6 +480,15 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
             const SizedBox(width: 8),
           ],
+          Text(
+            '${_currentIndex + 1}/${_entries.length}',
+            style: const TextStyle(
+              fontSize: 14,
+              fontWeight: FontWeight.bold,
+              color: AppColors.inkSoft,
+            ),
+          ),
+          const SizedBox(width: 10),
           Text(
             '🪙 $_roundPoints',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),

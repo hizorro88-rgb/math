@@ -41,7 +41,7 @@ class LevelBubble extends StatelessWidget {
               '$number',
               style: displayStyle(
                 fontSize: 16,
-                color: const Color(0xFFC9BFAE),
+                color: const Color(0xFF9E9382),
               ),
             ),
           ),
