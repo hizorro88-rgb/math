@@ -970,7 +970,7 @@ class _RewardBoardCard extends StatelessWidget {
                         color: const Color(0xFFFFD34D), width: 1.5),
                   ),
                   child: const Text(
-                    '🎁 선물 정하기',
+                    '🔒 선물 정하기',
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.bold,

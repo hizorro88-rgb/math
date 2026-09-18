@@ -206,6 +206,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               fontWeight: FontWeight.normal,
             ),
             counterText: '',
+            helperText: '안 쓰면 "우리 아이"로 시작해요',
+            helperStyle: TextStyle(color: Colors.grey.shade500),
             filled: true,
             fillColor: Colors.white,
             border: OutlineInputBorder(

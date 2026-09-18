@@ -164,30 +164,42 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
                   color: _shake ? const Color(0xFFFFEBEB) : AppColors.cream,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Text(
-                  '$_a × $_b = ${_input.isEmpty ? '?' : _input}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                      fontSize: 30, fontWeight: FontWeight.bold),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Text(
-                  _twist == 0 ? '답을 거꾸로 눌러 주세요' : '답에 1을 더해 눌러 주세요',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.brown,
-                  ),
+                child: Column(
+                  children: [
+                    // 핵심 장치인 지시문을 문제 위에 크게 강조한다.
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFFF1CC),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                      child: Text(
+                        _twist == 0
+                            ? '⚠️ 답을 거꾸로 눌러 주세요'
+                            : '⚠️ 답에 1을 더해 눌러 주세요',
+                        style: const TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF8A6100),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '$_a × $_b = ${_input.isEmpty ? '?' : _input}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          fontSize: 30, fontWeight: FontWeight.bold),
+                    ),
+                  ],
                 ),
               ),
               if (_wrongCount > 0)
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
-                    '앗, 다시 한번요! (${3 - _wrongCount}번 남음)',
+                    '앗! 위의 지시문을 다시 읽어 보세요 (${3 - _wrongCount}번 남음)',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 13,

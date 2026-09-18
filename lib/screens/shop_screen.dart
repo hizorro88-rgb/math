@@ -265,7 +265,7 @@ class _ItemCard extends StatelessWidget {
                     : owned
                         ? '보유 ✓'
                         : dimmed
-                            ? '🪙 $remaining 남았어요'
+                            ? '🪙 $remaining 더 모으면 돼요'
                             : '🪙 ${item.cost} · 살 수 있어요!',
                 style: TextStyle(
                   fontSize: 13,

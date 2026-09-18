@@ -361,10 +361,9 @@ class _QuizScreenState extends State<QuizScreen> {
                             children: [
                               const SizedBox(height: 16),
                               _buildQuestionCard(),
-                              const Spacer(flex: 2),
+                              const Spacer(),
                               _buildOwlCheer(),
-                              const Spacer(flex: 1),
-                              const SizedBox(height: 8),
+                              const SizedBox(height: 10),
                               if (_question.vertical)
                                 _buildKeypad()
                               else
@@ -484,9 +483,9 @@ class _QuizScreenState extends State<QuizScreen> {
             const SizedBox(width: 8),
           ],
           Text(
-            '${_currentIndex + 1}/${_entries.length}',
+            '문제 ${_currentIndex + 1}/${_entries.length}',
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: 13,
               fontWeight: FontWeight.bold,
               color: AppColors.inkSoft,
             ),
