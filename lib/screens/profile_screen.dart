@@ -234,6 +234,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                   ),
+                const SizedBox(height: 12),
+                Text(
+                  '프로필은 4명까지 만들 수 있어요',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 12.5, color: Colors.grey.shade500),
+                ),
               ],
               ),
             ),

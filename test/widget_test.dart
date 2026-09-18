@@ -11,6 +11,20 @@ import 'package:preschool_math/services/sounds.dart';
 import 'package:preschool_math/services/speech.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+
+/// 부모 게이트: 곱셈 문제를 읽고 숫자 키패드로 정답을 입력해 통과한다.
+Future<void> passParentGate(WidgetTester tester) async {
+  final expr = tester.widget<Text>(find.textContaining('× ')).data!;
+  final m = RegExp(r'(\d+) × (\d+)').firstMatch(expr)!;
+  final answer = int.parse(m.group(1)!) * int.parse(m.group(2)!);
+  for (final ch in '$answer'.split('')) {
+    await tester.tap(find.byKey(ValueKey('gate-$ch')));
+    await tester.pump();
+  }
+  await tester.tap(find.byKey(const ValueKey('gate-ok')));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   setUp(() {
     AppMotion.loops = false; // pumpAndSettle이 끝나도록 반복 애니메이션 정지
@@ -417,14 +431,8 @@ void main() {
 
     expect(find.text('부모님 확인'), findsOneWidget);
 
-    // 문제를 읽고 정답 버튼을 누르면 리포트가 열린다.
-    final expr = tester
-        .widget<Text>(find.textContaining('× '))
-        .data!; // '7 × 6 = ?'
-    final m = RegExp(r'(\d+) × (\d+)').firstMatch(expr)!;
-    final answer = int.parse(m.group(1)!) * int.parse(m.group(2)!);
-    await tester.tap(find.widgetWithText(OutlinedButton, '$answer'));
-    await tester.pumpAndSettle();
+    // 문제를 읽고 키패드로 정답을 입력하면 리포트가 열린다.
+    await passParentGate(tester);
 
     expect(find.text('학습 리포트'), findsOneWidget);
     // 아직 아무것도 안 풀었으면 과목별 빈 카드 5장 대신 안내 1장으로 접힌다.
@@ -527,12 +535,8 @@ void main() {
     await scrollAndTap(tester, find.text('5살'));
     expect(find.text('부모님 확인'), findsOneWidget);
 
-    // 곱셈 문제를 풀면 이용권 화면이 열린다.
-    final expr = tester.widget<Text>(find.textContaining('× ')).data!;
-    final m = RegExp(r'(\d+) × (\d+)').firstMatch(expr)!;
-    final answer = int.parse(m.group(1)!) * int.parse(m.group(2)!);
-    await tester.tap(find.widgetWithText(OutlinedButton, '$answer'));
-    await tester.pumpAndSettle();
+    // 곱셈 문제를 키패드로 풀면 이용권 화면이 열린다.
+    await passParentGate(tester);
 
     expect(find.text('가족 이용권'), findsOneWidget);
     expect(find.textContaining('한 번 결제로'), findsWidgets);

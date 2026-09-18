@@ -140,7 +140,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _title('만나서 반가워요!\n누가 배울 건가요?'),
+        _title('만나서 반가워요!\n누가 배울까요?'),
         const SizedBox(height: 20),
         Wrap(
           alignment: WrapAlignment.center,

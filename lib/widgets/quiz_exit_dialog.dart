@@ -15,7 +15,7 @@ Future<bool> confirmQuizExit(BuildContext context) async {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('🥺',
+            const Text('🦉',
                 textAlign: TextAlign.center, style: TextStyle(fontSize: 48)),
             const SizedBox(height: 8),
             const Text(
@@ -25,7 +25,7 @@ Future<bool> confirmQuizExit(BuildContext context) async {
             ),
             const SizedBox(height: 8),
             Text(
-              '지금 나가면 이번 판 점수가 사라져요',
+              '이번 판은 저장되지 않아요.\n다음에 처음부터 다시 할 수 있어요!',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 15, color: Colors.grey.shade600),
             ),

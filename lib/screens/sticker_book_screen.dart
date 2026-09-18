@@ -427,7 +427,8 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
                       const SizedBox(height: 4),
                       Text(
                         _tickets > 0
-                            ? '물음표 칸이나 흐린 그림을 눌러 붙여 보세요!'
+                            ? '먼저 칭찬판·스티커북의 물음표 칸에 붙여요.\n'
+                                '붙인 스티커로는 아래 꾸미기도 할 수 있어요!'
                             : '퀴즈 한 판을 통과할 때마다 스티커 1장을 받아요.\n'
                                 '페이지 완성 🪙 ${StickerStore.pageBonus} · '
                                 '앨범 완성 🪙 ${StickerStore.albumBonus} 보너스!',
@@ -694,7 +695,7 @@ class _CanvasCard extends StatelessWidget {
               const Spacer(),
               // 지우개 모드
               GestureDetector(
-                onTap: onToggleErase,
+                onTap: placed.isEmpty ? null : onToggleErase,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 10, vertical: 6),
@@ -715,16 +716,18 @@ class _CanvasCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.bold,
-                      color: erasing
-                          ? const Color(0xFFEA2B2B)
-                          : Colors.grey.shade600,
+                      color: placed.isEmpty
+                          ? Colors.grey.shade400
+                          : erasing
+                              ? const Color(0xFFEA2B2B)
+                              : Colors.grey.shade600,
                     ),
                   ),
                 ),
               ),
               const SizedBox(width: 6),
               GestureDetector(
-                onTap: onClear,
+                onTap: placed.isEmpty ? null : onClear,
                 child: Container(
                   padding: const EdgeInsets.symmetric(
                       horizontal: 10, vertical: 6),
@@ -738,7 +741,9 @@ class _CanvasCard extends StatelessWidget {
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade600,
+                      color: placed.isEmpty
+                          ? Colors.grey.shade400
+                          : Colors.grey.shade600,
                     ),
                   ),
                 ),

@@ -360,9 +360,10 @@ class _QuizScreenState extends State<QuizScreen> {
                             children: [
                               const SizedBox(height: 16),
                               _buildQuestionCard(),
-                              const Spacer(),
+                              const Spacer(flex: 2),
                               _buildOwlCheer(),
-                              const SizedBox(height: 14),
+                              const Spacer(flex: 1),
+                              const SizedBox(height: 8),
                               if (_question.vertical)
                                 _buildKeypad()
                               else
@@ -1038,7 +1039,8 @@ class _EmojiHint extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const style = TextStyle(fontSize: 26);
+    // 아이가 손가락으로 짚으며 셀 수 있게 큼직하게.
+    const style = TextStyle(fontSize: 34);
 
     // 세로셈은 자리수 학습, 듣고 풀기는 암산이 목적이라 그림 힌트를 겹치지 않는다.
     if (question.vertical || question.listenOnly) {

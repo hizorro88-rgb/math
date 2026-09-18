@@ -33,17 +33,23 @@ class LevelBubble extends StatelessWidget {
       // 잠김: 점선 빈 원 (자물쇠 없음)
       return SizedBox(
         width: 56,
-        height: 56,
+        height: 62,
         child: CustomPaint(
           painter: _DashedCirclePainter(),
-          child: Center(
-            child: Text(
-              '$number',
-              style: displayStyle(
-                fontSize: 16,
-                color: const Color(0xFF9E9382),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              // 글을 몰라도 "잠김"이 읽히도록 작은 자물쇠를 함께 보여준다.
+              const Icon(Icons.lock_rounded,
+                  size: 13, color: Color(0xFFB3A995)),
+              Text(
+                '$number',
+                style: displayStyle(
+                  fontSize: 15,
+                  color: const Color(0xFF9E9382),
+                ),
               ),
-            ),
+            ],
           ),
         ),
       );
@@ -93,8 +99,20 @@ class LevelBubble extends StatelessWidget {
       ),
     );
 
-    // 지금 도전할 단계는 숨 쉬듯 은은하게 커졌다 작아진다.
-    if (_isCurrent) return _Pulse(child: bubble);
+    // 지금 도전할 단계는 숨 쉬듯 커졌다 작아지고, "여기부터!"를 달아준다.
+    if (_isCurrent) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _Pulse(child: bubble),
+          const SizedBox(height: 2),
+          Text(
+            '여기부터!',
+            style: displayStyle(fontSize: 11, color: AppColors.green),
+          ),
+        ],
+      );
+    }
     return bubble;
   }
 }
@@ -147,7 +165,8 @@ class _DashedCirclePainter extends CustomPainter {
       ..strokeWidth = 2;
     final fill = Paint()..color = AppColors.lockedNode.withValues(alpha: 0.5);
     final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2 - 2;
+    final radius =
+        (size.width < size.height ? size.width : size.height) / 2 - 2;
     canvas.drawCircle(center, radius, fill);
     // 점선: 짧은 호를 돌아가며 그린다
     const dashCount = 14;

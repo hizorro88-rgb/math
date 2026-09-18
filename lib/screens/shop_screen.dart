@@ -79,6 +79,18 @@ class _ShopScreenState extends State<ShopScreen> {
     }
   }
 
+  /// 부기의 한 마디: 살 수 있는 게 없으면 가장 가까운 목표를 알려준다.
+  String _cheerLine() {
+    if (_equipped.isNotEmpty) return '멋지다! 아이템을 눌러 바꿔 봐요';
+    final wishList = shopItems.where((i) => !_owned.contains(i.id)).toList()
+      ..sort((a, b) => a.cost.compareTo(b.cost));
+    if (wishList.isEmpty) return '와, 전부 다 모았어! 부엉!';
+    final next = wishList.first;
+    if (_coins >= next.cost) return '아이템을 사서 나를 꾸며 줘!';
+    final need = next.cost - _coins;
+    return '${next.emoji} ${next.name}까지 🪙 $need! 퀴즈로 모아 보자!';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -126,9 +138,7 @@ class _ShopScreenState extends State<ShopScreen> {
                       OwlAvatar(size: 88, equipped: _equipped),
                       const SizedBox(height: 6),
                       Text(
-                        _equipped.isEmpty
-                            ? '아이템을 사서 나를 꾸며 줘!'
-                            : '멋지다! 아이템을 눌러 바꿔 봐요',
+                        _cheerLine(),
                         style: TextStyle(
                           fontSize: 15,
                           color: Colors.grey.shade600,

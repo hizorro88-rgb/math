@@ -11,7 +11,6 @@ import '../widgets/parent_gate.dart';
 import 'backup_screen.dart';
 import 'level_map_screen.dart';
 import 'pass_screen.dart';
-import 'report_screen.dart';
 
 /// 설정: 효과음·말소리(문제 읽어주기)·말 빠르기, 진도 백업 바로가기.
 class SettingsScreen extends StatefulWidget {
@@ -24,16 +23,43 @@ class SettingsScreen extends StatefulWidget {
 class _SettingsScreenState extends State<SettingsScreen> {
   DateTime? _lastSync;
   bool _syncing = false;
+  bool _reminderOn = false;
 
   @override
   void initState() {
     super.initState();
     _loadSyncTime();
+    _loadReminder();
   }
 
   Future<void> _loadSyncTime() async {
     final at = await CloudSync.lastSyncedAt();
     if (mounted) setState(() => _lastSync = at);
+  }
+
+  Future<void> _loadReminder() async {
+    final on = await Reminders.isEnabled();
+    if (mounted) setState(() => _reminderOn = on);
+  }
+
+  /// 매일 알림 토글 (부모님 메뉴라 게이트를 거친다).
+  /// 리포트 화면의 토글과 같은 저장값을 읽고 쓴다.
+  Future<void> _toggleReminder(bool value) async {
+    final ok = await checkParentGate(context);
+    if (!ok || !mounted) return;
+    if (value) {
+      final enabled = await Reminders.enable();
+      if (!mounted) return;
+      setState(() => _reminderOn = enabled);
+      if (!enabled) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('알림 권한이 필요해요. 기기 설정에서 허용해 주세요.')),
+        );
+      }
+    } else {
+      await Reminders.disable();
+      if (mounted) setState(() => _reminderOn = false);
+    }
   }
 
   /// 클라우드 로그인: 부모 확인 → 이메일/비밀번호 입력 → 로그인 또는 가입.
@@ -350,22 +376,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 },
               ),
               const Divider(height: 1),
-              ListTile(
-                leading: const Icon(Icons.notifications_rounded,
+              SwitchListTile(
+                value: _reminderOn,
+                onChanged: _syncing ? null : (value) => _toggleReminder(value),
+                secondary: const Icon(Icons.notifications_rounded,
                     color: Color(0xFFF4B740)),
                 title: const Text(
                   '매일 학습 알림',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                subtitle: Text(keepAll('리포트 화면 오른쪽 위 종 모양에서 켜고 꺼요')),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: () async {
-                  final ok = await checkParentGate(context);
-                  if (!ok || !context.mounted) return;
-                  await Navigator.of(context).push(
-                    MaterialPageRoute(builder: (_) => const ReportScreen()),
-                  );
-                },
+                subtitle: Text(keepAll('저녁마다 오늘의 퀴즈를 잊지 않게 알려줘요')),
+                activeTrackColor: const Color(0xFF3DA35D),
               ),
               const Divider(height: 1),
               ListTile(
@@ -454,7 +475,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
           const SizedBox(height: 14),
           Text(
-            '매일 학습 알림은 부모님 메뉴의 알림 설정에서 켤 수 있어요.\n'
+            ''
             '이 앱은 서버 없이 모든 기록을 폰 안에만 저장하고,\n'
             '아이의 개인정보를 수집하지 않아요.',
             textAlign: TextAlign.center,
