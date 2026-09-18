@@ -853,7 +853,7 @@ class _CanvasCard extends StatelessWidget {
           // 팔레트: 모은 스티커 중에서 골라 도장처럼 쓴다.
           if (palette.isEmpty)
             Text(
-              '아직 꾸미기에 쓸 스티커가 없어요.\n위 스티커북에 먼저 붙이면 여기서도 쓸 수 있어요!',
+              '칭찬판이나 스티커북에 붙인 스티커가 생기면\n여기를 마음껏 꾸밀 수 있어요!',
               style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
             )
           else

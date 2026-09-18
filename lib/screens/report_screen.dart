@@ -650,7 +650,7 @@ class _BackupCard extends StatelessWidget {
             width: double.infinity,
             child: FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF5A78D6),
+                backgroundColor: const Color(0xFF3DA35D),
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
               onPressed: () => Navigator.of(context).push(

@@ -148,7 +148,7 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
             Text(
               _locked
                   ? '너무 많이 틀렸어요.\n$_lockSecondsLeft초 뒤에 다시 해 주세요.'
-                  : '보호자만 들어갈 수 있어요.\n답을 눌러서 입력해 주세요.',
+                  : '보호자만 들어갈 수 있어요.\n아래 문제를 풀어 주세요.',
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,

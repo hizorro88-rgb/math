@@ -113,6 +113,9 @@ class _UnitSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final unitLevels =
         Curriculum.levels.where((l) => l.unit.index == unit.index).toList();
+    // 이 묶음의 첫 단계도 잠겨 있으면 아직 못 여는 묶음
+    final unitLocked =
+        !ProgressStore.isUnlocked(stars, unitLevels.first.number);
     final clearedCount =
         unitLevels.where((l) => stars[l.number - 1] >= 1).length;
 
@@ -187,6 +190,17 @@ class _UnitSection extends StatelessWidget {
               ),
             ],
           ),
+          if (unitLocked) ...[
+            const SizedBox(height: 8),
+            Text(
+              '🔒 앞 묶음을 다 끝내면 열려요',
+              style: TextStyle(
+                fontSize: 12.5,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade500,
+              ),
+            ),
+          ],
           const SizedBox(height: 14),
           Wrap(
             spacing: 10,

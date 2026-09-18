@@ -342,7 +342,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
 
   /// 오늘 활동에 따라 부엉이 인사말이 달라진다.
   String _greetingFor(_MapData data) {
-    final name = data.profile.name;
+    // 기본 이름("우리 아이")이면 호칭이 어색하지 않게 "친구"로 부른다.
+    final name = data.profile.name == '우리 아이' ? '친구' : data.profile.name;
     final daily = data.daily;
     if (daily.rounds >= 3) {
       return '$name, 오늘 벌써\n${daily.rounds}판이나 풀었어! 🎉';
@@ -1171,7 +1172,7 @@ class _DailyCard extends StatelessWidget {
                         ),
                       ),
                       child: Text(
-                        affordable ? '받기 · 🪙 200' : '🪙 200 모으면 받아요',
+                        affordable ? '받기 · 🪙 200' : '🪙 200 모이면 여기서 받아요',
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,

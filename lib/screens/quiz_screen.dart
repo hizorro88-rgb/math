@@ -359,9 +359,9 @@ class _QuizScreenState extends State<QuizScreen> {
                         child: IntrinsicHeight(
                           child: Column(
                             children: [
-                              const SizedBox(height: 16),
+                              const Spacer(flex: 1),
                               _buildQuestionCard(),
-                              const Spacer(),
+                              const Spacer(flex: 2),
                               _buildOwlCheer(),
                               const SizedBox(height: 10),
                               if (_question.vertical)
@@ -470,7 +470,16 @@ class _QuizScreenState extends State<QuizScreen> {
               ),
             ),
           ),
-          const SizedBox(width: 12),
+          const SizedBox(width: 8),
+          Text(
+            '문제 ${_currentIndex + 1}/${_entries.length}',
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: AppColors.inkSoft,
+            ),
+          ),
+          const SizedBox(width: 10),
           if (_combo >= 2) ...[
             Text(
               '🔥$_combo',
@@ -482,15 +491,6 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
             const SizedBox(width: 8),
           ],
-          Text(
-            '문제 ${_currentIndex + 1}/${_entries.length}',
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: AppColors.inkSoft,
-            ),
-          ),
-          const SizedBox(width: 10),
           Text(
             '🪙 $_roundPoints',
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
