@@ -164,7 +164,9 @@ class _UnitSection extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 4),
-                    Row(
+                    Opacity(
+                      opacity: unitLocked ? 0.35 : 1,
+                      child: Row(
                       children: [
                         Expanded(
                           child: ClipRRect(
@@ -188,6 +190,7 @@ class _UnitSection extends StatelessWidget {
                           ),
                         ),
                       ],
+                    ),
                     ),
                   ],
                 ),

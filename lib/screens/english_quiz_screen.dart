@@ -329,8 +329,8 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
           ),
           if (widget.level != null) ...[
             Text(
-              '${widget.level!.unit.title} '
-              '${widget.level!.number - widget.level!.unit.firstLevelNumber + 1}/10',
+              '${widget.level!.unit.title} · '
+              '${widget.level!.number - widget.level!.unit.firstLevelNumber + 1}단계',
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

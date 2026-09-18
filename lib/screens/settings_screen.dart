@@ -474,6 +474,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ],
           const SizedBox(height: 14),
+          _card(
+            children: [
+              const ListTile(
+                leading: Icon(Icons.info_outline_rounded, color: Colors.grey),
+                title: Text('앱 정보',
+                    style:
+                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                subtitle: Text(
+                  '부엉이 학교 v$appVersionLabel\n문의: hizorro88@gmail.com',
+                  style: TextStyle(height: 1.5),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
           Text(
             ''
             '이 앱은 서버 없이 모든 기록을 폰 안에만 저장하고,\n'

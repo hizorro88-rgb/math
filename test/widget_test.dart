@@ -76,7 +76,7 @@ void main() {
     expect(find.text('🔒'), findsNothing);
 
     await scrollAndTap(tester, find.text('1').first);
-    expect(find.textContaining('수 세기 첫걸음 1/10'), findsOneWidget);
+    expect(find.textContaining('수 세기 첫걸음 · 1단계'), findsOneWidget);
     expect(find.text('몇 개일까요?'), findsOneWidget); // 4살 첫 단계는 수 세기
     expect(find.text('🪙 0'), findsOneWidget);
   });
@@ -100,7 +100,7 @@ void main() {
     expect(find.text('3').first, findsOneWidget);
     await scrollAndTap(tester, find.text('3').first);
 
-    expect(find.textContaining('3/10'), findsOneWidget);
+    expect(find.textContaining('· 3단계'), findsOneWidget);
   });
 
   testWidgets('초등 2학년 곱셈 카테고리는 바로 시작할 수 있다', (tester) async {

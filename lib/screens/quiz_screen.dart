@@ -359,11 +359,11 @@ class _QuizScreenState extends State<QuizScreen> {
                         child: IntrinsicHeight(
                           child: Column(
                             children: [
-                              const Spacer(flex: 1),
-                              _buildQuestionCard(),
                               const Spacer(flex: 2),
+                              _buildQuestionCard(),
+                              const Spacer(flex: 3),
                               _buildOwlCheer(),
-                              const SizedBox(height: 10),
+                              const Spacer(flex: 3),
                               if (_question.vertical)
                                 _buildKeypad()
                               else
@@ -396,7 +396,7 @@ class _QuizScreenState extends State<QuizScreen> {
   Widget _buildOwlCheer() {
     final line = _answered
         ? (_isCorrect ? '부엉부엉! 잘했어!' : '괜찮아, 다시 해 보자!')
-        : '잘 보고 골라 봐!';
+        : '부기랑 같이 골라 볼까?';
     return Row(
       children: [
         const Text('🦉', style: TextStyle(fontSize: 30)),
@@ -443,8 +443,8 @@ class _QuizScreenState extends State<QuizScreen> {
           ],
           if (widget.level != null) ...[
             Text(
-              '${widget.level!.unit.title} '
-              '${widget.level!.number - widget.level!.unit.firstLevelNumber + 1}/10',
+              '${widget.level!.unit.title} · '
+              '${widget.level!.number - widget.level!.unit.firstLevelNumber + 1}단계',
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

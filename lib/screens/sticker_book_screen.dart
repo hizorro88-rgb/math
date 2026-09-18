@@ -458,6 +458,7 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
                   palette: _palette,
                   brush: _brush,
                   erasing: _erasing,
+                  hasTickets: _tickets > 0,
                   onPickBrush: _pickBrush,
                   onTapCanvas: _tapCanvas,
                   onDragSticker: _dragCanvasSticker,
@@ -652,6 +653,7 @@ class _CanvasCard extends StatelessWidget {
     required this.onTapSticker,
     required this.onToggleErase,
     required this.onClear,
+    required this.hasTickets,
   });
 
   final List<PlacedSticker> placed;
@@ -665,6 +667,9 @@ class _CanvasCard extends StatelessWidget {
   final void Function(int index) onTapSticker;
   final VoidCallback onToggleErase;
   final VoidCallback onClear;
+
+  /// 아직 안 붙인 스티커가 있는지 (빈 팔레트 안내 분기용)
+  final bool hasTickets;
 
   @override
   Widget build(BuildContext context) {
@@ -853,7 +858,9 @@ class _CanvasCard extends StatelessWidget {
           // 팔레트: 모은 스티커 중에서 골라 도장처럼 쓴다.
           if (palette.isEmpty)
             Text(
-              '칭찬판이나 스티커북에 붙인 스티커가 생기면\n여기를 마음껏 꾸밀 수 있어요!',
+              hasTickets
+                  ? '위 칭찬판·스티커북에 스티커를 붙이면\n여기서도 꾸밀 수 있어요!'
+                  : '칭찬판이나 스티커북에 붙인 스티커가 생기면\n여기를 마음껏 꾸밀 수 있어요!',
               style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
             )
           else
@@ -970,7 +977,7 @@ class _RewardBoardCard extends StatelessWidget {
                         color: const Color(0xFFFFD34D), width: 1.5),
                   ),
                   child: const Text(
-                    '🔒 선물 정하기',
+                    '🎁 선물 정하기 (부모님)',
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.bold,

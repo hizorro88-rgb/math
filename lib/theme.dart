@@ -56,6 +56,9 @@ class AppColors {
   ];
 }
 
+/// 설정 화면에 보여줄 앱 버전 (pubspec version과 함께 올린다)
+const appVersionLabel = '1.17.4';
+
 /// 제목·버튼·숫자용 라운드 서체 (본문은 NotoSansKR)
 const kDisplayFont = 'Jua';
 

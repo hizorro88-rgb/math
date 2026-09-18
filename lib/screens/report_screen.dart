@@ -618,7 +618,7 @@ class _ReminderCard extends StatelessWidget {
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
         subtitle: Text(
-          '설정 → 부모님 메뉴에서 켜고 꺼요',
+          '탭하면 설정으로 가서 켤 수 있어요',
           style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
         ),
         trailing: const Icon(Icons.chevron_right),

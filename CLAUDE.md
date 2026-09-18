@@ -6,7 +6,7 @@
 ## 기능을 추가하거나 고친 뒤 반드시 할 일 (사용자와 약속)
 
 1. `flutter analyze` + `flutter test` 전부 통과 확인
-2. pubspec.yaml 버전 올리고 커밋 → `claude/preschool-math-quiz-app-pvy4y4` 브랜치에 푸시
+2. pubspec.yaml 버전 올리고(lib/theme.dart의 appVersionLabel도 함께) 커밋 → `claude/preschool-math-quiz-app-pvy4y4` 브랜치에 푸시
 3. **웹 버전도 같은 링크로 재게시** — 사용자가 매 기능마다 웹 업데이트를 요청함
    - 공개 웹은 GitHub Pages가 푸시마다 자동 배포한다
      (.github/workflows/deploy-web.yml → https://dopamingo.dopamine.me.kr)
