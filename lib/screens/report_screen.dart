@@ -222,7 +222,7 @@ class _WeekCard extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF58A700),
+                            color: Color(0xFF2E7D46),
                           ),
                         ),
                       const SizedBox(height: 2),
@@ -233,7 +233,7 @@ class _WeekCard extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: day.rounds == 0
                               ? Colors.grey.shade200
-                              : const Color(0xFF58CC02),
+                              : const Color(0xFF3DA35D),
                           borderRadius: BorderRadius.circular(6),
                         ),
                       ),
@@ -285,13 +285,13 @@ class _AccuracyCard extends StatelessWidget {
     final unlearnedCount = rows.length - learned.length;
 
     return _reportCard(
-      title: '수학 정답률',
+      title: '🧮 수학 정답률',
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (learned.isEmpty)
             Text(
-              '아직 수학 퀴즈를 풀지 않았어요.\n첫 판을 끝내면 여기에 정답률이 쌓여요!',
+              '아직 수학 퀴즈를 풀지 않았어요.\n홈에서 🧮 수학 탭을 눌러 시작해 보세요!',
               style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
             )
           else
@@ -344,7 +344,7 @@ class _AccuracyRow extends StatelessWidget {
               color: accuracy == null
                   ? Colors.grey
                   : accuracy >= 80
-                      ? const Color(0xFF58CC02)
+                      ? const Color(0xFF3DA35D)
                       : accuracy >= 50
                           ? const Color(0xFFFF9600)
                           : const Color(0xFFFF4B4B),
@@ -377,7 +377,7 @@ class _KoreanCard extends StatelessWidget {
   Widget build(BuildContext context) {
     if (stats.krTotalCorrect + stats.krTotalWrong == 0) {
       return _reportCard(
-        title: '한글 정답률',
+        title: '📖 한글 정답률',
         child: Text(
           '아직 한글 퀴즈를 풀지 않았어요.\n홈에서 📖 한글 탭을 눌러 시작해 보세요!',
           style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
@@ -385,7 +385,7 @@ class _KoreanCard extends StatelessWidget {
       );
     }
     return _reportCard(
-      title: '한글 정답률',
+      title: '📖 한글 정답률',
       child: Column(
         children: [
           for (final type in KrQuizType.values) ...[
@@ -650,7 +650,7 @@ class _ReminderCardState extends State<_ReminderCard> {
           ),
           Switch(
             value: _enabled,
-            activeTrackColor: const Color(0xFF58CC02),
+            activeTrackColor: const Color(0xFF3DA35D),
             onChanged: _toggle,
           ),
         ],

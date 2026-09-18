@@ -229,7 +229,7 @@ class ResultScreen extends StatelessWidget {
                         const Spacer(),
                         if (hasNext) ...[
                           BouncyButton(
-                            color: const Color(0xFF58CC02),
+                            color: const Color(0xFF3DA35D),
                             onTap: () => _replace(context, nextBuilder!),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -255,11 +255,11 @@ class ResultScreen extends StatelessWidget {
                         ],
                         BouncyButton(
                           color:
-                              hasNext ? Colors.white : const Color(0xFF58CC02),
+                              hasNext ? Colors.white : const Color(0xFF3DA35D),
                           shadowColor: hasNext ? Colors.grey.shade300 : null,
                           border: hasNext
                               ? Border.all(
-                                  color: const Color(0xFF58CC02), width: 2)
+                                  color: const Color(0xFF3DA35D), width: 2)
                               : null,
                           onTap: () => _replace(context, retryBuilder),
                           child: Row(
@@ -271,7 +271,7 @@ class ResultScreen extends StatelessWidget {
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
                                   color: hasNext
-                                      ? const Color(0xFF58CC02)
+                                      ? const Color(0xFF3DA35D)
                                       : Colors.white,
                                 ),
                               ),
@@ -280,7 +280,7 @@ class ResultScreen extends StatelessWidget {
                                 Icons.refresh_rounded,
                                 size: 28,
                                 color: hasNext
-                                    ? const Color(0xFF58CC02)
+                                    ? const Color(0xFF3DA35D)
                                     : Colors.white,
                               ),
                             ],
@@ -618,7 +618,7 @@ class _PointsCard extends StatelessWidget {
               return Column(
                 children: [
                   Text(
-                    '모은 점수 $total점 · ${rank.emoji} ${rank.title}',
+                    '모은 코인 $total개 · ${rank.emoji} ${rank.title}',
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

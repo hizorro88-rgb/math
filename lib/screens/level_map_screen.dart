@@ -251,7 +251,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(
         content: Text(ok
-            ? '🧊 스트릭 지킴이를 샀어요! 하루 걸러도 스트릭이 이어져요'
+            ? '🛡️ 스트릭 지킴이를 샀어요! 하루 걸러도 스트릭이 이어져요'
             : '코인이 부족하거나 이미 충분히 갖고 있어요'),
         duration: const Duration(seconds: 2),
       ));
@@ -890,8 +890,9 @@ class _HeaderScenePainter extends CustomPainter {
       canvas.drawCircle(Offset(cx - r * 1.0, cy + r * 0.3), r * 0.65, cloud);
     }
 
-    drawCloud(size.width * 0.78, size.height * 0.20, 13);
-    drawCloud(size.width * 0.30, size.height * 0.10, 9);
+    // 상단 버튼 줄(약 0.3h)과 겹치지 않게 아래쪽 빈 하늘에만 띄운다.
+    drawCloud(size.width * 0.86, size.height * 0.48, 12);
+    drawCloud(size.width * 0.64, size.height * 0.72, 9);
 
     // 뒷 언덕
     final back = Paint()..color = Colors.white.withValues(alpha: 0.10);
@@ -1123,7 +1124,7 @@ class _DailyCard extends StatelessWidget {
           Row(
             children: [
               Text(
-                '🧊 스트릭 지킴이 ×${daily.freezes}',
+                '🛡️ 스트릭 지킴이 ×${daily.freezes}',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,
@@ -1138,9 +1139,9 @@ class _DailyCard extends StatelessWidget {
                     padding: const EdgeInsets.symmetric(
                         horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFE3F4FF),
+                      color: const Color(0xFFEAF4E6),
                       borderRadius: BorderRadius.circular(999),
-                      border: Border.all(color: const Color(0xFF1CB0F6)),
+                      border: Border.all(color: AppColors.green),
                     ),
                     child: const Text(
                       '받기 · 🪙 200',
@@ -1194,7 +1195,7 @@ class _MissionRow extends StatelessWidget {
                   minHeight: 7,
                   backgroundColor: Colors.grey.shade200,
                   color:
-                      done ? const Color(0xFF58CC02) : const Color(0xFFFF9600),
+                      done ? const Color(0xFF3DA35D) : const Color(0xFFFF9600),
                 ),
               ),
             ],
@@ -1206,7 +1207,7 @@ class _MissionRow extends StatelessWidget {
           style: TextStyle(
             fontSize: 13,
             fontWeight: FontWeight.bold,
-            color: done ? const Color(0xFF58A700) : Colors.grey.shade600,
+            color: done ? const Color(0xFF2E7D46) : Colors.grey.shade600,
           ),
         ),
       ],
@@ -1281,7 +1282,7 @@ class _SubjectTab extends StatelessWidget {
           color: selected ? const Color(0xFFD7FFB8) : Colors.white,
           borderRadius: BorderRadius.circular(18),
           border: Border.all(
-            color: selected ? const Color(0xFF58CC02) : Colors.grey.shade300,
+            color: selected ? const Color(0xFF3DA35D) : Colors.grey.shade300,
             width: 3,
           ),
           boxShadow: [

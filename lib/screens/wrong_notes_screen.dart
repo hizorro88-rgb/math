@@ -327,7 +327,7 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
     if (_answered) {
       if (isAnswer) {
         color = const Color(0xFFD7FFB8);
-        border = const Color(0xFF58CC02);
+        border = const Color(0xFF3DA35D);
       } else if (isSelected) {
         color = const Color(0xFFFFD6D6);
         border = const Color(0xFFE05C5C);

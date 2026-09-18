@@ -214,7 +214,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                 ),
               const SizedBox(height: 28),
               BouncyButton(
-                color: const Color(0xFF58CC02),
+                color: const Color(0xFF3DA35D),
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 onTap: _startQuiz,
                 child: const Row(
@@ -307,7 +307,7 @@ class _ChoiceCard extends StatelessWidget {
           color: selected ? const Color(0xFFD7FFB8) : Colors.white,
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: selected ? const Color(0xFF58CC02) : Colors.grey.shade300,
+            color: selected ? const Color(0xFF3DA35D) : Colors.grey.shade300,
             width: 3,
           ),
           boxShadow: [

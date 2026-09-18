@@ -231,7 +231,7 @@ class _BackupScreenState extends State<BackupScreen> {
                       child: BouncyButton(
                         color: _restoreController.text.trim().isEmpty
                             ? Colors.grey.shade400
-                            : const Color(0xFF58CC02),
+                            : const Color(0xFF3DA35D),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         onTap: _restoring ? () {} : _restore,
                         child: Text(

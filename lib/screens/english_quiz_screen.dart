@@ -484,7 +484,7 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
                             border: Border.all(
                               color: _answered
                                   ? (_isCorrect
-                                      ? const Color(0xFF58CC02)
+                                      ? const Color(0xFF3DA35D)
                                       : const Color(0xFFEA2B2B))
                                   : i == _picked.length
                                       ? _themeColor
@@ -633,7 +633,7 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
     final color =
         _isCorrect ? const Color(0xFFD7FFB8) : const Color(0xFFFFDFE0);
     final textColor =
-        _isCorrect ? const Color(0xFF58A700) : const Color(0xFFEA2B2B);
+        _isCorrect ? const Color(0xFF2E7D46) : const Color(0xFFEA2B2B);
     final message =
         _isCorrect ? '정답이에요! 🎉' : '아쉬워요! 정답은 ${_question.answerText}';
 
@@ -690,7 +690,7 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
             const SizedBox(height: 14),
             BouncyButton(
               color: _isCorrect
-                  ? const Color(0xFF58CC02)
+                  ? const Color(0xFF3DA35D)
                   : const Color(0xFFEA2B2B),
               onTap: _next,
               child: Row(
@@ -720,7 +720,7 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
               // 2초 동안 줄어드는 막대: 다 줄면 자동으로 다음 문제로
               AutoNextBar(
                 key: ValueKey('auto-next-$_currentIndex'),
-                color: const Color(0xFF58CC02),
+                color: const Color(0xFF3DA35D),
                 onDone: _next,
               ),
             ],
@@ -756,8 +756,8 @@ class _EnChoiceButton extends StatelessWidget {
         (Colors.white, Colors.grey.shade300, Colors.black87),
       _EnChoiceState.correct => (
           const Color(0xFFD7FFB8),
-          const Color(0xFF58CC02),
-          const Color(0xFF58A700),
+          const Color(0xFF3DA35D),
+          const Color(0xFF2E7D46),
         ),
       _EnChoiceState.wrong => (
           const Color(0xFFFFDFE0),

@@ -428,11 +428,11 @@ void main() {
 
     expect(find.text('학습 리포트'), findsOneWidget);
     await tester.dragUntilVisible(
-      find.text('한글 정답률'),
+      find.text('📖 한글 정답률'),
       find.byType(ListView).last,
       const Offset(0, -300),
     );
-    expect(find.text('한글 정답률'), findsOneWidget);
+    expect(find.text('📖 한글 정답률'), findsOneWidget);
   });
 
   testWidgets('착용한 아이템이 홈 헤더 부엉이에 보인다', (tester) async {

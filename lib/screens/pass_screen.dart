@@ -128,9 +128,9 @@ class _PassScreenState extends State<PassScreen> {
                     '수학 420 · 한글 120 · 영어 80 · 일본어 90 · 중국어 70단계'),
                 _benefit('🧒', '프로필 4명',
                     '아이마다 프로필을 만들어 각자의 진도로 배워요'),
-                _benefit('👨‍👩‍👧‍👦', '가족 기기 공유',
+                _benefit('🏠', '가족 기기 공유',
                     'Google Play 가족 라이브러리 / Apple 가족 공유를 켜면\n한 번 결제로 가족의 다른 폰·태블릿에서도 쓸 수 있어요'),
-                _benefit('📲', '재설치·기기 변경 시 복원',
+                _benefit('💾', '재설치·기기 변경 시 복원',
                     '같은 스토어 계정이면 [구매 복원]으로 다시 켤 수 있어요'),
                 const SizedBox(height: 20),
                 if (_hasPass)
@@ -140,7 +140,7 @@ class _PassScreenState extends State<PassScreen> {
                       color: const Color(0xFFD7FFB8),
                       borderRadius: BorderRadius.circular(20),
                       border:
-                          Border.all(color: const Color(0xFF58CC02), width: 2),
+                          Border.all(color: const Color(0xFF3DA35D), width: 2),
                     ),
                     child: const Text(
                       '✅ 가족 이용권 사용 중이에요!',
@@ -148,13 +148,13 @@ class _PassScreenState extends State<PassScreen> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF58A700),
+                        color: Color(0xFF2E7D46),
                       ),
                     ),
                   )
                 else ...[
                   BouncyButton(
-                    color: const Color(0xFF58CC02),
+                    color: const Color(0xFF3DA35D),
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     onTap: _buy,
                     child: Text(
@@ -187,7 +187,7 @@ class _PassScreenState extends State<PassScreen> {
                   if (!Purchases.available) ...[
                     const SizedBox(height: 12),
                     Text(
-                      '결제는 스토어(구글 플레이/앱스토어)에서 설치한 출시 버전에서 할 수 있어요.',
+                      '결제는 스토어(구글 플레이/앱스토어)에서 설치한\n출시 버전에서 할 수 있어요.',
                       textAlign: TextAlign.center,
                       style:
                           TextStyle(fontSize: 12, color: Colors.grey.shade600),

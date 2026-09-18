@@ -219,7 +219,7 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
     final brush = _brush;
     if (_erasing || brush == null) return;
     if (_canvas.length >= CanvasStore.maxPlaced) {
-      _snack('꾸미기 판이 가득 찼어요! 🧽 지우개로 조금 정리해 볼까요?');
+      _snack('꾸미기 판이 가득 찼어요! ✋ 떼어내기로 조금 정리해 볼까요?');
       return;
     }
     Sounds.correct(1);
@@ -364,7 +364,7 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
               ),
               const SizedBox(height: 20),
               BouncyButton(
-                color: const Color(0xFF58CC02),
+                color: const Color(0xFF3DA35D),
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 onTap: () => Navigator.of(context).pop(),
                 child: const Text(
@@ -427,7 +427,7 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
                       const SizedBox(height: 4),
                       Text(
                         _tickets > 0
-                            ? '마음에 드는 흐린 스티커를 눌러서 붙여 보세요!'
+                            ? '물음표 칸이나 흐린 그림을 눌러 붙여 보세요!'
                             : '퀴즈 한 판을 통과할 때마다 스티커 1장을 받아요.\n'
                                 '페이지 완성 🪙 ${StickerStore.pageBonus} · '
                                 '앨범 완성 🪙 ${StickerStore.albumBonus} 보너스!',
@@ -711,7 +711,7 @@ class _CanvasCard extends StatelessWidget {
                     ),
                   ),
                   child: Text(
-                    '🧽 지우개',
+                    '✋ 떼어내기',
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.bold,
@@ -734,7 +734,7 @@ class _CanvasCard extends StatelessWidget {
                     border: Border.all(color: Colors.grey.shade300, width: 1.5),
                   ),
                   child: Text(
-                    '🗑️ 정리',
+                    '🗑️ 모두 지우기',
                     style: TextStyle(
                       fontSize: 12.5,
                       fontWeight: FontWeight.bold,
@@ -788,7 +788,7 @@ class _CanvasCard extends StatelessWidget {
                           child: Opacity(
                             opacity: 0.7,
                             child:
-                                Text('☀️', style: TextStyle(fontSize: 28)),
+                                Text('🌞', style: TextStyle(fontSize: 28)),
                           ),
                         ),
                         const Positioned(
@@ -797,7 +797,7 @@ class _CanvasCard extends StatelessWidget {
                           child: Opacity(
                             opacity: 0.6,
                             child:
-                                Text('☁️', style: TextStyle(fontSize: 24)),
+                                Text('⛅', style: TextStyle(fontSize: 24)),
                           ),
                         ),
                         // 붙인 스티커들 (끌어서 옮길 수 있다)
@@ -848,7 +848,7 @@ class _CanvasCard extends StatelessWidget {
           // 팔레트: 모은 스티커 중에서 골라 도장처럼 쓴다.
           if (palette.isEmpty)
             Text(
-              '모은 스티커가 아직 없어요. 퀴즈 한 판 통과하면 시작!',
+              '아직 꾸미기에 쓸 스티커가 없어요.\n위 스티커북에 먼저 붙이면 여기서도 쓸 수 있어요!',
               style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
             )
           else

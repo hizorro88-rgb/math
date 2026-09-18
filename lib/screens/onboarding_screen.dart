@@ -101,7 +101,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _nextButton({required String label, required VoidCallback onTap}) {
     return BouncyButton(
-      color: const Color(0xFF58CC02),
+      color: const Color(0xFF3DA35D),
       padding: const EdgeInsets.symmetric(vertical: 16),
       onTap: onTap,
       child: Text(
@@ -141,7 +141,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     shape: BoxShape.circle,
                     border: Border.all(
                       color: _emoji == avatar
-                          ? const Color(0xFF58CC02)
+                          ? const Color(0xFF3DA35D)
                           : Colors.grey.shade300,
                       width: 3,
                     ),
@@ -182,6 +182,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           decoration: InputDecoration(
             hintText: '아이 이름 (예: 하늘)',
+            hintStyle: TextStyle(
+              color: Colors.grey.shade400,
+              fontWeight: FontWeight.normal,
+            ),
             counterText: '',
             filled: true,
             fillColor: Colors.white,
@@ -228,7 +232,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     borderRadius: BorderRadius.circular(18),
                     border: Border.all(
                       color: _ageIndex == i
-                          ? const Color(0xFF58CC02)
+                          ? const Color(0xFF3DA35D)
                           : Colors.grey.shade300,
                       width: 3,
                     ),

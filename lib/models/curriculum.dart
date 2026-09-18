@@ -118,7 +118,7 @@ class Curriculum {
         title: '4살',
         emoji: '🍼',
         desc: '다섯까지 수 세기',
-        color: const Color(0xFF58CC02),
+        color: const Color(0xFF3DA35D),
         units: [
           Unit(
               title: '수 세기 첫걸음',

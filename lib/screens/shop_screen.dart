@@ -198,7 +198,7 @@ class _ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const green = Color(0xFF58CC02);
+    const green = Color(0xFF3DA35D);
     final dimmed = !owned && !affordable;
 
     return GestureDetector(
@@ -248,8 +248,10 @@ class _ItemCard extends StatelessWidget {
                 equipped
                     ? '착용 중'
                     : owned
-                        ? '보유'
-                        : '🪙 ${item.cost}',
+                        ? '보유 ✓'
+                        : dimmed
+                            ? '🪙 ${item.cost} · 부족'
+                            : '🪙 ${item.cost}',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,

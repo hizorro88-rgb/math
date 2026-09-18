@@ -166,7 +166,7 @@ class _UnitSection extends StatelessWidget {
                             child: LinearProgressIndicator(
                               value: clearedCount / Curriculum.levelsPerUnit,
                               minHeight: 8,
-                              backgroundColor: Colors.grey.shade200,
+                              backgroundColor: const Color(0xFFEBE3D2),
                               color: unit.color,
                             ),
                           ),

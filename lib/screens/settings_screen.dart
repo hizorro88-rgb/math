@@ -274,7 +274,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 subtitle: const Text('정답·오답 딩동 소리'),
-                activeTrackColor: const Color(0xFF58CC02),
+                activeTrackColor: const Color(0xFF3DA35D),
               ),
               const Divider(height: 1),
               SwitchListTile(
@@ -290,7 +290,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 subtitle: const Text('글을 몰라도 풀 수 있게 문제·정답을 읽어줘요'),
-                activeTrackColor: const Color(0xFF58CC02),
+                activeTrackColor: const Color(0xFF3DA35D),
               ),
               const Divider(height: 1),
               ListTile(
@@ -363,12 +363,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 leading: Text(PremiumStore.allUnlocked ? '🔓' : '🔑',
                     style: const TextStyle(fontSize: 26)),
                 title: const Text(
-                  '전체 열기 (가족용)',
+                  '코드로 전체 열기',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(PremiumStore.allUnlocked
                     ? '모든 단계와 과목이 열려 있어요'
-                    : '코드를 입력하면 모든 잠금이 열려요'),
+                    : '선물받은 코드가 있다면 여기에 입력해요'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: _toggleAllUnlock,
               ),

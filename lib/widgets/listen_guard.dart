@@ -23,7 +23,7 @@ Future<bool> ensureListenReady(
             '기기 설정에서 $langName TTS를 설치해 주세요.',
         buttons: [
           BouncyButton(
-            color: const Color(0xFF58CC02),
+            color: const Color(0xFF3DA35D),
             padding: const EdgeInsets.symmetric(vertical: 14),
             onTap: () => Navigator.of(context).pop(),
             child: const Text(
@@ -52,7 +52,7 @@ Future<bool> ensureListenReady(
       message: '이 문제는 소리를 듣고 풀어요.\n소리를 켜야 시작할 수 있어요!',
       buttons: [
         BouncyButton(
-          color: const Color(0xFF58CC02),
+          color: const Color(0xFF3DA35D),
           padding: const EdgeInsets.symmetric(vertical: 14),
           onTap: () => Navigator.of(context).pop(true),
           child: const Text(

@@ -170,7 +170,7 @@ class _UnitSection extends StatelessWidget {
                               value: clearedCount /
                                   KoreanCurriculum.levelsPerUnit,
                               minHeight: 8,
-                              backgroundColor: Colors.grey.shade200,
+                              backgroundColor: const Color(0xFFEBE3D2),
                               color: unit.color,
                             ),
                           ),

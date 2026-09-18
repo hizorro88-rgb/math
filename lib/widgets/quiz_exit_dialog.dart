@@ -31,7 +31,7 @@ Future<bool> confirmQuizExit(BuildContext context) async {
             ),
             const SizedBox(height: 20),
             BouncyButton(
-              color: const Color(0xFF58CC02),
+              color: const Color(0xFF3DA35D),
               padding: const EdgeInsets.symmetric(vertical: 14),
               onTap: () => Navigator.of(context).pop(false),
               child: const Text(
