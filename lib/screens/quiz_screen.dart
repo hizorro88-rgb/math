@@ -300,8 +300,8 @@ class _QuizScreenState extends State<QuizScreen> {
             headerText: widget.bossMode
                 ? '👑 주간 보스전'
                 : level != null
-                    ? '${level.unit.emoji} ${level.unit.title} '
-                        '${level.number - level.unit.firstLevelNumber + 1}/10'
+                    ? '${level.unit.emoji} ${level.unit.title} · '
+                        '${level.number - level.unit.firstLevelNumber + 1}단계'
                     : null,
             showUnlockHint: level != null && stars < 1,
             nextLabel:

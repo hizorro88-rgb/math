@@ -98,6 +98,10 @@ void main() {
   });
 
   testWidgets('노트가 비어 있으면 축하 안내가 보인다', (tester) async {
+    // 퀴즈를 풀어 본 사용자여야 "틀린 게 없다" 축하가 나온다.
+    SharedPreferences.setMockInitialValues({
+      'stats_add_correct_v1': 3,
+    });
     await tester.pumpWidget(const MaterialApp(home: WrongNotesScreen()));
     await tester.pumpAndSettle();
 

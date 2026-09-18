@@ -7,8 +7,9 @@ import '../theme.dart';
 
 /// 부모용 화면(결제·백업·설정 등) 앞에 두는 확인 관문.
 ///
-/// 아이가 찍어서 통과할 수 없도록 보기 없이 **숫자 키패드로 직접 입력**한다
-/// (두 자리 × 한 자리 곱셈). 3번 틀리면 30초 동안 잠긴다.
+/// 아이가 찍어서 통과할 수 없도록, 한글로 쓴 세 자리 수(예: 삼백사십칠)를
+/// 읽고 숫자 키패드로 직접 입력한다. 연산이 아니라 문해 기반이라
+/// 보호자에게는 쉽고 아이에게는 어렵다. 3번 틀리면 30초 동안 잠긴다.
 /// (구글 플레이 가족 정책의 보호자 게이트 요건 대응)
 Future<bool> checkParentGate(BuildContext context) async {
   final passed = await showDialog<bool>(
@@ -30,14 +31,11 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
   static DateTime? _lockedUntil;
 
   final _random = Random();
-  late int _a, _b;
-  late int _twist; // 0: 답을 거꾸로, 1: 답에 1을 더해
+  late int _target;
   String _input = '';
   int _wrongCount = 0;
   bool _shake = false;
   Timer? _ticker;
-
-  int get _answer => _a * _b;
   bool get _locked =>
       _lockedUntil != null && DateTime.now().isBefore(_lockedUntil!);
   int get _lockSecondsLeft =>
@@ -57,19 +55,24 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
   }
 
   void _newProblem() {
-    // 거꾸로 뒤집었을 때 0으로 시작하지 않게 10의 배수는 피한다.
-    do {
-      _a = 12 + _random.nextInt(18); // 12..29
-      _b = 3 + _random.nextInt(7); // 3..9
-    } while (_a * _b % 10 == 0);
-    _twist = _random.nextInt(2);
+    // 읽기 쉬운 표기를 위해 모든 자리가 1~9인 세 자리 수만 낸다.
+    _target = (1 + _random.nextInt(9)) * 100 +
+        (1 + _random.nextInt(9)) * 10 +
+        (1 + _random.nextInt(9));
     _input = '';
   }
 
-  /// 지시문까지 적용한 정답 (거꾸로 or +1)
-  String get _expected => _twist == 0
-      ? '$_answer'.split('').reversed.join()
-      : '${_answer + 1}';
+  static const _digitWords = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'];
+
+  /// 347 → "삼백사십칠" (백·십의 1은 관례대로 생략)
+  String get _hangul {
+    final h = _target ~/ 100, t = (_target ~/ 10) % 10, o = _target % 10;
+    return '${h == 1 ? '' : _digitWords[h]}백'
+        '${t == 1 ? '' : _digitWords[t]}십'
+        '${_digitWords[o]}';
+  }
+
+  String get _expected => '$_target';
 
   void _startTicker() {
     _ticker?.cancel();
@@ -120,7 +123,7 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.fromLTRB(24, 12, 24, 20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -159,14 +162,13 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
             if (!_locked) ...[
               AnimatedContainer(
                 duration: const Duration(milliseconds: 150),
-                padding: const EdgeInsets.symmetric(vertical: 10),
+                padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
                   color: _shake ? const Color(0xFFFFEBEB) : AppColors.cream,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
                   children: [
-                    // 핵심 장치인 지시문을 문제 위에 크게 강조한다.
                     Container(
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 5),
@@ -174,11 +176,9 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
                         color: const Color(0xFFFFF1CC),
                         borderRadius: BorderRadius.circular(999),
                       ),
-                      child: Text(
-                        _twist == 0
-                            ? '⚠️ 답을 거꾸로 눌러 주세요'
-                            : '⚠️ 답에 1을 더해 눌러 주세요',
-                        style: const TextStyle(
+                      child: const Text(
+                        '아래 한글 수를 숫자로 눌러 주세요',
+                        style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF8A6100),
@@ -187,10 +187,19 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      '$_a × $_b = ${_input.isEmpty ? '?' : _input}',
+                      _hangul,
+                      key: const ValueKey('gate-question'),
+                      textAlign: TextAlign.center,
+                      style: displayStyle(fontSize: 30),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _input.isEmpty ? '□ □ □' : _input,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                          fontSize: 30, fontWeight: FontWeight.bold),
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.inkSoft),
                     ),
                   ],
                 ),
@@ -199,7 +208,7 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
                 Padding(
                   padding: const EdgeInsets.only(top: 6),
                   child: Text(
-                    '앗! 위의 지시문을 다시 읽어 보세요 (${3 - _wrongCount}번 남음)',
+                    '앗, 다시 읽어 볼까요? (${3 - _wrongCount}번 남음)',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontSize: 13,

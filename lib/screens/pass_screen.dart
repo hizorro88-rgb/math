@@ -154,11 +154,18 @@ class _PassScreenState extends State<PassScreen> {
                   )
                 else ...[
                   BouncyButton(
-                    color: const Color(0xFF3DA35D),
+                    // 스토어 미연결(웹·개발 빌드)에서는 회색으로 상태를 보여준다.
+                    color: Purchases.available
+                        ? const Color(0xFF3DA35D)
+                        : const Color(0xFFBFB9AC),
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     onTap: _buy,
                     child: Text(
-                      price == null ? '이용권 구매하기' : '이용권 구매하기 · $price',
+                      !Purchases.available
+                          ? '스토어 버전에서 구매할 수 있어요'
+                          : price == null
+                              ? '이용권 구매하기'
+                              : '이용권 구매하기 · $price',
                       textAlign: TextAlign.center,
                       style: const TextStyle(
                         fontSize: 20,

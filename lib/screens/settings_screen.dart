@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
 import '../models/premium.dart';
 import '../theme.dart';
@@ -476,14 +477,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 14),
           _card(
             children: [
-              const ListTile(
-                leading: Icon(Icons.info_outline_rounded, color: Colors.grey),
-                title: Text('앱 정보',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                subtitle: Text(
-                  '부엉이 학교 v$appVersionLabel\n문의: hizorro88@gmail.com',
-                  style: TextStyle(height: 1.5),
+              Builder(
+                builder: (context) => ListTile(
+                  leading: const Icon(Icons.info_outline_rounded,
+                      color: Colors.grey),
+                  title: const Text('앱 정보',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
+                  subtitle: const Text(
+                    '부엉이 학교 v$appVersionLabel\n문의: hizorro88@gmail.com (탭하면 복사)',
+                    style: TextStyle(height: 1.5),
+                  ),
+                  onTap: () {
+                    Clipboard.setData(
+                        const ClipboardData(text: 'hizorro88@gmail.com'));
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('문의 이메일 주소를 복사했어요.')),
+                    );
+                  },
                 ),
               ),
             ],

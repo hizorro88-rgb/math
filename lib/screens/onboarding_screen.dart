@@ -94,6 +94,18 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                     ),
                 ],
               ),
+              if (_step == 0) ...[
+                const SizedBox(height: 6),
+                Text(
+                  '안녕! 나는 부기야. 같이 배워 보자!',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.grey.shade600,
+                  ),
+                ),
+              ],
               const SizedBox(height: 8),
               // 단계마다 키를 줘서 버튼 상태(연타 방지 타이머)가 이월되지 않게 한다.
               KeyedSubtree(

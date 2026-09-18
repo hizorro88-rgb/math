@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../models/stats.dart';
 import '../models/wrong_notes.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
@@ -26,6 +27,7 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
   String? _selected;
   bool _finished = false;
   bool _loaded = false;
+  bool _neverPlayed = false; // 아직 퀴즈를 하나도 안 풀었는지
   Timer? _nextTimer;
 
   WrongNote get _note => _round[_index];
@@ -45,7 +47,9 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
 
   Future<void> _startRound() async {
     final notes = await WrongNoteStore.load();
+    final stats = await StatsStore.load();
     if (!mounted) return;
+    _neverPlayed = stats.totalAnswered == 0;
     // 최근에 틀린 것부터 다시 푼다.
     final ordered = notes.reversed.toList();
     setState(() {
@@ -122,13 +126,16 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
         children: [
           const Text('🦉📒', style: TextStyle(fontSize: 52)),
           const SizedBox(height: 12),
-          const Text(
-            '오답 노트가 비었어요! 🎉',
-            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          Text(
+            _neverPlayed ? '여기는 오답 노트!' : '오답 노트가 비었어요! 🎉',
+            style:
+                const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6),
           Text(
-            '틀린 게 하나도 없다니, 부기가 깜짝 놀랐어!\n틀린 문제가 생기면 여기 모아 뒀다가 같이 복습해요.',
+            _neverPlayed
+                ? '퀴즈를 풀다가 틀린 문제가 여기 모여요.\n부기랑 같이 첫 퀴즈부터 시작해 볼까?'
+                : '틀린 게 하나도 없다니, 부기가 깜짝 놀랐어!\n틀린 문제가 생기면 여기 모아 뒀다가 같이 복습해요.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
           ),

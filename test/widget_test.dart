@@ -12,20 +12,27 @@ import 'package:preschool_math/services/speech.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
-/// 부모 게이트: 곱셈 문제와 지시문(거꾸로/+1)을 읽고 키패드로 통과한다.
+/// 부모 게이트: 한글로 쓴 세 자리 수를 읽고 키패드로 입력해 통과한다.
 Future<void> passParentGate(WidgetTester tester) async {
-  final expr = tester.widget<Text>(find.textContaining('× ')).data!;
-  final m = RegExp(r'(\d+) × (\d+)').firstMatch(expr)!;
-  final answer = int.parse(m.group(1)!) * int.parse(m.group(2)!);
-  final reversed =
-      tester.any(find.textContaining('거꾸로'));
-  final input = reversed
-      ? '$answer'.split('').reversed.join()
-      : '${answer + 1}';
-  for (final ch in input.split('')) {
+  final hangul =
+      tester.widget<Text>(find.byKey(const ValueKey('gate-question'))).data!;
+  const words = ['', '일', '이', '삼', '사', '오', '육', '칠', '팔', '구'];
+  int digitBefore(String marker) {
+    final idx = hangul.indexOf(marker);
+    if (idx == 0) return 1; // "백십…"처럼 1은 생략 표기
+    final w = hangul.substring(idx - 1, idx);
+    final d = words.indexOf(w);
+    return d > 0 ? d : 1;
+  }
+
+  final ones = words.indexOf(hangul.substring(hangul.length - 1));
+  final answer = digitBefore('백') * 100 + digitBefore('십') * 10 + ones;
+  for (final ch in '$answer'.split('')) {
+    await tester.ensureVisible(find.byKey(ValueKey('gate-$ch')));
     await tester.tap(find.byKey(ValueKey('gate-$ch')));
     await tester.pump();
   }
+  await tester.ensureVisible(find.byKey(const ValueKey('gate-ok')));
   await tester.tap(find.byKey(const ValueKey('gate-ok')));
   await tester.pumpAndSettle();
 }

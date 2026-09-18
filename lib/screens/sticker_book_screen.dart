@@ -834,7 +834,9 @@ class _CanvasCard extends StatelessWidget {
                           Center(
                             child: Text(
                               palette.isEmpty
-                                  ? '퀴즈를 통과해 스티커를 모으면\n여기를 마음껏 꾸밀 수 있어요!'
+                                  ? (hasTickets
+                                      ? '위 칭찬판에 스티커를 붙이면\n여기를 꾸밀 수 있어요!'
+                                      : '퀴즈를 통과해 스티커를 모으면\n여기를 마음껏 꾸밀 수 있어요!')
                                   : brush == null
                                       ? '아래에서 스티커를 고르고\n원하는 곳을 톡! 눌러 붙여요'
                                       : '원하는 곳을 톡! 눌러 붙여요',
@@ -956,13 +958,21 @@ class _RewardBoardCard extends StatelessWidget {
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
               ),
               const SizedBox(width: 8),
-              Text(
-                '${boards + 1}번째 판 · $filled/${RewardBoardStore.slots}',
-                style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.grey.shade600),
+              Expanded(
+                child: Text(
+                  '${boards + 1}번째 판 · $filled/${RewardBoardStore.slots}',
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey.shade600),
+                ),
               ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
               const Spacer(),
               // 부모가 선물 약속을 적는 버튼 (부모 확인 뒤)
               GestureDetector(
