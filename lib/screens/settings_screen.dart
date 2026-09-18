@@ -348,7 +348,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           Padding(
             padding: const EdgeInsets.only(left: 8, bottom: 8),
             child: Text(
-              '부모님 메뉴',
+              '🔒 부모님 메뉴',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,

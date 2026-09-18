@@ -1185,6 +1185,11 @@ class _DailyCard extends StatelessWidget {
                 }),
             ],
           ),
+          const SizedBox(height: 4),
+          Text(
+            '하루 쉬어도 연속 기록(불꽃)을 지켜 줘요',
+            style: TextStyle(fontSize: 11.5, color: Colors.grey.shade500),
+          ),
         ],
       ),
     );

@@ -243,12 +243,12 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
             milestoneDays: rewards.milestoneDays,
             milestoneCoins: rewards.milestoneCoins,
             headerText: level != null
-                ? '${widget.pack.name} ${level.number}단계 · '
-                    '${level.unit.emoji} ${level.unit.title}'
+                ? '${level.unit.emoji} ${level.unit.title} '
+                    '${level.number - level.unit.firstLevelNumber + 1}/10'
                 : null,
             showUnlockHint: level != null && stars < 1,
             nextLabel:
-                next != null ? '다음 단계 (${next.number}단계)' : null,
+                next != null ? '다음 단계' : null,
             nextBuilder: next != null
                 ? () => LanguageQuizScreen(
                       pack: widget.pack,
@@ -336,7 +336,8 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
           ),
           if (widget.level != null) ...[
             Text(
-              '${widget.level!.number}단계',
+              '${widget.level!.unit.title} '
+              '${widget.level!.number - widget.level!.unit.firstLevelNumber + 1}/10',
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

@@ -117,7 +117,7 @@ class Curriculum {
       AgeCategory(
         title: '4살',
         emoji: '🍼',
-        desc: '다섯까지 수 세기',
+        desc: '5까지 수 세기',
         color: const Color(0xFF3DA35D),
         units: [
           Unit(
@@ -127,7 +127,7 @@ class Curriculum {
               startMax: 2,
               endMax: 3),
           Unit(
-              title: '다섯까지 세기',
+              title: '5까지 세기',
               emoji: '🐤',
               mode: QuizMode.counting,
               startMax: 4,
@@ -143,11 +143,11 @@ class Curriculum {
       AgeCategory(
         title: '5살',
         emoji: '🧸',
-        desc: '열까지 세기 · 더하기 시작',
+        desc: '10까지 세기 · 더하기 시작',
         color: const Color(0xFF1CB0F6),
         units: [
           Unit(
-              title: '열까지 세기',
+              title: '10까지 세기',
               emoji: '🐥',
               mode: QuizMode.counting,
               startMax: 6,
@@ -169,7 +169,7 @@ class Curriculum {
       AgeCategory(
         title: '6살',
         emoji: '🎨',
-        desc: '5까지 덧셈·뺄셈 · 스무까지 세기',
+        desc: '5까지 덧셈·뺄셈 · 20까지 세기',
         color: const Color(0xFFFF9600),
         units: [
           Unit(
@@ -191,7 +191,7 @@ class Curriculum {
               startMax: 3,
               endMax: 5),
           Unit(
-              title: '스무까지 세기',
+              title: '20까지 세기',
               emoji: '🦉',
               mode: QuizMode.counting,
               startMax: 11,

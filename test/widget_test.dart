@@ -12,12 +12,17 @@ import 'package:preschool_math/services/speech.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
-/// 부모 게이트: 곱셈 문제를 읽고 숫자 키패드로 정답을 입력해 통과한다.
+/// 부모 게이트: 곱셈 문제와 지시문(거꾸로/+1)을 읽고 키패드로 통과한다.
 Future<void> passParentGate(WidgetTester tester) async {
   final expr = tester.widget<Text>(find.textContaining('× ')).data!;
   final m = RegExp(r'(\d+) × (\d+)').firstMatch(expr)!;
   final answer = int.parse(m.group(1)!) * int.parse(m.group(2)!);
-  for (final ch in '$answer'.split('')) {
+  final reversed =
+      tester.any(find.textContaining('거꾸로'));
+  final input = reversed
+      ? '$answer'.split('').reversed.join()
+      : '${answer + 1}';
+  for (final ch in input.split('')) {
     await tester.tap(find.byKey(ValueKey('gate-$ch')));
     await tester.pump();
   }
@@ -71,7 +76,7 @@ void main() {
     expect(find.text('🔒'), findsNothing);
 
     await scrollAndTap(tester, find.text('1').first);
-    expect(find.text('1단계'), findsOneWidget);
+    expect(find.textContaining('수 세기 첫걸음 1/10'), findsOneWidget);
     expect(find.text('몇 개일까요?'), findsOneWidget); // 4살 첫 단계는 수 세기
     expect(find.text('🪙 0'), findsOneWidget);
   });
@@ -95,7 +100,7 @@ void main() {
     expect(find.text('3').first, findsOneWidget);
     await scrollAndTap(tester, find.text('3').first);
 
-    expect(find.text('3단계'), findsOneWidget);
+    expect(find.textContaining('3/10'), findsOneWidget);
   });
 
   testWidgets('초등 2학년 곱셈 카테고리는 바로 시작할 수 있다', (tester) async {
@@ -549,7 +554,7 @@ void main() {
 
     await scrollAndTap(tester, find.text('5살'));
     expect(find.text('부모님 확인'), findsNothing);
-    expect(find.text('열까지 세기'), findsOneWidget);
+    expect(find.text('10까지 세기'), findsOneWidget);
   });
 
   testWidgets('프로필이 여럿이면 넷플릭스처럼 프로필 선택부터 시작한다', (tester) async {

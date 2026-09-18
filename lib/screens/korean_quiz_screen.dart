@@ -236,11 +236,12 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
             milestoneDays: rewards.milestoneDays,
             milestoneCoins: rewards.milestoneCoins,
             headerText: level != null
-                ? '한글 ${level.number}단계 · ${level.unit.emoji} ${level.unit.title}'
+                ? '${level.unit.emoji} ${level.unit.title} '
+                    '${level.number - level.unit.firstLevelNumber + 1}/10'
                 : null,
             showUnlockHint: level != null && stars < 1,
             nextLabel:
-                next != null ? '다음 단계 (${next.number}단계)' : null,
+                next != null ? '다음 단계' : null,
             nextBuilder: next != null
                 ? () => KoreanQuizScreen(
                       type: next.unit.type,
@@ -326,7 +327,8 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
           ),
           if (widget.level != null) ...[
             Text(
-              '${widget.level!.number}단계',
+              '${widget.level!.unit.title} '
+              '${widget.level!.number - widget.level!.unit.firstLevelNumber + 1}/10',
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,

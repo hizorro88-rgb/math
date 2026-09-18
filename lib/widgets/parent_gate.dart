@@ -31,6 +31,7 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
 
   final _random = Random();
   late int _a, _b;
+  late int _twist; // 0: 답을 거꾸로, 1: 답에 1을 더해
   String _input = '';
   int _wrongCount = 0;
   bool _shake = false;
@@ -56,10 +57,19 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
   }
 
   void _newProblem() {
-    _a = 12 + _random.nextInt(18); // 12..29
-    _b = 3 + _random.nextInt(7); // 3..9
+    // 거꾸로 뒤집었을 때 0으로 시작하지 않게 10의 배수는 피한다.
+    do {
+      _a = 12 + _random.nextInt(18); // 12..29
+      _b = 3 + _random.nextInt(7); // 3..9
+    } while (_a * _b % 10 == 0);
+    _twist = _random.nextInt(2);
     _input = '';
   }
+
+  /// 지시문까지 적용한 정답 (거꾸로 or +1)
+  String get _expected => _twist == 0
+      ? '$_answer'.split('').reversed.join()
+      : '${_answer + 1}';
 
   void _startTicker() {
     _ticker?.cancel();
@@ -87,7 +97,7 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
 
   void _submit() {
     if (_locked || _input.isEmpty) return;
-    if (int.tryParse(_input) == _answer) {
+    if (_input == _expected) {
       Navigator.of(context).pop(true);
       return;
     }
@@ -159,6 +169,18 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
                   textAlign: TextAlign.center,
                   style: const TextStyle(
                       fontSize: 30, fontWeight: FontWeight.bold),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.only(top: 8),
+                child: Text(
+                  _twist == 0 ? '답을 거꾸로 눌러 주세요' : '답에 1을 더해 눌러 주세요',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.brown,
+                  ),
                 ),
               ),
               if (_wrongCount > 0)

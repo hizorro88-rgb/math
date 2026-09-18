@@ -178,6 +178,7 @@ class _ShopScreenState extends State<ShopScreen> {
                             owned: _owned.contains(item.id),
                             equipped: _isEquipped(item),
                             affordable: _coins >= item.cost,
+                            remaining: item.cost - _coins,
                             onTap: () => _onItemTap(item),
                           ),
                     ],
@@ -197,6 +198,7 @@ class _ItemCard extends StatelessWidget {
     required this.owned,
     required this.equipped,
     required this.affordable,
+    required this.remaining,
     required this.onTap,
   });
 
@@ -204,6 +206,9 @@ class _ItemCard extends StatelessWidget {
   final bool owned;
   final bool equipped;
   final bool affordable;
+
+  /// 이 아이템까지 더 모아야 하는 코인 수 (부족할 때만 의미)
+  final int remaining;
   final VoidCallback onTap;
 
   @override
@@ -260,8 +265,8 @@ class _ItemCard extends StatelessWidget {
                     : owned
                         ? '보유 ✓'
                         : dimmed
-                            ? '🪙 ${item.cost} · 부족'
-                            : '🪙 ${item.cost}',
+                            ? '🪙 $remaining 남았어요'
+                            : '🪙 ${item.cost} · 살 수 있어요!',
                 style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.bold,

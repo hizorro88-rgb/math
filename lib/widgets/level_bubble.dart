@@ -108,7 +108,7 @@ class LevelBubble extends StatelessWidget {
           const SizedBox(height: 2),
           Text(
             '여기부터!',
-            style: displayStyle(fontSize: 11, color: AppColors.green),
+            style: displayStyle(fontSize: 12, color: AppColors.greenPressed),
           ),
         ],
       );

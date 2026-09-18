@@ -193,6 +193,33 @@ class ResultScreen extends StatelessWidget {
                           style: TextStyle(
                               fontSize: 18, color: Colors.grey.shade700),
                         ),
+                        if (correctCount < totalCount) ...[
+                          const SizedBox(height: 10),
+                          Center(
+                            child: OutlinedButton.icon(
+                              style: OutlinedButton.styleFrom(
+                                foregroundColor: AppColors.brown,
+                                side: const BorderSide(
+                                    color: AppColors.brown, width: 1.5),
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 18, vertical: 10),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(999),
+                                ),
+                              ),
+                              onPressed: () => Navigator.of(context).push(
+                                MaterialPageRoute(
+                                    builder: (_) => const WrongNotesScreen()),
+                              ),
+                              icon: const Icon(Icons.search_rounded, size: 20),
+                              label: Text(
+                                '틀린 ${totalCount - correctCount}문제 다시 보기',
+                                style: const TextStyle(
+                                    fontSize: 15, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ),
+                        ],
                         if (showUnlockHint) ...[
                           const SizedBox(height: 8),
                           Text(

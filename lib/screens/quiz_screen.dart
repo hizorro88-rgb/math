@@ -300,11 +300,12 @@ class _QuizScreenState extends State<QuizScreen> {
             headerText: widget.bossMode
                 ? '👑 주간 보스전'
                 : level != null
-                    ? '${level.number}단계 · ${level.unit.emoji} ${level.unit.title}'
+                    ? '${level.unit.emoji} ${level.unit.title} '
+                        '${level.number - level.unit.firstLevelNumber + 1}/10'
                     : null,
             showUnlockHint: level != null && stars < 1,
             nextLabel:
-                next != null ? '다음 단계 (${next.number}단계)' : null,
+                next != null ? '다음 단계' : null,
             nextBuilder: next != null
                 ? () => QuizScreen(config: next.config, level: next)
                 : null,
@@ -443,7 +444,8 @@ class _QuizScreenState extends State<QuizScreen> {
           ],
           if (widget.level != null) ...[
             Text(
-              '${widget.level!.number}단계',
+              '${widget.level!.unit.title} '
+              '${widget.level!.number - widget.level!.unit.firstLevelNumber + 1}/10',
               style: const TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
