@@ -30,9 +30,11 @@ class CloudSync {
   static Future<void> init() async {
     if (DefaultFirebaseOptions.currentPlatform.apiKey == 'TODO') return;
     try {
+      // 웹에서 Firebase JS 로딩이 차단된 환경(회사망 등)이면 영영 끝나지
+      // 않을 수 있어, 시간을 정해 두고 안 되면 클라우드 없이 계속 간다.
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
-      );
+      ).timeout(const Duration(seconds: 8));
       available = true;
     } catch (_) {
       available = false;
