@@ -245,7 +245,7 @@ class Curriculum {
       AgeCategory(
         title: '초등 1학년',
         emoji: '✏️',
-        desc: '받아올림·받아내림, 20까지 덧셈·뺄셈',
+        desc: '받아올림·받아내림 · 세로셈 · 시계 보기',
         color: const Color(0xFFA560E8),
         units: [
           Unit(
@@ -283,13 +283,13 @@ class Curriculum {
               emoji: '🧮',
               mode: QuizMode.verticalAdd,
               startMax: 20,
-              endMax: 40),
+              endMax: 50),
           Unit(
               title: '세로 뺄셈 첫걸음',
               emoji: '📝',
               mode: QuizMode.verticalSub,
               startMax: 20,
-              endMax: 40),
+              endMax: 50),
           Unit(
               title: '시계 보기',
               emoji: '🕒',
@@ -389,19 +389,19 @@ class Curriculum {
               emoji: '🚀',
               mode: QuizMode.multiplication,
               startMax: 11,
-              endMax: 15),
+              endMax: 19),
           Unit(
               title: '세 자리 덧뺄셈',
               emoji: '🏰',
               mode: QuizMode.mixed,
               startMax: 100,
-              endMax: 200),
+              endMax: 400),
           Unit(
               title: '수학 왕 되기',
               emoji: '👑',
               mode: QuizMode.mixed,
-              startMax: 200,
-              endMax: 300),
+              startMax: 400,
+              endMax: 999),
         ],
       ),
       // 초3~4 심화: 분수·소수·시간 계산 (기존 기록 보존을 위해 항상 끝에 추가)
