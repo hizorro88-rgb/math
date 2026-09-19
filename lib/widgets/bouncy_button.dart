@@ -11,6 +11,7 @@ class BouncyButton extends StatefulWidget {
     this.padding = const EdgeInsets.symmetric(vertical: 16),
     this.shadowColor,
     this.border,
+    this.debounce = true,
   });
 
   final Color color;
@@ -22,6 +23,10 @@ class BouncyButton extends StatefulWidget {
   final double borderRadius;
   final EdgeInsets padding;
   final BoxBorder? border;
+
+  /// 연타 방지(400ms). 화면 전환 버튼은 켜 두고,
+  /// 접기/펼치기처럼 같은 자리에서 반복 탭하는 토글은 끈다.
+  final bool debounce;
 
   /// [color]를 살짝 어둡게 만든다.
   static Color darken(Color color, [double amount = 0.18]) {
@@ -43,7 +48,8 @@ class _BouncyButtonState extends State<BouncyButton> {
 
   void _handleTap() {
     final now = DateTime.now();
-    if (_lastTapTime != null &&
+    if (widget.debounce &&
+        _lastTapTime != null &&
         now.difference(_lastTapTime!) < const Duration(milliseconds: 400)) {
       return;
     }

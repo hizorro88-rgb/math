@@ -636,4 +636,87 @@ void main() {
     await tester.pump(const Duration(seconds: 2));
     await tester.pumpAndSettle();
   });
+
+  testWidgets('나이가 7살이면 이전 나이 카테고리가 접기 카드로 접힌다', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'family_pass_v1': true,
+      'age_category_v1': 3, // 7살
+    });
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    // 4~6살 카드 대신 접기 카드 한 장, 추천 배지는 7살에
+    expect(find.text('이전 단계 3개'), findsOneWidget);
+    expect(find.text('4살'), findsNothing);
+    expect(find.text('6살'), findsNothing);
+    expect(find.text('7살'), findsOneWidget);
+    expect(find.text('👍 추천'), findsOneWidget);
+
+    // 펼치면 이전 카드가 보이고, 다시 탭하면 접힌다
+    await scrollAndTap(tester, find.text('이전 단계 3개'));
+    expect(find.text('이전 단계 접기'), findsOneWidget);
+    expect(find.text('4살'), findsOneWidget);
+    await scrollAndTap(tester, find.text('이전 단계 접기'));
+    expect(find.text('4살'), findsNothing);
+  });
+
+  testWidgets('나이가 4살이면 접을 게 없어 접기 카드가 안 나온다', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'family_pass_v1': true,
+      'age_category_v1': 0,
+    });
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('이전 단계'), findsNothing);
+    expect(find.text('4살'), findsOneWidget);
+  });
+
+  testWidgets('나이를 안 골랐으면 접지 않는다', (tester) async {
+    SharedPreferences.setMockInitialValues({'family_pass_v1': true});
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('이전 단계'), findsNothing);
+    expect(find.text('4살'), findsOneWidget);
+  });
+
+  testWidgets('이용권이 없으면 나이가 있어도 접지 않는다', (tester) async {
+    // 무료 카테고리(4살)가 유일하게 열린 곳이라 접으면 놀 데가 없다.
+    SharedPreferences.setMockInitialValues({'age_category_v1': 3});
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('이전 단계'), findsNothing);
+    expect(find.text('4살'), findsOneWidget);
+  });
+
+  testWidgets('설정 > 우리 아이 단계에서 접기를 끄면 모든 단계가 보인다', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'family_pass_v1': true,
+      'age_category_v1': 3,
+    });
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+    expect(find.text('4살'), findsNothing);
+
+    await tester.tap(find.byIcon(Icons.settings_rounded));
+    await tester.pumpAndSettle();
+    await scrollAndTap(tester, find.text('우리 아이 단계'));
+    await passParentGate(tester);
+    expect(find.text('우리 아이 단계 맞추기'), findsOneWidget);
+
+    // 이전 단계 접어두기 끄기 → 시트 닫기 → 설정에서 홈으로
+    await tester.tap(find.text('이전 단계 접어두기'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('완료')); // 시트 닫기
+    await tester.pumpAndSettle();
+    expect(find.text('우리 아이 단계 맞추기'), findsNothing); // 시트 닫힘
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.text('부엉이 학교'), findsOneWidget); // 홈으로 복귀
+
+    expect(find.textContaining('이전 단계'), findsNothing);
+    expect(find.text('4살'), findsOneWidget);
+  });
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/curriculum.dart';
 import '../models/premium.dart';
 import '../theme.dart';
 import '../models/profile.dart';
@@ -11,6 +13,7 @@ import '../services/speech.dart';
 import '../widgets/parent_gate.dart';
 import 'backup_screen.dart';
 import 'level_map_screen.dart';
+import 'onboarding_screen.dart';
 import 'pass_screen.dart';
 import 'report_screen.dart';
 
@@ -27,11 +30,167 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _syncing = false;
   bool _reminderOn = false;
 
+  /// 우리 아이 단계: 나이(수학 카테고리 인덱스)와 이전 단계 접기 설정
+  int? _ageIndex;
+  bool _foldPrevAges = true;
+
   @override
   void initState() {
     super.initState();
     _loadSyncTime();
     _loadReminder();
+    _loadAgeFold();
+  }
+
+  Future<void> _loadAgeFold() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+    final idx = prefs.getInt(Profiles.scoped(OnboardingScreen.ageCategoryKey));
+    setState(() {
+      _ageIndex =
+          idx != null && idx >= 0 && idx < Curriculum.categories.length
+              ? idx
+              : null;
+      _foldPrevAges =
+          prefs.getBool(Profiles.scoped(LevelMapScreen.foldPrevAgesKey)) ??
+              true;
+    });
+  }
+
+  /// 우리 아이 단계 시트: 나이 고르기(추천·접기 기준) + 이전 단계 접어두기.
+  /// 홈 화면 구성을 바꾸는 부모의 결정이라 게이트를 거친다.
+  Future<void> _openAgeSheet() async {
+    final ok = await checkParentGate(context);
+    if (!ok || !mounted) return;
+    final prefs = await SharedPreferences.getInstance();
+    if (!mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) => StatefulBuilder(
+        builder: (context, setSheetState) {
+          Future<void> pickAge(int? value) async {
+            if (value == null) {
+              await prefs
+                  .remove(Profiles.scoped(OnboardingScreen.ageCategoryKey));
+            } else {
+              await prefs.setInt(
+                  Profiles.scoped(OnboardingScreen.ageCategoryKey), value);
+            }
+            if (!mounted) return;
+            setState(() => _ageIndex = value);
+            setSheetState(() {});
+          }
+
+          Widget ageChip(String label, int? value) {
+            final selected = _ageIndex == value;
+            return GestureDetector(
+              onTap: () => pickAge(value),
+              child: Container(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: selected ? const Color(0xFFD7FFB8) : Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(
+                    color: selected
+                        ? const Color(0xFF3DA35D)
+                        : Colors.grey.shade300,
+                    width: 2.5,
+                  ),
+                ),
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                      fontSize: 15, fontWeight: FontWeight.bold),
+                ),
+              ),
+            );
+          }
+
+          return SafeArea(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    '우리 아이 단계 맞추기',
+                    textAlign: TextAlign.center,
+                    style: displayStyle(fontSize: 20),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    keepAll('나이를 고르면 홈에서 그 단계를 추천하고, '
+                        '더 낮은 수학 단계는 접어둘 수 있어요'),
+                    textAlign: TextAlign.center,
+                    style:
+                        TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                  ),
+                  const SizedBox(height: 14),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      for (var i = 0;
+                          i < Curriculum.categories.length;
+                          i++)
+                        ageChip(Curriculum.categories[i].title, i),
+                      ageChip('선택 안 함', null),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  SwitchListTile(
+                    value: _foldPrevAges,
+                    onChanged: _ageIndex == null
+                        ? null
+                        : (value) async {
+                            await prefs.setBool(
+                                Profiles.scoped(
+                                    LevelMapScreen.foldPrevAgesKey),
+                                value);
+                            if (!mounted) return;
+                            setState(() => _foldPrevAges = value);
+                            setSheetState(() {});
+                          },
+                    title: const Text(
+                      '이전 단계 접어두기',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                    subtitle: Text(keepAll(
+                        '아이 나이보다 낮은 수학 단계를 홈에서 접어요. 기록은 그대로예요.')),
+                    activeTrackColor: const Color(0xFF3DA35D),
+                  ),
+                  const SizedBox(height: 6),
+                  FilledButton(
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF3DA35D),
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    onPressed: () => Navigator.of(context).pop(),
+                    child: const Text(
+                      '완료',
+                      style: TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
   }
 
   Future<void> _loadSyncTime() async {
@@ -394,6 +553,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     MaterialPageRoute(builder: (_) => const PassScreen()),
                   );
                 },
+              ),
+              const Divider(height: 1),
+              ListTile(
+                leading: const Text('🪜', style: TextStyle(fontSize: 26)),
+                title: const Text(
+                  '우리 아이 단계',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(keepAll(_ageIndex == null
+                    ? '나이를 고르면 딱 맞게 보여드려요'
+                    : '${Curriculum.categories[_ageIndex!].title} · '
+                        '${_foldPrevAges ? '이전 단계는 접어둬요' : '모든 단계 보여요'}')),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: _openAgeSheet,
               ),
               const Divider(height: 1),
               SwitchListTile(

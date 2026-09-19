@@ -45,6 +45,10 @@ import 'wrong_notes_screen.dart';
 class LevelMapScreen extends StatefulWidget {
   const LevelMapScreen({super.key});
 
+  /// 아이 나이보다 앞의 수학 카테고리를 홈에서 접어둘지 (프로필 스코프, 기본 켜짐).
+  /// 설정 > 부모님 메뉴 > 우리 아이 단계에서 바꾼다.
+  static const foldPrevAgesKey = 'fold_prev_ages_v1';
+
   @override
   State<LevelMapScreen> createState() => _LevelMapScreenState();
 }
@@ -66,6 +70,7 @@ class _MapData {
     required this.review,
     required this.wrongCount,
     required this.stickerTickets,
+    required this.foldPrevAges,
   });
 
   final List<int> stars;
@@ -97,6 +102,9 @@ class _MapData {
 
   /// 아직 스티커북에 안 붙인 스티커 수
   final int stickerTickets;
+
+  /// 나이보다 앞의 수학 카테고리 접기 설정 (기본 켜짐)
+  final bool foldPrevAges;
 }
 
 class _LevelMapScreenState extends State<LevelMapScreen> {
@@ -104,6 +112,10 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
 
   /// 지금 보고 있는 과목 (0: 수학, 1: 한글, 2: 영어, 3~: 언어 팩)
   int _subject = 0;
+
+  /// 접어둔 이전 나이 카테고리를 지금 펼쳐서 보는 중인지.
+  /// 화면 상태로만 두고 저장하지 않아, 홈을 새로 열면 다시 접힌다.
+  bool _prevAgesExpanded = false;
 
   /// 과목 탭 정보 (뒤쪽은 languagePacks 순서)
   static final List<(String, String)> _subjects = [
@@ -157,6 +169,9 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       review: Review.suggest(await StatsStore.load()),
       wrongCount: await WrongNoteStore.count(),
       stickerTickets: await StickerStore.tickets(),
+      foldPrevAges:
+          prefs.getBool(Profiles.scoped(LevelMapScreen.foldPrevAgesKey)) ??
+              true,
     );
   }
 
@@ -199,6 +214,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     if (!mounted) return;
     setState(() {
       _dataFuture = _load();
+      _prevAgesExpanded = false; // 기본은 정돈된(접힌) 화면
     });
     _loadSubject(); // 프로필이 바뀌면 그 아이가 보던 과목으로
   }
@@ -320,7 +336,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const SettingsScreen()),
     );
-    if (mounted) setState(() {}); // 소리 설정이 바뀌었을 수 있다
+    _refresh(); // 소리·나이·접기 설정이 바뀌었을 수 있다
   }
 
   Future<void> _openProfiles() async {
@@ -328,6 +344,64 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       MaterialPageRoute(builder: (_) => const ProfileScreen()),
     );
     _refresh(); // 프로필이 바뀌면 진행도·코인 등을 다시 불러온다.
+  }
+
+  /// 수학 카테고리 카드 목록. 아이 나이(추천 카테고리)보다 앞의 단계는
+  /// 접기 카드 한 장으로 접어둔다 — 기록은 그대로 두고 표시만 접는다.
+  /// 이용권이 없으면 무료 카테고리(4살)가 유일하게 놀 수 있는 곳이라 접지 않는다.
+  List<Widget> _mathCategoryCards(_MapData data) {
+    final age = data.recommendedCategory;
+    final foldCount =
+        data.foldPrevAges && age != null && age > 0 && data.hasPass ? age : 0;
+
+    Widget cardFor(AgeCategory category) => _CategoryCard(
+          emoji: category.emoji,
+          title: category.title,
+          desc: category.desc,
+          color: category.color,
+          cleared: Curriculum.levels
+              .where((l) =>
+                  l.unit.category.index == category.index &&
+                  data.stars[l.number - 1] >= 1)
+              .length,
+          total: category.totalLevels,
+          recommended: data.recommendedCategory == category.index,
+          locked: !data.hasPass && category.index > 0,
+          onTap: () => _openCategory(category),
+        );
+
+    final folded = Curriculum.categories.take(foldCount).toList();
+    var foldedStars = 0;
+    for (final c in folded) {
+      for (var n = c.firstLevelNumber; n <= c.lastLevelNumber; n++) {
+        foldedStars += data.stars[n - 1];
+      }
+    }
+
+    return [
+      if (foldCount > 0) ...[
+        _FoldCard(
+          expanded: _prevAgesExpanded,
+          count: foldCount,
+          rangeLabel: foldCount == 1
+              ? folded.first.title
+              : '${folded.first.title}~${folded.last.title}',
+          stars: foldedStars,
+          onTap: () =>
+              setState(() => _prevAgesExpanded = !_prevAgesExpanded),
+        ),
+        const SizedBox(height: 12),
+        if (_prevAgesExpanded)
+          for (final category in folded) ...[
+            cardFor(category),
+            const SizedBox(height: 12),
+          ],
+      ],
+      for (final category in Curriculum.categories.skip(foldCount)) ...[
+        cardFor(category),
+        const SizedBox(height: 12),
+      ],
+    ];
   }
 
   /// 오늘 활동에 따라 부엉이 인사말이 달라진다.
@@ -360,7 +434,6 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
           if (data == null) {
             return const Center(child: CircularProgressIndicator());
           }
-          final stars = data.stars;
           // 별 합계는 전 과목
           final totalStars = data.stars.fold<int>(0, (sum, s) => sum + s) +
               data.krStars.fold<int>(0, (sum, s) => sum + s) +
@@ -477,25 +550,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                         const SizedBox(height: 12),
                       ]
                     else
-                      for (final category in Curriculum.categories) ...[
-                        _CategoryCard(
-                          emoji: category.emoji,
-                          title: category.title,
-                          desc: category.desc,
-                          color: category.color,
-                          cleared: Curriculum.levels
-                              .where((l) =>
-                                  l.unit.category.index == category.index &&
-                                  stars[l.number - 1] >= 1)
-                              .length,
-                          total: category.totalLevels,
-                          recommended:
-                              data.recommendedCategory == category.index,
-                          locked: !data.hasPass && category.index > 0,
-                          onTap: () => _openCategory(category),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
+                      ..._mathCategoryCards(data),
                     const SizedBox(height: 10),
                     // ── 2. 오늘의 도전: 매일 한 번씩 들르는 것들 ──
                     const _SectionTitle('🔥 오늘의 도전'),
@@ -1271,6 +1326,87 @@ class _MissionRow extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// 접어둔 이전 나이 단계 묶음 카드. 탭하면 그 자리에서 펼쳤다 접는다.
+/// 더 쉬운 콘텐츠를 보여줄 뿐이라 부모 관문 없이 아이도 열 수 있다.
+class _FoldCard extends StatelessWidget {
+  const _FoldCard({
+    required this.expanded,
+    required this.count,
+    required this.rangeLabel,
+    required this.stars,
+    required this.onTap,
+  });
+
+  final bool expanded;
+  final int count;
+
+  /// 접힌 범위 표시용 (예: "4살~6살")
+  final String rangeLabel;
+
+  /// 접힌 카테고리 안에 모아 둔 별 합계 (기록이 사라진 게 아님을 보여준다)
+  final int stars;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return BouncyButton(
+      color: Colors.white,
+      shadowColor: Colors.grey.shade300,
+      borderRadius: 22,
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      debounce: false, // 접었다 폈다 반복 탭이 자연스러워야 한다
+      onTap: onTap,
+      child: Row(
+        children: [
+          Container(
+            width: 44,
+            height: 44,
+            decoration: BoxDecoration(
+              color: const Color(0xFFEAF9E6),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: const Center(
+              child: Text('🌱', style: TextStyle(fontSize: 22)),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  expanded ? '이전 단계 접기' : '이전 단계 $count개',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  expanded
+                      ? '구경 다 했으면 눌러서 접어요'
+                      : stars > 0
+                          ? '⭐ $stars개 모은 곳 · 누르면 열려요'
+                          : '$rangeLabel 단계 · 누르면 열려요',
+                  style:
+                      TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            expanded
+                ? Icons.keyboard_arrow_up_rounded
+                : Icons.keyboard_arrow_down_rounded,
+            size: 28,
+            color: AppColors.inkSoft,
+          ),
+        ],
+      ),
     );
   }
 }
