@@ -47,10 +47,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
     if (!mounted) return;
     final idx = prefs.getInt(Profiles.scoped(OnboardingScreen.ageCategoryKey));
     setState(() {
-      _ageIndex =
-          idx != null && idx >= 0 && idx < Curriculum.categories.length
-              ? idx
-              : null;
+      _ageIndex = idx != null && idx >= 0 && idx < Curriculum.categories.length
+          ? idx
+          : null;
       _foldPrevAges =
           prefs.getBool(Profiles.scoped(LevelMapScreen.foldPrevAgesKey)) ??
               true;
@@ -129,8 +128,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     keepAll('나이를 고르면 홈에서 그 단계를 추천하고, '
                         '더 낮은 수학 단계는 접어둘 수 있어요'),
                     textAlign: TextAlign.center,
-                    style:
-                        TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
                   ),
                   const SizedBox(height: 14),
                   Wrap(
@@ -138,9 +136,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     runSpacing: 8,
                     alignment: WrapAlignment.center,
                     children: [
-                      for (var i = 0;
-                          i < Curriculum.categories.length;
-                          i++)
+                      for (var i = 0; i < Curriculum.categories.length; i++)
                         ageChip(Curriculum.categories[i].title, i),
                       ageChip('선택 안 함', null),
                     ],
@@ -152,8 +148,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         ? null
                         : (value) async {
                             await prefs.setBool(
-                                Profiles.scoped(
-                                    LevelMapScreen.foldPrevAgesKey),
+                                Profiles.scoped(LevelMapScreen.foldPrevAgesKey),
                                 value);
                             if (!mounted) return;
                             setState(() => _foldPrevAges = value);
@@ -161,11 +156,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           },
                     title: const Text(
                       '이전 단계 접어두기',
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    subtitle: Text(keepAll(
-                        '아이 나이보다 낮은 수학 단계를 홈에서 접어요. 기록은 그대로예요.')),
+                    subtitle:
+                        Text(keepAll('아이 나이보다 낮은 수학 단계를 홈에서 접어요. 기록은 그대로예요.')),
                     activeTrackColor: const Color(0xFF3DA35D),
                   ),
                   const SizedBox(height: 6),
@@ -180,8 +175,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onPressed: () => Navigator.of(context).pop(),
                     child: const Text(
                       '완료',
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -290,7 +285,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
     setState(() => _syncing = false);
 
     if (error != null) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(error)));
+      ScaffoldMessenger.of(context)
+          .showSnackBar(SnackBar(content: Text(error)));
       return;
     }
     // 클라우드 기록이 복원됐을 수 있으니 캐시를 새로 읽고 홈부터 다시 연다.
@@ -457,7 +453,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   if (value) Sounds.correct(1); // 켜졌는지 바로 들려준다
                   setState(() {});
                 },
-                secondary: const Text('🔔', style: TextStyle(fontSize: 26)),
+                secondary: const SizedBox(
+                    width: 34,
+                    child: Center(
+                        child: Text('🔔', style: TextStyle(fontSize: 26)))),
                 title: const Text(
                   '효과음',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -473,7 +472,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   if (value) Speech.speak('안녕하세요!');
                   setState(() {});
                 },
-                secondary: const Text('🗣️', style: TextStyle(fontSize: 26)),
+                secondary: const SizedBox(
+                    width: 34,
+                    child: Center(
+                        child: Text('🗣️', style: TextStyle(fontSize: 26)))),
                 title: const Text(
                   '문제 읽어주기',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -483,17 +485,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const Text('🐢', style: TextStyle(fontSize: 26)),
+                leading: const SizedBox(
+                    width: 34,
+                    child: Center(
+                        child: Text('🐢', style: TextStyle(fontSize: 26)))),
                 title: const Text(
                   '말 빠르기',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 trailing: SegmentedButton<double>(
                   segments: const [
-                    ButtonSegment(
-                        value: Speech.rateSlow, label: Text('천천히')),
-                    ButtonSegment(
-                        value: Speech.rateNormal, label: Text('보통')),
+                    ButtonSegment(value: Speech.rateSlow, label: Text('천천히')),
+                    ButtonSegment(value: Speech.rateNormal, label: Text('보통')),
                   ],
                   selected: {Speech.rate},
                   onSelectionChanged: (selection) async {
@@ -556,7 +559,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const Text('🪜', style: TextStyle(fontSize: 26)),
+                leading: const SizedBox(
+                    width: 34,
+                    child: Center(
+                        child: Text('🪜', style: TextStyle(fontSize: 26)))),
                 title: const Text(
                   '우리 아이 단계',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -583,7 +589,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const Text('💾', style: TextStyle(fontSize: 26)),
+                leading: const SizedBox(
+                    width: 34,
+                    child: Center(
+                        child: Text('💾', style: TextStyle(fontSize: 26)))),
                 title: const Text(
                   '진도 백업·옮기기',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -614,7 +623,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               children: [
                 if (!CloudSync.signedIn)
                   ListTile(
-                    leading: const Text('☁️', style: TextStyle(fontSize: 26)),
+                    leading: const SizedBox(
+                        width: 34,
+                        child: Center(
+                            child: Text('☁️', style: TextStyle(fontSize: 26)))),
                     title: const Text(
                       '클라우드 동기화',
                       style:
@@ -632,7 +644,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   )
                 else ...[
                   ListTile(
-                    leading: const Text('☁️', style: TextStyle(fontSize: 26)),
+                    leading: const SizedBox(
+                        width: 34,
+                        child: Center(
+                            child: Text('☁️', style: TextStyle(fontSize: 26)))),
                     title: Text(
                       CloudSync.email ?? '클라우드 동기화',
                       style: const TextStyle(
@@ -657,8 +672,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const Divider(height: 1),
                   ListTile(
-                    leading: const Icon(Icons.logout_rounded,
-                        color: Colors.grey),
+                    leading:
+                        const Icon(Icons.logout_rounded, color: Colors.grey),
                     title: const Text('로그아웃'),
                     onTap: _syncing ? null : _cloudSignOut,
                   ),
@@ -674,8 +689,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   leading: const Icon(Icons.info_outline_rounded,
                       color: Colors.grey),
                   title: const Text('앱 정보',
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
                   subtitle: const Text(
                     '쿼카 학교 v$appVersionLabel\n문의: hizorro88@gmail.com (탭하면 복사)',
                     style: TextStyle(height: 1.5),
