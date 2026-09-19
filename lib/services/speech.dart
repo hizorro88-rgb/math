@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -92,6 +93,38 @@ class Speech {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setDouble(_rateKey, value);
       await _tts.setSpeechRate(_platformRate);
+    } catch (_) {}
+  }
+
+  /// 설정에서 음성을 설치하고 돌아온 경우를 위해 지원 여부를 다시 확인한다.
+  /// (앱을 재시작하지 않아도 듣기 문제가 바로 열리게)
+  static Future<bool> recheckLang(String lang) async {
+    try {
+      final ok = await _tts.isLanguageAvailable(lang);
+      final value = ok is bool ? ok : true;
+      if (lang == 'ko-KR') {
+        available = value;
+      } else {
+        langAvailable[lang] = value;
+      }
+      return value;
+    } catch (_) {
+      return isLangAvailable(lang);
+    }
+  }
+
+  /// 기기 TTS 설정 화면을 열 수 있는지 (안드로이드에서만).
+  /// 일본어·중국어 음성이 없을 때 설치하러 바로 보내는 용도.
+  static bool get canOpenTtsSettings =>
+      !kIsWeb && defaultTargetPlatform == TargetPlatform.android;
+
+  static const _settingsChannel = MethodChannel('quokka.school/tts');
+
+  /// 안드로이드 TTS 설정 화면을 연다 (구글 TTS의 언어 음성 설치 입구).
+  /// 실패해도 조용히 넘어간다.
+  static Future<void> openTtsSettings() async {
+    try {
+      await _settingsChannel.invokeMethod('openSettings');
     } catch (_) {}
   }
 

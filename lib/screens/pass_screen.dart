@@ -107,14 +107,7 @@ class _PassScreenState extends State<PassScreen> {
                   ),
                   child: Column(
                     children: [
-                      const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          QuokkaFace(size: 46),
-                          SizedBox(width: 4),
-                          Text('👑', style: TextStyle(fontSize: 38)),
-                        ],
-                      ),
+                      const QuokkaFace(size: 64),
                       const SizedBox(height: 8),
                       const Text(
                         '한 번 결제로\n온 가족이 함께 배워요',
@@ -133,7 +126,7 @@ class _PassScreenState extends State<PassScreen> {
                 ),
                 const SizedBox(height: 16),
                 _benefit('🗺️', '5과목 모든 단계 열기',
-                    '총 780단계 — 수학 420 · 한글 120 · 영어 80 · 일본어 90 · 중국어 70'),
+                    '총 780단계 — 수학\u00A0420 · 한글\u00A0120 · 영어\u00A080 · 일본어\u00A090 · 중국어\u00A070'),
                 _benefit('🧒', '프로필 4명',
                     '아이마다 프로필을 만들어 각자의 진도로 배워요'),
                 _benefit('🏠', '가족 기기 공유',

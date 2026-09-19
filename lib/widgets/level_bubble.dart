@@ -105,7 +105,7 @@ class LevelBubble extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           _Pulse(child: bubble),
-          const SizedBox(height: 2),
+          const SizedBox(height: 7),
           Text(
             '여기부터!',
             style: displayStyle(fontSize: 12, color: AppColors.greenPressed),

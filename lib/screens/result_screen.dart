@@ -305,72 +305,68 @@ class ResultScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 10),
                       ],
-                      Row(
-                        children: [
-                          Expanded(
-                            child: BouncyButton(
-                              color: hasNext
-                                  ? Colors.white
-                                  : const Color(0xFF3DA35D),
-                              shadowColor:
-                                  hasNext ? Colors.grey.shade300 : null,
-                              border: hasNext
-                                  ? Border.all(
-                                      color: const Color(0xFF3DA35D), width: 2)
-                                  : null,
-                              padding: const EdgeInsets.symmetric(vertical: 13),
-                              onTap: () => _replace(context, retryBuilder),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  Text(
-                                    '다시 하기',
-                                    style: TextStyle(
-                                      fontSize: hasNext ? 19 : 22,
-                                      fontWeight: FontWeight.bold,
-                                      color: hasNext
-                                          ? const Color(0xFF3DA35D)
-                                          : Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 6),
-                                  Icon(
-                                    Icons.refresh_rounded,
-                                    size: 24,
-                                    color: hasNext
-                                        ? const Color(0xFF3DA35D)
-                                        : Colors.white,
-                                  ),
-                                ],
-                              ),
+                      if (hasNext)
+                        // 통과: 주인공은 '다음 단계' 하나. 다시 하기는 조용한 보조.
+                        TextButton.icon(
+                          style: TextButton.styleFrom(
+                            minimumSize: const Size(48, 44),
+                          ),
+                          onPressed: () => _replace(context, retryBuilder),
+                          icon: const Icon(Icons.refresh_rounded,
+                              size: 20, color: AppColors.inkSoft),
+                          label: const Text(
+                            '다시 하기',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.inkSoft,
                             ),
                           ),
-                          const SizedBox(width: 10),
-                          TextButton.icon(
-                            style: TextButton.styleFrom(
-                              minimumSize: const Size(48, 48),
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 12),
-                            ),
-                            onPressed: () => Navigator.of(context)
-                                .popUntil((route) => route.isFirst),
-                            icon: Icon(homeIcon,
-                                size: 22, color: AppColors.inkSoft),
-                            label: Text(
-                              homeLabel,
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                                color: AppColors.inkSoft,
+                        )
+                      else
+                        // 미통과: 같은 자리의 주인공이 '다시 하기'가 된다.
+                        BouncyButton(
+                          color: const Color(0xFF3DA35D),
+                          onTap: () => _replace(context, retryBuilder),
+                          child: const Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                '다시 하기',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.white,
+                                ),
                               ),
-                            ),
+                              SizedBox(width: 8),
+                              Icon(
+                                Icons.refresh_rounded,
+                                size: 28,
+                                color: Colors.white,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
                     ],
                   ),
                 ),
               ],
+            ),
+          ),
+          // 처음으로: 버튼 바 대신 좌상단 홈 아이콘 (버튼 수 줄이기)
+          SafeArea(
+            child: Align(
+              alignment: Alignment.topLeft,
+              child: Padding(
+                padding: const EdgeInsets.only(left: 6, top: 2),
+                child: IconButton(
+                  tooltip: homeLabel,
+                  onPressed: () =>
+                      Navigator.of(context).popUntil((route) => route.isFirst),
+                  icon: Icon(homeIcon, size: 30, color: AppColors.inkSoft),
+                ),
+              ),
             ),
           ),
         ],
@@ -682,24 +678,24 @@ class _PointsCard extends StatelessWidget {
               final next = nextRankFor(total);
               return Column(
                 children: [
-                  Text(
-                    '모은 코인 $total개 · ${rank.emoji} ${rank.title}',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.brown.shade400,
-                    ),
-                  ),
                   if (next != null) ...[
-                    const SizedBox(height: 4),
                     Text(
                       '${next.emoji} ${next.title}까지 ${next.minPoints - total}코인!',
                       style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.brown.shade300,
+                        fontSize: 16,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.brown.shade400,
                       ),
                     ),
+                    const SizedBox(height: 4),
                   ],
+                  Text(
+                    '모은 코인 $total개 · ${rank.emoji} ${rank.title}',
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.brown.shade300,
+                    ),
+                  ),
                 ],
               );
             },

@@ -19,7 +19,8 @@ class QuokkaFace extends StatelessWidget {
       width: size,
       height: size,
       fit: BoxFit.contain,
-      filterQuality: FilterQuality.medium,
+      // 픽셀아트는 보간 없이 또렷하게 (도트 뭉개짐 방지)
+      filterQuality: FilterQuality.none,
     );
   }
 }
@@ -110,7 +111,7 @@ class _QuokkaAvatarState extends State<QuokkaAvatar> {
               width: size * 1.2,
               height: size * 1.2,
               fit: BoxFit.contain,
-              filterQuality: FilterQuality.medium,
+              filterQuality: FilterQuality.none, // 도트 뭉개짐 방지
               gaplessPlayback: true, // 프레임 전환 시 깜빡이는 공백 방지
             ),
           ),

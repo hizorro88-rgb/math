@@ -118,7 +118,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       body: !_loaded
           ? const Center(child: CircularProgressIndicator())
           : Align(
-              alignment: const Alignment(0, -0.5),
+              alignment: const Alignment(0, -0.2),
               child: SingleChildScrollView(
               padding: const EdgeInsets.all(20),
               child: Column(
@@ -127,7 +127,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                 if (widget.asLauncher) ...[
                   const Center(
-                      child: QuokkaFace(size: 56)),
+                      child: QuokkaFace(size: 64)),
                   const SizedBox(height: 6),
                   Center(
                     child: Text(

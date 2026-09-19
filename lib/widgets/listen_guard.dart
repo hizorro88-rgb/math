@@ -12,7 +12,9 @@ Future<bool> ensureListenReady(
   String lang = 'ko-KR',
   String langName = '한국어',
 }) async {
-  if (!Speech.isLangAvailable(lang)) {
+  // 시작 후 음성을 설치했을 수 있으니, 막기 전에 한 번 다시 확인한다.
+  if (!Speech.isLangAvailable(lang) && !await Speech.recheckLang(lang)) {
+    if (!context.mounted) return false;
     await showDialog<void>(
       context: context,
       builder: (context) => _guardDialog(
@@ -20,18 +22,47 @@ Future<bool> ensureListenReady(
         emoji: '🙉',
         title: '음성을 쓸 수 없어요',
         message: '이 기기에는 $langName 읽어주기 음성이 없어서\n듣기 문제를 풀 수 없어요.\n'
-            '기기 설정에서 $langName TTS를 설치해 주세요.',
+            '$langName 음성을 설치하면 바로 풀 수 있어요!',
         buttons: [
+          // 안드로이드: 기기 TTS 설정으로 바로 이동 (음성 데이터 설치 입구)
+          if (Speech.canOpenTtsSettings) ...[
+            BouncyButton(
+              color: const Color(0xFF3DA35D),
+              padding: const EdgeInsets.symmetric(vertical: 14),
+              onTap: () {
+                Navigator.of(context).pop();
+                Speech.openTtsSettings();
+              },
+              child: const Text(
+                '⚙️ 음성 설치하러 가기',
+                style: TextStyle(
+                  fontSize: 19,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+          ],
           BouncyButton(
-            color: const Color(0xFF3DA35D),
+            color: Speech.canOpenTtsSettings
+                ? Colors.white
+                : const Color(0xFF3DA35D),
+            shadowColor:
+                Speech.canOpenTtsSettings ? Colors.grey.shade300 : null,
+            border: Speech.canOpenTtsSettings
+                ? Border.all(color: Colors.grey.shade300, width: 2)
+                : null,
             padding: const EdgeInsets.symmetric(vertical: 14),
             onTap: () => Navigator.of(context).pop(),
-            child: const Text(
-              '알겠어요',
+            child: Text(
+              Speech.canOpenTtsSettings ? '다음에 할래요' : '알겠어요',
               style: TextStyle(
-                fontSize: 20,
+                fontSize: Speech.canOpenTtsSettings ? 18 : 20,
                 fontWeight: FontWeight.bold,
-                color: Colors.white,
+                color: Speech.canOpenTtsSettings
+                    ? Colors.grey.shade600
+                    : Colors.white,
               ),
             ),
           ),
@@ -42,6 +73,7 @@ Future<bool> ensureListenReady(
   }
 
   if (Speech.enabled) return true;
+  if (!context.mounted) return false;
 
   final turnOn = await showDialog<bool>(
     context: context,

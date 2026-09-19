@@ -360,11 +360,11 @@ class _QuizScreenState extends State<QuizScreen> {
                         child: IntrinsicHeight(
                           child: Column(
                             children: [
-                              const Spacer(flex: 2),
+                              const Spacer(flex: 1),
                               _buildQuestionCard(),
-                              const Spacer(flex: 3),
+                              const Spacer(flex: 2),
                               _buildOwlCheer(),
-                              const Spacer(flex: 3),
+                              const Spacer(flex: 2),
                               if (_question.vertical)
                                 _buildKeypad()
                               else
@@ -399,8 +399,9 @@ class _QuizScreenState extends State<QuizScreen> {
         ? (_isCorrect ? '우와아! 잘했어!' : '괜찮아, 다시 해 보자!')
         : '쿼카랑 같이 골라 볼까?';
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const QuokkaFace(size: 34),
+        const QuokkaFace(size: 64),
         const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

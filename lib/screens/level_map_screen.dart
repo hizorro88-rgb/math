@@ -456,6 +456,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 onSettingsTap: _openSettings,
                 onSoundChanged: () => setState(() {}),
                 subjectEmojis: [for (final s in _subjects) s.$1],
+                subjectLabels: [for (final s in _subjects) s.$2],
                 subject: _subject,
                 onSubjectChanged: _setSubject,
               ),
@@ -771,6 +772,7 @@ class _Header extends StatelessWidget {
     required this.onSettingsTap,
     required this.onSoundChanged,
     required this.subjectEmojis,
+    required this.subjectLabels,
     required this.subject,
     required this.onSubjectChanged,
   });
@@ -788,6 +790,9 @@ class _Header extends StatelessWidget {
 
   /// 상단의 작은 과목 이모지 버튼들 (탭하면 아래 카테고리가 바뀐다)
   final List<String> subjectEmojis;
+
+  /// 과목 이름 (선택된 버튼에만 이모지 옆에 함께 보여준다)
+  final List<String> subjectLabels;
   final int subject;
   final ValueChanged<int> onSubjectChanged;
 
@@ -834,19 +839,25 @@ class _Header extends StatelessWidget {
                     alignment: Alignment.centerRight,
                     child: Row(
                       children: [
-                        // 과목 바로 바꾸기 (작은 이모지 버튼)
+                        // 과목 바로 바꾸기: 선택된 과목은 이름까지 보여줘서
+                        // "지금 무슨 과목인지"가 한눈에 보인다.
                         for (var i = 0; i < subjectEmojis.length; i++)
                           Padding(
                             padding:
-                                const EdgeInsets.symmetric(horizontal: 1.5),
+                                const EdgeInsets.symmetric(horizontal: 2),
                             child: GestureDetector(
                               key: ValueKey('subject-$i'),
+                              behavior: HitTestBehavior.opaque,
                               onTap: () => onSubjectChanged(i),
                               child: Container(
-                                width: 32,
-                                height: 32,
+                                height: 38,
+                                constraints:
+                                    const BoxConstraints(minWidth: 38),
+                                padding: EdgeInsets.symmetric(
+                                    horizontal: i == subject ? 10 : 0),
+                                alignment: Alignment.center,
                                 decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
+                                  borderRadius: BorderRadius.circular(999),
                                   color: i == subject
                                       ? Colors.white
                                       : Colors.white
@@ -857,16 +868,37 @@ class _Header extends StatelessWidget {
                                     width: i == subject ? 2 : 1,
                                   ),
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    subjectEmojis[i],
-                                    style: const TextStyle(fontSize: 15),
-                                  ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    Text(
+                                      subjectEmojis[i],
+                                      style: const TextStyle(fontSize: 16),
+                                    ),
+                                    if (i == subject) ...[
+                                      const SizedBox(width: 4),
+                                      Text(
+                                        subjectLabels[i],
+                                        style: const TextStyle(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.bold,
+                                          color: AppColors.ink,
+                                        ),
+                                      ),
+                                    ],
+                                  ],
                                 ),
                               ),
                             ),
                           ),
-                        const SizedBox(width: 7),
+                        // 과목 그룹과 프로필을 구분하는 얇은 세로선
+                        Container(
+                          width: 1.5,
+                          height: 22,
+                          margin:
+                              const EdgeInsets.symmetric(horizontal: 7),
+                          color: Colors.white.withValues(alpha: 0.4),
+                        ),
                         // 프로필 바꾸기 (아바타만 — 이름은 아래 인사말에 나온다)
                         GestureDetector(
                           key: const ValueKey('profile-chip'),
@@ -1545,7 +1577,9 @@ class _CategoryCard extends StatelessWidget {
       borderRadius: 22,
       padding: const EdgeInsets.all(14),
       onTap: onTap,
-      child: Row(
+      child: Opacity(
+        opacity: locked ? 0.62 : 1,
+        child: Row(
         children: [
           Container(
             width: 54,
@@ -1633,8 +1667,12 @@ class _CategoryCard extends StatelessWidget {
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: Colors.grey),
+          // 잠긴 카드는 "눌러도 열리는 것"처럼 보이지 않게 화살표 대신 자물쇠
+          locked
+              ? Icon(Icons.lock_rounded, color: Colors.grey.shade400)
+              : const Icon(Icons.chevron_right, color: Colors.grey),
         ],
+        ),
       ),
     );
   }
