@@ -12,6 +12,7 @@ import '../widgets/parent_gate.dart';
 import 'backup_screen.dart';
 import 'level_map_screen.dart';
 import 'pass_screen.dart';
+import 'report_screen.dart';
 
 /// 설정: 효과음·말소리(문제 읽어주기)·말 빠르기, 진도 백업 바로가기.
 class SettingsScreen extends StatefulWidget {
@@ -359,6 +360,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           _card(
             children: [
+              ListTile(
+                leading: const Icon(Icons.insert_chart_rounded,
+                    color: Color(0xFF4D96FF)),
+                title: const Text(
+                  '학습 리포트',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                subtitle: Text(keepAll('과목별 정답률과 일주일 학습 기록을 봐요')),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () async {
+                  final ok = await checkParentGate(context);
+                  if (!ok || !context.mounted) return;
+                  await Navigator.of(context).push(
+                    MaterialPageRoute(builder: (_) => const ReportScreen()),
+                  );
+                },
+              ),
+              const Divider(height: 1),
               ListTile(
                 leading: const Icon(Icons.family_restroom_rounded,
                     color: Color(0xFF8C5A2B)),

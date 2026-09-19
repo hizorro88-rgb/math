@@ -35,7 +35,6 @@ import 'pass_screen.dart';
 import 'practice_screen.dart';
 import 'profile_screen.dart';
 import 'quiz_screen.dart';
-import 'report_screen.dart';
 import 'settings_screen.dart';
 import 'shop_screen.dart';
 import 'sticker_book_screen.dart';
@@ -310,15 +309,6 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     );
   }
 
-  Future<void> _openReport() async {
-    // 부모용 화면이라 간단한 확인 관문을 거친다.
-    final ok = await checkParentGate(context);
-    if (!ok || !mounted) return;
-    Navigator.of(context).push(
-      MaterialPageRoute(builder: (_) => const ReportScreen()),
-    );
-  }
-
   Future<void> _openStickerBook() async {
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const StickerBookScreen()),
@@ -390,7 +380,6 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 profile: data.profile,
                 onOwlTap: _openShop,
                 onProfileTap: _openProfiles,
-                onReportTap: _openReport,
                 onSettingsTap: _openSettings,
                 onSoundChanged: () => setState(() {}),
               ),
@@ -398,27 +387,118 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    // 과목 고르기: 가로 스크롤 칩 (끝에 여백을 둬서
-                    // 더 있다는 것이 보이게)
+                    // ── 1. 배우기: 과목을 고르면 바로 밑 카테고리가 바뀐다 ──
+                    const _SectionTitle('📚 배우기'),
+                    // 과목 고르기: 탭 폭을 4.5개가 보이게 맞춰서
+                    // 오른쪽에 과목이 더 있다는 것이 눈에 띄게 한다.
                     SizedBox(
                       height: 56,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        padding: const EdgeInsets.only(right: 28),
-                        itemCount: _subjects.length,
-                        separatorBuilder: (context, index) =>
-                            const SizedBox(width: 8),
-                        itemBuilder: (context, i) => _SubjectTab(
-                          emoji: _subjects[i].$1,
-                          label: _subjects[i].$2,
-                          selected: _subject == i,
-                          onTap: () => _setSubject(i),
-                        ),
+                      child: LayoutBuilder(
+                        builder: (context, constraints) {
+                          final tabWidth =
+                              (constraints.maxWidth - 8 * 4) / 4.5;
+                          return ListView.separated(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _subjects.length,
+                            separatorBuilder: (context, index) =>
+                                const SizedBox(width: 8),
+                            itemBuilder: (context, i) => SizedBox(
+                              width: tabWidth,
+                              child: _SubjectTab(
+                                emoji: _subjects[i].$1,
+                                label: _subjects[i].$2,
+                                selected: _subject == i,
+                                onTap: () => _setSubject(i),
+                              ),
+                            ),
+                          );
+                        },
                       ),
                     ),
                     const SizedBox(height: 14),
-                    _RankCard(points: data.points),
-                    const SizedBox(height: 14),
+                    // 고른 과목의 카테고리를 골라 들어간다.
+                    if (_subject == 1)
+                      for (final category in KoreanCurriculum.categories) ...[
+                        _CategoryCard(
+                          emoji: category.emoji,
+                          title: category.title,
+                          desc: category.desc,
+                          color: category.color,
+                          cleared: KoreanCurriculum.levels
+                              .where((l) =>
+                                  l.unit.category.index == category.index &&
+                                  data.krStars[l.number - 1] >= 1)
+                              .length,
+                          total: category.totalLevels,
+                          locked: !data.hasPass && category.index > 0,
+                          onTap: () => _openKoreanCategory(category),
+                        ),
+                        const SizedBox(height: 12),
+                      ]
+                    else if (_subject == 2)
+                      for (final category in EnglishCurriculum.categories) ...[
+                        _CategoryCard(
+                          emoji: category.emoji,
+                          title: category.title,
+                          desc: category.desc,
+                          color: category.color,
+                          cleared: EnglishCurriculum.levels
+                              .where((l) =>
+                                  l.unit.category.index == category.index &&
+                                  data.enStars[l.number - 1] >= 1)
+                              .length,
+                          total: category.totalLevels,
+                          locked: !data.hasPass && category.index > 0,
+                          onTap: () => _openEnglishCategory(category),
+                        ),
+                        const SizedBox(height: 12),
+                      ]
+                    else if (_subject >= 3)
+                      for (final category
+                          in languagePacks[_subject - 3].categories) ...[
+                        _CategoryCard(
+                          emoji: category.emoji,
+                          title: category.title,
+                          desc: category.desc,
+                          color: category.color,
+                          cleared: languagePacks[_subject - 3]
+                              .levels
+                              .where((l) =>
+                                  l.unit.category.index == category.index &&
+                                  data.langStars[_subject - 3]
+                                          [l.number - 1] >=
+                                      1)
+                              .length,
+                          total: category.totalLevels,
+                          locked: !data.hasPass && category.index > 0,
+                          onTap: () => _openLangCategory(
+                              languagePacks[_subject - 3], category),
+                        ),
+                        const SizedBox(height: 12),
+                      ]
+                    else
+                      for (final category in Curriculum.categories) ...[
+                        _CategoryCard(
+                          emoji: category.emoji,
+                          title: category.title,
+                          desc: category.desc,
+                          color: category.color,
+                          cleared: Curriculum.levels
+                              .where((l) =>
+                                  l.unit.category.index == category.index &&
+                                  stars[l.number - 1] >= 1)
+                              .length,
+                          total: category.totalLevels,
+                          recommended:
+                              data.recommendedCategory == category.index,
+                          locked: !data.hasPass && category.index > 0,
+                          onTap: () => _openCategory(category),
+                        ),
+                        const SizedBox(height: 12),
+                      ],
+                    const SizedBox(height: 10),
+                    // ── 2. 오늘의 도전: 매일 한 번씩 들르는 것들 ──
+                    const _SectionTitle('🔥 오늘의 도전'),
                     _DailyCard(
                         daily: data.daily,
                         coins: data.coins,
@@ -509,176 +589,131 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                       ),
                       const SizedBox(height: 14),
                     ],
-                    // 오답 노트: 틀린 낱말이 쌓여 있으면 다시 풀기 제안
-                    if (data.wrongCount > 0) ...[
-                      BouncyButton(
-                        color: const Color(0xFFFDE8F4),
-                        shadowColor: const Color(0xFFF2A9D4),
-                        borderRadius: 22,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 14),
-                        onTap: () async {
-                          await Navigator.of(context).push(
-                            MaterialPageRoute(
-                                builder: (_) => const WrongNotesScreen()),
-                          );
-                          _refresh();
-                        },
-                        child: Row(
-                          children: [
-                            const Text('📒', style: TextStyle(fontSize: 30)),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    '오답 노트',
-                                    style: TextStyle(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                    // 오답 노트: 자리를 고정해 두고(위치 기억),
+                    // 틀린 게 쌓였을 때만 분홍으로 눈에 띄게 한다.
+                    BouncyButton(
+                      color: data.wrongCount > 0
+                          ? const Color(0xFFFDE8F4)
+                          : Colors.white,
+                      shadowColor: data.wrongCount > 0
+                          ? const Color(0xFFF2A9D4)
+                          : Colors.grey.shade300,
+                      borderRadius: 22,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 14),
+                      onTap: () async {
+                        await Navigator.of(context).push(
+                          MaterialPageRoute(
+                              builder: (_) => const WrongNotesScreen()),
+                        );
+                        _refresh();
+                      },
+                      child: Row(
+                        children: [
+                          const Text('📒', style: TextStyle(fontSize: 30)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  '오답 노트',
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                  Text(
-                                    '틀린 낱말 ${data.wrongCount}개 · 맞히면 노트에서 사라져요',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade700,
-                                    ),
+                                ),
+                                Text(
+                                  data.wrongCount > 0
+                                      ? '틀린 낱말 ${data.wrongCount}개 · 맞히면 노트에서 사라져요'
+                                      : '지금은 비어 있어요 · 틀린 문제가 생기면 여기 모여요',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade700,
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
-                            const Icon(Icons.chevron_right, color: Colors.grey),
-                          ],
-                        ),
+                          ),
+                          const Icon(Icons.chevron_right, color: Colors.grey),
+                        ],
                       ),
-                      const SizedBox(height: 14),
-                    ],
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                            child: _MenuCard(
-                          emoji: '🛍️',
-                          title: '꾸미기 가게',
-                          subtitle: '부엉이 꾸미기',
-                          onTap: _openShop,
-                        )),
-                        const SizedBox(width: 10),
-                        Expanded(
-                            child: _MenuCard(
-                          emoji: '🎨',
-                          title: '자유 연습',
-                          subtitle: '골라서 연습',
-                          onTap: _openPractice,
-                        )),
-                      ],
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                            child: _MenuCard(
-                          emoji: '📔',
-                          title: '스티커북',
-                          subtitle: data.stickerTickets > 0
-                              ? '🎟️ 붙일 스티커 ${data.stickerTickets}장!'
-                              : '골라 붙이기',
-                          onTap: _openStickerBook,
-                        )),
-                        const SizedBox(width: 10),
-                        Expanded(
-                            child: _MenuCard(
-                          emoji: '🏅',
-                          title: '배지 도감',
-                          subtitle: '모은 배지 보기',
-                          onTap: _openBadges,
-                        )),
-                      ],
                     ),
                     const SizedBox(height: 14),
-                    // 고른 과목의 카테고리를 골라 들어간다.
-                    if (_subject == 1)
-                      for (final category in KoreanCurriculum.categories) ...[
-                        _CategoryCard(
-                          emoji: category.emoji,
-                          title: category.title,
-                          desc: category.desc,
-                          color: category.color,
-                          cleared: KoreanCurriculum.levels
-                              .where((l) =>
-                                  l.unit.category.index == category.index &&
-                                  data.krStars[l.number - 1] >= 1)
-                              .length,
-                          total: category.totalLevels,
-                          locked: !data.hasPass && category.index > 0,
-                          onTap: () => _openKoreanCategory(category),
-                        ),
-                        const SizedBox(height: 12),
-                      ]
-                    else if (_subject == 2)
-                      for (final category in EnglishCurriculum.categories) ...[
-                        _CategoryCard(
-                          emoji: category.emoji,
-                          title: category.title,
-                          desc: category.desc,
-                          color: category.color,
-                          cleared: EnglishCurriculum.levels
-                              .where((l) =>
-                                  l.unit.category.index == category.index &&
-                                  data.enStars[l.number - 1] >= 1)
-                              .length,
-                          total: category.totalLevels,
-                          locked: !data.hasPass && category.index > 0,
-                          onTap: () => _openEnglishCategory(category),
-                        ),
-                        const SizedBox(height: 12),
-                      ]
-                    else if (_subject >= 3)
-                      for (final category
-                          in languagePacks[_subject - 3].categories) ...[
-                        _CategoryCard(
-                          emoji: category.emoji,
-                          title: category.title,
-                          desc: category.desc,
-                          color: category.color,
-                          cleared: languagePacks[_subject - 3]
-                              .levels
-                              .where((l) =>
-                                  l.unit.category.index == category.index &&
-                                  data.langStars[_subject - 3]
-                                          [l.number - 1] >=
-                                      1)
-                              .length,
-                          total: category.totalLevels,
-                          locked: !data.hasPass && category.index > 0,
-                          onTap: () => _openLangCategory(
-                              languagePacks[_subject - 3], category),
-                        ),
-                        const SizedBox(height: 12),
-                      ]
-                    else
-                      for (final category in Curriculum.categories) ...[
-                        _CategoryCard(
-                          emoji: category.emoji,
-                          title: category.title,
-                          desc: category.desc,
-                          color: category.color,
-                          cleared: Curriculum.levels
-                              .where((l) =>
-                                  l.unit.category.index == category.index &&
-                                  stars[l.number - 1] >= 1)
-                              .length,
-                          total: category.totalLevels,
-                          recommended:
-                              data.recommendedCategory == category.index,
-                          locked: !data.hasPass && category.index > 0,
-                          onTap: () => _openCategory(category),
-                        ),
-                        const SizedBox(height: 12),
-                      ],
+                    // 자유 연습: 단계와 무관한 학습이라 도전 묶음에 둔다.
+                    BouncyButton(
+                      color: Colors.white,
+                      shadowColor: Colors.grey.shade300,
+                      borderRadius: 22,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 14),
+                      onTap: _openPractice,
+                      child: Row(
+                        children: [
+                          const Text('🎨', style: TextStyle(fontSize: 30)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  '자유 연습',
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                Text(
+                                  '단계와 상관없이 하고 싶은 것만 골라 연습해요',
+                                  style: TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.grey.shade700,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const Icon(Icons.chevron_right, color: Colors.grey),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    // ── 3. 모으기·꾸미기: 보상 구경 ──
+                    const _SectionTitle('🎁 모으기·꾸미기'),
+                    IntrinsicHeight(
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Expanded(
+                              child: _MenuCard(
+                            emoji: '🛍️',
+                            title: '꾸미기 가게',
+                            subtitle: '부엉이 꾸미기',
+                            onTap: _openShop,
+                          )),
+                          const SizedBox(width: 10),
+                          Expanded(
+                              child: _MenuCard(
+                            emoji: '📔',
+                            title: '스티커북',
+                            subtitle: data.stickerTickets > 0
+                                ? '🎟️ ${data.stickerTickets}장!'
+                                : '골라 붙이기',
+                            onTap: _openStickerBook,
+                          )),
+                          const SizedBox(width: 10),
+                          Expanded(
+                              child: _MenuCard(
+                            emoji: '🏅',
+                            title: '배지 도감',
+                            subtitle: '모은 배지',
+                            onTap: _openBadges,
+                          )),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _RankCard(points: data.points),
                   ],
                 ),
               ),
@@ -702,7 +737,6 @@ class _Header extends StatelessWidget {
     required this.profile,
     required this.onOwlTap,
     required this.onProfileTap,
-    required this.onReportTap,
     required this.onSettingsTap,
     required this.onSoundChanged,
   });
@@ -715,7 +749,6 @@ class _Header extends StatelessWidget {
   final Profile profile;
   final VoidCallback onOwlTap;
   final VoidCallback onProfileTap;
-  final VoidCallback onReportTap;
   final VoidCallback onSettingsTap;
   final VoidCallback onSoundChanged;
 
@@ -778,15 +811,6 @@ class _Header extends StatelessWidget {
                         color: Colors.white,
                       ),
                     ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: onReportTap,
-                  visualDensity: VisualDensity.compact,
-                  icon: const Icon(
-                    Icons.insert_chart_rounded,
-                    color: Colors.white,
-                    size: 26,
                   ),
                 ),
                 // 한 번에 전부 끄기/켜기 (효과음+읽어주기)
@@ -1251,7 +1275,32 @@ class _MissionRow extends StatelessWidget {
   }
 }
 
-/// 꾸미기 가게 / 자유 연습으로 들어가는 메뉴 카드
+/// 홈 화면 섹션 제목: 이 구역이 무엇을 하는 곳인지 한 줄로 알려준다.
+class _SectionTitle extends StatelessWidget {
+  const _SectionTitle(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(left: 6, bottom: 10),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: Text(
+          text,
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+            color: Colors.grey.shade600,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+/// 꾸미기 가게 / 스티커북 / 배지 도감으로 들어가는 메뉴 카드
 class _MenuCard extends StatelessWidget {
   const _MenuCard({
     required this.emoji,

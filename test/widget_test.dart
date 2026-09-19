@@ -434,12 +434,13 @@ void main() {
     expect(find.byIcon(Icons.backspace_outlined), findsOneWidget);
   });
 
-  testWidgets('리포트는 부모 게이트(곱셈 문제)를 풀어야 열린다', (tester) async {
+  testWidgets('리포트는 설정의 부모님 메뉴에서 게이트를 풀어야 열린다', (tester) async {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.insert_chart_rounded));
+    await tester.tap(find.byIcon(Icons.settings_rounded));
     await tester.pumpAndSettle();
+    await scrollAndTap(tester, find.text('학습 리포트'));
 
     expect(find.text('부모님 확인'), findsOneWidget);
 
