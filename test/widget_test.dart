@@ -271,6 +271,8 @@ void main() {
     await tester.pumpAndSettle();
 
     // 헤더의 한글 과목 버튼을 누른다.
+    await tester.tap(find.byKey(const ValueKey('subject-picker')));
+    await tester.pumpAndSettle();
     await scrollAndTap(tester, find.byKey(const ValueKey('subject-1')));
     expect(find.text('한글 첫걸음'), findsOneWidget);
 
@@ -484,6 +486,8 @@ void main() {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byKey(const ValueKey('subject-picker')));
+    await tester.pumpAndSettle();
     await scrollAndTap(tester, find.byKey(const ValueKey('subject-2')));
     expect(find.text('알파벳 첫걸음'), findsOneWidget);
 
@@ -512,6 +516,8 @@ void main() {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
+    await tester.tap(find.byKey(const ValueKey('subject-picker')));
+    await tester.pumpAndSettle();
     await scrollAndTap(tester, find.byKey(const ValueKey('subject-3')));
     expect(find.text('かな 첫걸음'), findsOneWidget);
 

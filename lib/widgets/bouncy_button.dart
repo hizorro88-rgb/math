@@ -89,3 +89,39 @@ class _BouncyButtonState extends State<BouncyButton> {
     );
   }
 }
+
+/// 아무 위젯에나 "눌리는 느낌"(살짝 줄어들었다 돌아옴)을 입히는 래퍼.
+/// 색·그림자·상태 표현은 자식이 그대로 관리한다. onTap이 null이면 반응 없음.
+class PressBounce extends StatefulWidget {
+  const PressBounce({super.key, required this.child, this.onTap});
+
+  final Widget child;
+  final VoidCallback? onTap;
+
+  @override
+  State<PressBounce> createState() => _PressBounceState();
+}
+
+class _PressBounceState extends State<PressBounce> {
+  bool _pressed = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = widget.onTap != null;
+    return GestureDetector(
+      onTapDown: enabled ? (_) => setState(() => _pressed = true) : null,
+      onTapCancel: () => setState(() => _pressed = false),
+      onTapUp: enabled
+          ? (_) {
+              setState(() => _pressed = false);
+              widget.onTap!();
+            }
+          : null,
+      child: AnimatedScale(
+        scale: _pressed ? 0.93 : 1,
+        duration: const Duration(milliseconds: 90),
+        child: widget.child,
+      ),
+    );
+  }
+}

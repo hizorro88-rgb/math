@@ -346,6 +346,74 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     _refresh(); // 프로필이 바뀌면 진행도·코인 등을 다시 불러온다.
   }
 
+  /// 과목 고르기 창: 큰 버튼으로 과목 하나를 고른다.
+  Future<void> _openSubjectPicker() async {
+    final picked = await showModalBottomSheet<int>(
+      context: context,
+      backgroundColor: Colors.white,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) => SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                '어떤 과목을 배울까?',
+                textAlign: TextAlign.center,
+                style: displayStyle(fontSize: 20),
+              ),
+              const SizedBox(height: 14),
+              for (var i = 0; i < _subjects.length; i++) ...[
+                BouncyButton(
+                  key: ValueKey('subject-$i'),
+                  color: i == _subject ? const Color(0xFFD7FFB8) : Colors.white,
+                  shadowColor: i == _subject
+                      ? const Color(0xFFB5E48C)
+                      : Colors.grey.shade300,
+                  border: Border.all(
+                    color: i == _subject
+                        ? const Color(0xFF3DA35D)
+                        : Colors.grey.shade300,
+                    width: 2,
+                  ),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  onTap: () => Navigator.of(context).pop(i),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(_subjects[i].$1,
+                          style: const TextStyle(fontSize: 22)),
+                      const SizedBox(width: 8),
+                      Text(
+                        _subjects[i].$2,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (i == _subject) ...[
+                        const SizedBox(width: 6),
+                        const Icon(Icons.check_rounded,
+                            size: 20, color: Color(0xFF2E7D46)),
+                      ],
+                    ],
+                  ),
+                ),
+                if (i != _subjects.length - 1) const SizedBox(height: 8),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+    if (picked != null) _setSubject(picked);
+  }
+
   /// 수학 카테고리 카드 목록. 아이 나이(추천 카테고리)보다 앞의 단계는
   /// 접기 카드 한 장으로 접어둔다 — 기록은 그대로 두고 표시만 접는다.
   /// 이용권이 없으면 무료 카테고리(4살)가 유일하게 놀 수 있는 곳이라 접지 않는다.
@@ -458,7 +526,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 subjectEmojis: [for (final s in _subjects) s.$1],
                 subjectLabels: [for (final s in _subjects) s.$2],
                 subject: _subject,
-                onSubjectChanged: _setSubject,
+                onSubjectPickerTap: _openSubjectPicker,
               ),
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -774,7 +842,7 @@ class _Header extends StatelessWidget {
     required this.subjectEmojis,
     required this.subjectLabels,
     required this.subject,
-    required this.onSubjectChanged,
+    required this.onSubjectPickerTap,
   });
 
   final String title;
@@ -788,13 +856,11 @@ class _Header extends StatelessWidget {
   final VoidCallback onSettingsTap;
   final VoidCallback onSoundChanged;
 
-  /// 상단의 작은 과목 이모지 버튼들 (탭하면 아래 카테고리가 바뀐다)
+  /// 현재 과목 표시용 (이모지·이름). 칩을 누르면 과목 고르기 창이 뜬다.
   final List<String> subjectEmojis;
-
-  /// 과목 이름 (선택된 버튼에만 이모지 옆에 함께 보여준다)
   final List<String> subjectLabels;
   final int subject;
-  final ValueChanged<int> onSubjectChanged;
+  final VoidCallback onSubjectPickerTap;
 
   @override
   Widget build(BuildContext context) {
@@ -839,66 +905,44 @@ class _Header extends StatelessWidget {
                     alignment: Alignment.centerRight,
                     child: Row(
                       children: [
-                        // 과목 바로 바꾸기: 선택된 과목은 이름까지 보여줘서
-                        // "지금 무슨 과목인지"가 한눈에 보인다.
-                        for (var i = 0; i < subjectEmojis.length; i++)
-                          Padding(
-                            padding:
-                                const EdgeInsets.symmetric(horizontal: 2),
-                            child: GestureDetector(
-                              key: ValueKey('subject-$i'),
-                              behavior: HitTestBehavior.opaque,
-                              onTap: () => onSubjectChanged(i),
-                              child: Container(
-                                height: 38,
-                                constraints:
-                                    const BoxConstraints(minWidth: 38),
-                                padding: EdgeInsets.symmetric(
-                                    horizontal: i == subject ? 10 : 0),
-                                alignment: Alignment.center,
-                                decoration: BoxDecoration(
-                                  borderRadius: BorderRadius.circular(999),
-                                  color: i == subject
-                                      ? Colors.white
-                                      : Colors.white
-                                          .withValues(alpha: 0.18),
-                                  border: Border.all(
-                                    color: Colors.white.withValues(
-                                        alpha: i == subject ? 1 : 0.45),
-                                    width: i == subject ? 2 : 1,
+                        // 현재 과목 하나만 보여주고, 누르면 고르기 창이 뜬다.
+                        GestureDetector(
+                          key: const ValueKey('subject-picker'),
+                          behavior: HitTestBehavior.opaque,
+                          onTap: onSubjectPickerTap,
+                          child: Container(
+                            height: 38,
+                            padding: const EdgeInsets.only(left: 11, right: 4),
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(999),
+                              color: Colors.white,
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  subjectEmojis[subject],
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                                const SizedBox(width: 5),
+                                Text(
+                                  subjectLabels[subject],
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.bold,
+                                    color: AppColors.ink,
                                   ),
                                 ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    Text(
-                                      subjectEmojis[i],
-                                      style: const TextStyle(fontSize: 16),
-                                    ),
-                                    if (i == subject) ...[
-                                      const SizedBox(width: 4),
-                                      Text(
-                                        subjectLabels[i],
-                                        style: const TextStyle(
-                                          fontSize: 14,
-                                          fontWeight: FontWeight.bold,
-                                          color: AppColors.ink,
-                                        ),
-                                      ),
-                                    ],
-                                  ],
+                                const Icon(
+                                  Icons.arrow_drop_down_rounded,
+                                  size: 24,
+                                  color: AppColors.inkSoft,
                                 ),
-                              ),
+                              ],
                             ),
                           ),
-                        // 과목 그룹과 프로필을 구분하는 얇은 세로선
-                        Container(
-                          width: 1.5,
-                          height: 22,
-                          margin:
-                              const EdgeInsets.symmetric(horizontal: 7),
-                          color: Colors.white.withValues(alpha: 0.4),
                         ),
+                        const SizedBox(width: 8),
                         // 프로필 바꾸기 (아바타만 — 이름은 아래 인사말에 나온다)
                         GestureDetector(
                           key: const ValueKey('profile-chip'),
@@ -964,9 +1008,7 @@ class _Header extends StatelessWidget {
               children: [
                 GestureDetector(
                   onTap: onOwlTap,
-                  child: _OwlBounce(
-                    child: QuokkaAvatar(size: 84, equipped: equipped),
-                  ),
+                  child: QuokkaAvatar(size: 84, equipped: equipped),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -1064,48 +1106,6 @@ class _HeaderScenePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-/// 쿼카가 2초 주기로 살짝 숨 쉬듯 움직인다.
-class _OwlBounce extends StatefulWidget {
-  const _OwlBounce({required this.child});
-
-  final Widget child;
-
-  @override
-  State<_OwlBounce> createState() => _OwlBounceState();
-}
-
-class _OwlBounceState extends State<_OwlBounce>
-    with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 2000),
-  );
-
-  @override
-  void initState() {
-    super.initState();
-    if (AppMotion.loops) _controller.repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: _controller,
-      builder: (context, child) => Transform.translate(
-        offset: Offset(0, -3 * _controller.value),
-        child: child,
-      ),
-      child: widget.child,
-    );
-  }
 }
 
 class _StatChip extends StatelessWidget {
@@ -1416,56 +1416,41 @@ class _FoldCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    // 학습 카드보다 눈에 덜 띄어야 해서 한 줄짜리 얇은 카드로 둔다.
     return BouncyButton(
       color: Colors.white,
       shadowColor: Colors.grey.shade300,
-      borderRadius: 22,
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      borderRadius: 18,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
       debounce: false, // 접었다 폈다 반복 탭이 자연스러워야 한다
       onTap: onTap,
       child: Row(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: const Color(0xFFEAF9E6),
-              borderRadius: BorderRadius.circular(14),
-            ),
-            child: const Center(
-              child: Text('🌱', style: TextStyle(fontSize: 22)),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  expanded ? '이전 단계 접기' : '이전 단계 $count개',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  expanded
-                      ? '구경 다 했으면 눌러서 접어요'
-                      : stars > 0
-                          ? '⭐ $stars개 모은 곳 · 누르면 열려요'
-                          : '$rangeLabel 단계 · 누르면 열려요',
-                  style:
-                      TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
-                ),
-              ],
+          const Text('🌱', style: TextStyle(fontSize: 18)),
+          const SizedBox(width: 8),
+          Text(
+            expanded ? '이전 단계 접기' : '이전 단계 $count개',
+            style: const TextStyle(
+              fontSize: 14.5,
+              fontWeight: FontWeight.bold,
+              color: AppColors.inkSoft,
             ),
           ),
+          const Spacer(),
+          Text(
+            expanded
+                ? ''
+                : stars > 0
+                    ? '⭐ $stars'
+                    : rangeLabel,
+            style: TextStyle(fontSize: 12.5, color: Colors.grey.shade500),
+          ),
+          const SizedBox(width: 2),
           Icon(
             expanded
                 ? Icons.keyboard_arrow_up_rounded
                 : Icons.keyboard_arrow_down_rounded,
-            size: 28,
+            size: 24,
             color: AppColors.inkSoft,
           ),
         ],

@@ -529,7 +529,7 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
     _ensureTiles();
     Widget tile(int index) {
       final used = _picked.contains(index);
-      return GestureDetector(
+      return PressBounce(
         onTap: _answered || used ? null : () => _tapTile(index),
         child: Container(
           width: 60,
@@ -572,7 +572,7 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
           runSpacing: 8,
           children: [
             for (var i = 0; i < _question.tiles.length; i++) tile(i),
-            GestureDetector(
+            PressBounce(
               onTap: _answered ? null : _tapTileBackspace,
               child: Container(
                 width: 60,
@@ -812,6 +812,6 @@ class _KrChoiceButton extends StatelessWidget {
       );
     }
 
-    return GestureDetector(onTap: onTap, child: button);
+    return PressBounce(onTap: onTap, child: button);
   }
 }

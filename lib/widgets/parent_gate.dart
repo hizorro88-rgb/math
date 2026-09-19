@@ -4,6 +4,7 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
+import 'bouncy_button.dart';
 
 /// 부모용 화면(결제·백업·설정 등) 앞에 두는 확인 관문.
 ///
@@ -280,24 +281,20 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Material(
+        child: PressBounce(
           key: key,
-          color: color ?? Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(14),
-            child: Container(
-              height: 46,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(14),
-                border: color == null
-                    ? Border.all(color: AppColors.outline, width: 1.5)
-                    : null,
-              ),
-              child: child,
+          onTap: onTap,
+          child: Container(
+            height: 46,
+            alignment: Alignment.center,
+            decoration: BoxDecoration(
+              color: color ?? Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              border: color == null
+                  ? Border.all(color: AppColors.outline, width: 1.5)
+                  : null,
             ),
+            child: child,
           ),
         ),
       ),

@@ -298,7 +298,7 @@ class _ChoiceCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return PressBounce(
       onTap: onTap,
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 150),

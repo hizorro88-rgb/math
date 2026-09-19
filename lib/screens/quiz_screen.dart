@@ -625,7 +625,7 @@ class _QuizScreenState extends State<QuizScreen> {
   Widget _buildKeypad() {
     Widget key({required Widget child, VoidCallback? onTap}) {
       return Expanded(
-        child: GestureDetector(
+        child: PressBounce(
           onTap: _answered ? null : onTap,
           child: Container(
             height: 56,
@@ -1029,7 +1029,7 @@ class _ChoiceButton extends StatelessWidget {
       );
     }
 
-    return GestureDetector(onTap: onTap, child: button);
+    return PressBounce(onTap: onTap, child: button);
   }
 }
 

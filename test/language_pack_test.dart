@@ -181,4 +181,50 @@ void main() {
       }
     });
   });
+
+  group('한자 팩 (천자문)', () {
+    test('훈음·구절 완성이 규칙에 맞는다', () {
+      final random = Random(11);
+      for (var round = 0; round < 30; round++) {
+        final q = hanjaPack.generateOne(1, 0, random); // 한자 → 훈음
+        final c = hanjaChars.firstWhere((h) => h.char == q.display);
+        expect(q.answer, c.reading);
+        expect(q.choices, contains(q.answer));
+        expect(q.choices.toSet(), hasLength(4));
+      }
+      for (var round = 0; round < 30; round++) {
+        final q = hanjaPack.generateOne(2, 9, random); // 훈음 → 한자
+        final c = hanjaChars.firstWhere((h) => h.reading == q.display);
+        expect(q.answer, c.char);
+      }
+      for (var round = 0; round < 30; round++) {
+        final q = hanjaPack.generateOne(4, 0, random); // 구절 완성 (앞 단계)
+        expect(q.display, contains('□'));
+        // 가린 글자를 채우면 천자문 구절이 된다.
+        final filled = q.display.replaceAll(' ', '').replaceFirst('□', q.answer);
+        expect(
+          hanjaPhrases.map((p) => p.map((c) => c.char).join()),
+          contains(filled),
+        );
+        expect(q.choices, contains(q.answer));
+      }
+      for (var round = 0; round < 30; round++) {
+        final q = hanjaPack.generateOne(3, 9, random); // 그림 → 한자
+        final c = hanjaChars.firstWhere((h) => h.emoji == q.display);
+        expect(q.answer, c.char);
+      }
+    });
+
+    test('훈음이 같은 글자(집 우·집 주)는 서로 오답으로 안 나온다', () {
+      final random = Random(13);
+      for (var round = 0; round < 200; round++) {
+        final q = hanjaPack.generateOne(0, 9, random);
+        final readings = [
+          for (final ch in q.choices)
+            hanjaChars.firstWhere((h) => h.char == ch).reading,
+        ];
+        expect(readings.toSet(), hasLength(4));
+      }
+    });
+  });
 }
