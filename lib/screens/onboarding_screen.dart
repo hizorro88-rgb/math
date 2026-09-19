@@ -71,7 +71,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               const Text('🦉', textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 64)),
               Text(
-                '부엉이 학교',
+                '쿼카 학교',
                 textAlign: TextAlign.center,
                 style: displayStyle(fontSize: 20, color: AppColors.brown),
               ),
@@ -97,7 +97,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               if (_step == 0) ...[
                 const SizedBox(height: 6),
                 Text(
-                  '안녕! 나는 부기야. 같이 배워 보자!',
+                  '안녕! 나는 쿼키야. 같이 배워 보자!',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
@@ -302,7 +302,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         BouncyButton(
           color: const Color(0xFF1CB0F6),
           padding: const EdgeInsets.symmetric(vertical: 16),
-          onTap: () => Speech.speak('안녕? 나는 부엉이야. 우리 같이 놀면서 공부하자!'),
+          onTap: () => Speech.speak('안녕? 나는 쿼카 쿼키야. 우리 같이 놀면서 공부하자!'),
           child: const Text(
             '🔊 소리 들어 보기',
             textAlign: TextAlign.center,

@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import '../models/progress.dart';
 import '../models/shop.dart';
 import '../services/sounds.dart';
-import '../widgets/owl_avatar.dart';
+import '../widgets/quokka_avatar.dart';
 
-/// 부엉이 꾸미기 상점: 퀴즈로 모은 코인으로 모자·안경·친구를 산다.
+/// 쿼카 꾸미기 상점: 퀴즈로 모은 코인으로 모자·안경·친구를 산다.
 class ShopScreen extends StatefulWidget {
   const ShopScreen({super.key});
 
@@ -79,12 +79,12 @@ class _ShopScreenState extends State<ShopScreen> {
     }
   }
 
-  /// 부기의 한 마디: 살 수 있는 게 없으면 가장 가까운 목표를 알려준다.
+  /// 쿼키의 한 마디: 살 수 있는 게 없으면 가장 가까운 목표를 알려준다.
   String _cheerLine() {
     if (_equipped.isNotEmpty) return '멋지다! 아이템을 눌러 바꿔 봐요';
     final wishList = shopItems.where((i) => !_owned.contains(i.id)).toList()
       ..sort((a, b) => a.cost.compareTo(b.cost));
-    if (wishList.isEmpty) return '와, 전부 다 모았어! 부엉!';
+    if (wishList.isEmpty) return '와, 전부 다 모았어! 신난다!';
     final next = wishList.first;
     if (_coins >= next.cost) return '아이템을 사서 나를 꾸며 줘!';
     final need = next.cost - _coins;
@@ -119,7 +119,7 @@ class _ShopScreenState extends State<ShopScreen> {
           : ListView(
               padding: const EdgeInsets.all(16),
               children: [
-                // 내 부엉이 미리보기
+                // 내 쿼카 미리보기
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   decoration: BoxDecoration(
@@ -135,7 +135,7 @@ class _ShopScreenState extends State<ShopScreen> {
                   ),
                   child: Column(
                     children: [
-                      OwlAvatar(size: 88, equipped: _equipped),
+                      QuokkaAvatar(size: 88, equipped: _equipped),
                       const SizedBox(height: 6),
                       Text(
                         _cheerLine(),

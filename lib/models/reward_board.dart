@@ -20,7 +20,7 @@ class RewardBoardResult {
   /// 부모가 정해 둔 선물 약속 (없으면 null)
   final String? promise;
 
-  /// 앱 선물로 받은 부엉이 꾸미기 아이템 (모두 갖고 있으면 null)
+  /// 앱 선물로 받은 쿼카 꾸미기 아이템 (모두 갖고 있으면 null)
   final ShopItem? gift;
 
   /// 아이템 대신 받은 코인 (아이템을 다 모았을 때)

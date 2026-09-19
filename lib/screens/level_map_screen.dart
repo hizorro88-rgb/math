@@ -18,7 +18,7 @@ import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../theme.dart';
 import '../widgets/bouncy_button.dart';
-import '../widgets/owl_avatar.dart';
+import '../widgets/quokka_avatar.dart';
 import '../widgets/parent_gate.dart';
 import '../models/boss.dart';
 import '../models/quiz_config.dart';
@@ -404,7 +404,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     ];
   }
 
-  /// 오늘 활동에 따라 부엉이 인사말이 달라진다.
+  /// 오늘 활동에 따라 쿼키 인사말이 달라진다.
   String _greetingFor(_MapData data) {
     // 기본 이름("우리 아이")이면 호칭이 어색하지 않게 "친구"로 부른다.
     final name = data.profile.name == '우리 아이' ? '친구' : data.profile.name;
@@ -419,9 +419,9 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       return '$name, ${daily.streak}일째\n함께라니 최고야! 🔥';
     }
     final hour = DateTime.now().hour;
-    if (hour < 12) return '$name, 좋은 아침이야!\n부기랑 놀면서 배우자!';
-    if (hour < 18) return '$name, 오늘도 왔구나!\n부기가 기다렸어!';
-    return '$name, 자기 전에\n한 판 어때? 부엉!';
+    if (hour < 12) return '$name, 좋은 아침이야!\n쿼키랑 놀면서 배우자!';
+    if (hour < 18) return '$name, 오늘도 왔구나!\n쿼키가 기다렸어!';
+    return '$name, 자기 전에\n한 판 어때? 헤헤!';
   }
 
   @override
@@ -445,7 +445,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
             padding: EdgeInsets.zero,
             children: [
               _Header(
-                title: '부엉이 학교',
+                title: '쿼카 학교',
                 greeting: _greetingFor(data),
                 totalStars: totalStars,
                 coins: data.coins,
@@ -455,40 +455,16 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 onProfileTap: _openProfiles,
                 onSettingsTap: _openSettings,
                 onSoundChanged: () => setState(() {}),
+                subjectEmojis: [for (final s in _subjects) s.$1],
+                subject: _subject,
+                onSubjectChanged: _setSubject,
               ),
               Padding(
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
-                    // ── 1. 배우기: 과목을 고르면 바로 밑 카테고리가 바뀐다 ──
+                    // ── 1. 배우기 (과목은 상단 헤더의 이모지 버튼으로 바꾼다) ──
                     const _SectionTitle('📚 배우기'),
-                    // 과목 고르기: 탭 폭을 4.5개가 보이게 맞춰서
-                    // 오른쪽에 과목이 더 있다는 것이 눈에 띄게 한다.
-                    SizedBox(
-                      height: 56,
-                      child: LayoutBuilder(
-                        builder: (context, constraints) {
-                          final tabWidth =
-                              (constraints.maxWidth - 8 * 4) / 4.5;
-                          return ListView.separated(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: _subjects.length,
-                            separatorBuilder: (context, index) =>
-                                const SizedBox(width: 8),
-                            itemBuilder: (context, i) => SizedBox(
-                              width: tabWidth,
-                              child: _SubjectTab(
-                                emoji: _subjects[i].$1,
-                                label: _subjects[i].$2,
-                                selected: _subject == i,
-                                onTap: () => _setSubject(i),
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 14),
                     // 고른 과목의 카테고리를 골라 들어간다.
                     if (_subject == 1)
                       for (final category in KoreanCurriculum.categories) ...[
@@ -743,7 +719,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                               child: _MenuCard(
                             emoji: '🛍️',
                             title: '꾸미기 가게',
-                            subtitle: '부엉이 꾸미기',
+                            subtitle: '쿼키 꾸미기',
                             onTap: _openShop,
                           )),
                           const SizedBox(width: 10),
@@ -780,8 +756,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
   }
 }
 
-/// 초록 그라데이션 헤더: 꾸며진 부엉이가 인사하고 별·코인을 보여준다.
-/// 부엉이를 누르면 꾸미기 가게로 간다.
+/// 초록 그라데이션 헤더: 꾸며진 쿼카가 인사하고 별·코인을 보여준다.
+/// 쿼카를 누르면 꾸미기 가게로 간다.
 class _Header extends StatelessWidget {
   const _Header({
     required this.title,
@@ -794,6 +770,9 @@ class _Header extends StatelessWidget {
     required this.onProfileTap,
     required this.onSettingsTap,
     required this.onSoundChanged,
+    required this.subjectEmojis,
+    required this.subject,
+    required this.onSubjectChanged,
   });
 
   final String title;
@@ -806,6 +785,11 @@ class _Header extends StatelessWidget {
   final VoidCallback onProfileTap;
   final VoidCallback onSettingsTap;
   final VoidCallback onSoundChanged;
+
+  /// 상단의 작은 과목 이모지 버튼들 (탭하면 아래 카테고리가 바뀐다)
+  final List<String> subjectEmojis;
+  final int subject;
+  final ValueChanged<int> onSubjectChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -840,58 +824,105 @@ class _Header extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: displayStyle(fontSize: 26, color: Colors.white),
+                  style: displayStyle(fontSize: 22, color: Colors.white),
                 ),
-                const Spacer(),
-                // 프로필 바꾸기
-                GestureDetector(
-                  onTap: onProfileTap,
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 5,
+                const SizedBox(width: 8),
+                // 좁은 화면에서도 넘치지 않게 오른쪽 묶음 전체를 축소한다.
+                Expanded(
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerRight,
+                    child: Row(
+                      children: [
+                        // 과목 바로 바꾸기 (작은 이모지 버튼)
+                        for (var i = 0; i < subjectEmojis.length; i++)
+                          Padding(
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 1.5),
+                            child: GestureDetector(
+                              key: ValueKey('subject-$i'),
+                              onTap: () => onSubjectChanged(i),
+                              child: Container(
+                                width: 32,
+                                height: 32,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: i == subject
+                                      ? Colors.white
+                                      : Colors.white
+                                          .withValues(alpha: 0.18),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(
+                                        alpha: i == subject ? 1 : 0.45),
+                                    width: i == subject ? 2 : 1,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    subjectEmojis[i],
+                                    style: const TextStyle(fontSize: 15),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        const SizedBox(width: 7),
+                        // 프로필 바꾸기 (아바타만 — 이름은 아래 인사말에 나온다)
+                        GestureDetector(
+                          key: const ValueKey('profile-chip'),
+                          onTap: onProfileTap,
+                          child: Container(
+                            width: 34,
+                            height: 34,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.white.withValues(alpha: 0.25),
+                              border: Border.all(
+                                color: Colors.white.withValues(alpha: 0.6),
+                                width: 1.5,
+                              ),
+                            ),
+                            child: Center(
+                              child: Text(
+                                profile.emoji,
+                                style: const TextStyle(fontSize: 17),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 3),
+                        // 한 번에 전부 끄기/켜기 (효과음+읽어주기)
+                        GestureDetector(
+                          onTap: () async {
+                            final anyOn = Sounds.enabled || Speech.enabled;
+                            await Sounds.setEnabled(!anyOn);
+                            await Speech.setEnabled(!anyOn);
+                            onSoundChanged();
+                          },
+                          child: Padding(
+                            padding: const EdgeInsets.all(5),
+                            child: Icon(
+                              Sounds.enabled || Speech.enabled
+                                  ? Icons.volume_up_rounded
+                                  : Icons.volume_off_rounded,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                        GestureDetector(
+                          onTap: onSettingsTap,
+                          child: const Padding(
+                            padding: EdgeInsets.all(5),
+                            child: Icon(
+                              Icons.settings_rounded,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.25),
-                      borderRadius: BorderRadius.circular(999),
-                      border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.6),
-                      ),
-                    ),
-                    child: Text(
-                      '${profile.emoji} ${profile.name}',
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-                // 한 번에 전부 끄기/켜기 (효과음+읽어주기)
-                IconButton(
-                  onPressed: () async {
-                    final anyOn = Sounds.enabled || Speech.enabled;
-                    await Sounds.setEnabled(!anyOn);
-                    await Speech.setEnabled(!anyOn);
-                    onSoundChanged();
-                  },
-                  visualDensity: VisualDensity.compact,
-                  icon: Icon(
-                    Sounds.enabled || Speech.enabled
-                        ? Icons.volume_up_rounded
-                        : Icons.volume_off_rounded,
-                    color: Colors.white,
-                    size: 26,
-                  ),
-                ),
-                IconButton(
-                  onPressed: onSettingsTap,
-                  visualDensity: VisualDensity.compact,
-                  icon: const Icon(
-                    Icons.settings_rounded,
-                    color: Colors.white,
-                    size: 26,
                   ),
                 ),
               ],
@@ -902,7 +933,7 @@ class _Header extends StatelessWidget {
                 GestureDetector(
                   onTap: onOwlTap,
                   child: _OwlBounce(
-                    child: OwlAvatar(size: 68, equipped: equipped),
+                    child: QuokkaAvatar(size: 68, equipped: equipped),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -964,7 +995,7 @@ class _Header extends StatelessWidget {
   }
 }
 
-/// 헤더 배경: 구름 두 점과 겹친 언덕 — "부엉이 학교"의 앞마당
+/// 헤더 배경: 구름 두 점과 겹친 언덕 — "쿼카 학교"의 앞마당
 class _HeaderScenePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
@@ -1003,7 +1034,7 @@ class _HeaderScenePainter extends CustomPainter {
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
 
-/// 부엉이가 2초 주기로 살짝 숨 쉬듯 움직인다.
+/// 쿼카가 2초 주기로 살짝 숨 쉬듯 움직인다.
 class _OwlBounce extends StatefulWidget {
   const _OwlBounce({required this.child});
 
@@ -1473,62 +1504,6 @@ class _MenuCard extends StatelessWidget {
             style: const TextStyle(fontSize: 13, color: Colors.grey),
           ),
         ],
-      ),
-    );
-  }
-}
-
-/// 과목 전환 탭 (수학 / 한글)
-class _SubjectTab extends StatelessWidget {
-  const _SubjectTab({
-    required this.emoji,
-    required this.label,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final String emoji;
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 12),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFFD7FFB8) : Colors.white,
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(
-            color: selected ? const Color(0xFF3DA35D) : Colors.grey.shade300,
-            width: 3,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: selected ? const Color(0xFFB5E48C) : Colors.grey.shade300,
-              offset: const Offset(0, 4),
-              blurRadius: 0,
-            ),
-          ],
-        ),
-        child: FittedBox(
-          fit: BoxFit.scaleDown,
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(emoji, style: const TextStyle(fontSize: 18)),
-              const SizedBox(width: 4),
-              Text(
-                label,
-                style:
-                    const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-              ),
-            ],
-          ),
-        ),
       ),
     );
   }

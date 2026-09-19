@@ -134,8 +134,8 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
           const SizedBox(height: 6),
           Text(
             _neverPlayed
-                ? '퀴즈를 풀다가 틀린 문제가 여기 모여요.\n부기랑 같이 첫 퀴즈부터 시작해 볼까?'
-                : '틀린 게 하나도 없다니, 부기가 깜짝 놀랐어!\n틀린 문제가 생기면 여기 모아 뒀다가 같이 복습해요.',
+                ? '퀴즈를 풀다가 틀린 문제가 여기 모여요.\n쿼키랑 같이 첫 퀴즈부터 시작해 볼까?'
+                : '틀린 게 하나도 없다니, 쿼키가 깜짝 놀랐어!\n틀린 문제가 생기면 여기 모아 뒀다가 같이 복습해요.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
           ),

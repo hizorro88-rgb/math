@@ -1,7 +1,7 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-/// 하루 한 번 "부엉이가 기다려요" 알림. 부모가 리포트 화면에서 켜고 끈다.
+/// 하루 한 번 "쿼키가 기다려요" 알림. 부모가 리포트 화면에서 켜고 끈다.
 /// 알림이 안 되는 환경(테스트·권한 거부)에서도 앱은 조용히 계속 동작한다.
 class Reminders {
   Reminders._();
@@ -60,7 +60,7 @@ class Reminders {
       // 지금 시각 기준으로 매일 반복 (켠 시각쯤에 울린다)
       await _plugin.periodicallyShow(
         _notificationId,
-        '부엉이가 기다려요 🦉',
+        '쿼키가 기다려요 🌿',
         '오늘의 미션을 풀고 스트릭을 이어 가요!',
         RepeatInterval.daily,
         const NotificationDetails(

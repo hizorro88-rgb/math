@@ -16,7 +16,7 @@ enum ItemSlot {
   final String label;
 }
 
-/// 부엉이를 꾸미는 상점 아이템
+/// 쿼카를 꾸미는 상점 아이템
 class ShopItem {
   const ShopItem({
     required this.id,

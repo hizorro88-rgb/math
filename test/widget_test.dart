@@ -3,6 +3,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:preschool_math/main.dart';
 import 'package:preschool_math/theme.dart';
 import 'package:preschool_math/models/wrong_notes.dart';
+import 'package:preschool_math/widgets/quokka_avatar.dart';
 import 'package:preschool_math/models/english_data.dart';
 import 'package:preschool_math/models/japanese_pack.dart';
 import 'package:preschool_math/models/korean_data.dart';
@@ -59,7 +60,7 @@ void main() {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('부엉이 학교'), findsOneWidget);
+    expect(find.text('쿼카 학교'), findsOneWidget);
     expect(find.text('자유 연습'), findsOneWidget);
     expect(find.text('지금 나는 알!'), findsOneWidget);
 
@@ -269,8 +270,8 @@ void main() {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
-    // 과목 탭을 한글로 바꾼다. (헤더가 스크롤로 가려질 수 있어 카테고리로 확인)
-    await scrollAndTap(tester, find.text('한글'));
+    // 헤더의 한글 과목 버튼을 누른다.
+    await scrollAndTap(tester, find.byKey(const ValueKey('subject-1')));
     expect(find.text('한글 첫걸음'), findsOneWidget);
 
     // 첫 카테고리 → 1단계 (낱말 보고 그림 찾기)
@@ -312,8 +313,9 @@ void main() {
     await scrollAndTap(tester, find.text('잘 들려요! 시작하기'));
 
     // 홈: 바뀐 프로필과 나이 추천 배지가 보인다.
-    expect(find.text('부엉이 학교'), findsOneWidget);
-    expect(find.text('🦊 하늘'), findsOneWidget);
+    expect(find.text('쿼카 학교'), findsOneWidget);
+    expect(find.text('🦊'), findsOneWidget); // 헤더 프로필 아바타
+    expect(find.textContaining('하늘,'), findsOneWidget); // 인사말에 이름
     await tester.ensureVisible(find.text('👍 추천'));
     expect(find.text('👍 추천'), findsOneWidget);
     expect(Sounds.enabled, isTrue);
@@ -457,7 +459,7 @@ void main() {
     expect(find.textContaining('첫 퀴즈를 풀면'), findsOneWidget);
   });
 
-  testWidgets('착용한 아이템이 홈 헤더 부엉이에 보인다', (tester) async {
+  testWidgets('착용한 아이템이 홈 헤더 쿼카에 보인다', (tester) async {
     SharedPreferences.setMockInitialValues({
       'owned_items_v1': ['ribbon', 'glasses', 'grass'],
       'equipped_items_v1': ['ribbon', 'glasses', 'grass'],
@@ -466,8 +468,8 @@ void main() {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
-    // 부엉이 + 리본(머리), 안경(얼굴), 풀밭(배경)
-    expect(find.text('🦉'), findsOneWidget);
+    // 쿼카 마스코트 + 리본(머리), 안경(얼굴), 풀밭(배경)
+    expect(find.byType(QuokkaAvatar), findsOneWidget);
     expect(find.text('🎀'), findsOneWidget);
     expect(find.text('👓'), findsOneWidget);
     expect(find.text('🌿'), findsOneWidget);
@@ -478,7 +480,7 @@ void main() {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
-    await scrollAndTap(tester, find.text('영어'));
+    await scrollAndTap(tester, find.byKey(const ValueKey('subject-2')));
     expect(find.text('알파벳 첫걸음'), findsOneWidget);
 
     // 영어 낱말 카테고리 → 첫 단계 (낱말 듣고 그림 찾기)
@@ -506,7 +508,7 @@ void main() {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
-    await scrollAndTap(tester, find.text('일본어'));
+    await scrollAndTap(tester, find.byKey(const ValueKey('subject-3')));
     expect(find.text('かな 첫걸음'), findsOneWidget);
 
     await scrollAndTap(tester, find.text('일본어 낱말'));
@@ -580,8 +582,9 @@ void main() {
 
     // 바다를 고르면 바다의 홈으로 들어간다.
     await scrollAndTap(tester, find.text('바다'));
-    expect(find.text('부엉이 학교'), findsOneWidget);
-    expect(find.text('🦊 바다'), findsOneWidget);
+    expect(find.text('쿼카 학교'), findsOneWidget);
+    expect(find.text('🦊'), findsOneWidget); // 헤더 프로필 아바타
+    expect(find.textContaining('바다,'), findsOneWidget); // 인사말에 이름
     expect(Profiles.activeId, 2);
   });
 
@@ -590,7 +593,7 @@ void main() {
     await tester.pumpAndSettle();
 
     // 홈 → 프로필 화면 (헤더의 프로필 칩)
-    await tester.tap(find.text('🐣 우리 아이'));
+    await tester.tap(find.byKey(const ValueKey('profile-chip')));
     await tester.pumpAndSettle();
 
     expect(find.text('새 프로필 만들기'), findsOneWidget);
@@ -714,7 +717,7 @@ void main() {
     expect(find.text('우리 아이 단계 맞추기'), findsNothing); // 시트 닫힘
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
-    expect(find.text('부엉이 학교'), findsOneWidget); // 홈으로 복귀
+    expect(find.text('쿼카 학교'), findsOneWidget); // 홈으로 복귀
 
     expect(find.textContaining('이전 단계'), findsNothing);
     expect(find.text('4살'), findsOneWidget);

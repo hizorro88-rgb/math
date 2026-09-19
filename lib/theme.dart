@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// "부엉이 학교" 디자인 토큰 — 따뜻한 숲 톤.
+/// "쿼카 학교" 디자인 토큰 — 따뜻한 숲 톤.
 /// 색·서체·모양을 여기서만 정의하고 화면들은 이것만 가져다 쓴다.
 class AppColors {
   AppColors._();
@@ -18,7 +18,7 @@ class AppColors {
   static const green = Color(0xFF3DA35D);
   static const greenPressed = Color(0xFF2E7D46);
 
-  /// 부엉이 브라운 (보조)
+  /// 쿼카 브라운 (보조)
   static const brown = Color(0xFF8C5A2B);
   static const brownSurface = Color(0xFFF3E7D3);
 
@@ -57,7 +57,7 @@ class AppColors {
 }
 
 /// 설정 화면에 보여줄 앱 버전 (pubspec version과 함께 올린다)
-const appVersionLabel = '1.20.0';
+const appVersionLabel = '1.21.0';
 
 /// 제목·버튼·숫자용 라운드 서체 (본문은 NotoSansKR)
 const kDisplayFont = 'Jua';

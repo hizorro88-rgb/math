@@ -677,7 +677,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style: TextStyle(
                           fontSize: 16, fontWeight: FontWeight.bold)),
                   subtitle: const Text(
-                    '부엉이 학교 v$appVersionLabel\n문의: hizorro88@gmail.com (탭하면 복사)',
+                    '쿼카 학교 v$appVersionLabel\n문의: hizorro88@gmail.com (탭하면 복사)',
                     style: TextStyle(height: 1.5),
                   ),
                   onTap: () {

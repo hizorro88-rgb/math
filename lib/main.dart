@@ -54,7 +54,7 @@ class PreschoolMathApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: '부엉이 학교',
+      title: '쿼카 학교',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,

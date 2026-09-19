@@ -124,7 +124,7 @@ final List<LearnBadge> allBadges = [
   LearnBadge(
     id: 'points1000',
     emoji: '🪙',
-    title: '부자 부엉이',
+    title: '부자 쿼카',
     desc: '누적 점수 1000점 모으기',
     earnedBy: (d) => d.points >= 1000,
   ),

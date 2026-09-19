@@ -1,0 +1,119 @@
+import 'dart:async';
+import 'dart:math';
+
+import 'package:flutter/material.dart';
+
+import '../models/shop.dart';
+import '../theme.dart';
+
+/// 산 아이템을 걸친 쿼카 마스코트 '쿼키'.
+/// 본체는 오리지널 에셋(assets/images/quokka.png)이고 2.6~4.6초마다
+/// 눈을 깜빡인다. 머리 위 모자, 얼굴 앞 안경, 옆에는 친구가 붙는다.
+class QuokkaAvatar extends StatefulWidget {
+  const QuokkaAvatar({super.key, this.size = 52, this.equipped = const []});
+
+  final double size;
+  final List<ShopItem> equipped;
+
+  @override
+  State<QuokkaAvatar> createState() => _QuokkaAvatarState();
+}
+
+class _QuokkaAvatarState extends State<QuokkaAvatar> {
+  final _random = Random();
+  Timer? _timer;
+  bool _blink = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // 위젯 테스트의 pumpAndSettle이 끝나도록 반복 타이머는 AppMotion으로 끈다.
+    if (AppMotion.loops) _scheduleBlink();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _scheduleBlink() {
+    _timer = Timer(
+      Duration(milliseconds: 2600 + _random.nextInt(2000)),
+      () {
+        if (!mounted) return;
+        setState(() => _blink = true);
+        _timer = Timer(const Duration(milliseconds: 140), () {
+          if (!mounted) return;
+          setState(() => _blink = false);
+          _scheduleBlink();
+        });
+      },
+    );
+  }
+
+  ShopItem? _bySlot(ItemSlot slot) {
+    for (final item in widget.equipped) {
+      if (item.slot == slot) return item;
+    }
+    return null;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final size = widget.size;
+    final hat = _bySlot(ItemSlot.hat);
+    final face = _bySlot(ItemSlot.face);
+    final side = _bySlot(ItemSlot.side);
+    final bg = _bySlot(ItemSlot.bg);
+
+    return SizedBox(
+      width: size * 1.5,
+      height: size * 1.45,
+      child: Stack(
+        clipBehavior: Clip.none,
+        alignment: Alignment.bottomCenter,
+        children: [
+          // 배경은 쿼카 뒤에 은은하게 깔린다.
+          if (bg != null)
+            Positioned(
+              bottom: size * 0.18,
+              child: Opacity(
+                opacity: 0.55,
+                child: Text(bg.emoji, style: TextStyle(fontSize: size * 1.05)),
+              ),
+            ),
+          Positioned(
+            bottom: 0,
+            child: Image.asset(
+              _blink
+                  ? 'assets/images/quokka_blink.png'
+                  : 'assets/images/quokka.png',
+              width: size * 1.2,
+              height: size * 1.2,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.medium,
+              gaplessPlayback: true, // 프레임 전환 시 깜빡이는 공백 방지
+            ),
+          ),
+          if (hat != null)
+            Positioned(
+              bottom: size * 0.98,
+              child: Text(hat.emoji, style: TextStyle(fontSize: size * 0.5)),
+            ),
+          if (face != null)
+            Positioned(
+              bottom: size * 0.56,
+              child: Text(face.emoji, style: TextStyle(fontSize: size * 0.38)),
+            ),
+          if (side != null)
+            Positioned(
+              bottom: 0,
+              right: -size * 0.1,
+              child: Text(side.emoji, style: TextStyle(fontSize: size * 0.55)),
+            ),
+        ],
+      ),
+    );
+  }
+}

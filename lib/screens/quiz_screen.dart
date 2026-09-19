@@ -392,11 +392,11 @@ class _QuizScreenState extends State<QuizScreen> {
     );
   }
 
-  /// 문제 카드 아래의 작은 부엉이 응원
+  /// 문제 카드 아래의 작은 쿼카 응원
   Widget _buildOwlCheer() {
     final line = _answered
-        ? (_isCorrect ? '부엉부엉! 잘했어!' : '괜찮아, 다시 해 보자!')
-        : '부기랑 같이 골라 볼까?';
+        ? (_isCorrect ? '우와아! 잘했어!' : '괜찮아, 다시 해 보자!')
+        : '쿼키랑 같이 골라 볼까?';
     return Row(
       children: [
         const Text('🦉', style: TextStyle(fontSize: 30)),

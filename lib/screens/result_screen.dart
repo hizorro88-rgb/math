@@ -172,10 +172,10 @@ class ResultScreen extends StatelessWidget {
                               ),
                               child: Text(
                                 switch (_stars) {
-                                  3 => '부엉부엉! 눈이 부셔!',
-                                  2 => '멋진걸? 부엉!',
-                                  1 => '내일은 별 3개다, 부엉!',
-                                  _ => '부기랑 같이 다시 해 보자!',
+                                  3 => '우와아! 눈이 부셔!',
+                                  2 => '멋진걸? 헤헤!',
+                                  1 => '내일은 별 3개다, 아자!',
+                                  _ => '쿼키랑 같이 다시 해 보자!',
                                 },
                                 style: const TextStyle(
                                   fontSize: 15,
