@@ -78,7 +78,19 @@ class Level {
               (Curriculum.levelsPerUnit - 1))
           .round();
 
-  QuizConfig get config => QuizConfig(mode: unit.mode, maxNumber: maxNumber);
+  /// 난이도 하한. 곱셈·나눗셈은 유닛의 시작 단수 아래로 내려가지 않게
+  /// (8~9단 묶음에서 2단이 나오지 않게), 나머지 연산은 답이 최대값의
+  /// 절반 근처 아래로 내려가지 않게 한다.
+  int get minNumber {
+    if (unit.mode == QuizMode.multiplication ||
+        unit.mode == QuizMode.division) {
+      return unit.startMax;
+    }
+    return maxNumber <= 6 ? 1 : (maxNumber * 0.55).ceil();
+  }
+
+  QuizConfig get config => QuizConfig(
+      mode: unit.mode, maxNumber: maxNumber, minNumber: minNumber);
 }
 
 /// 나이·학년별 교육과정에 맞춘 커리큘럼.

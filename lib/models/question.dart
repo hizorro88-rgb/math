@@ -263,9 +263,10 @@ class QuestionGenerator {
           emoji: _emoji,
         );
 
-      // 곱셈: max단까지의 구구단. (2~max) × (1~9)
+      // 곱셈: 시작 단부터 max단까지. (min~max) × (1~9)
       case QuizMode.multiplication:
-        final table = 2 + _random.nextInt(max - 1); // 2..max
+        final lowTable = config.minNumber.clamp(2, max);
+        final table = lowTable + _random.nextInt(max - lowTable + 1);
         final times = 1 + _random.nextInt(9); // 1..9
         final answer = table * times;
         return Question(
@@ -276,9 +277,12 @@ class QuestionGenerator {
           emoji: _emoji,
         );
 
-      // 나눗셈: 곱셈구구를 거꾸로. (나누는 수 2~min(max,9), 몫 1~9)
+      // 나눗셈: 곱셈구구를 거꾸로. (나누는 수 min~min(max,9), 몫 1~9)
       case QuizMode.division:
-        final divisor = 2 + _random.nextInt((max < 9 ? max : 9) - 1);
+        final divisorMax = max < 9 ? max : 9;
+        final divisorMin = config.minNumber.clamp(2, divisorMax);
+        final divisor =
+            divisorMin + _random.nextInt(divisorMax - divisorMin + 1);
         final quotient = 1 + _random.nextInt(9);
         return Question(
           op: QuestionOp.div,
@@ -291,7 +295,8 @@ class QuestionGenerator {
       // 세로 덧셈: 두 자리 수 중심으로 자리수 계산을 연습한다.
       case QuizMode.verticalAdd:
         final m = max < 20 ? 20 : max;
-        final sum = 11 + _random.nextInt(m - 10); // 11..m
+        final sumMin = config.minNumber < 11 ? 11 : config.minNumber;
+        final sum = sumMin + _random.nextInt(m - sumMin + 1); // sumMin..m
         final left = 10 + _random.nextInt(sum - 10); // 10..sum-1
         return Question(
           op: QuestionOp.add,
@@ -305,7 +310,8 @@ class QuestionGenerator {
       // 세로 뺄셈: 두 자리 수에서 빼기 (답은 0 이상)
       case QuizMode.verticalSub:
         final m = max < 20 ? 20 : max;
-        final left = 11 + _random.nextInt(m - 10); // 11..m
+        final leftMin = config.minNumber < 11 ? 11 : config.minNumber;
+        final left = leftMin + _random.nextInt(m - leftMin + 1); // leftMin..m
         final right = 1 + _random.nextInt(left); // 1..left
         return Question(
           op: QuestionOp.sub,
@@ -318,7 +324,7 @@ class QuestionGenerator {
 
       // 빈칸 채우기: 덧셈·뺄셈 식에서 피연산자 하나를 □로 가린다.
       case QuizMode.fillBlank:
-        final base = _addSub(QuizMode.mixed, max);
+        final base = _addSub(QuizMode.mixed, max, min: config.minNumber);
         final blankSide = 1 + _random.nextInt(2);
         final hidden = blankSide == 1 ? base.left : base.right;
         return Question(
@@ -417,7 +423,7 @@ class QuestionGenerator {
 
       // 듣고 풀기: 덧셈·뺄셈을 소리로만 들려준다 (암산 연습).
       case QuizMode.listen:
-        final base = _addSub(QuizMode.mixed, max);
+        final base = _addSub(QuizMode.mixed, max, min: config.minNumber);
         return Question(
           op: base.op,
           left: base.left,
@@ -641,28 +647,31 @@ class QuestionGenerator {
       case QuizMode.addition:
       case QuizMode.subtraction:
       case QuizMode.mixed:
-        return _addSub(config.mode, max);
+        return _addSub(config.mode, max, min: config.minNumber);
     }
   }
 
   /// 덧셈/뺄셈/섞어서 문제 하나를 만든다.
-  Question _addSub(QuizMode mode, int max) {
+  /// [min]은 난이도 하한: 덧셈의 합과 뺄셈의 처음 수가 이 값 아래로
+  /// 내려가지 않아 뒤 단계에서 갑자기 쉬운 문제가 나오지 않는다.
+  Question _addSub(QuizMode mode, int max, {int min = 1}) {
     final isAddition = switch (mode) {
       QuizMode.addition => true,
       QuizMode.subtraction => false,
       _ => _random.nextBool(),
     };
 
+    final low = min.clamp(2, max);
     int left;
     int right;
     if (isAddition) {
-      // 합이 max를 넘지 않도록 한다. (1 + 1 부터)
-      final sum = 2 + _random.nextInt(max - 1); // 2..max
+      // 합이 low..max 범위에 들어오게 한다.
+      final sum = low + _random.nextInt(max - low + 1);
       left = 1 + _random.nextInt(sum - 1); // 1..sum-1
       right = sum - left;
     } else {
-      // 답이 0 이상이 되도록 큰 수에서 작은 수를 뺀다.
-      left = 2 + _random.nextInt(max - 1); // 2..max
+      // 처음 수를 low..max에서 뽑고, 답이 0 이상이 되게 뺀다.
+      left = low + _random.nextInt(max - low + 1);
       right = 1 + _random.nextInt(left); // 1..left
     }
 

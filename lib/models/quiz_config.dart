@@ -75,6 +75,7 @@ class QuizConfig {
   const QuizConfig({
     required this.mode,
     required this.maxNumber,
+    this.minNumber = 1,
     this.questionCount = 10,
   });
 
@@ -82,5 +83,10 @@ class QuizConfig {
 
   /// 답(그리고 피연산자)이 넘지 않는 최대값
   final int maxNumber;
+
+  /// 난이도 하한: 덧셈·섞어서는 답이, 곱셈은 단수가, 나눗셈은 나누는 수가
+  /// 이 값 아래로 내려가지 않는다. 뒤 단계에서 갑자기 쉬운 문제
+  /// (예: 두 자리 덧셈 단계의 1+2)가 나오는 것을 막는다.
+  final int minNumber;
   final int questionCount;
 }

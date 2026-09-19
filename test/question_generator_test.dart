@@ -348,6 +348,65 @@ void main() {
     }
   });
 
+  group('QuestionGenerator 난이도 하한', () {
+    test('덧셈: 답이 minNumber 아래로 내려가지 않는다', () {
+      final generator = QuestionGenerator(random: Random(51));
+      for (var round = 0; round < 30; round++) {
+        final questions = generator.generate(const QuizConfig(
+            mode: QuizMode.addition, maxNumber: 50, minNumber: 25));
+        for (final q in questions) {
+          expect(q.answer, inInclusiveRange(25, 50));
+        }
+      }
+    });
+
+    test('뺄셈: 처음 수가 minNumber 아래로 내려가지 않는다', () {
+      final generator = QuestionGenerator(random: Random(53));
+      for (var round = 0; round < 30; round++) {
+        final questions = generator.generate(const QuizConfig(
+            mode: QuizMode.subtraction, maxNumber: 50, minNumber: 25));
+        for (final q in questions) {
+          expect(q.left, inInclusiveRange(25, 50));
+        }
+      }
+    });
+
+    test('곱셈: 8~9단 설정에서 2단이 나오지 않는다', () {
+      final generator = QuestionGenerator(random: Random(55));
+      for (var round = 0; round < 30; round++) {
+        final questions = generator.generate(const QuizConfig(
+            mode: QuizMode.multiplication, maxNumber: 9, minNumber: 8));
+        for (final q in questions) {
+          expect(q.left, inInclusiveRange(8, 9));
+        }
+      }
+    });
+
+    test('나눗셈: 나누는 수가 minNumber 아래로 내려가지 않는다', () {
+      final generator = QuestionGenerator(random: Random(57));
+      for (var round = 0; round < 30; round++) {
+        final questions = generator.generate(const QuizConfig(
+            mode: QuizMode.division, maxNumber: 9, minNumber: 6));
+        for (final q in questions) {
+          expect(q.right, inInclusiveRange(6, 9));
+        }
+      }
+    });
+
+    test('커리큘럼 단계가 하한을 실어 보낸다', () {
+      // 곱셈 유닛: 단수 하한 = 유닛의 시작 단수 (뒤 단원에서 2단 금지)
+      final mulUnit =
+          Curriculum.units.firstWhere((u) => u.title == '곱셈 완성 (8~9단)');
+      expect(Curriculum.levelAt(mulUnit.firstLevelNumber).config.minNumber, 8);
+
+      // 덧셈 유닛: 답 하한이 최대값의 절반 이상
+      final addUnit =
+          Curriculum.units.firstWhere((u) => u.title == '두 자리 덧셈');
+      final config = Curriculum.levelAt(addUnit.firstLevelNumber).config;
+      expect(config.minNumber, greaterThanOrEqualTo(config.maxNumber ~/ 2));
+    });
+  });
+
   group('QuestionGenerator 초3·4 심화', () {
     test('분수: 부호화·보기·읽어주기가 규칙에 맞는다', () {
       final generator = QuestionGenerator(random: Random(21));
