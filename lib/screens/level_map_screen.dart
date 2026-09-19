@@ -965,7 +965,7 @@ class _Header extends StatelessWidget {
                 GestureDetector(
                   onTap: onOwlTap,
                   child: _OwlBounce(
-                    child: QuokkaAvatar(size: 68, equipped: equipped),
+                    child: QuokkaAvatar(size: 84, equipped: equipped),
                   ),
                 ),
                 const SizedBox(width: 12),

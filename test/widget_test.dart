@@ -722,4 +722,22 @@ void main() {
     expect(find.textContaining('이전 단계'), findsNothing);
     expect(find.text('4살'), findsOneWidget);
   });
+
+  testWidgets('새 프로필을 만들 때 나이를 고르면 그 프로필에 저장된다', (tester) async {
+    SharedPreferences.setMockInitialValues({'family_pass_v1': true});
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('profile-chip')));
+    await tester.pumpAndSettle();
+    await scrollAndTap(tester, find.text('새 프로필 만들기'));
+
+    await tester.enterText(find.byType(TextField), '바다');
+    await scrollAndTap(tester, find.text('6살'));
+    await scrollAndTap(tester, find.text('만들기'));
+
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getInt('p2_age_category_v1'), 2); // 6살 = 인덱스 2
+    expect(Profiles.activeId, 2); // 만든 프로필로 바로 전환
+  });
 }

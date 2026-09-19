@@ -69,7 +69,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Center(child: QuokkaFace(size: 72)),
+              const Center(child: QuokkaFace(size: 90)),
               const SizedBox(height: 4),
               Text(
                 '쿼카 학교',

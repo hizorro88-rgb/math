@@ -16,7 +16,7 @@ Future<bool> confirmQuizExit(BuildContext context) async {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Center(child: QuokkaFace(size: 52)),
+            const Center(child: QuokkaFace(size: 64)),
             const SizedBox(height: 8),
             const Text(
               '정말 그만할까요?',

@@ -125,7 +125,7 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const QuokkaFace(size: 64),
+          const QuokkaFace(size: 76),
           const SizedBox(height: 12),
           Text(
             _neverPlayed ? '여기는 오답 노트!' : '오답 노트가 비었어요! 🎉',

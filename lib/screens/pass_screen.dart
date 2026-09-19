@@ -107,7 +107,7 @@ class _PassScreenState extends State<PassScreen> {
                   ),
                   child: Column(
                     children: [
-                      const QuokkaFace(size: 64),
+                      const QuokkaFace(size: 76),
                       const SizedBox(height: 8),
                       const Text(
                         '한 번 결제로\n온 가족이 함께 배워요',

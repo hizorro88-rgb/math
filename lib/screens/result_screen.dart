@@ -168,7 +168,7 @@ class ResultScreen extends StatelessWidget {
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  const QuokkaFace(size: 38),
+                                  const QuokkaFace(size: 48),
                                   const SizedBox(width: 8),
                                   Container(
                                     padding: const EdgeInsets.symmetric(

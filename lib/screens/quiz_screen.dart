@@ -401,7 +401,7 @@ class _QuizScreenState extends State<QuizScreen> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const QuokkaFace(size: 64),
+        const QuokkaFace(size: 72),
         const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),

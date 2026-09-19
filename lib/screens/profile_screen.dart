@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
-import '../widgets/quokka_avatar.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/curriculum.dart';
 import '../models/premium.dart';
 import '../models/profile.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/parent_gate.dart';
+import '../widgets/quokka_avatar.dart';
 import 'level_map_screen.dart';
+import 'onboarding_screen.dart';
 import 'pass_screen.dart';
 
 /// 프로필 선택 화면: 누가 놀지 고르고, 프로필을 만들고 고치고 지운다.
@@ -127,7 +130,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                 if (widget.asLauncher) ...[
                   const Center(
-                      child: QuokkaFace(size: 64)),
+                      child: QuokkaFace(size: 78)),
                   const SizedBox(height: 6),
                   Center(
                     child: Text(
@@ -250,7 +253,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 }
 
-/// 프로필 만들기/고치기: 동물 아바타를 고르고 이름을 적는다.
+/// 프로필 만들기/고치기: 동물 아바타를 고르고 이름을 적고 나이를 고른다.
+/// 나이는 홈의 추천 배지와 '이전 단계 접기' 기준이 된다.
 class _ProfileDialog extends StatefulWidget {
   const _ProfileDialog({this.editing});
 
@@ -266,6 +270,28 @@ class _ProfileDialogState extends State<_ProfileDialog> {
   late final _nameController =
       TextEditingController(text: widget.editing?.name ?? '');
 
+  /// 고른 나이(수학 카테고리 인덱스). null이면 선택 안 함.
+  int? _ageIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    final editing = widget.editing;
+    if (editing != null) _loadAge(editing.id);
+  }
+
+  Future<void> _loadAge(int id) async {
+    final prefs = await SharedPreferences.getInstance();
+    final idx =
+        prefs.getInt(Profiles.scopedFor(id, OnboardingScreen.ageCategoryKey));
+    if (!mounted) return;
+    setState(() {
+      _ageIndex = idx != null && idx >= 0 && idx < Curriculum.categories.length
+          ? idx
+          : null;
+    });
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -276,21 +302,58 @@ class _ProfileDialogState extends State<_ProfileDialog> {
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
     final editing = widget.editing;
+    int profileId;
     if (editing != null) {
       await Profiles.update(editing.id, emoji: _emoji, name: name);
+      profileId = editing.id;
     } else {
       final profile = await Profiles.add(emoji: _emoji, name: name);
-      if (profile != null) await Profiles.setActive(profile.id);
+      if (profile == null) {
+        if (mounted) Navigator.of(context).pop(false);
+        return;
+      }
+      await Profiles.setActive(profile.id);
+      profileId = profile.id;
+    }
+    // 나이 저장: 홈의 추천 배지·이전 단계 접기가 이 값을 따라간다.
+    final prefs = await SharedPreferences.getInstance();
+    final ageKey = Profiles.scopedFor(profileId, OnboardingScreen.ageCategoryKey);
+    if (_ageIndex != null) {
+      await prefs.setInt(ageKey, _ageIndex!);
+    } else {
+      await prefs.remove(ageKey);
     }
     if (!mounted) return;
     Navigator.of(context).pop(true);
+  }
+
+  Widget _ageChip(String label, int? value) {
+    final selected = _ageIndex == value;
+    return GestureDetector(
+      onTap: () => setState(() => _ageIndex = value),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected ? const Color(0xFFD7FFB8) : Colors.white,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: selected ? const Color(0xFF3DA35D) : Colors.grey.shade300,
+            width: 2,
+          ),
+        ),
+        child: Text(
+          label,
+          style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
+        ),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Dialog(
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-      child: Padding(
+      child: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -345,6 +408,27 @@ class _ProfileDialogState extends State<_ProfileDialog> {
                   borderRadius: BorderRadius.circular(16),
                 ),
               ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              '몇 살이에요? (딱 맞는 단계를 추천해 드려요)',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.bold,
+                color: Colors.grey.shade600,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Wrap(
+              alignment: WrapAlignment.center,
+              spacing: 6,
+              runSpacing: 6,
+              children: [
+                for (var i = 0; i < Curriculum.categories.length; i++)
+                  _ageChip(Curriculum.categories[i].title, i),
+                _ageChip('선택 안 함', null),
+              ],
             ),
             const SizedBox(height: 14),
             BouncyButton(

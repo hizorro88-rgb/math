@@ -135,7 +135,7 @@ class _ShopScreenState extends State<ShopScreen> {
                   ),
                   child: Column(
                     children: [
-                      QuokkaAvatar(size: 88, equipped: _equipped),
+                      QuokkaAvatar(size: 108, equipped: _equipped),
                       const SizedBox(height: 6),
                       Text(
                         _cheerLine(),

@@ -38,6 +38,11 @@ class Profiles {
   static String scoped(String base) =>
       activeId == 1 ? base : 'p${activeId}_$base';
 
+  /// 특정 프로필의 저장 키 (프로필 만들기/고치기처럼
+  /// 아직 활성이 아닌 프로필의 값을 다룰 때).
+  static String scopedFor(int id, String base) =>
+      id == 1 ? base : 'p${id}_$base';
+
   static Future<void> init() async {
     try {
       final prefs = await SharedPreferences.getInstance();
