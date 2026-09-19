@@ -85,6 +85,23 @@ class Question {
   /// 같은 연산 안의 세부 유형 (예: 시간 계산에서 0=몇 시, 1=몇 분)
   final int variant;
 
+  /// 지시문 템플릿: 같은 유형 10문제가 같은 문장으로 반복되지 않게
+  /// 문항 번호(variant)로 돌려 쓴다. [0]은 기존 문구(테스트 고정점).
+  static const _countingExprs = [
+    '몇 개일까요?',
+    '모두 세어 볼까요?',
+    '몇 개가 있을까요?',
+    '하나, 둘, 셋… 몇 개?',
+  ];
+  static const _countingSpeeches = [
+    '모두 몇 개일까요?',
+    '손가락으로 짚으면서 세어 보세요',
+    '하나씩 천천히 세어 볼까요?',
+    '전부 몇 개인지 맞혀 보세요',
+  ];
+  static const _compareMaxExprs = ['가장 큰 수는?', '제일 큰 수를 찾아요!', '어떤 수가 가장 클까?'];
+  static const _compareMinExprs = ['가장 작은 수는?', '제일 작은 수를 찾아요!', '어떤 수가 가장 작을까?'];
+
   bool get isCounting => op == QuestionOp.counting;
   bool get isAddition => op == QuestionOp.add;
 
@@ -145,12 +162,15 @@ class Question {
           : '$left $opSign □ = $total';
     }
     return switch (op) {
-      QuestionOp.counting => '몇 개일까요?',
+      QuestionOp.counting =>
+        _countingExprs[variant % _countingExprs.length],
       QuestionOp.add => '$left + $right = ?',
       QuestionOp.sub => '$left - $right = ?',
       QuestionOp.mul => '$left × $right = ?',
       QuestionOp.div => '$left ÷ $right = ?',
-      QuestionOp.compare => right == 1 ? '가장 큰 수는?' : '가장 작은 수는?',
+      QuestionOp.compare => right == 1
+          ? _compareMaxExprs[variant % _compareMaxExprs.length]
+          : _compareMinExprs[variant % _compareMinExprs.length],
       QuestionOp.pattern => '${sequence.join(', ')}, ?',
       QuestionOp.clock => '시계는 몇 시일까요?',
       QuestionOp.shape => '$emoji 몇 개일까요?',
@@ -179,7 +199,8 @@ class Question {
           : '$left 빼기 몇이면 $total일까요?';
     }
     return switch (op) {
-      QuestionOp.counting => '모두 몇 개일까요?',
+      QuestionOp.counting =>
+        _countingSpeeches[variant % _countingSpeeches.length],
       QuestionOp.add => '$left 더하기 $right는?',
       QuestionOp.sub => '$left 빼기 $right는?',
       QuestionOp.mul => '$left 곱하기 $right는?',
@@ -187,8 +208,14 @@ class Question {
       QuestionOp.compare => right == 1 ? '가장 큰 수를 찾아보세요' : '가장 작은 수를 찾아보세요',
       QuestionOp.pattern => '${sequence.join(', ')}, 다음 수는?',
       QuestionOp.clock => '시계가 가리키는 시각은 몇 시일까요?',
-      QuestionOp.shape =>
-        '${shapeKinds.firstWhere((s) => s.emoji == emoji).name}가 몇 개인지 세어 보세요',
+      QuestionOp.shape => switch (variant % 3) {
+          1 =>
+            '${shapeKinds.firstWhere((s) => s.emoji == emoji).name}만 골라서 세어 볼까요?',
+          2 =>
+            '숨어 있는 ${shapeKinds.firstWhere((s) => s.emoji == emoji).name}를 찾아 세어 보세요',
+          _ =>
+            '${shapeKinds.firstWhere((s) => s.emoji == emoji).name}가 몇 개인지 세어 보세요',
+        },
       // 심화 유형은 항상 prompt가 있어 위에서 먼저 반환된다 (완전성 유지용).
       QuestionOp.fraction ||
       QuestionOp.decimal ||
@@ -219,40 +246,71 @@ class QuestionGenerator {
 
   final Random _random;
 
-  static const _emojis = [
-    '🍎',
-    '🍓',
-    '🍌',
-    '🐤',
-    '🐶',
-    '⭐',
-    '🚗',
-    '🎈',
-    '🐟',
-    '🌼'
-  ];
+  /// 그림 테마: 판마다 하나를 뽑아 "이번 판은 과일 나라"처럼
+  /// 판 단위로 그림이 바뀐다 (한 판 안에서는 테마 안에서만 회전).
+  static const _emojiThemes = <String, List<String>>{
+    '과일': ['🍎', '🍓', '🍌', '🍇', '🍑', '🍒', '🍉', '🍊'],
+    '동물': ['🐤', '🐶', '🐰', '🐸', '🐢', '🐝', '🦋', '🐞'],
+    '바다': ['🐟', '🐙', '🦀', '🐚', '🐬', '🦐', '⛵', '🐳'],
+    '탈것': ['🚗', '🚌', '🚂', '🚁', '🚀', '🚲', '🚜', '🛸'],
+    '간식': ['🍪', '🍩', '🧁', '🍭', '🍬', '🍦', '🍿', '🥕'],
+    '반짝': ['⭐', '🎈', '🌼', '🌸', '🌻', '🎁', '🧸', '🪁'],
+  };
+
+  /// 이번 판의 그림 풀 (generate 시작 시 테마에서 뽑는다)
+  List<String> _roundEmojis = _emojiThemes.values.first;
+
+  /// 처음 두 문제는 살짝 쉬운 "워밍업"으로 내는 유형들
+  static const _warmupModes = {
+    QuizMode.counting,
+    QuizMode.addition,
+    QuizMode.subtraction,
+    QuizMode.mixed,
+    QuizMode.shapeCount,
+  };
 
   List<Question> generate(QuizConfig config) {
+    // 판마다 그림 테마를 하나 뽑는다.
+    final themes = _emojiThemes.values.toList();
+    _roundEmojis = themes[_random.nextInt(themes.length)];
+
+    // 워밍업용: 처음 2문제는 최대값을 낮춰 리듬을 만든다.
+    QuizConfig eased = config;
+    if (_warmupModes.contains(config.mode) && config.maxNumber > 3) {
+      final easedMax =
+          ((config.maxNumber * 0.7).ceil()).clamp(2, config.maxNumber);
+      eased = QuizConfig(
+        mode: config.mode,
+        maxNumber: easedMax,
+        minNumber: config.minNumber.clamp(1, easedMax),
+        questionCount: config.questionCount,
+      );
+    }
+
     final questions = <Question>[];
     String? previousKey;
+    int? previousAnswer;
 
     for (var i = 0; i < config.questionCount; i++) {
       Question question;
-      // 바로 앞 문제와 똑같은 문제는 피한다.
-      // (만들 수 있는 문제가 하나뿐이어도 멈추지 않게 시도 횟수를 제한한다)
+      // 바로 앞 문제와 똑같은 문제, 그리고 같은 정답의 연속을 피한다.
+      // (만들 수 있는 문제가 적어도 멈추지 않게 시도 횟수를 제한한다)
       var attempts = 0;
       do {
-        question = _generateOne(config);
-      } while (question.dedupKey == previousKey && ++attempts < 30);
+        question = _generateOne(i < 2 ? eased : config, index: i);
+      } while ((question.dedupKey == previousKey ||
+              question.answer == previousAnswer) &&
+          ++attempts < 30);
       previousKey = question.dedupKey;
+      previousAnswer = question.answer;
       questions.add(question);
     }
     return questions;
   }
 
-  String get _emoji => _emojis[_random.nextInt(_emojis.length)];
+  String get _emoji => _roundEmojis[_random.nextInt(_roundEmojis.length)];
 
-  Question _generateOne(QuizConfig config) {
+  Question _generateOne(QuizConfig config, {int index = 0}) {
     final max = config.maxNumber;
 
     switch (config.mode) {
@@ -263,6 +321,7 @@ class QuestionGenerator {
           op: QuestionOp.counting,
           left: count,
           right: 0,
+          variant: index, // 문항마다 지시문이 조금씩 달라진다
           choices: _buildChoices(count, max),
           emoji: _emoji,
         );
@@ -368,6 +427,7 @@ class QuestionGenerator {
           op: QuestionOp.compare,
           left: answer,
           right: findMax ? 1 : 0,
+          variant: index,
           choices: choices,
           emoji: _emoji,
         );
@@ -405,6 +465,7 @@ class QuestionGenerator {
           op: QuestionOp.shape,
           left: count,
           right: 0,
+          variant: index,
           shapeItems: items,
           choices: _buildChoices(count, maxCount),
           emoji: target.emoji,

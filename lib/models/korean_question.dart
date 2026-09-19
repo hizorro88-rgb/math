@@ -107,11 +107,18 @@ class KoreanQuestionGenerator {
 
   final Random _random;
 
+  /// 문항마다 지시문을 조금씩 바꾸기 위한 순번 (generate가 문항 번호로 설정)
+  int _seq = 0;
+
+  /// [0]은 기존 문구(테스트 고정점), 나머지는 회전.
+  String _rot(List<String> pool) => pool[_seq % pool.length];
+
   List<KoreanQuestion> generate(KrQuizType type,
       {int stage = 0, int count = 10}) {
     final questions = <KoreanQuestion>[];
     String? previousKey;
     for (var i = 0; i < count; i++) {
+      _seq = i;
       KoreanQuestion question;
       do {
         question = _generateOne(type, stage);
@@ -172,7 +179,7 @@ class KoreanQuestionGenerator {
         final target = picked.first;
         return KoreanQuestion(
           type: type,
-          instruction: '알맞은 그림을 찾아요',
+          instruction: _rot(const ['알맞은 그림을 찾아요', '어떤 그림일까요?', '그림을 골라 볼까요?']),
           display: target.word,
           choices: _shuffled([for (final w in picked) w.emoji]),
           answer: target.emoji,
@@ -188,7 +195,7 @@ class KoreanQuestionGenerator {
         final target = picked.first;
         return KoreanQuestion(
           type: type,
-          instruction: '무슨 소리일까요? 🔊를 눌러 다시 들어요',
+          instruction: _rot(const ['무슨 소리일까요? 🔊를 눌러 다시 들어요', '소리를 잘 들어 보세요 🔊', '귀 기울여 볼까요? 🔊']),
           display: '🔊',
           choices: _shuffled([for (final v in picked) v.letter]),
           answer: target.letter,
@@ -204,7 +211,7 @@ class KoreanQuestionGenerator {
         final target = picked.first;
         return KoreanQuestion(
           type: type,
-          instruction: '무슨 소리일까요? 🔊를 눌러 다시 들어요',
+          instruction: _rot(const ['무슨 소리일까요? 🔊를 눌러 다시 들어요', '소리를 잘 들어 보세요 🔊', '귀 기울여 볼까요? 🔊']),
           display: '🔊',
           choices: _shuffled(picked),
           answer: target,
@@ -343,7 +350,7 @@ class KoreanQuestionGenerator {
     final target = picked.first;
     return KoreanQuestion(
       type: type,
-      instruction: '그림에 맞는 낱말은?',
+      instruction: _rot(const ['그림에 맞는 낱말은?', '그림의 이름은 무엇일까요?', '이 그림, 뭐라고 부를까?']),
       display: target.emoji,
       choices: _shuffled([for (final w in picked) w.word]),
       answer: target.word,

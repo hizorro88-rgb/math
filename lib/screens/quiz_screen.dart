@@ -94,6 +94,47 @@ class _QuizScreenState extends State<QuizScreen> {
     return _barShown;
   }
 
+  /// 문구 풀: [0]은 기존 문구(위젯 테스트 고정점).
+  /// 화면 문구는 문항 번호로 결정적으로 고르고, TTS만 랜덤을 쓴다.
+  static const _correctSpeeches = [
+    '정답이에요!',
+    '딩동댕, 맞았어요!',
+    '우와, 정답!',
+    '참 잘했어요!',
+    '대단해요!',
+    '역시 최고예요!',
+  ];
+  static const _wrongSpeeches = [
+    '아쉬워요. 정답은 X이에요.',
+    '괜찮아요! 정답은 X이에요.',
+    '거의 다 왔어요! 정답은 X이에요.',
+    '다음엔 맞힐 거예요. 정답은 X이에요.',
+  ];
+  static const _correctPanels = ['정답이에요! 🎉', '딩동댕! 🎉', '맞았어요! 🎉', '참 잘했어요! 🎉'];
+  static const _cheerAsking = [
+    '쿼카랑 같이 골라 볼까?',
+    '음… 어떤 게 답일까?',
+    '천천히 보면 보여!',
+    '손가락으로 세어 볼까?',
+    '이번 문제도 재밌겠다!',
+  ];
+  static const _cheerCorrect = [
+    '우와아! 잘했어!',
+    '딩동댕! 최고야!',
+    '해낼 줄 알았어!',
+    '박수 짝짝짝!',
+    '쿼카가 깡충 뛰었어!',
+  ];
+  static const _cheerWrong = [
+    '괜찮아, 다시 해 보자!',
+    '실수해도 괜찮아!',
+    '한 번 더 보면 알 수 있어!',
+    '쿼카도 가끔 틀려~',
+  ];
+
+  /// 7번째 문제는 ⚡보너스: 맞히면 코인 2배 (재출제 문제에는 없음)
+  bool get _isBonusQuestion => _currentIndex == 6 && !_isRetryQuestion;
+
   bool get _answered => _selectedChoice != null;
   bool get _isCorrect => _selectedChoice == _question.answer;
   Color get _themeColor => widget.level?.unit.color ?? const Color(0xFF3DA35D);
@@ -175,7 +216,7 @@ class _QuizScreenState extends State<QuizScreen> {
         } else {
           _correctCount++;
           _combo++;
-          _lastGained = pointsForAnswer(_combo);
+          _lastGained = pointsForAnswer(_combo) * (_isBonusQuestion ? 2 : 1);
           _roundPoints += _lastGained;
         }
       } else {
@@ -217,11 +258,20 @@ class _QuizScreenState extends State<QuizScreen> {
     if (_isCorrect) {
       Sounds.correct(_combo);
       HapticFeedback.lightImpact().ignore();
-      Speech.speak('정답이에요!');
+      // 연속 정답은 그 자체가 사건이 되게 따로 읽어 준다.
+      if (_combo == 3) {
+        Speech.speak('와, 3개 연속이에요!');
+      } else if (_combo == 5) {
+        Speech.speak('대단해요, 5연속!');
+      } else {
+        Speech.speak(
+            _correctSpeeches[_random.nextInt(_correctSpeeches.length)]);
+      }
     } else {
       Sounds.wrong();
       HapticFeedback.heavyImpact().ignore();
-      Speech.speak('아쉬워요. 정답은 ${_question.answerSpeech}이에요.');
+      Speech.speak(_wrongSpeeches[_random.nextInt(_wrongSpeeches.length)]
+          .replaceFirst('X', _question.answerSpeech));
     }
   }
 
@@ -395,9 +445,14 @@ class _QuizScreenState extends State<QuizScreen> {
 
   /// 문제 카드 아래의 작은 쿼카 응원
   Widget _buildOwlCheer() {
+    // 리빌드마다 흔들리지 않게 문항 번호로 결정적으로 고른다.
     final line = _answered
-        ? (_isCorrect ? '우와아! 잘했어!' : '괜찮아, 다시 해 보자!')
-        : '쿼카랑 같이 골라 볼까?';
+        ? (_isCorrect
+            ? _cheerCorrect[_currentIndex % _cheerCorrect.length]
+            : _cheerWrong[_currentIndex % _cheerWrong.length])
+        : _currentIndex == 5 && !_isRetryQuestion
+            ? '절반 왔어! 조금만 더!'
+            : _cheerAsking[_currentIndex % _cheerAsking.length];
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -527,6 +582,27 @@ class _QuizScreenState extends State<QuizScreen> {
         children: [
           Column(
             children: [
+              if (_isBonusQuestion) ...[
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFFF1C2),
+                    borderRadius: BorderRadius.circular(999),
+                    border:
+                        Border.all(color: const Color(0xFFFFD34D), width: 2),
+                  ),
+                  child: const Text(
+                    '⚡ 보너스 문제! 코인 2배',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF9A6A00),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
               if (_isRetryQuestion) ...[
                 Container(
                   padding:
@@ -728,7 +804,9 @@ class _QuizScreenState extends State<QuizScreen> {
     final textColor =
         _isCorrect ? const Color(0xFF2E7D46) : const Color(0xFFEA2B2B);
     final message =
-        _isCorrect ? '정답이에요! 🎉' : '아쉬워요! 정답은 ${_question.answerLabel}';
+        _isCorrect
+        ? _correctPanels[_currentIndex % _correctPanels.length]
+        : '아쉬워요! 정답은 ${_question.answerLabel}';
 
     final isLast = _currentIndex + 1 >= _entries.length;
 

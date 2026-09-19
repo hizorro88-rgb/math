@@ -19,7 +19,16 @@ void main() {
             expect(q.answer, q.left);
             expect(q.left, greaterThanOrEqualTo(1));
             expect(q.left, lessThanOrEqualTo(maxNumber));
-            expect(q.expression, '몇 개일까요?');
+            // 지시문은 문제 순서에 따라 회전한다 (지루함 방지)
+            expect(
+              q.expression,
+              anyOf(
+                '몇 개일까요?',
+                '모두 세어 볼까요?',
+                '몇 개가 있을까요?',
+                '하나, 둘, 셋… 몇 개?',
+              ),
+            );
             expect(q.choices, hasLength(4));
             expect(q.choices.toSet(), hasLength(4));
             expect(q.choices, contains(q.answer));
@@ -200,9 +209,12 @@ void main() {
                 ? q.choices.reduce((a, b) => a > b ? a : b)
                 : q.choices.reduce((a, b) => a < b ? a : b);
             expect(q.answer, expected);
+            // 지시문은 문제 순서에 따라 회전한다 (지루함 방지)
             expect(
               q.expression,
-              q.right == 1 ? '가장 큰 수는?' : '가장 작은 수는?',
+              q.right == 1
+                  ? anyOf('가장 큰 수는?', '제일 큰 수를 찾아요!', '어떤 수가 가장 클까?')
+                  : anyOf('가장 작은 수는?', '제일 작은 수를 찾아요!', '어떤 수가 가장 작을까?'),
             );
             expect(q.choices.every((c) => c >= 1), isTrue);
           }

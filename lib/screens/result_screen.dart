@@ -73,12 +73,18 @@ class ResultScreen extends StatelessWidget {
 
   int get _stars => starsForScore(correctCount, totalCount);
 
-  String get _message => switch (_stars) {
-        3 => '와, 최고예요! 🏆',
-        2 => '정말 잘했어요! 👏',
-        1 => '잘했어요! 조금만 더 힘내요 💪',
-        _ => '괜찮아요! 다시 해 볼까요? 🌱',
-      };
+  /// 칭찬 문구를 판마다 조금씩 바꾼다. Stateless라 Random 대신
+  /// 점수 기반으로 결정적으로 고른다. [0]은 기존 문구(테스트 고정점).
+  int get _lineIndex => (correctCount * 7 + totalCount) % 3;
+
+  static const _messages = [
+    ['괜찮아요! 다시 해 볼까요? 🌱', '한 번 더 하면 늘어요! 🌱', '시작이 반이에요! 🌱'], // 0별
+    ['잘했어요! 조금만 더 힘내요 💪', '좋아요, 감 잡았어요! 💪', '점점 잘하고 있어요! 💪'],
+    ['정말 잘했어요! 👏', '멋져요, 별 두 개! 👏', '거의 다 왔어요! 👏'],
+    ['와, 최고예요! 🏆', '완벽에 가까워요! 🏆', '오늘의 주인공이에요! 🏆'],
+  ];
+
+  String get _message => _messages[_stars][_lineIndex];
 
   void _replace(BuildContext context, Widget Function() builder) {
     Navigator.of(context).pushReplacement(
@@ -178,12 +184,28 @@ class ResultScreen extends StatelessWidget {
                                       borderRadius: BorderRadius.circular(16),
                                     ),
                                     child: Text(
-                                      switch (_stars) {
-                                        3 => '우와아! 눈이 부셔!',
-                                        2 => '멋진걸? 헤헤!',
-                                        1 => '내일은 별 3개다, 아자!',
-                                        _ => '쿼카랑 같이 다시 해 보자!',
-                                      },
+                                      const [
+                                        [
+                                          '쿼카랑 같이 다시 해 보자!',
+                                          '연습하면 점점 잘하게 돼!',
+                                          '쿼카가 옆에서 응원할게!'
+                                        ],
+                                        [
+                                          '내일은 별 3개다, 아자!',
+                                          '포기 안 하는 게 멋져!',
+                                          '별 하나도 소중해!'
+                                        ],
+                                        [
+                                          '멋진걸? 헤헤!',
+                                          '쿼카가 감동했어!',
+                                          '별 둘! 대단한걸?'
+                                        ],
+                                        [
+                                          '우와아! 눈이 부셔!',
+                                          '완벽해! 쿼카가 자랑스러워!',
+                                          '별 셋! 오늘의 챔피언!'
+                                        ],
+                                      ][_stars][_lineIndex],
                                       style: const TextStyle(
                                         fontSize: 15,
                                         fontWeight: FontWeight.bold,
