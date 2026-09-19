@@ -422,7 +422,7 @@ class Curriculum {
               emoji: '🧀',
               mode: QuizMode.fraction,
               startMax: 6,
-              endMax: 9),
+              endMax: 12),
           Unit(
               title: '소수 첫걸음',
               emoji: '💧',
@@ -434,7 +434,7 @@ class Curriculum {
               emoji: '🌊',
               mode: QuizMode.decimal,
               startMax: 10,
-              endMax: 19),
+              endMax: 50),
           Unit(
               title: '시간 계산',
               emoji: '⏱️',

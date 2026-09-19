@@ -472,6 +472,92 @@ void main() {
       }
     });
 
+    test('분수 4학년 확장: 분모 12까지 나오고 뺄셈·가분수·대분수 유형이 맞는다', () {
+      final generator = QuestionGenerator(random: Random(29));
+      final seenVariants = <int>{};
+      var bigDenominator = false;
+      for (var round = 0; round < 120; round++) {
+        final questions = generator.generate(
+          const QuizConfig(mode: QuizMode.fraction, maxNumber: 12),
+        );
+        for (final q in questions) {
+          expect(q.op, QuestionOp.fraction);
+          seenVariants.add(q.variant);
+          final n = q.answer ~/ 100;
+          final d = q.answer % 100;
+          expect(d, inInclusiveRange(2, 12));
+          if (d >= 10) bigDenominator = true;
+          expect(q.choices, hasLength(4));
+          expect(q.choices.toSet(), hasLength(4));
+          expect(q.choices, contains(q.answer));
+          expect(q.answerLabel, '$n/$d');
+          expect(q.answerSpeech, '$d분의 $n');
+          switch (q.variant) {
+            case 3: // 같은 분모 뺄셈: 문장에서 답을 다시 계산해 확인
+              final match =
+                  RegExp(r'^(\d+)/(\d+) - (\d+)/\d+ = \?$').firstMatch(q.prompt);
+              expect(match, isNotNull, reason: q.prompt);
+              expect(
+                int.parse(match!.group(1)!) - int.parse(match.group(3)!),
+                n,
+              );
+              expect(int.parse(match.group(2)!), d);
+              expect(n, inInclusiveRange(1, d - 1));
+            case 4: // 가분수 찾기: 정답만 분자가 분모 이상
+              expect(n, greaterThanOrEqualTo(d));
+              for (final c in q.choices.where((c) => c != q.answer)) {
+                expect(c % 100, d);
+                expect(c ~/ 100, lessThan(d));
+              }
+            case 5: // 대분수 → 가분수: w×d+p 확인
+              final match = RegExp(r'^대분수 (\d+)[과와] (\d+)/(\d+)를 가분수로 바꾸면\?$')
+                  .firstMatch(q.prompt);
+              expect(match, isNotNull, reason: q.prompt);
+              expect(int.parse(match!.group(3)!), d);
+              expect(
+                int.parse(match.group(1)!) * d + int.parse(match.group(2)!),
+                n,
+              );
+          }
+        }
+      }
+      expect(seenVariants, containsAll([3, 4, 5]));
+      expect(bigDenominator, isTrue);
+    });
+
+    test('소수 4학년 확장: 2.0 이상 값과 뺄셈 유형이 나온다', () {
+      final generator = QuestionGenerator(random: Random(33));
+      var sawBig = false;
+      var sawSub = false;
+      for (final maxNumber in [20, 50]) {
+        for (var round = 0; round < 60; round++) {
+          final questions = generator.generate(
+            QuizConfig(mode: QuizMode.decimal, maxNumber: maxNumber),
+          );
+          for (final q in questions) {
+            expect(q.op, QuestionOp.decimal);
+            expect(q.answer, inInclusiveRange(1, maxNumber));
+            expect(q.answerLabel, (q.answer / 10).toStringAsFixed(1));
+            expect(q.choices, contains(q.answer));
+            expect(q.choices.toSet(), hasLength(4));
+            if (q.answer >= 20) sawBig = true;
+            if (q.variant == 2 || q.variant == 3) {
+              final sign = q.variant == 2 ? r'\+' : '-';
+              final match = RegExp('^(\\d+\\.\\d) $sign (\\d+\\.\\d) = \\?\$')
+                  .firstMatch(q.prompt);
+              expect(match, isNotNull, reason: q.prompt);
+              final a = (double.parse(match!.group(1)!) * 10).round();
+              final b = (double.parse(match.group(2)!) * 10).round();
+              expect(q.answer, q.variant == 2 ? a + b : a - b);
+              if (q.variant == 3) sawSub = true;
+            }
+          }
+        }
+      }
+      expect(sawBig, isTrue);
+      expect(sawSub, isTrue);
+    });
+
     test('시간 계산: 분 부호화와 시각 표기가 맞는다', () {
       final generator = QuestionGenerator(random: Random(25));
       for (final maxNumber in [3, 8, 12]) {

@@ -434,9 +434,17 @@ class QuestionGenerator {
         );
 
       // 분수: 똑같이 나누기(이름 붙이기) → 같은 분모 비교 → 같은 분모 덧셈
+      // → (4학년, max 10부터) 같은 분모 뺄셈 · 가분수 찾기 · 대분수→가분수
       case QuizMode.fraction:
-        final m = max.clamp(2, 9);
-        final forms = [0, if (m >= 5) 1, if (m >= 6) 2];
+        final m = max.clamp(2, 12);
+        final forms = [
+          0,
+          if (m >= 5) 1,
+          if (m >= 6) 2,
+          if (m >= 10) 3,
+          if (m >= 10) 4,
+          if (m >= 10) 5,
+        ];
         switch (forms[_random.nextInt(forms.length)]) {
           // 이름 붙이기: b조각 중 한 조각 = 1/b
           // (분모가 한 종류뿐이면 연속 중복을 못 피하므로 최소 2~3은 나오게 한다)
@@ -445,7 +453,7 @@ class QuestionGenerator {
             final d = 2 + _random.nextInt(dMax - 1); // 2..dMax
             final wrong = <int>{};
             while (wrong.length < 3) {
-              final other = 2 + _random.nextInt(8); // 2..9
+              final other = 2 + _random.nextInt((dMax - 1).clamp(8, 11));
               if (other != d) wrong.add(100 + other);
             }
             return Question(
@@ -460,7 +468,7 @@ class QuestionGenerator {
 
           // 같은 분모 비교: 분자가 클수록 크다
           case 1:
-            final d = 5 + _random.nextInt(5); // 5..9
+            final d = 5 + _random.nextInt(m - 4); // 5..m
             final numerators = <int>{};
             while (numerators.length < 4) {
               numerators.add(1 + _random.nextInt(d - 1)); // 1..d-1
@@ -480,8 +488,8 @@ class QuestionGenerator {
 
           // 같은 분모 덧셈: a/d + b/d = (a+b)/d
           // (오답 3개를 1..d-1에서 뽑으므로 분모는 5 이상이어야 한다)
-          default:
-            final d = 5 + _random.nextInt(5); // 5..9
+          case 2:
+            final d = 5 + _random.nextInt(m - 4); // 5..m
             final a = 1 + _random.nextInt(d - 2); // 1..d-2
             final b = 1 + _random.nextInt(d - 1 - a); // a+b <= d-1
             final sum = a + b;
@@ -500,19 +508,85 @@ class QuestionGenerator {
               choices: [sum * 100 + d, ...wrong]..shuffle(_random),
               emoji: '',
             );
-        }
 
-      // 소수: 0.1 모으기 → 비교 → 덧셈 (값은 0.1 단위 개수로 부호화)
-      case QuizMode.decimal:
-        final upper = max.clamp(2, 19); // 최대 1.9
-        final forms = [0, 1, if (upper >= 10) 2];
-        switch (forms[_random.nextInt(forms.length)]) {
-          // 0.1이 k개 = 0.k
-          case 0:
-            final k = 1 + _random.nextInt(upper.clamp(2, 9));
+          // 같은 분모 뺄셈: a/d - b/d = (a-b)/d
+          case 3:
+            final d = 5 + _random.nextInt(m - 4); // 5..m
+            final a = 2 + _random.nextInt(d - 2); // 2..d-1
+            final b = 1 + _random.nextInt(a - 1); // 1..a-1
+            final diff = a - b;
             final wrong = <int>{};
             while (wrong.length < 3) {
-              final n = 1 + _random.nextInt(upper.clamp(4, 19));
+              final n = 1 + _random.nextInt(d - 1);
+              if (n != diff) wrong.add(n * 100 + d);
+            }
+            return Question(
+              op: QuestionOp.fraction,
+              variant: 3,
+              left: diff * 100 + d,
+              right: 0,
+              prompt: '$a/$d - $b/$d = ?',
+              promptSpeech: '$d분의 $a 빼기 $d분의 $b는?',
+              choices: [diff * 100 + d, ...wrong]..shuffle(_random),
+              emoji: '',
+            );
+
+          // 가분수 찾기: 분자가 분모와 같거나 큰 분수를 고른다
+          case 4:
+            final d = 4 + _random.nextInt(m - 3); // 4..m
+            final n = d + _random.nextInt(4); // d..d+3 (가분수)
+            final wrong = <int>{};
+            while (wrong.length < 3) {
+              final p = 1 + _random.nextInt(d - 1); // 진분수
+              wrong.add(p * 100 + d);
+            }
+            return Question(
+              op: QuestionOp.fraction,
+              variant: 4,
+              left: n * 100 + d,
+              right: 0,
+              prompt: '가분수는 어느 것일까요?',
+              promptSpeech: '분자가 분모와 같거나 더 큰 가분수를 찾아보세요',
+              choices: [n * 100 + d, ...wrong]..shuffle(_random),
+              emoji: '',
+            );
+
+          // 대분수 → 가분수: w와 p/d = (w×d+p)/d
+          default:
+            final d = 4 + _random.nextInt(m - 3); // 4..m
+            final w = 1 + _random.nextInt(3); // 1..3
+            final p = 1 + _random.nextInt(d - 1); // 1..d-1
+            final n = w * d + p;
+            final wrong = <int>{};
+            while (wrong.length < 3) {
+              final k = d + _random.nextInt(3 * d); // d..4d-1 (가분수)
+              if (k != n) wrong.add(k * 100 + d);
+            }
+            final josa = w == 2 ? '와' : '과';
+            return Question(
+              op: QuestionOp.fraction,
+              variant: 5,
+              left: n * 100 + d,
+              right: 0,
+              prompt: '대분수 $w$josa $p/$d를 가분수로 바꾸면?',
+              promptSpeech: '대분수 $w$josa $d분의 $p를 가분수로 바꾸면?',
+              choices: [n * 100 + d, ...wrong]..shuffle(_random),
+              emoji: '',
+            );
+        }
+
+      // 소수: 0.1 모으기 → 비교 → 덧셈 → (max 10부터) 뺄셈
+      // (값은 0.1 단위 개수로 부호화, 4학년 확장으로 5.0까지)
+      case QuizMode.decimal:
+        final upper = max.clamp(2, 50); // 최대 5.0
+        final forms = [0, 1, if (upper >= 10) 2, if (upper >= 10) 3];
+        switch (forms[_random.nextInt(forms.length)]) {
+          // 0.1이 k개 = 0.k (2.0 넘게도 모아 본다)
+          case 0:
+            final k = 1 + _random.nextInt(upper.clamp(2, 29));
+            final wrong = <int>{};
+            while (wrong.length < 3) {
+              final n = 1 + _random.nextInt(upper.clamp(4, 29));
               if (n != k) wrong.add(n);
             }
             return Question(
@@ -527,7 +601,7 @@ class QuestionGenerator {
 
           // 소수 비교 (서로 다른 보기 4개가 나오게 범위 하한을 보정)
           case 1:
-            final range = upper.clamp(4, 19);
+            final range = upper.clamp(4, 50);
             final pool = <int>{};
             while (pool.length < 4) {
               pool.add(1 + _random.nextInt(range));
@@ -544,14 +618,16 @@ class QuestionGenerator {
               emoji: '',
             );
 
-          // 소수 덧셈: 합이 1.9 이하
-          default:
-            final a = 1 + _random.nextInt(9); // 0.1..0.9
-            final b = 1 + _random.nextInt((upper - a).clamp(1, 9));
+          // 소수 덧셈: 합이 상한 이하 (상한이 2.0 이상이면 큰 소수끼리도 더한다)
+          case 2:
+            final aMax = upper >= 20 ? (upper - 2).clamp(1, 29) : 9;
+            final a = 1 + _random.nextInt(aMax);
+            final b =
+                1 + _random.nextInt((upper - a).clamp(1, upper >= 20 ? 20 : 9));
             final sum = a + b;
             final wrong = <int>{};
             while (wrong.length < 3) {
-              final n = 1 + _random.nextInt(19);
+              final n = 1 + _random.nextInt(upper.clamp(19, 50));
               if (n != sum) wrong.add(n);
             }
             String lab(int v) => (v / 10).toStringAsFixed(1);
@@ -563,6 +639,28 @@ class QuestionGenerator {
               prompt: '${lab(a)} + ${lab(b)} = ?',
               promptSpeech: '${lab(a)} 더하기 ${lab(b)}는?',
               choices: [sum, ...wrong]..shuffle(_random),
+              emoji: '',
+            );
+
+          // 소수 뺄셈: a - b (답은 0.1 이상)
+          default:
+            final a = 2 + _random.nextInt((upper - 1).clamp(1, 48)); // 2..upper
+            final b = 1 + _random.nextInt(a - 1); // 1..a-1
+            final diff = a - b;
+            final wrong = <int>{};
+            while (wrong.length < 3) {
+              final n = 1 + _random.nextInt(upper.clamp(19, 50));
+              if (n != diff) wrong.add(n);
+            }
+            String lab(int v) => (v / 10).toStringAsFixed(1);
+            return Question(
+              op: QuestionOp.decimal,
+              variant: 3,
+              left: diff,
+              right: 0,
+              prompt: '${lab(a)} - ${lab(b)} = ?',
+              promptSpeech: '${lab(a)} 빼기 ${lab(b)}는?',
+              choices: [diff, ...wrong]..shuffle(_random),
               emoji: '',
             );
         }
