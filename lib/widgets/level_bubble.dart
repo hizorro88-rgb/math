@@ -186,3 +186,50 @@ class _DashedCirclePainter extends CustomPainter {
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }
+
+/// 단계 원들을 한 줄에 5개씩, 열 위치를 맞춰 배치하는 그리드.
+/// 원 크기가 상태(현재·잠김)마다 달라도 각 칸의 가운데에 정렬돼
+/// 위아래 줄의 1~5·6~10 위치가 서로 맞는다.
+class LevelGrid extends StatelessWidget {
+  const LevelGrid({super.key, required this.children, this.perRow = 5});
+
+  final List<Widget> children;
+  final int perRow;
+
+  @override
+  Widget build(BuildContext context) {
+    const gap = 8.0;
+    final rows = (children.length + perRow - 1) ~/ perRow;
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cell = (constraints.maxWidth - gap * (perRow - 1)) / perRow;
+        return Column(
+          children: [
+            for (var r = 0; r < rows; r++) ...[
+              if (r > 0) const SizedBox(height: 10),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  for (var i = 0; i < perRow; i++) ...[
+                    if (i > 0) const SizedBox(width: gap),
+                    SizedBox(
+                      width: cell,
+                      child: r * perRow + i < children.length
+                          ? Center(
+                              child: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: children[r * perRow + i],
+                              ),
+                            )
+                          : null,
+                    ),
+                  ],
+                ],
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}

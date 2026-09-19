@@ -214,9 +214,7 @@ class _UnitSection extends StatelessWidget {
             ),
           ],
           const SizedBox(height: 14),
-          Wrap(
-            spacing: 10,
-            runSpacing: 10,
+          LevelGrid(
             children: [
               for (final level in unitLevels)
                 LevelBubble(
