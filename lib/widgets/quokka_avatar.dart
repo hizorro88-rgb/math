@@ -115,12 +115,27 @@ class _QuokkaAvatarState extends State<QuokkaAvatar> {
               gaplessPlayback: true, // 프레임 전환 시 깜빡이는 공백 방지
             ),
           ),
-          if (hat != null)
+          // 도트 아이템은 쿼카와 같은 128px 캔버스에 위치까지 맞춰 그려져 있어
+          // 본체와 같은 크기로 겹치면 정확히 착용된다.
+          for (final item in [hat, face])
+            if (item != null && item.pixel)
+              Positioned(
+                bottom: 0,
+                child: Image.asset(
+                  'assets/images/items/${item.id}.png',
+                  width: size * 1.2,
+                  height: size * 1.2,
+                  fit: BoxFit.contain,
+                  filterQuality: FilterQuality.none,
+                  gaplessPlayback: true,
+                ),
+              ),
+          if (hat != null && !hat.pixel)
             Positioned(
               bottom: size * 0.98,
               child: Text(hat.emoji, style: TextStyle(fontSize: size * 0.5)),
             ),
-          if (face != null)
+          if (face != null && !face.pixel)
             Positioned(
               bottom: size * 0.56,
               child: Text(face.emoji, style: TextStyle(fontSize: size * 0.38)),

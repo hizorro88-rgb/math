@@ -468,10 +468,14 @@ void main() {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
-    // 쿼카 마스코트 + 리본(머리), 안경(얼굴), 풀밭(배경)
+    // 쿼카 마스코트 + 리본(머리)·안경(얼굴)은 도트 그림, 풀밭(배경)은 이모지
     expect(find.byType(QuokkaAvatar), findsOneWidget);
-    expect(find.text('🎀'), findsOneWidget);
-    expect(find.text('👓'), findsOneWidget);
+    Finder itemImage(String id) => find.byWidgetPredicate((w) =>
+        w is Image &&
+        w.image is AssetImage &&
+        (w.image as AssetImage).assetName == 'assets/images/items/$id.png');
+    expect(itemImage('ribbon'), findsOneWidget);
+    expect(itemImage('glasses'), findsOneWidget);
     expect(find.text('🌿'), findsOneWidget);
   });
 

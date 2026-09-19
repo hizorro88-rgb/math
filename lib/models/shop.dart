@@ -24,6 +24,7 @@ class ShopItem {
     required this.name,
     required this.cost,
     required this.slot,
+    this.pixel = false,
   });
 
   final String id;
@@ -31,30 +32,95 @@ class ShopItem {
   final String name;
   final int cost;
   final ItemSlot slot;
+
+  /// true면 쿼카와 같은 도트 화풍의 전용 그림으로 착용된다
+  /// (assets/images/items/<id>.png, 128px 캔버스에 위치까지 맞춰 둠).
+  /// 상점 카드에는 여전히 [emoji]를 보여준다.
+  final bool pixel;
 }
 
 /// 상점에서 살 수 있는 아이템 목록 (코인으로 구매)
+/// 머리·얼굴은 쿼카와 같은 도트 그림으로 착용된다 (pixel: true).
 const List<ShopItem> shopItems = [
   // 머리
-  ShopItem(id: 'ribbon', emoji: '🎀', name: '리본', cost: 80, slot: ItemSlot.hat),
   ShopItem(
-      id: 'cap', emoji: '🧢', name: '야구 모자', cost: 150, slot: ItemSlot.hat),
+      id: 'ribbon',
+      emoji: '🎀',
+      name: '리본',
+      cost: 80,
+      slot: ItemSlot.hat,
+      pixel: true),
   ShopItem(
-      id: 'tophat', emoji: '🎩', name: '신사 모자', cost: 300, slot: ItemSlot.hat),
+      id: 'cap',
+      emoji: '🧢',
+      name: '야구 모자',
+      cost: 150,
+      slot: ItemSlot.hat,
+      pixel: true),
   ShopItem(
-      id: 'gradcap', emoji: '🎓', name: '졸업 모자', cost: 450, slot: ItemSlot.hat),
-  ShopItem(id: 'crown', emoji: '👑', name: '왕관', cost: 600, slot: ItemSlot.hat),
+      id: 'tophat',
+      emoji: '🎩',
+      name: '신사 모자',
+      cost: 300,
+      slot: ItemSlot.hat,
+      pixel: true),
+  ShopItem(
+      id: 'flowercrown',
+      emoji: '🌼',
+      name: '꽃 화관',
+      cost: 350,
+      slot: ItemSlot.hat,
+      pixel: true),
+  ShopItem(
+      id: 'gradcap',
+      emoji: '🎓',
+      name: '졸업 모자',
+      cost: 450,
+      slot: ItemSlot.hat,
+      pixel: true),
+  ShopItem(
+      id: 'crown',
+      emoji: '👑',
+      name: '왕관',
+      cost: 600,
+      slot: ItemSlot.hat,
+      pixel: true),
+  ShopItem(
+      id: 'wizard',
+      emoji: '🧙',
+      name: '마법사 모자',
+      cost: 700,
+      slot: ItemSlot.hat,
+      pixel: true),
   // 얼굴
   ShopItem(
-      id: 'glasses', emoji: '👓', name: '안경', cost: 100, slot: ItemSlot.face),
+      id: 'glasses',
+      emoji: '👓',
+      name: '안경',
+      cost: 100,
+      slot: ItemSlot.face,
+      pixel: true),
   ShopItem(
-      id: 'goggles', emoji: '🥽', name: '물안경', cost: 200, slot: ItemSlot.face),
+      id: 'goggles',
+      emoji: '🥽',
+      name: '물안경',
+      cost: 200,
+      slot: ItemSlot.face,
+      pixel: true),
   ShopItem(
       id: 'sunglasses',
       emoji: '🕶️',
       name: '선글라스',
       cost: 250,
-      slot: ItemSlot.face),
+      slot: ItemSlot.face,
+      pixel: true),
+  ShopItem(
+      id: 'heartglasses',
+      emoji: '😍',
+      name: '하트 안경',
+      cost: 350,
+      slot: ItemSlot.face,
+      pixel: true),
   // 친구
   ShopItem(
       id: 'balloon', emoji: '🎈', name: '풍선', cost: 120, slot: ItemSlot.side),
@@ -63,15 +129,21 @@ const List<ShopItem> shopItems = [
   ShopItem(
       id: 'chick', emoji: '🐥', name: '병아리 친구', cost: 250, slot: ItemSlot.side),
   ShopItem(
+      id: 'duck', emoji: '🦆', name: '오리 친구', cost: 320, slot: ItemSlot.side),
+  ShopItem(
       id: 'teddy', emoji: '🧸', name: '곰인형', cost: 400, slot: ItemSlot.side),
   ShopItem(
       id: 'puppy', emoji: '🐶', name: '강아지 친구', cost: 550, slot: ItemSlot.side),
+  ShopItem(
+      id: 'rocket', emoji: '🚀', name: '장난감 로켓', cost: 700, slot: ItemSlot.side),
   ShopItem(
       id: 'rainbow', emoji: '🌈', name: '무지개', cost: 800, slot: ItemSlot.side),
   // 배경
   ShopItem(id: 'grass', emoji: '🌿', name: '풀밭', cost: 300, slot: ItemSlot.bg),
   ShopItem(id: 'sea', emoji: '🌊', name: '바다', cost: 450, slot: ItemSlot.bg),
   ShopItem(id: 'space', emoji: '🌌', name: '우주', cost: 600, slot: ItemSlot.bg),
+  ShopItem(
+      id: 'snow', emoji: '❄️', name: '눈 오는 날', cost: 700, slot: ItemSlot.bg),
   ShopItem(id: 'castle', emoji: '🏰', name: '성', cost: 800, slot: ItemSlot.bg),
 ];
 
