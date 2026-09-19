@@ -213,7 +213,7 @@ class Curriculum {
       AgeCategory(
         title: '7살',
         emoji: '🎒',
-        desc: '10까지 덧셈·뺄셈 (학교 갈 준비!)',
+        desc: '10까지 덧셈·뺄셈 · 시계 읽기 (학교 갈 준비!)',
         color: const Color(0xFFFF4B4B),
         units: [
           Unit(
@@ -240,6 +240,13 @@ class Curriculum {
               mode: QuizMode.fillBlank,
               startMax: 6,
               endMax: 10),
+          // 시계의 기준값은 분: 12(정각만) → 24(몇 시 반 섞임)
+          Unit(
+              title: '시계 읽기',
+              emoji: '🕐',
+              mode: QuizMode.clock,
+              startMax: 12,
+              endMax: 24),
         ],
       ),
       AgeCategory(
@@ -294,8 +301,8 @@ class Curriculum {
               title: '시계 보기',
               emoji: '🕒',
               mode: QuizMode.clock,
-              startMax: 12,
-              endMax: 12),
+              startMax: 18,
+              endMax: 24),
           Unit(
               title: '덧뺄셈 마스터',
               emoji: '🦄',

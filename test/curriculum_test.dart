@@ -114,6 +114,28 @@ void main() {
       expect(ProgressStore.isUnlocked(stars, second), isTrue);
     });
 
+    test('예전(v4) 별 기록이 새 단계 번호로 이사한다', () async {
+      // v4 시절(42묶음, 420단계): 7살에 '시계 읽기'가 들어가기 전.
+      // '덧뺄셈 마스터'는 v4에서 23번째 묶음(221~230단계)이었다.
+      final old = List.filled(420, '0');
+      old[0] = '3';
+      old[220] = '2'; // 221단계 (덧뺄셈 마스터 첫 단계)
+      SharedPreferences.setMockInitialValues({'level_stars_v4': old});
+      Profiles.activeId = 1;
+
+      final stars = await ProgressStore.load();
+      expect(stars.length, Curriculum.totalLevels);
+      expect(stars[0], 3);
+
+      // 이제 7살 '시계 읽기' 10단계만큼 뒤로 밀렸다.
+      final unit =
+          Curriculum.units.firstWhere((u) => u.title == '덧뺄셈 마스터');
+      expect(stars[unit.firstLevelNumber - 1], 2);
+      final clock =
+          Curriculum.units.firstWhere((u) => u.title == '시계 읽기');
+      expect(clock.category.title, '7살');
+    });
+
     test('예전(v3) 별 기록이 새 단계 번호로 이사한다', () async {
       // v3 시절: '덧뺄셈 마스터'는 21번째 묶음(201~210단계)이었다.
       final old = List.filled(350, '0');

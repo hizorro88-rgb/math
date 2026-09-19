@@ -110,10 +110,14 @@ class Question {
   }
 
   /// 보기·정답 숫자를 화면에 보여줄 글자로 바꾼다.
-  /// 분수는 분자×100+분모, 소수는 0.1 단위 개수, 시간은 분으로 부호화돼 있다.
+  /// 분수는 분자×100+분모, 소수는 0.1 단위 개수,
+  /// 시계·시간은 분으로 부호화돼 있다.
   String labelFor(int value) => switch (op) {
         QuestionOp.fraction => '${value ~/ 100}/${value % 100}',
         QuestionOp.decimal => (value / 10).toStringAsFixed(1),
+        QuestionOp.clock => value % 60 == 0
+            ? '${value ~/ 60}시'
+            : '${value ~/ 60}시 30분',
         QuestionOp.timeCalc => variant == 1
             ? '$value분'
             : value % 60 == 0
@@ -406,16 +410,22 @@ class QuestionGenerator {
           emoji: target.emoji,
         );
 
-      // 시계 보기: 몇 시(정각)를 맞힌다. (난이도 값은 쓰지 않는다)
+      // 시계 보기: 몇 시(정각), 기준값이 18 이상이면 몇 시 반도 섞는다.
+      // 값은 분으로 부호화한다 (3시 = 180, 3시 30분 = 210).
       case QuizMode.clock:
+        final halfAllowed = max >= 18;
         final hour = 1 + _random.nextInt(12); // 1..12
-        final choices = <int>{hour};
+        final minute = halfAllowed && _random.nextBool() ? 30 : 0;
+        final answer = hour * 60 + minute;
+        final choices = <int>{answer};
         while (choices.length < 4) {
-          choices.add(1 + _random.nextInt(12));
+          final h = 1 + _random.nextInt(12);
+          final m = halfAllowed && _random.nextBool() ? 30 : 0;
+          choices.add(h * 60 + m);
         }
         return Question(
           op: QuestionOp.clock,
-          left: hour,
+          left: answer,
           right: 0,
           choices: choices.toList()..shuffle(_random),
           emoji: _emoji,

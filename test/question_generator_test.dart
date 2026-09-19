@@ -257,24 +257,45 @@ void main() {
   });
 
   group('QuestionGenerator 시계 보기', () {
-    test('1~12시 정각이 나오고 보기가 시각 범위 안에 있다', () {
+    test('기준값이 작으면 정각만 나온다 (분 부호화)', () {
       final generator = QuestionGenerator(random: Random(41));
       for (var round = 0; round < 30; round++) {
         final questions = generator.generate(
-          const QuizConfig(mode: QuizMode.clock, maxNumber: 10),
+          const QuizConfig(mode: QuizMode.clock, maxNumber: 12),
         );
         for (final q in questions) {
           expect(q.op, QuestionOp.clock);
-          expect(q.left, greaterThanOrEqualTo(1));
-          expect(q.left, lessThanOrEqualTo(12));
+          expect(q.left % 60, 0); // 정각만
+          expect(q.left ~/ 60, inInclusiveRange(1, 12));
           expect(q.answer, q.left);
+          expect(q.answerLabel, '${q.left ~/ 60}시');
           expect(q.expression, '시계는 몇 시일까요?');
           expect(q.choices, hasLength(4));
           expect(q.choices.toSet(), hasLength(4));
           expect(q.choices, contains(q.answer));
-          expect(q.choices.every((c) => c >= 1 && c <= 12), isTrue);
         }
       }
+    });
+
+    test('기준값이 18 이상이면 몇 시 반도 나온다', () {
+      final generator = QuestionGenerator(random: Random(43));
+      var sawHalf = false;
+      for (var round = 0; round < 30; round++) {
+        final questions = generator.generate(
+          const QuizConfig(mode: QuizMode.clock, maxNumber: 24),
+        );
+        for (final q in questions) {
+          expect(q.left % 30, 0); // 정각 또는 30분
+          expect(q.left ~/ 60, inInclusiveRange(1, 12));
+          if (q.left % 60 == 30) {
+            sawHalf = true;
+            expect(q.answerLabel, '${q.left ~/ 60}시 30분');
+          }
+          expect(q.choices, contains(q.answer));
+          expect(q.choices.toSet(), hasLength(4));
+        }
+      }
+      expect(sawHalf, isTrue);
     });
   });
 

@@ -1184,12 +1184,12 @@ class _EmojiHint extends StatelessWidget {
           ],
         );
 
-      // 시계 보기: 아날로그 시계 그림이 곧 문제다.
+      // 시계 보기: 아날로그 시계 그림이 곧 문제다. (값은 분으로 부호화)
       case QuestionOp.clock:
         return SizedBox(
           width: 170,
           height: 170,
-          child: CustomPaint(painter: _ClockPainter(hour: question.left)),
+          child: CustomPaint(painter: _ClockPainter(minutes: question.left)),
         );
 
       // 분수 이름 붙이기: 피자처럼 나눈 원에서 색칠한 조각을 보여준다.
@@ -1264,11 +1264,14 @@ class _PiePainter extends CustomPainter {
       oldDelegate.filled != filled || oldDelegate.slices != slices;
 }
 
-/// 정각을 가리키는 아날로그 시계 (시침은 시각, 분침은 12)
+/// 아날로그 시계: 정각과 30분을 그린다 (값은 분으로 부호화, 3시 30분 = 210)
 class _ClockPainter extends CustomPainter {
-  const _ClockPainter({required this.hour});
+  const _ClockPainter({required this.minutes});
 
-  final int hour;
+  final int minutes;
+
+  int get hour => minutes ~/ 60;
+  int get minute => minutes % 60;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -1309,17 +1312,21 @@ class _ClockPainter extends CustomPainter {
       painter.paint(canvas, pos - Offset(painter.width / 2, painter.height / 2));
     }
 
-    // 분침 (12를 가리킴)
+    // 분침 (정각은 12, 30분은 6을 가리킴)
+    final minuteAngle = (minute * 6 - 90) * math.pi / 180;
     canvas.drawLine(
       center,
-      center + Offset(0, -(radius - 26)),
+      center +
+          Offset(math.cos(minuteAngle), math.sin(minuteAngle)) *
+              (radius - 26),
       Paint()
         ..color = const Color(0xFF1CB0F6)
         ..strokeWidth = 5
         ..strokeCap = StrokeCap.round,
     );
-    // 시침
-    final hourAngle = ((hour % 12) * 30 - 90) * math.pi / 180;
+    // 시침 (30분이면 숫자 사이 중간까지 간다)
+    final hourAngle =
+        ((hour % 12) * 30 + minute * 0.5 - 90) * math.pi / 180;
     canvas.drawLine(
       center,
       center +
@@ -1333,5 +1340,6 @@ class _ClockPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(_ClockPainter oldDelegate) => oldDelegate.hour != hour;
+  bool shouldRepaint(_ClockPainter oldDelegate) =>
+      oldDelegate.minutes != minutes;
 }

@@ -126,7 +126,7 @@ class _PassScreenState extends State<PassScreen> {
                 ),
                 const SizedBox(height: 16),
                 _benefit('🗺️', '5과목 모든 단계 열기',
-                    '총 780단계 — 수학\u00A0420 · 한글\u00A0120 · 영어\u00A080 · 일본어\u00A090 · 중국어\u00A070'),
+                    '총 790단계 — 수학\u00A0430 · 한글\u00A0120 · 영어\u00A080 · 일본어\u00A090 · 중국어\u00A070'),
                 _benefit('🧒', '프로필 4명',
                     '아이마다 프로필을 만들어 각자의 진도로 배워요'),
                 _benefit('🏠', '가족 기기 공유',

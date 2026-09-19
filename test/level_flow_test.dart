@@ -73,13 +73,13 @@ void main() {
     expect(find.text('다음 단계'), findsOneWidget);
 
     final prefs = await SharedPreferences.getInstance();
-    var stars = prefs.getStringList('level_stars_v4')!;
+    var stars = prefs.getStringList('level_stars_v5')!;
     expect(int.parse(stars[50]), greaterThanOrEqualTo(1), reason: '51단계 저장');
 
     await scrollAndTap(tester, find.text('다음 단계'));
     await solveRound();
 
-    stars = prefs.getStringList('level_stars_v4')!;
+    stars = prefs.getStringList('level_stars_v5')!;
     expect(int.parse(stars[51]), greaterThanOrEqualTo(1),
         reason: '다음 단계로 이어 깬 52단계도 저장돼야 한다');
   });

@@ -31,6 +31,10 @@
 - 정답 자동 넘어가기(AutoNextBar)는 그려진 프레임 시간 기준 3초 —
   벽시계 기준으로 되돌리면 소리 재생 랙 때문에 즉시 넘어가는 버그가 재발한다.
 - 전체 열기 코드는 lib/models/premium.dart의 unlockCode.
+- 수학 커리큘럼에 유닛을 넣거나 순서를 바꾸면 단계 번호가 밀린다 —
+  progress.dart의 level_stars 키를 올리고(현재 v5) 직전 버전의
+  유닛 제목 목록을 추가해 제목 기반 마이그레이션으로 별 기록을 지킬 것.
+  이용권 화면의 단계 수 문구와 시드 배열 길이도 함께 갱신.
 - 사용자의 빌드 PC(Windows, D:\math)는 JDK 21(Temurin) + NDK 30.0.16248370 고정.
 - 클라우드 동기화(lib/services/cloud_sync.dart): lib/firebase_options.dart가
   TODO 자리표시자면 조용히 꺼진다. 사용자가 Firebase 콘솔 구성값을 주면
