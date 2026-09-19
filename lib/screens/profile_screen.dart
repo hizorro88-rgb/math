@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/quokka_avatar.dart';
 
 import '../models/premium.dart';
 import '../models/profile.dart';
@@ -126,7 +127,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 children: [
                 if (widget.asLauncher) ...[
                   const Center(
-                      child: Text('🦉', style: TextStyle(fontSize: 52))),
+                      child: QuokkaFace(size: 56)),
                   const SizedBox(height: 6),
                   Center(
                     child: Text(

@@ -404,7 +404,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     ];
   }
 
-  /// 오늘 활동에 따라 쿼키 인사말이 달라진다.
+  /// 오늘 활동에 따라 쿼카 인사말이 달라진다.
   String _greetingFor(_MapData data) {
     // 기본 이름("우리 아이")이면 호칭이 어색하지 않게 "친구"로 부른다.
     final name = data.profile.name == '우리 아이' ? '친구' : data.profile.name;
@@ -419,8 +419,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       return '$name, ${daily.streak}일째\n함께라니 최고야! 🔥';
     }
     final hour = DateTime.now().hour;
-    if (hour < 12) return '$name, 좋은 아침이야!\n쿼키랑 놀면서 배우자!';
-    if (hour < 18) return '$name, 오늘도 왔구나!\n쿼키가 기다렸어!';
+    if (hour < 12) return '$name, 좋은 아침이야!\n쿼카랑 놀면서 배우자!';
+    if (hour < 18) return '$name, 오늘도 왔구나!\n쿼카가 기다렸어!';
     return '$name, 자기 전에\n한 판 어때? 헤헤!';
   }
 
@@ -719,7 +719,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                               child: _MenuCard(
                             emoji: '🛍️',
                             title: '꾸미기 가게',
-                            subtitle: '쿼키 꾸미기',
+                            subtitle: '쿼카 꾸미기',
                             onTap: _openShop,
                           )),
                           const SizedBox(width: 10),

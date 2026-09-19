@@ -1,4 +1,5 @@
 import 'dart:async';
+import '../widgets/quokka_avatar.dart';
 
 import 'package:flutter/material.dart';
 
@@ -124,7 +125,14 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Text('🦉📒', style: TextStyle(fontSize: 52)),
+          const Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              QuokkaFace(size: 50),
+              SizedBox(width: 4),
+              Text('📒', style: TextStyle(fontSize: 44)),
+            ],
+          ),
           const SizedBox(height: 12),
           Text(
             _neverPlayed ? '여기는 오답 노트!' : '오답 노트가 비었어요! 🎉',
@@ -134,8 +142,8 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
           const SizedBox(height: 6),
           Text(
             _neverPlayed
-                ? '퀴즈를 풀다가 틀린 문제가 여기 모여요.\n쿼키랑 같이 첫 퀴즈부터 시작해 볼까?'
-                : '틀린 게 하나도 없다니, 쿼키가 깜짝 놀랐어!\n틀린 문제가 생기면 여기 모아 뒀다가 같이 복습해요.',
+                ? '퀴즈를 풀다가 틀린 문제가 여기 모여요.\n쿼카랑 같이 첫 퀴즈부터 시작해 볼까?'
+                : '틀린 게 하나도 없다니, 쿼카가 깜짝 놀랐어!\n틀린 문제가 생기면 여기 모아 뒀다가 같이 복습해요.',
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
           ),

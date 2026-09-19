@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_tts/flutter_tts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -34,6 +35,11 @@ class Speech {
   /// 말 빠르기 (rateSlow 또는 rateNormal)
   static double rate = rateNormal;
 
+  /// 플랫폼별 빠르기 보정: 모바일 TTS는 0.5 근처가 보통 빠르기지만
+  /// 웹(Web Speech API)은 1.0이 보통이라, 같은 값을 그대로 주면
+  /// 절반 속도로 늘어진 이상한 목소리가 된다.
+  static double get _platformRate => kIsWeb ? rate * 2 : rate;
+
   /// 앱 시작 시 한 번: 한국어, 아이가 듣기 좋게 천천히·살짝 높게.
   static Future<void> init() async {
     try {
@@ -47,7 +53,7 @@ class Speech {
       final ok = await _tts.isLanguageAvailable('ko-KR');
       if (ok is bool && !ok) available = false;
       await _tts.setLanguage('ko-KR');
-      await _tts.setSpeechRate(rate);
+      await _tts.setSpeechRate(_platformRate);
       await _tts.setPitch(1.05);
       // 외국어 음성 지원 여부도 확인해 둔다 (듣기 유형 입구에서 안내용).
       for (final lang in ['en-US', 'ja-JP', 'zh-CN']) {
@@ -69,7 +75,7 @@ class Speech {
           (prefs.getBool('sound_enabled_v1') ?? true);
       rate = prefs.getDouble(_rateKey) ?? rateNormal;
     } catch (_) {}
-    _tts.setSpeechRate(rate).ignore();
+    _tts.setSpeechRate(_platformRate).ignore();
   }
 
   static Future<void> setEnabled(bool value) async {
@@ -85,7 +91,7 @@ class Speech {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setDouble(_rateKey, value);
-      await _tts.setSpeechRate(value);
+      await _tts.setSpeechRate(_platformRate);
     } catch (_) {}
   }
 

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../widgets/quokka_avatar.dart';
 
 import '../models/curriculum.dart';
 import '../models/profile.dart';
@@ -68,8 +69,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text('🦉', textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 64)),
+              const Center(child: QuokkaFace(size: 72)),
+              const SizedBox(height: 4),
               Text(
                 '쿼카 학교',
                 textAlign: TextAlign.center,
@@ -97,7 +98,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               if (_step == 0) ...[
                 const SizedBox(height: 6),
                 Text(
-                  '안녕! 나는 쿼키야. 같이 배워 보자!',
+                  '안녕! 나는 쿼카야. 같이 배워 보자!',
                   textAlign: TextAlign.center,
                   style: TextStyle(
                     fontSize: 14,
@@ -302,7 +303,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         BouncyButton(
           color: const Color(0xFF1CB0F6),
           padding: const EdgeInsets.symmetric(vertical: 16),
-          onTap: () => Speech.speak('안녕? 나는 쿼카 쿼키야. 우리 같이 놀면서 공부하자!'),
+          onTap: () => Speech.speak('안녕? 나는 쿼카 쿼카야. 우리 같이 놀면서 공부하자!'),
           child: const Text(
             '🔊 소리 들어 보기',
             textAlign: TextAlign.center,

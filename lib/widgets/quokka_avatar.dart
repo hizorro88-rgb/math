@@ -6,7 +6,25 @@ import 'package:flutter/material.dart';
 import '../models/shop.dart';
 import '../theme.dart';
 
-/// 산 아이템을 걸친 쿼카 마스코트 '쿼키'.
+/// 꾸미기 없이 쿼카 얼굴만 보여줄 때 (응원 말풍선·팝업·빈 화면 등)
+class QuokkaFace extends StatelessWidget {
+  const QuokkaFace({super.key, this.size = 32});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      'assets/images/quokka.png',
+      width: size,
+      height: size,
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.medium,
+    );
+  }
+}
+
+/// 산 아이템을 걸친 쿼카 마스코트.
 /// 본체는 오리지널 에셋(assets/images/quokka.png)이고 2.6~4.6초마다
 /// 눈을 깜빡인다. 머리 위 모자, 얼굴 앞 안경, 옆에는 친구가 붙는다.
 class QuokkaAvatar extends StatefulWidget {

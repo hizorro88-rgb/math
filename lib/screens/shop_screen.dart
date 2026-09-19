@@ -79,7 +79,7 @@ class _ShopScreenState extends State<ShopScreen> {
     }
   }
 
-  /// 쿼키의 한 마디: 살 수 있는 게 없으면 가장 가까운 목표를 알려준다.
+  /// 쿼카의 한 마디: 살 수 있는 게 없으면 가장 가까운 목표를 알려준다.
   String _cheerLine() {
     if (_equipped.isNotEmpty) return '멋지다! 아이템을 눌러 바꿔 봐요';
     final wishList = shopItems.where((i) => !_owned.contains(i.id)).toList()

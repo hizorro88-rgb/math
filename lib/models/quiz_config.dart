@@ -59,7 +59,7 @@ enum QuizMode {
 enum Difficulty {
   easy('쉬워요', '5까지', 5, '🐣'),
   normal('보통이에요', '10까지', 10, '🐥'),
-  hard('어려워요', '20까지', 20, '🦉'),
+  hard('어려워요', '20까지', 20, '🦁'),
   expert('최고 도전', '100까지', 100, '🚀');
 
   const Difficulty(this.label, this.description, this.maxNumber, this.emoji);

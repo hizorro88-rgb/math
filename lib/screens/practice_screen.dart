@@ -194,7 +194,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                     const SizedBox(width: 8),
                     Expanded(
                       child: _ChoiceCard(
-                        emoji: '🦉',
+                        emoji: '🦁',
                         label: '어려워요',
                         selected: _langHard,
                         onTap: () => setState(() => _langHard = true),

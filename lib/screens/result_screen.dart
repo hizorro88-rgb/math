@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/quokka_avatar.dart';
 
 import '../models/daily.dart';
 import '../models/progress.dart';
@@ -111,233 +112,265 @@ class ResultScreen extends StatelessWidget {
           ),
           if (_stars >= 1) const Positioned.fill(child: ConfettiBurst()),
           SafeArea(
-            child: LayoutBuilder(
-              builder: (context, constraints) => SingleChildScrollView(
-                padding: const EdgeInsets.all(24),
-                child: ConstrainedBox(
-                  constraints:
-                      BoxConstraints(minHeight: constraints.maxHeight - 48),
-                  child: IntrinsicHeight(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const Spacer(),
-                        if (headerText != null) ...[
-                          Text(
-                            headerText!,
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                fontSize: 18, color: Colors.grey.shade600),
-                          ),
-                          const SizedBox(height: 12),
-                        ],
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            for (var i = 0; i < 3; i++)
-                              TweenAnimationBuilder<double>(
-                                tween: Tween(begin: 0, end: 1),
-                                duration: Duration(milliseconds: 400 + i * 300),
-                                curve: Curves.elasticOut,
-                                builder: (context, value, child) =>
-                                    Transform.scale(
-                                  scale: value,
-                                  child: child,
-                                ),
-                                child: Text(
-                                  i < _stars ? '⭐' : '☆',
-                                  style: const TextStyle(fontSize: 64),
-                                ),
-                              ),
-                          ],
-                        ),
-                        const SizedBox(height: 20),
-                        Text(
-                          _message,
-                          textAlign: TextAlign.center,
-                          style: displayStyle(fontSize: 30),
-                        ),
-                        const SizedBox(height: 10),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            const Text('🦉', style: TextStyle(fontSize: 34)),
-                            const SizedBox(width: 8),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 14, vertical: 8),
-                              decoration: BoxDecoration(
-                                color: AppColors.brownSurface,
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: Text(
-                                switch (_stars) {
-                                  3 => '우와아! 눈이 부셔!',
-                                  2 => '멋진걸? 헤헤!',
-                                  1 => '내일은 별 3개다, 아자!',
-                                  _ => '쿼키랑 같이 다시 해 보자!',
-                                },
-                                style: const TextStyle(
-                                  fontSize: 15,
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.brown,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          '$totalCount문제 중에 $correctCount문제를 맞혔어요!',
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                              fontSize: 18, color: Colors.grey.shade700),
-                        ),
-                        if (correctCount < totalCount) ...[
-                          const SizedBox(height: 10),
-                          Center(
-                            child: OutlinedButton.icon(
-                              style: OutlinedButton.styleFrom(
-                                foregroundColor: AppColors.brown,
-                                side: const BorderSide(
-                                    color: AppColors.brown, width: 1.5),
-                                padding: const EdgeInsets.symmetric(
-                                    horizontal: 18, vertical: 10),
-                                shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                              ),
-                              onPressed: () => Navigator.of(context).push(
-                                MaterialPageRoute(
-                                    builder: (_) => const WrongNotesScreen()),
-                              ),
-                              icon: const Icon(Icons.search_rounded, size: 20),
-                              label: Text(
-                                '틀린 ${totalCount - correctCount}문제 다시 보기',
-                                style: const TextStyle(
-                                    fontSize: 15, fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ),
-                        ],
-                        if (showUnlockHint) ...[
-                          const SizedBox(height: 8),
-                          Text(
-                            '5문제 이상 맞히면 다음 단계가 열려요!',
-                            textAlign: TextAlign.center,
-                            style: TextStyle(
-                                fontSize: 16, color: Colors.grey.shade600),
-                          ),
-                        ],
-                        const SizedBox(height: 20),
-                        _PointsCard(earnedPoints: earnedPoints),
-                        if (bossCleared) ...[
-                          const SizedBox(height: 12),
-                          const _BossBanner(),
-                        ],
-                        if (chestCoins > 0) ...[
-                          const SizedBox(height: 12),
-                          _ChestBanner(coins: chestCoins),
-                        ],
-                        if (stickerEarned) ...[
-                          const SizedBox(height: 12),
-                          const _StickerBanner(),
-                        ],
-                        const _WrongNotesBanner(),
-                        if (milestoneDays > 0) ...[
-                          const SizedBox(height: 12),
-                          _MilestoneBanner(
-                              days: milestoneDays, coins: milestoneCoins),
-                        ],
-                        if (completedMissions.isNotEmpty) ...[
-                          const SizedBox(height: 12),
-                          _MissionBanner(missions: completedMissions),
-                        ],
-                        const Spacer(),
-                        if (hasNext) ...[
-                          BouncyButton(
-                            color: const Color(0xFF3DA35D),
-                            onTap: () => _replace(context, nextBuilder!),
-                            child: Row(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              children: [
+            child: Column(
+              children: [
+                // 내용만 스크롤되고, 다음 단계 버튼은 아래 고정 바에 항상 보인다.
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) => SingleChildScrollView(
+                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight - 32),
+                        child: IntrinsicHeight(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              const Spacer(),
+                              if (headerText != null) ...[
                                 Text(
-                                  nextLabel!,
-                                  style: const TextStyle(
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
+                                  headerText!,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                      fontSize: 18,
+                                      color: Colors.grey.shade600),
+                                ),
+                                const SizedBox(height: 12),
+                              ],
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  for (var i = 0; i < 3; i++)
+                                    TweenAnimationBuilder<double>(
+                                      tween: Tween(begin: 0, end: 1),
+                                      duration:
+                                          Duration(milliseconds: 400 + i * 300),
+                                      curve: Curves.elasticOut,
+                                      builder: (context, value, child) =>
+                                          Transform.scale(
+                                        scale: value,
+                                        child: child,
+                                      ),
+                                      child: Text(
+                                        i < _stars ? '⭐' : '☆',
+                                        style: const TextStyle(fontSize: 64),
+                                      ),
+                                    ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+                              Text(
+                                _message,
+                                textAlign: TextAlign.center,
+                                style: displayStyle(fontSize: 30),
+                              ),
+                              const SizedBox(height: 10),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  const QuokkaFace(size: 38),
+                                  const SizedBox(width: 8),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 8),
+                                    decoration: BoxDecoration(
+                                      color: AppColors.brownSurface,
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                    child: Text(
+                                      switch (_stars) {
+                                        3 => '우와아! 눈이 부셔!',
+                                        2 => '멋진걸? 헤헤!',
+                                        1 => '내일은 별 3개다, 아자!',
+                                        _ => '쿼카랑 같이 다시 해 보자!',
+                                      },
+                                      style: const TextStyle(
+                                        fontSize: 15,
+                                        fontWeight: FontWeight.bold,
+                                        color: AppColors.brown,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                '$totalCount문제 중에 $correctCount문제를 맞혔어요!',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                    fontSize: 18, color: Colors.grey.shade700),
+                              ),
+                              if (correctCount < totalCount) ...[
+                                const SizedBox(height: 10),
+                                Center(
+                                  child: OutlinedButton.icon(
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: AppColors.brown,
+                                      side: const BorderSide(
+                                          color: AppColors.brown, width: 1.5),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 18, vertical: 10),
+                                      shape: RoundedRectangleBorder(
+                                        borderRadius:
+                                            BorderRadius.circular(999),
+                                      ),
+                                    ),
+                                    onPressed: () => Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                          builder: (_) =>
+                                              const WrongNotesScreen()),
+                                    ),
+                                    icon: const Icon(Icons.search_rounded,
+                                        size: 20),
+                                    label: Text(
+                                      '틀린 ${totalCount - correctCount}문제 다시 보기',
+                                      style: const TextStyle(
+                                          fontSize: 15,
+                                          fontWeight: FontWeight.bold),
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(width: 8),
-                                const Icon(
-                                  Icons.arrow_forward_rounded,
-                                  size: 28,
-                                  color: Colors.white,
+                              ],
+                              if (showUnlockHint) ...[
+                                const SizedBox(height: 8),
+                                Text(
+                                  '5문제 이상 맞히면 다음 단계가 열려요!',
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                      fontSize: 16,
+                                      color: Colors.grey.shade600),
                                 ),
                               ],
-                            ),
+                              const SizedBox(height: 20),
+                              _PointsCard(earnedPoints: earnedPoints),
+                              if (bossCleared) ...[
+                                const SizedBox(height: 12),
+                                const _BossBanner(),
+                              ],
+                              if (chestCoins > 0) ...[
+                                const SizedBox(height: 12),
+                                _ChestBanner(coins: chestCoins),
+                              ],
+                              if (stickerEarned) ...[
+                                const SizedBox(height: 12),
+                                const _StickerBanner(),
+                              ],
+                              const _WrongNotesBanner(),
+                              if (milestoneDays > 0) ...[
+                                const SizedBox(height: 12),
+                                _MilestoneBanner(
+                                    days: milestoneDays, coins: milestoneCoins),
+                              ],
+                              if (completedMissions.isNotEmpty) ...[
+                                const SizedBox(height: 12),
+                                _MissionBanner(missions: completedMissions),
+                              ],
+                              const Spacer(),
+                            ],
                           ),
-                          const SizedBox(height: 12),
-                        ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                // 하단 고정 버튼 바: 판이 끝나면 스크롤 없이 바로 다음으로
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(24, 4, 24, 12),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      if (hasNext) ...[
                         BouncyButton(
-                          color:
-                              hasNext ? Colors.white : const Color(0xFF3DA35D),
-                          shadowColor: hasNext ? Colors.grey.shade300 : null,
-                          border: hasNext
-                              ? Border.all(
-                                  color: const Color(0xFF3DA35D), width: 2)
-                              : null,
-                          onTap: () => _replace(context, retryBuilder),
+                          color: const Color(0xFF3DA35D),
+                          onTap: () => _replace(context, nextBuilder!),
                           child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Text(
-                                '다시 하기',
-                                style: TextStyle(
+                                nextLabel!,
+                                style: const TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
-                                  color: hasNext
-                                      ? const Color(0xFF3DA35D)
-                                      : Colors.white,
+                                  color: Colors.white,
                                 ),
                               ),
                               const SizedBox(width: 8),
-                              Icon(
-                                Icons.refresh_rounded,
+                              const Icon(
+                                Icons.arrow_forward_rounded,
                                 size: 28,
-                                color: hasNext
-                                    ? const Color(0xFF3DA35D)
-                                    : Colors.white,
+                                color: Colors.white,
                               ),
                             ],
                           ),
                         ),
-                        const SizedBox(height: 4),
-                        TextButton.icon(
-                          style: TextButton.styleFrom(
-                            minimumSize: const Size(48, 48),
-                            padding: const EdgeInsets.symmetric(
-                                horizontal: 16, vertical: 12),
-                          ),
-                          onPressed: () => Navigator.of(context)
-                              .popUntil((route) => route.isFirst),
-                          icon: Icon(homeIcon,
-                              size: 22, color: AppColors.inkSoft),
-                          label: Text(
-                            homeLabel,
-                            style: const TextStyle(
-                              fontSize: 17,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.inkSoft,
+                        const SizedBox(height: 10),
+                      ],
+                      Row(
+                        children: [
+                          Expanded(
+                            child: BouncyButton(
+                              color: hasNext
+                                  ? Colors.white
+                                  : const Color(0xFF3DA35D),
+                              shadowColor:
+                                  hasNext ? Colors.grey.shade300 : null,
+                              border: hasNext
+                                  ? Border.all(
+                                      color: const Color(0xFF3DA35D), width: 2)
+                                  : null,
+                              padding: const EdgeInsets.symmetric(vertical: 13),
+                              onTap: () => _replace(context, retryBuilder),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    '다시 하기',
+                                    style: TextStyle(
+                                      fontSize: hasNext ? 19 : 22,
+                                      fontWeight: FontWeight.bold,
+                                      color: hasNext
+                                          ? const Color(0xFF3DA35D)
+                                          : Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  Icon(
+                                    Icons.refresh_rounded,
+                                    size: 24,
+                                    color: hasNext
+                                        ? const Color(0xFF3DA35D)
+                                        : Colors.white,
+                                  ),
+                                ],
+                              ),
                             ),
                           ),
-                        ),
-                      ],
-                    ),
+                          const SizedBox(width: 10),
+                          TextButton.icon(
+                            style: TextButton.styleFrom(
+                              minimumSize: const Size(48, 48),
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 12, vertical: 12),
+                            ),
+                            onPressed: () => Navigator.of(context)
+                                .popUntil((route) => route.isFirst),
+                            icon: Icon(homeIcon,
+                                size: 22, color: AppColors.inkSoft),
+                            label: Text(
+                              homeLabel,
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.inkSoft,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ),
+              ],
             ),
           ),
         ],

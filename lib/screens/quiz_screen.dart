@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import '../widgets/quokka_avatar.dart';
 
 import '../models/boss.dart';
 import '../models/curriculum.dart';
@@ -396,10 +397,10 @@ class _QuizScreenState extends State<QuizScreen> {
   Widget _buildOwlCheer() {
     final line = _answered
         ? (_isCorrect ? '우와아! 잘했어!' : '괜찮아, 다시 해 보자!')
-        : '쿼키랑 같이 골라 볼까?';
+        : '쿼카랑 같이 골라 볼까?';
     return Row(
       children: [
-        const Text('🦉', style: TextStyle(fontSize: 30)),
+        const QuokkaFace(size: 34),
         const SizedBox(width: 8),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
@@ -518,6 +519,10 @@ class _QuizScreenState extends State<QuizScreen> {
         ],
       ),
       child: Stack(
+        // 넓은 화면에서도 문제가 카드 가운데 오고,
+        // 우상단 스피커 버튼이 모서리에 잘리지 않게 한다.
+        alignment: Alignment.topCenter,
+        clipBehavior: Clip.none,
         children: [
           Column(
             children: [

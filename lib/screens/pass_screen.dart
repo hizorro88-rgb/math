@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../widgets/quokka_avatar.dart';
 
 import '../models/premium.dart';
 import '../services/purchases.dart';
@@ -106,7 +107,14 @@ class _PassScreenState extends State<PassScreen> {
                   ),
                   child: Column(
                     children: [
-                      const Text('🦉👑', style: TextStyle(fontSize: 44)),
+                      const Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          QuokkaFace(size: 46),
+                          SizedBox(width: 4),
+                          Text('👑', style: TextStyle(fontSize: 38)),
+                        ],
+                      ),
                       const SizedBox(height: 8),
                       const Text(
                         '한 번 결제로\n온 가족이 함께 배워요',

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'quokka_avatar.dart';
 
 import 'bouncy_button.dart';
 
@@ -15,8 +16,7 @@ Future<bool> confirmQuizExit(BuildContext context) async {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text('🦉',
-                textAlign: TextAlign.center, style: TextStyle(fontSize: 48)),
+            const Center(child: QuokkaFace(size: 52)),
             const SizedBox(height: 8),
             const Text(
               '정말 그만할까요?',
