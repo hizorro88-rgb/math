@@ -263,8 +263,8 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
               stage: widget.stage,
               level: level,
             ),
-            homeLabel: level != null ? '지도로' : '처음으로',
-            homeIcon: level != null ? Icons.map_rounded : Icons.home_rounded,
+            // 어디서 왔든 홈으로 가는 버튼이라 표현을 하나로 통일한다.
+            homeLabel: '처음으로',
           ),
         ),
       );
