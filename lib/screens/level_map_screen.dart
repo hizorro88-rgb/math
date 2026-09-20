@@ -117,12 +117,12 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
   /// 화면 상태로만 두고 저장하지 않아, 홈을 새로 열면 다시 접힌다.
   bool _prevAgesExpanded = false;
 
-  /// 과목 탭 정보 (뒤쪽은 languagePacks 순서)
-  static final List<(String, String)> _subjects = [
-    ('🧮', '수학'),
-    ('📖', '한글'),
-    ('🔤', '영어'),
-    for (final pack in languagePacks) (pack.emoji, pack.name),
+  /// 과목 탭 정보 (뒤쪽은 languagePacks 순서). 세 번째 값은 어른용 과정 표시.
+  static final List<(String, String, bool)> _subjects = [
+    ('🧮', '수학', false),
+    ('📖', '한글', false),
+    ('🔤', '영어', false),
+    for (final pack in languagePacks) (pack.emoji, pack.name, pack.forAdults),
   ];
   static const _subjectKey = 'subject_v2';
   static const _subjectKeyOld = 'subject_korean_v1'; // 예전 한글/수학 토글
@@ -396,6 +396,25 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      if (_subjects[i].$3) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: const Color(0xFFEDE7FF),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: const Text(
+                            '어른',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.bold,
+                              color: Color(0xFF6C4FD8),
+                            ),
+                          ),
+                        ),
+                      ],
                       if (i == _subject) ...[
                         const SizedBox(width: 6),
                         const Icon(Icons.check_rounded,

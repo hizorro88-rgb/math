@@ -35,6 +35,18 @@
   progress.dart의 level_stars 키를 올리고(현재 v5) 직전 버전의
   유닛 제목 목록을 추가해 제목 기반 마이그레이션으로 별 기록을 지킬 것.
   이용권 화면의 단계 수 문구와 시드 배열 길이도 함께 갱신.
+- 언어 팩(lib/models/language_pack.dart)은 두 가지 방식이 있다.
+  일본어·중국어·한자는 유형 기반(generateOne), 영어회화는 주제 기반
+  (generateLevel — 한 판 10문제를 팩이 통째로 만든다, unitBased=true).
+  주제 기반 팩은 연습 화면이 유형 대신 주제를 고르게 하고,
+  퀴즈 화면은 문제마다 다른 유형(q.typeIndex)으로 그린다.
+- 영어회화 표현 데이터(주제 30개 × 100개 = 3000개)는
+  lib/models/conversation_data_t1~t3.dart가 원본이다. 그 파일을 직접 고치되
+  규칙을 지킬 것: 영어는 아스키만·1~6낱말, 3000개 전체에서 표현이 겹치지 않고,
+  한 주제 안에서는 한국어 뜻도 겹치지 않아야 한다(보기 4개가 같아지면 안 됨).
+  test/conversation_pack_test.dart가 이 규칙을 전부 검사한다.
+  주제를 넣거나 빼면 conversation_pack.dart의 제목 목록과
+  이용권 화면의 단계 수 문구도 함께 갱신.
 - 사용자의 빌드 PC(Windows, D:\math)는 JDK 21(Temurin) + NDK 30.0.16248370 고정.
 - 클라우드 동기화(lib/services/cloud_sync.dart): lib/firebase_options.dart가
   TODO 자리표시자면 조용히 꺼진다. 사용자가 Firebase 콘솔 구성값을 주면

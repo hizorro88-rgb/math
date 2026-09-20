@@ -29,6 +29,7 @@ class LanguageQuizScreen extends StatefulWidget {
     required this.typeIndex,
     this.stage = 0,
     this.level,
+    this.unitIndex = -1,
   });
 
   final LanguagePack pack;
@@ -36,6 +37,9 @@ class LanguageQuizScreen extends StatefulWidget {
   /// pack.types 안에서의 유형 번호
   final int typeIndex;
   final int stage;
+
+  /// 유닛 기반 팩(영어회화)에서 어느 주제로 낼지. -1이면 단계나 무작위를 따른다.
+  final int unitIndex;
 
   /// 단계 도전이면 해당 단계, 아니면 null
   final LangLevel? level;
@@ -82,6 +86,11 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
   }
 
   bool get _answered => _selectedChoice != null;
+
+  /// 영어 문장처럼 긴 제시문인지 (줄바꿈해서 보여 줄지 판단)
+  bool get _longDisplay =>
+      widget.pack.types[_question.typeIndex].textDisplay &&
+      _question.display.length > 12;
   bool get _isCorrect => _selectedChoice == _question.answer;
   Color get _themeColor =>
       widget.level?.unit.color ?? const Color(0xFFFF4B4B);
@@ -89,16 +98,23 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
   @override
   void initState() {
     super.initState();
-    final questions =
-        widget.pack.generate(widget.typeIndex, stage: widget.stage);
+    final questions = widget.pack.generate(
+      widget.typeIndex,
+      stage: widget.stage,
+      unitIndex: widget.unitIndex >= 0
+          ? widget.unitIndex
+          : widget.level?.unit.index ?? -1,
+    );
     _baseCount = questions.length;
     _entries.addAll(questions.map(_LangEntry.new));
     WidgetsBinding.instance.addPostFrameCallback((_) => _start());
   }
 
   /// 소리 찾기 유형은 소리가 있어야 풀 수 있으니 먼저 확인한다.
+  /// 한 판에 유형이 섞이는 팩도 있어서 문제들을 보고 판단한다.
   Future<void> _start() async {
-    final needsListening = widget.pack.types[widget.typeIndex].listening;
+    final needsListening = _entries
+        .any((e) => widget.pack.types[e.question.typeIndex].listening);
     if (needsListening) {
       final ready = await ensureListenReady(
         context,
@@ -128,8 +144,10 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
     _ensureTiles();
     if (_picked.contains(index)) return;
     setState(() => _picked.add(index));
-    if (_picked.length >= _question.answer.length) {
-      _selectChoice([for (final i in _picked) _question.tiles[i]].join());
+    if (_picked.length >= _question.slotCount) {
+      _selectChoice(
+        [for (final i in _picked) _question.tiles[i]].join(_question.tileJoin),
+      );
     }
   }
 
@@ -144,7 +162,7 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
     if (_answered) return;
     // 첫 시도만 학습 통계에 기록한다 (재출제 풀이는 제외).
     if (!_isRetryQuestion) {
-      StatsStore.recordLangAnswer(widget.pack, widget.typeIndex,
+      StatsStore.recordLangAnswer(widget.pack, _question.typeIndex,
           correct: choice == _question.answer);
     }
     setState(() {
@@ -178,7 +196,9 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
     } else {
       Sounds.wrong();
       HapticFeedback.heavyImpact().ignore();
-      Speech.speak(_question.answerText, lang: widget.pack.ttsLang);
+      // 틀렸을 때는 제시문 발음을 다시 들려준다 (보기가 한국어 뜻일 수도 있어서
+      // answerText 대신 speech를 읽는다).
+      Speech.speak(_question.speech, lang: widget.pack.ttsLang);
     }
   }
 
@@ -386,7 +406,7 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
 
   Widget _buildQuestionCard() {
     // 그림·🔊는 큼직하게, 낱말·글자 배열은 그보다 작게
-    final displayIsText = widget.pack.types[widget.typeIndex].textDisplay;
+    final displayIsText = widget.pack.types[_question.typeIndex].textDisplay;
 
     return Container(
       width: double.infinity,
@@ -442,11 +462,23 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
                 onTap: _question.display == '🔊' ? _speakQuestion : null,
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
-                  child: Text(
-                    _question.display,
-                    style: TextStyle(
-                      fontSize: displayIsText ? 40 : 64,
-                      fontWeight: FontWeight.bold,
+                  child: ConstrainedBox(
+                    // 문장이 길면 줄을 바꿔서 보여 준다 (한 줄로 줄이면 너무 작아진다)
+                    constraints: BoxConstraints(
+                      maxWidth: _longDisplay ? 300 : double.infinity,
+                    ),
+                    child: Text(
+                      _question.display,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: _longDisplay
+                            ? 28
+                            : displayIsText
+                                ? 40
+                                : 64,
+                        height: _longDisplay ? 1.3 : null,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                 ),
@@ -455,11 +487,19 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
                 const SizedBox(height: 8),
                 Text(
                   _question.subDisplay,
-                  style: const TextStyle(
-                    fontSize: 34,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 4,
-                  ),
+                  textAlign: TextAlign.center,
+                  // 한자 구절처럼 짧은 것은 크게, 회화 뜻풀이처럼 길면 작게
+                  style: _question.subDisplay.length > 10
+                      ? TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.grey.shade600,
+                        )
+                      : const TextStyle(
+                          fontSize: 34,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 4,
+                        ),
                 ),
               ],
               // 낱말 만들기: 채워지는 글자 칸
@@ -467,14 +507,22 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
                 const SizedBox(height: 12),
                 Builder(builder: (context) {
                   _ensureTiles();
-                  return Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  // 영어 문장은 단어 단위라 칸이 넓고 여러 줄로 접힌다.
+                  final wordMode = _question.tileJoin.isNotEmpty;
+                  return Wrap(
+                    alignment: WrapAlignment.center,
+                    spacing: 6,
+                    runSpacing: 6,
                     children: [
-                      for (var i = 0; i < _question.answer.length; i++)
+                      for (var i = 0; i < _question.slotCount; i++)
                         Container(
-                          width: 46,
+                          width: wordMode ? null : 46,
+                          constraints:
+                              wordMode ? const BoxConstraints(minWidth: 54) : null,
                           height: 52,
-                          margin: const EdgeInsets.symmetric(horizontal: 3),
+                          padding: wordMode
+                              ? const EdgeInsets.symmetric(horizontal: 10)
+                              : null,
                           decoration: BoxDecoration(
                             color: _answered
                                 ? (_isCorrect
@@ -500,8 +548,8 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
                               i < _picked.length
                                   ? _question.tiles[_picked[i]]
                                   : '',
-                              style: const TextStyle(
-                                fontSize: 26,
+                              style: TextStyle(
+                                fontSize: wordMode ? 19 : 26,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -533,12 +581,17 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
   /// 낱말 만들기용 글자 타일 (누른 타일은 비활성화, 지우기 포함)
   Widget _buildTiles() {
     _ensureTiles();
+    // 영어 문장은 단어 타일이라 글자 수에 맞춰 칸이 늘어난다.
+    final wordMode = _question.tileJoin.isNotEmpty;
     Widget tile(int index) {
       final used = _picked.contains(index);
       return PressBounce(
         onTap: _answered || used ? null : () => _tapTile(index),
         child: Container(
-          width: 60,
+          width: wordMode ? null : 60,
+          constraints: wordMode ? const BoxConstraints(minWidth: 60) : null,
+          padding:
+              wordMode ? const EdgeInsets.symmetric(horizontal: 12) : null,
           height: 60,
           decoration: BoxDecoration(
             color: used || _answered ? Colors.grey.shade100 : Colors.white,
@@ -558,7 +611,7 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
             child: Text(
               _question.tiles[index],
               style: TextStyle(
-                fontSize: 26,
+                fontSize: wordMode ? 20 : 26,
                 fontWeight: FontWeight.bold,
                 color: used || _answered
                     ? Colors.grey.shade400
@@ -604,18 +657,21 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
   }
 
   Widget _buildChoices() {
+    // 영어 문장·뜻풀이처럼 긴 보기는 두세 줄로 접히게 두고 칸도 높인다.
+    final longChoices = _question.choices.any((c) => c.length > 14);
     return GridView.count(
       crossAxisCount: 2,
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       mainAxisSpacing: 14,
       crossAxisSpacing: 12,
-      childAspectRatio: 1.75,
+      childAspectRatio: longChoices ? 1.2 : 1.75,
       children: [
         for (final choice in _question.choices)
           _LangChoiceButton(
             value: choice,
             emoji: _question.emojiChoices,
+            long: longChoices,
             state: _choiceState(choice),
             onTap: () => _selectChoice(choice),
           ),
@@ -743,12 +799,16 @@ class _LangChoiceButton extends StatelessWidget {
     required this.emoji,
     required this.state,
     required this.onTap,
+    this.long = false,
   });
 
   final String value;
 
   /// 그림(이모지) 보기면 더 크게 그린다.
   final bool emoji;
+
+  /// 문장처럼 긴 보기면 작은 글씨로 줄바꿈해서 보여 준다.
+  final bool long;
   final _LangChoiceState state;
   final VoidCallback onTap;
 
@@ -794,12 +854,22 @@ class _LangChoiceButton extends StatelessWidget {
       child: Center(
         child: FittedBox(
           fit: BoxFit.scaleDown,
-          child: Text(
-            value,
-            style: TextStyle(
-              fontSize: emoji ? 44 : 30,
-              fontWeight: FontWeight.bold,
-              color: textColor,
+          child: ConstrainedBox(
+            // 긴 보기는 이 폭에서 줄을 바꾸고, 그래도 넘치면 통째로 줄어든다.
+            constraints: BoxConstraints(maxWidth: long ? 170 : double.infinity),
+            child: Text(
+              value,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: emoji
+                    ? 44
+                    : long
+                        ? 19
+                        : 30,
+                height: long ? 1.25 : null,
+                fontWeight: FontWeight.bold,
+                color: textColor,
+              ),
             ),
           ),
         ),

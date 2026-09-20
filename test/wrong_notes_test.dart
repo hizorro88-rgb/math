@@ -58,7 +58,7 @@ void main() {
   });
 
   test('언어 팩 문제도 팩 정보(과목·발음 언어)와 함께 담긴다', () async {
-    final q = japanesePack.generateOne(3, 0, Random(11));
+    final q = japanesePack.generateOne!(3, 0, Random(11));
     final note = WrongNote.fromLang(japanesePack, q);
     expect(note.subject, 'ja');
     expect(note.subjectName, '일본어');

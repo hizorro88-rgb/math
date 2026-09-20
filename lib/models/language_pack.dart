@@ -20,6 +20,8 @@ class LangQuestion {
     this.subDisplay = '',
     this.emojiChoices = false,
     this.tiles = const [],
+    this.tileSlots = 0,
+    this.tileJoin = '',
     required this.dedupKey,
   });
 
@@ -38,7 +40,17 @@ class LangQuestion {
   /// 낱말 만들기용 글자 타일. 비어 있지 않으면 타일 조립 UI로 푼다.
   final List<String> tiles;
 
+  /// 채울 칸 수. 0이면 정답 글자 수(글자 단위 조립)를 쓴다.
+  /// 영어 문장처럼 단어 단위로 조립할 때 단어 수를 넣는다.
+  final int tileSlots;
+
+  /// 타일을 이어 붙일 때 쓰는 글자 (영어 문장은 공백)
+  final String tileJoin;
+
   final String dedupKey;
+
+  /// 조립할 칸 수 (글자 단위면 정답 길이)
+  int get slotCount => tileSlots > 0 ? tileSlots : answer.length;
 }
 
 /// 언어 팩의 문제 유형 (통계 인덱스가 순서 기반이라 끝에만 추가할 것)
@@ -122,8 +134,11 @@ class LanguagePack {
     required this.ttsLang,
     required this.types,
     required this.categories,
-    required this.generateOne,
-  }) {
+    this.generateOne,
+    this.generateLevel,
+    this.forAdults = false,
+  }) : assert(generateOne != null || generateLevel != null,
+            '문제를 만드는 방법이 최소 하나는 있어야 한다') {
     var unitIndex = 0;
     var levelNumber = 1;
     for (var c = 0; c < categories.length; c++) {
@@ -159,9 +174,20 @@ class LanguagePack {
   final List<LangUnitType> types;
   final List<LangCategory> categories;
 
-  /// 유형·단계에 맞는 문제 하나를 만든다.
-  final LangQuestion Function(int typeIndex, int stage, Random random)
+  /// 유형·단계에 맞는 문제 하나를 만든다. (유형 기반 팩: 일본어·중국어·한자)
+  final LangQuestion Function(int typeIndex, int stage, Random random)?
       generateOne;
+
+  /// 유닛(주제)별로 한 판 10문제를 통째로 만든다. (유닛 기반 팩: 영어회화)
+  /// 한 판에서 같은 표현이 겹치지 않게 팩이 직접 배분한다.
+  final List<LangQuestion> Function(int unitIndex, int stage, Random random)?
+      generateLevel;
+
+  /// 유닛(주제)이 곧 학습 범위인 팩인지. 연습 화면이 유형 대신 주제를 고르게 한다.
+  bool get unitBased => generateLevel != null;
+
+  /// 어른용 과정인지 (과목 고르기에서 '어른' 표시를 붙인다)
+  final bool forAdults;
 
   late final List<LangUnit> units;
   late final List<LangLevel> levels;
@@ -171,15 +197,21 @@ class LanguagePack {
   LangLevel levelAt(int number) => levels[number - 1];
 
   /// 같은 문제가 연달아 나오지 않게 [count]개를 만든다.
+  /// 유닛 기반 팩은 [unitIndex]의 표현 묶음에서 한 판을 통째로 만든다.
+  /// (연습처럼 유닛이 정해지지 않았으면 아무 유닛이나 골라 섞어 낸다.)
   List<LangQuestion> generate(int typeIndex,
-      {int stage = 0, int count = 10, Random? random}) {
+      {int stage = 0, int count = 10, Random? random, int unitIndex = -1}) {
     final rng = random ?? Random();
+    if (generateLevel != null) {
+      final unit = unitIndex >= 0 ? unitIndex : rng.nextInt(units.length);
+      return generateLevel!(unit, stage, rng);
+    }
     final questions = <LangQuestion>[];
     String? previousKey;
     for (var i = 0; i < count; i++) {
       LangQuestion question;
       do {
-        question = generateOne(typeIndex, stage, rng);
+        question = generateOne!(typeIndex, stage, rng);
       } while (question.dedupKey == previousKey);
       previousKey = question.dedupKey;
       questions.add(question);

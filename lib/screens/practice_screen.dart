@@ -66,11 +66,14 @@ class _PracticeScreenState extends State<PracticeScreen> {
     }
     if (_subject >= 3) {
       final pack = languagePacks[_subject - 3];
+      final picked = _langType[pack.id] ?? 0;
       Navigator.of(context).push(
         MaterialPageRoute(
           builder: (_) => LanguageQuizScreen(
             pack: pack,
-            typeIndex: _langType[pack.id] ?? 0,
+            // 주제 기반 팩(영어회화)은 고른 값이 유형이 아니라 주제다.
+            typeIndex: pack.unitBased ? 0 : picked,
+            unitIndex: pack.unitBased ? picked : -1,
             stage: _langHard ? 9 : 0,
           ),
         ),
@@ -150,18 +153,25 @@ class _PracticeScreenState extends State<PracticeScreen> {
                   ),
                 )
               else if (_subject >= 3)
+                // 주제 기반 팩(영어회화)은 유형 대신 배울 주제를 고른다.
                 ..._buildGrid(
                   [
                     for (var i = 0;
-                        i < languagePacks[_subject - 3].types.length;
+                        i < (languagePacks[_subject - 3].unitBased
+                            ? languagePacks[_subject - 3].units.length
+                            : languagePacks[_subject - 3].types.length);
                         i++)
                       i,
                   ],
                   (i) {
                     final pack = languagePacks[_subject - 3];
                     return _ChoiceCard(
-                      emoji: pack.types[i].emoji,
-                      label: pack.types[i].label,
+                      emoji: pack.unitBased
+                          ? pack.units[i].emoji
+                          : pack.types[i].emoji,
+                      label: pack.unitBased
+                          ? pack.units[i].title
+                          : pack.types[i].label,
                       selected: (_langType[pack.id] ?? 0) == i,
                       onTap: () => setState(() => _langType[pack.id] = i),
                     );
