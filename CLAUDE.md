@@ -47,6 +47,14 @@
   test/conversation_pack_test.dart가 이 규칙을 전부 검사한다.
   주제를 넣거나 빼면 conversation_pack.dart의 제목 목록과
   이용권 화면의 단계 수 문구도 함께 갱신.
+- 말하기 연습(lib/services/voice_input.dart)은 마이크를 쓴다.
+  음성 인식(speech_to_text)과 녹음(record)이 마이크를 공유하므로
+  busy 플래그로 한 번에 하나만 돌린다. 위젯 테스트 setUp에서
+  `VoiceInput.enabled = false`를 넣지 않으면 플랫폼 채널에서 멈춘다.
+  채점은 낱말 겹침 60% 이상이면 통과 — 엄격하게 바꾸면 잘 말해도
+  계속 틀려서 아이가 포기한다(test/speaking_score_test.dart가 기준을 지킨다).
+  권한: AndroidManifest RECORD_AUDIO + RecognitionService queries,
+  iOS Info.plist NSMicrophoneUsageDescription·NSSpeechRecognitionUsageDescription.
 - 사용자의 빌드 PC(Windows, D:\math)는 JDK 21(Temurin) + NDK 30.0.16248370 고정.
 - 클라우드 동기화(lib/services/cloud_sync.dart): lib/firebase_options.dart가
   TODO 자리표시자면 조용히 꺼진다. 사용자가 Firebase 콘솔 구성값을 주면

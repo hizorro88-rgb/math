@@ -42,7 +42,11 @@ void main() {
               stage: level.stage, random: random);
           expect(questions, hasLength(10));
           for (final q in questions) {
-            if (q.tiles.isNotEmpty) {
+            if (pack.types[q.typeIndex].speaking) {
+              // 말하기 문제는 보기 없이 마이크로 푼다.
+              expect(q.choices, isEmpty, reason: pack.id);
+              expect(q.answer, isNotEmpty, reason: pack.id);
+            } else if (q.tiles.isNotEmpty) {
               // 글자 단위(일본어)든 단어 단위(영어회화)든 타일만으로 정답을 만든다.
               final remaining = [...q.tiles];
               final pieces = q.tileJoin.isEmpty

@@ -10,6 +10,7 @@ import 'package:preschool_math/models/korean_data.dart';
 import 'package:preschool_math/models/profile.dart';
 import 'package:preschool_math/services/sounds.dart';
 import 'package:preschool_math/services/speech.dart';
+import 'package:preschool_math/services/voice_input.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 
@@ -46,6 +47,8 @@ void main() {
     Sounds.enabled = true;
     Speech.enabled = true;
     Speech.rate = Speech.rateNormal;
+    // 마이크는 플랫폼 채널이라 테스트에서 건드리면 멈춘다.
+    VoiceInput.enabled = false;
   });
 
   /// 화면 밖에 있을 수 있는 위젯을 스크롤로 보이게 한 뒤 탭한다.

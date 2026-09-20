@@ -61,6 +61,7 @@ class LangUnitType {
     this.emoji, {
     this.listening = false,
     this.textDisplay = false,
+    this.speaking = false,
   });
 
   final String label;
@@ -72,6 +73,9 @@ class LangUnitType {
 
   /// 카드 가운데 표시가 글자(낱말·배열)라 작게 그린다.
   final bool textDisplay;
+
+  /// 마이크에 대고 직접 말해서 푸는 유형 (보기를 고르지 않는다)
+  final bool speaking;
 }
 
 /// 10단계씩 묶인 학습 묶음

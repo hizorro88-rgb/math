@@ -74,13 +74,19 @@ const _convTypes = [
   LangUnitType('듣고 고르기', '듣기', '👂', listening: true),
   LangUnitType('빈칸 채우기', '빈칸', '✏️', textDisplay: true),
   LangUnitType('문장 만들기', '배열', '🧱', textDisplay: true),
+  // 마이크에 대고 직접 말해서 푸는 유형. 문장과 뜻을 보여 주고 따라 말한다.
+  LangUnitType('따라 말하기', '말하기', '🎤',
+      textDisplay: true, listening: true, speaking: true),
 ];
 
-/// 단계가 올라갈수록 알아보기(0·1·2)에서 만들어 내기(3·4) 쪽으로 옮겨 간다.
-const _planEarly = [0, 1, 0, 2, 1, 0, 2, 1, 0, 1];
-const _planMid = [0, 1, 2, 3, 1, 0, 3, 2, 1, 3];
-const _planLate = [1, 3, 2, 4, 1, 3, 0, 4, 2, 3];
-const _planFinal = [3, 4, 2, 4, 1, 3, 4, 2, 4, 3];
+/// 단계가 올라갈수록 알아보기(0·1·2)에서 만들어 내기(3·4)와
+/// 직접 말하기(5) 쪽으로 옮겨 간다.
+const _planEarly = [0, 1, 0, 2, 1, 5, 2, 1, 0, 1];
+const _planMid = [0, 1, 2, 3, 1, 5, 3, 2, 1, 3];
+const _planLate = [1, 3, 2, 4, 5, 3, 0, 4, 2, 5];
+// 마지막 두 단계는 말하기로 시작한다 — 이쯤이면 표현을 아는 상태라
+// 바로 입으로 꺼내 보는 게 목표다.
+const _planFinal = [5, 3, 2, 4, 1, 5, 4, 2, 5, 3];
 
 List<int> _planFor(int stage) {
   if (stage <= 2) return _planEarly;
@@ -96,6 +102,8 @@ final _wordCore = RegExp(r"^([^A-Za-z]*)([A-Za-z][A-Za-z']*)(.*)$");
 int _usableType(ConvExpr expr, int type) {
   if (type == 4 && (expr.wordCount < 3 || expr.wordCount > 6)) return 1;
   if (type == 3 && expr.wordCount < 3) return 0;
+  // 한 낱말짜리는 음성 인식이 불안정해서 말하기 문제로 내지 않는다.
+  if (type == 5 && expr.wordCount < 2) return 1;
   return type;
 }
 
@@ -201,6 +209,19 @@ LangQuestion _convQuestion(
         answerText: target.en,
         speech: target.en,
         dedupKey: 'c3:${target.en}',
+      );
+    case 5:
+      // 마이크에 대고 직접 말하는 문제: 보기가 없고 말한 내용으로 채점한다.
+      return LangQuestion(
+        typeIndex: 5,
+        instruction: '들어 보고 따라 말해요',
+        display: target.en,
+        subDisplay: target.ko,
+        choices: const [],
+        answer: target.en,
+        answerText: target.en,
+        speech: target.en,
+        dedupKey: 'c5:${target.en}',
       );
     case 4:
       final tiles = [...target.words]..shuffle(random);

@@ -13,6 +13,7 @@ import '../models/wrong_notes.dart';
 import '../services/cloud_sync.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
+import '../services/voice_input.dart';
 import '../widgets/auto_next_bar.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/listen_guard.dart';
@@ -87,6 +88,17 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
 
   bool get _answered => _selectedChoice != null;
 
+  /// 마이크에 대고 직접 말해서 푸는 문제인지
+  bool get _isSpeakingQuestion =>
+      widget.pack.types[_question.typeIndex].speaking;
+
+  /// 말하기 문제 상태 (문제마다 새로 시작한다)
+  bool _micListening = false;
+  bool _micRecording = false;
+  SpeakingScore? _spoken;
+  String? _myVoicePath;
+  String _micNotice = '';
+
   /// 영어 문장처럼 긴 제시문인지 (줄바꿈해서 보여 줄지 판단)
   bool get _longDisplay =>
       widget.pack.types[_question.typeIndex].textDisplay &&
@@ -108,6 +120,13 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
     _baseCount = questions.length;
     _entries.addAll(questions.map(_LangEntry.new));
     WidgetsBinding.instance.addPostFrameCallback((_) => _start());
+  }
+
+  @override
+  void dispose() {
+    // 화면을 떠날 때 마이크를 확실히 놓아 준다 (기다리지 않는다 — 테스트가 멈춘다).
+    VoiceInput.release();
+    super.dispose();
   }
 
   /// 소리 찾기 유형은 소리가 있어야 풀 수 있으니 먼저 확인한다.
@@ -183,7 +202,8 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
         if (!_isRetryQuestion) {
           _entries.add(_LangEntry(_question, isRetry: true));
           // 보기 고르기 문제는 오답 노트에 담아 나중에 다시 푼다.
-          if (_question.tiles.isEmpty) {
+          // (말하기·타일 조립은 보기가 없어서 오답 노트로 못 낸다)
+          if (_question.tiles.isEmpty && !_isSpeakingQuestion) {
             WrongNoteStore.add(WrongNote.fromLang(widget.pack, _question));
           }
         }
@@ -293,8 +313,18 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
     setState(() {
       _currentIndex++;
       _selectedChoice = null;
+      _resetSpeaking();
     });
     _speakQuestion();
+  }
+
+  /// 말하기 문제 상태를 비운다 (다음 문제로 넘어갈 때)
+  void _resetSpeaking() {
+    _micListening = false;
+    _micRecording = false;
+    _spoken = null;
+    _myVoicePath = null;
+    _micNotice = '';
   }
 
   @override
@@ -319,7 +349,9 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
                           const SizedBox(height: 16),
                           _buildQuestionCard(),
                           const SizedBox(height: 24),
-                          if (_question.tiles.isNotEmpty)
+                          if (_isSpeakingQuestion)
+                            _buildSpeakingPanel()
+                          else if (_question.tiles.isNotEmpty)
                             _buildTiles()
                           else
                             _buildChoices(),
@@ -652,6 +684,235 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
             ),
           ],
         ),
+      ],
+    );
+  }
+
+  /// 🎤 말하기: 인식해서 채점한다.
+  Future<void> _tapMic() async {
+    if (_answered || _micRecording) return;
+    if (_micListening) {
+      await VoiceInput.stopListening();
+      if (mounted) setState(() => _micListening = false);
+      return;
+    }
+    final ready = await VoiceInput.ensureReady();
+    if (!mounted) return;
+    if (!ready) {
+      setState(() => _micNotice = '마이크를 쓸 수 없어요. 권한을 허용해 주세요.');
+      return;
+    }
+    setState(() {
+      _micListening = true;
+      _micNotice = '';
+    });
+    final heard = await VoiceInput.listen();
+    if (!mounted) return;
+    setState(() => _micListening = false);
+    if (heard.trim().isEmpty) {
+      setState(() => _micNotice = '잘 안 들렸어요. 한 번 더 말해 볼까요?');
+      return;
+    }
+    final score = scoreSpeaking(_question.answer, heard);
+    setState(() => _spoken = score);
+    // 통과하면 정답, 아니면 오답으로 채점한다 (기준은 느슨하다).
+    _selectChoice(score.passed ? _question.answer : '__speak_miss__');
+  }
+
+  /// 🔴 녹음: 내 목소리를 담아 원어민 발음과 번갈아 들어 본다.
+  Future<void> _tapRecord() async {
+    if (_micListening) return;
+    if (_micRecording) {
+      final path = await VoiceInput.stopRecording();
+      if (!mounted) return;
+      setState(() {
+        _micRecording = false;
+        _myVoicePath = path;
+        if (path == null) _micNotice = '녹음을 저장하지 못했어요.';
+      });
+      return;
+    }
+    final started = await VoiceInput.startRecording();
+    if (!mounted) return;
+    if (!started) {
+      setState(() => _micNotice = '녹음을 시작할 수 없어요. 권한을 확인해 주세요.');
+      return;
+    }
+    setState(() {
+      _micRecording = true;
+      _micNotice = '';
+    });
+  }
+
+  /// 말하기 문제 화면: 마이크로 말해서 채점받고, 녹음해서 발음을 비교한다.
+  Widget _buildSpeakingPanel() {
+    final score = _spoken;
+    return Column(
+      children: [
+        // 원어민 발음 다시 듣기
+        BouncyButton(
+          color: Colors.white,
+          shadowColor: Colors.grey.shade300,
+          border: Border.all(color: Colors.grey.shade300, width: 2),
+          padding: const EdgeInsets.symmetric(vertical: 12),
+          onTap: _speakQuestion,
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.volume_up_rounded, size: 22),
+              SizedBox(width: 8),
+              Text('원어민 발음 듣기',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+            ],
+          ),
+        ),
+        const SizedBox(height: 12),
+        // 마이크: 누르고 말하면 채점
+        BouncyButton(
+          key: const ValueKey('speak-mic'),
+          color: _micListening ? const Color(0xFFFFDFE0) : _themeColor,
+          shadowColor:
+              _micListening ? const Color(0xFFEA2B2B) : _themeColor,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          onTap: _answered ? null : _tapMic,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                _micListening ? Icons.stop_rounded : Icons.mic_rounded,
+                size: 26,
+                color: _micListening ? const Color(0xFFEA2B2B) : Colors.white,
+              ),
+              const SizedBox(width: 8),
+              Text(
+                _micListening ? '듣는 중… (누르면 멈춤)' : '눌러서 말하기',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color:
+                      _micListening ? const Color(0xFFEA2B2B) : Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(height: 10),
+        // 녹음해서 내 발음과 원어민 발음 비교하기
+        Row(
+          children: [
+            Expanded(
+              child: BouncyButton(
+                key: const ValueKey('speak-record'),
+                color: _micRecording ? const Color(0xFFFFEBD6) : Colors.white,
+                shadowColor: Colors.grey.shade300,
+                border: Border.all(
+                  color: _micRecording
+                      ? const Color(0xFFEA2B2B)
+                      : Colors.grey.shade300,
+                  width: 2,
+                ),
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                onTap: _tapRecord,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      _micRecording
+                          ? Icons.stop_circle_rounded
+                          : Icons.fiber_manual_record_rounded,
+                      size: 20,
+                      color: const Color(0xFFEA2B2B),
+                    ),
+                    const SizedBox(width: 6),
+                    Text(
+                      _micRecording ? '녹음 멈추기' : '내 목소리 녹음',
+                      style: const TextStyle(
+                          fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (_myVoicePath != null) ...[
+              const SizedBox(width: 10),
+              Expanded(
+                child: BouncyButton(
+                  key: const ValueKey('speak-playback'),
+                  color: Colors.white,
+                  shadowColor: Colors.grey.shade300,
+                  border: Border.all(color: Colors.grey.shade300, width: 2),
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  onTap: () => Sounds.playFile(_myVoicePath!),
+                  child: const Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.play_arrow_rounded, size: 20),
+                      SizedBox(width: 6),
+                      Text('내 목소리 듣기',
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.bold)),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
+        if (_micNotice.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text(
+            _micNotice,
+            textAlign: TextAlign.center,
+            style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+          ),
+        ],
+        if (score != null) ...[
+          const SizedBox(height: 14),
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: score.passed
+                  ? const Color(0xFFEAF9E6)
+                  : const Color(0xFFFFF1F1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: score.passed
+                    ? const Color(0xFFA8D89A)
+                    : const Color(0xFFF2B8B8),
+                width: 2,
+              ),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '이렇게 들렸어요',
+                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  score.heard,
+                  style: const TextStyle(
+                      fontSize: 17, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  score.perfect
+                      ? '낱말을 모두 정확히 말했어요! 🎉'
+                      : '${score.total}개 중 ${score.matched}개를 맞게 말했어요',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                    color: score.passed
+                        ? const Color(0xFF2E7D46)
+                        : const Color(0xFFB0413E),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ],
     );
   }

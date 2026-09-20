@@ -76,11 +76,13 @@ void main() {
           );
 
           for (final q in questions) {
-            expect(q.typeIndex, inInclusiveRange(0, 4));
+            expect(q.typeIndex, inInclusiveRange(0, 5));
             expect(q.speech.trim(), isNotEmpty);
             expect(q.instruction, isNotEmpty);
             expect(q.display, isNotEmpty);
-            if (q.tiles.isEmpty) {
+            if (q.typeIndex == 5) {
+              expect(q.choices, isEmpty, reason: q.display);
+            } else if (q.tiles.isEmpty) {
               expect(q.choices, hasLength(4), reason: q.display);
               expect(q.choices.toSet(), hasLength(4), reason: q.display);
               expect(q.choices, contains(q.answer), reason: q.display);
@@ -153,7 +155,7 @@ void main() {
       }
     });
 
-    test('단계가 오르면 만들어 내는 문제(빈칸·배열) 비중이 커진다', () {
+    test('단계가 오르면 만들어 내는 문제(빈칸·배열·말하기) 비중이 커진다', () {
       final random = Random(17);
       int produceCount(int stage) {
         var count = 0;
@@ -168,9 +170,29 @@ void main() {
       final early = produceCount(0);
       final middle = produceCount(4);
       final late = produceCount(9);
-      expect(early, 0);
+      expect(early, greaterThan(0)); // 첫 단계부터 말하기가 한 문제 들어간다
       expect(middle, greaterThan(early));
       expect(late, greaterThan(middle));
+    });
+
+    test('말하기 문제는 문장과 뜻을 함께 보여 주고 보기가 없다', () {
+      final random = Random(23);
+      final questions = [
+        for (var u = 0; u < 30; u++)
+          for (var stage = 0; stage < 10; stage++)
+            ...convGenerateLevel(u, stage, random),
+      ].where((q) => q.typeIndex == 5).toList();
+      expect(questions, isNotEmpty);
+      for (final q in questions) {
+        expect(q.choices, isEmpty);
+        expect(q.tiles, isEmpty);
+        expect(q.display, q.answer); // 따라 말할 영어 문장
+        expect(q.subDisplay, isNotEmpty); // 한국어 뜻
+        expect(q.speech, q.answer);
+        // 한 낱말짜리는 인식이 불안정해서 말하기로 내지 않는다.
+        expect(q.answer.split(' ').length, greaterThanOrEqualTo(2));
+      }
+      expect(conversationPack.types[5].speaking, isTrue);
     });
 
     test('단계마다 다루는 표현 묶음이 달라 300단계가 3000개를 모두 훑는다', () {

@@ -37,6 +37,20 @@ class Sounds {
     } catch (_) {}
   }
 
+  /// 녹음한 내 목소리 재생 (효과음 스위치와 무관하게 들려준다 —
+  /// 발음을 비교하려고 사용자가 직접 누른 것이라서).
+  /// 웹은 blob 주소, 모바일은 파일 경로를 받는다.
+  static Future<void> playFile(String path) async {
+    try {
+      await _player.stop();
+      await _player.play(
+        path.startsWith('blob:') || path.startsWith('http')
+            ? UrlSource(path)
+            : DeviceFileSource(path),
+      );
+    } catch (_) {}
+  }
+
   static Future<void> correct(int combo) =>
       play(combo >= 3 ? 'combo' : 'correct');
   static Future<void> wrong() => play('wrong');
