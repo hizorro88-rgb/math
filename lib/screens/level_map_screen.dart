@@ -6,6 +6,7 @@ import '../models/daily.dart';
 import '../models/english_curriculum.dart';
 import '../models/korean_curriculum.dart';
 import '../models/language_packs.dart';
+import '../models/pet.dart';
 import '../models/premium.dart';
 import '../models/profile.dart';
 import '../models/progress.dart';
@@ -32,6 +33,8 @@ import 'language_category_screen.dart';
 import 'language_quiz_screen.dart';
 import 'onboarding_screen.dart';
 import 'pass_screen.dart';
+import 'pet_intro_screen.dart';
+import 'pet_room_screen.dart';
 import 'practice_screen.dart';
 import 'profile_screen.dart';
 import 'quiz_screen.dart';
@@ -132,6 +135,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     super.initState();
     _dataFuture = _load();
     _loadSubject();
+    _loadPetEmoji();
   }
 
   Future<void> _loadSubject() async {
@@ -146,6 +150,43 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     setState(() => _subject = subject);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(Profiles.scoped(_subjectKey), subject);
+  }
+
+  /// 헤더에 보여 줄 펫 모습 (아직 안 골랐으면 알)
+  String _petEmoji = '🥚';
+
+  /// 진화 조건을 넘겨서 방에 가면 자라는 상태인지 (헤더에 점으로 알린다)
+  bool _petReady = false;
+
+  Future<void> _loadPetEmoji() async {
+    final pet = await PetStore.load();
+    final emoji = pet.species?.emojiAt(pet.stage) ?? '🥚';
+    final ready = pet.chosen && pet.earnedStage > pet.stage;
+    if (!mounted) return;
+    if (emoji != _petEmoji || ready != _petReady) {
+      setState(() {
+        _petEmoji = emoji;
+        _petReady = ready;
+      });
+    }
+  }
+
+  /// 내 친구 방으로. 아직 안 골랐으면 쿼카 박사가 먼저 고르게 한다.
+  Future<void> _openPet() async {
+    final pet = await PetStore.load();
+    if (!mounted) return;
+    if (!pet.chosen) {
+      final picked = await Navigator.of(context).push<bool>(
+        MaterialPageRoute(builder: (_) => const PetIntroScreen()),
+      );
+      if (!mounted || picked != true) return;
+    }
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const PetRoomScreen()),
+    );
+    if (!mounted) return;
+    _loadPetEmoji();
+    _refresh();
   }
 
   Future<_MapData> _load() async {
@@ -217,6 +258,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       _prevAgesExpanded = false; // 기본은 정돈된(접힌) 화면
     });
     _loadSubject(); // 프로필이 바뀌면 그 아이가 보던 과목으로
+    _loadPetEmoji();
   }
 
   /// 맞춤 복습: 어려워한 유형의 연습 한 판을 바로 연다 (단계 진행과 무관)
@@ -540,6 +582,9 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 profile: data.profile,
                 onOwlTap: _openShop,
                 onProfileTap: _openProfiles,
+                onPetTap: _openPet,
+                petEmoji: _petEmoji,
+                petReady: _petReady,
                 onSettingsTap: _openSettings,
                 onSoundChanged: () => setState(() {}),
                 subjectEmojis: [for (final s in _subjects) s.$1],
@@ -856,6 +901,9 @@ class _Header extends StatelessWidget {
     required this.profile,
     required this.onOwlTap,
     required this.onProfileTap,
+    required this.onPetTap,
+    required this.petEmoji,
+    required this.petReady,
     required this.onSettingsTap,
     required this.onSoundChanged,
     required this.subjectEmojis,
@@ -872,6 +920,15 @@ class _Header extends StatelessWidget {
   final Profile profile;
   final VoidCallback onOwlTap;
   final VoidCallback onProfileTap;
+
+  /// 내 친구(펫) 방 열기. 아직 안 골랐으면 고르는 화면이 뜬다.
+  final VoidCallback onPetTap;
+
+  /// 헤더에 보여 줄 펫 모습 (아직 안 골랐으면 알)
+  final String petEmoji;
+
+  /// 방에 가면 자랄 준비가 됐는지 (점으로 알린다)
+  final bool petReady;
   final VoidCallback onSettingsTap;
   final VoidCallback onSoundChanged;
 
@@ -983,6 +1040,50 @@ class _Header extends StatelessWidget {
                                 style: const TextStyle(fontSize: 17),
                               ),
                             ),
+                          ),
+                        ),
+                        const SizedBox(width: 6),
+                        // 내 친구 방 (공부해서 키우는 펫)
+                        GestureDetector(
+                          key: const ValueKey('pet-chip'),
+                          onTap: onPetTap,
+                          child: Stack(
+                            clipBehavior: Clip.none,
+                            children: [
+                              Container(
+                                width: 34,
+                                height: 34,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  color: Colors.white.withValues(alpha: 0.25),
+                                  border: Border.all(
+                                    color: Colors.white.withValues(alpha: 0.6),
+                                    width: 1.5,
+                                  ),
+                                ),
+                                child: Center(
+                                  child: Text(
+                                    petEmoji,
+                                    style: const TextStyle(fontSize: 17),
+                                  ),
+                                ),
+                              ),
+                              if (petReady)
+                                Positioned(
+                                  right: -2,
+                                  top: -2,
+                                  child: Container(
+                                    width: 13,
+                                    height: 13,
+                                    decoration: BoxDecoration(
+                                      color: AppColors.amber,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                          color: Colors.white, width: 2),
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
                         ),
                         const SizedBox(width: 3),

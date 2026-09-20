@@ -542,6 +542,17 @@ void main() {
     expect(find.text('정답이에요! 🎉'), findsOneWidget);
   });
 
+  testWidgets('헤더의 친구 버튼을 누르면 박사님이 친구를 고르게 한다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('pet-chip')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('쿼카 박사'), findsOneWidget);
+    expect(find.byKey(const ValueKey('egg-0')), findsOneWidget);
+  });
+
   testWidgets('자유 연습에서 중국어 숫자 한자를 연습할 수 있다', (tester) async {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();

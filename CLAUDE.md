@@ -55,6 +55,14 @@
   계속 틀려서 아이가 포기한다(test/speaking_score_test.dart가 기준을 지킨다).
   권한: AndroidManifest RECORD_AUDIO + RecognitionService queries,
   iOS Info.plist NSMicrophoneUsageDescription·NSSpeechRecognitionUsageDescription.
+- 펫 키우기(lib/models/pet.dart)의 설계 원칙 — 방치해도 벌하지 않는다.
+  배가 고파도 아프거나 죽지 않고 졸려 보일 뿐이고, 단계는 절대 내려가지
+  않는다. 매일 열지 않으면 손해라는 압박을 아이에게 주지 않기 위해서다.
+  진화 조건은 별(학습)과 돌봄을 둘 다 봐야 한다 — 코인으로 밥만 먹여서
+  진화를 사는 우회로가 생기면 공부를 건너뛴다. 하루 돌봄 횟수 제한도
+  같은 이유이니 풀지 말 것(test/pet_test.dart가 이 규칙들을 지킨다).
+  캐릭터 그림은 지금 임시 이모지(PetSpecies.stages)이고,
+  도트 그림이 준비되면 assets/images/pets/<종id>_<단계>.png로 교체한다.
 - 사용자의 빌드 PC(Windows, D:\math)는 JDK 21(Temurin) + NDK 30.0.16248370 고정.
 - 클라우드 동기화(lib/services/cloud_sync.dart): lib/firebase_options.dart가
   TODO 자리표시자면 조용히 꺼진다. 사용자가 Firebase 콘솔 구성값을 주면
