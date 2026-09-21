@@ -9,6 +9,7 @@ import '../services/speech.dart';
 import '../theme.dart';
 import '../widgets/bouncy_button.dart';
 import 'level_map_screen.dart';
+import 'pet_intro_screen.dart';
 
 /// 첫 실행 온보딩: ① 아이 이름·아바타 ② 나이 고르기 ③ 소리 확인.
 /// 끝나면 다시 나오지 않는다.
@@ -35,6 +36,24 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   void dispose() {
     _nameController.dispose();
     super.dispose();
+  }
+
+  /// 이름을 정하고 나면 바로 쿼카 박사가 나와서 함께할 친구를 고르게 한다.
+  /// 고르고 돌아오면 나이 고르기로 이어진다.
+  Future<void> _goToPetPick() async {
+    // 박사님 화면에서 부를 이름이라 먼저 저장해 둔다.
+    final name = _nameController.text.trim();
+    await Profiles.update(
+      Profiles.activeId,
+      emoji: _emoji,
+      name: name.isEmpty ? '우리 아이' : name,
+    );
+    if (!mounted) return;
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const PetIntroScreen()),
+    );
+    if (!mounted) return;
+    setState(() => _step = 1);
   }
 
   Future<void> _finish({required bool soundOn}) async {
@@ -230,7 +249,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           ),
         ),
         const SizedBox(height: 24),
-        _nextButton(label: '다음', onTap: () => setState(() => _step = 1)),
+        _nextButton(label: '다음', onTap: _goToPetPick),
       ],
     );
   }

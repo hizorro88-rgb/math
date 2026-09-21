@@ -55,6 +55,12 @@
   계속 틀려서 아이가 포기한다(test/speaking_score_test.dart가 기준을 지킨다).
   권한: AndroidManifest RECORD_AUDIO + RecognitionService queries,
   iOS Info.plist NSMicrophoneUsageDescription·NSSpeechRecognitionUsageDescription.
+- 홈 화면 맨 위는 쿼카가 아니라 친구(펫)다 — 다마고치처럼 홈에서 바로
+  밥·물을 준다(lib/widgets/home_pet_card.dart). 헤더에 펫 버튼을 다시
+  만들지 말 것. 쿼카는 선생님 역할로 퀴즈·결과·꾸미기 가게에만 남는다
+  (꾸민 아이템은 가게의 쿼카에서 확인한다).
+- 친구 고르기는 온보딩에서 이름을 넣은 바로 다음에 나온다
+  (onboarding_screen의 _goToPetPick → PetIntroScreen).
 - 펫 키우기(lib/models/pet.dart)의 설계 원칙 — 방치해도 벌하지 않는다.
   배가 고파도 아프거나 죽지 않고 졸려 보일 뿐이고, 단계는 절대 내려가지
   않는다. 매일 열지 않으면 손해라는 압박을 아이에게 주지 않기 위해서다.

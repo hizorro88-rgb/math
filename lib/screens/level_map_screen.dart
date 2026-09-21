@@ -19,7 +19,7 @@ import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../theme.dart';
 import '../widgets/bouncy_button.dart';
-import '../widgets/quokka_avatar.dart';
+import '../widgets/home_pet_card.dart';
 import '../widgets/parent_gate.dart';
 import '../models/boss.dart';
 import '../models/quiz_config.dart';
@@ -74,6 +74,7 @@ class _MapData {
     required this.wrongCount,
     required this.stickerTickets,
     required this.foldPrevAges,
+    required this.pet,
   });
 
   final List<int> stars;
@@ -108,6 +109,9 @@ class _MapData {
 
   /// 나이보다 앞의 수학 카테고리 접기 설정 (기본 켜짐)
   final bool foldPrevAges;
+
+  /// 홈 맨 위에서 함께 지내는 친구
+  final PetState pet;
 }
 
 class _LevelMapScreenState extends State<LevelMapScreen> {
@@ -135,7 +139,6 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     super.initState();
     _dataFuture = _load();
     _loadSubject();
-    _loadPetEmoji();
   }
 
   Future<void> _loadSubject() async {
@@ -152,23 +155,27 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     await prefs.setInt(Profiles.scoped(_subjectKey), subject);
   }
 
-  /// 헤더에 보여 줄 펫 모습 (아직 안 골랐으면 알)
-  String _petEmoji = '🥚';
-
-  /// 진화 조건을 넘겨서 방에 가면 자라는 상태인지 (헤더에 점으로 알린다)
-  bool _petReady = false;
-
-  Future<void> _loadPetEmoji() async {
-    final pet = await PetStore.load();
-    final emoji = pet.species?.emojiAt(pet.stage) ?? '🥚';
-    final ready = pet.chosen && pet.earnedStage > pet.stage;
+  /// 홈에서 바로 밥·물 주기. 못 주면 이유를 알려 준다.
+  Future<void> _carePet({required bool meal}) async {
+    final ok = await PetStore.care(meal: meal);
     if (!mounted) return;
-    if (emoji != _petEmoji || ready != _petReady) {
-      setState(() {
-        _petEmoji = emoji;
-        _petReady = ready;
-      });
+    if (!ok) {
+      final pet = await PetStore.load();
+      if (!mounted) return;
+      final enough =
+          meal ? pet.coins >= petMealCost : pet.coins >= petDrinkCost;
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(SnackBar(
+          content: Text(
+              enough ? '오늘은 충분히 줬어요. 내일 또 줄까요?' : '코인이 모자라요. 문제를 풀어 볼까요?'),
+          duration: const Duration(seconds: 2),
+        ));
+      return;
     }
+    Sounds.play('correct');
+    Speech.speak(meal ? '냠냠 맛있어요!' : '꿀꺽꿀꺽!');
+    _refresh();
   }
 
   /// 내 친구 방으로. 아직 안 골랐으면 쿼카 박사가 먼저 고르게 한다.
@@ -185,7 +192,6 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       MaterialPageRoute(builder: (_) => const PetRoomScreen()),
     );
     if (!mounted) return;
-    _loadPetEmoji();
     _refresh();
   }
 
@@ -213,6 +219,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       foldPrevAges:
           prefs.getBool(Profiles.scoped(LevelMapScreen.foldPrevAgesKey)) ??
               true,
+      pet: await PetStore.load(),
     );
   }
 
@@ -258,7 +265,6 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       _prevAgesExpanded = false; // 기본은 정돈된(접힌) 화면
     });
     _loadSubject(); // 프로필이 바뀌면 그 아이가 보던 과목으로
-    _loadPetEmoji();
   }
 
   /// 맞춤 복습: 어려워한 유형의 연습 한 판을 바로 연다 (단계 진행과 무관)
@@ -533,7 +539,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     ];
   }
 
-  /// 오늘 활동에 따라 쿼카 인사말이 달라진다.
+  /// 오늘 활동에 따라 친구의 인사말이 달라진다.
   String _greetingFor(_MapData data) {
     // 기본 이름("우리 아이")이면 호칭이 어색하지 않게 "친구"로 부른다.
     final name = data.profile.name == '우리 아이' ? '친구' : data.profile.name;
@@ -548,8 +554,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       return '$name, ${daily.streak}일째\n함께라니 최고야! 🔥';
     }
     final hour = DateTime.now().hour;
-    if (hour < 12) return '$name, 좋은 아침이야!\n쿼카랑 놀면서 배우자!';
-    if (hour < 18) return '$name, 오늘도 왔구나!\n쿼카가 기다렸어!';
+    if (hour < 12) return '$name, 좋은 아침이야!\n오늘도 같이 배우자!';
+    if (hour < 18) return '$name, 오늘도 왔구나!\n계속 기다렸어!';
     return '$name, 자기 전에\n한 판 어때? 헤헤!';
   }
 
@@ -583,8 +589,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 onOwlTap: _openShop,
                 onProfileTap: _openProfiles,
                 onPetTap: _openPet,
-                petEmoji: _petEmoji,
-                petReady: _petReady,
+                onPetCare: _carePet,
+                pet: data.pet,
                 onSettingsTap: _openSettings,
                 onSoundChanged: () => setState(() {}),
                 subjectEmojis: [for (final s in _subjects) s.$1],
@@ -902,8 +908,8 @@ class _Header extends StatelessWidget {
     required this.onOwlTap,
     required this.onProfileTap,
     required this.onPetTap,
-    required this.petEmoji,
-    required this.petReady,
+    required this.onPetCare,
+    required this.pet,
     required this.onSettingsTap,
     required this.onSoundChanged,
     required this.subjectEmojis,
@@ -924,11 +930,11 @@ class _Header extends StatelessWidget {
   /// 내 친구(펫) 방 열기. 아직 안 골랐으면 고르는 화면이 뜬다.
   final VoidCallback onPetTap;
 
-  /// 헤더에 보여 줄 펫 모습 (아직 안 골랐으면 알)
-  final String petEmoji;
+  /// 홈에서 바로 돌보기 (밥·물)
+  final Future<void> Function({required bool meal}) onPetCare;
 
-  /// 방에 가면 자랄 준비가 됐는지 (점으로 알린다)
-  final bool petReady;
+  /// 지금 친구 상태
+  final PetState pet;
   final VoidCallback onSettingsTap;
   final VoidCallback onSoundChanged;
 
@@ -1042,50 +1048,6 @@ class _Header extends StatelessWidget {
                             ),
                           ),
                         ),
-                        const SizedBox(width: 6),
-                        // 내 친구 방 (공부해서 키우는 펫)
-                        GestureDetector(
-                          key: const ValueKey('pet-chip'),
-                          onTap: onPetTap,
-                          child: Stack(
-                            clipBehavior: Clip.none,
-                            children: [
-                              Container(
-                                width: 34,
-                                height: 34,
-                                decoration: BoxDecoration(
-                                  shape: BoxShape.circle,
-                                  color: Colors.white.withValues(alpha: 0.25),
-                                  border: Border.all(
-                                    color: Colors.white.withValues(alpha: 0.6),
-                                    width: 1.5,
-                                  ),
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    petEmoji,
-                                    style: const TextStyle(fontSize: 17),
-                                  ),
-                                ),
-                              ),
-                              if (petReady)
-                                Positioned(
-                                  right: -2,
-                                  top: -2,
-                                  child: Container(
-                                    width: 13,
-                                    height: 13,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.amber,
-                                      shape: BoxShape.circle,
-                                      border: Border.all(
-                                          color: Colors.white, width: 2),
-                                    ),
-                                  ),
-                                ),
-                            ],
-                          ),
-                        ),
                         const SizedBox(width: 3),
                         // 한 번에 전부 끄기/켜기 (효과음+읽어주기)
                         GestureDetector(
@@ -1123,53 +1085,14 @@ class _Header extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 4),
-            Row(
-              children: [
-                GestureDetector(
-                  onTap: onOwlTap,
-                  child: QuokkaAvatar(size: 84, equipped: equipped),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Stack(
-                    clipBehavior: Clip.none,
-                    children: [
-                      // 말풍선 꼬리
-                      Positioned(
-                        left: -5,
-                        top: 20,
-                        child: Transform.rotate(
-                          angle: 0.785,
-                          child: Container(
-                            width: 12,
-                            height: 12,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 14,
-                          vertical: 10,
-                        ),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        child: Text(
-                          greeting,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                            color: AppColors.ink,
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+            const SizedBox(height: 6),
+            // 다마고치처럼 홈에서 바로 친구를 돌본다.
+            HomePetCard(
+              pet: pet,
+              greeting: greeting,
+              onOpenRoom: onPetTap,
+              onMeet: onPetTap,
+              onCare: onPetCare,
             ),
             const SizedBox(height: 14),
             Row(

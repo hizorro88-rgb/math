@@ -7,6 +7,7 @@ import 'package:preschool_math/widgets/quokka_avatar.dart';
 import 'package:preschool_math/models/english_data.dart';
 import 'package:preschool_math/models/japanese_pack.dart';
 import 'package:preschool_math/models/korean_data.dart';
+import 'package:preschool_math/models/pet.dart';
 import 'package:preschool_math/models/profile.dart';
 import 'package:preschool_math/services/sounds.dart';
 import 'package:preschool_math/services/speech.dart';
@@ -309,11 +310,23 @@ void main() {
     await tester.enterText(find.byType(TextField), '하늘');
     await scrollAndTap(tester, find.text('다음'));
 
-    // ② 나이 고르기
+    // ② 이름 바로 다음에 박사님이 함께할 친구를 고르게 한다
+    expect(find.text('쿼카 박사'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('egg-0')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('pick-0')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 1600)); // 흔들흔들 → 부화
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('hatch-done')));
+    await tester.pumpAndSettle();
+    expect((await PetStore.load()).chosen, isTrue);
+
+    // ③ 나이 고르기
     await scrollAndTap(tester, find.textContaining('6살'));
     await scrollAndTap(tester, find.text('다음'));
 
-    // ③ 소리 확인 후 시작
+    // ④ 소리 확인 후 시작
     expect(find.text('소리를 확인해 볼까요?'), findsOneWidget);
     await scrollAndTap(tester, find.text('잘 들려요! 시작하기'));
 
@@ -464,13 +477,16 @@ void main() {
     expect(find.textContaining('첫 퀴즈를 풀면'), findsOneWidget);
   });
 
-  testWidgets('착용한 아이템이 홈 헤더 쿼카에 보인다', (tester) async {
+  testWidgets('착용한 아이템이 꾸미기 가게의 쿼카에 보인다', (tester) async {
     SharedPreferences.setMockInitialValues({
       'owned_items_v1': ['ribbon', 'glasses', 'grass'],
       'equipped_items_v1': ['ribbon', 'glasses', 'grass'],
     });
 
     await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+    // 홈은 이제 친구(펫) 자리라, 꾸민 쿼카는 가게에서 본다.
+    await scrollAndTap(tester, find.text('꾸미기 가게'));
     await tester.pumpAndSettle();
 
     // 쿼카 마스코트 + 리본(머리)·안경(얼굴)은 도트 그림, 풀밭(배경)은 이모지
@@ -542,11 +558,27 @@ void main() {
     expect(find.text('정답이에요! 🎉'), findsOneWidget);
   });
 
-  testWidgets('헤더의 친구 버튼을 누르면 박사님이 친구를 고르게 한다', (tester) async {
+  testWidgets('홈에서 바로 친구에게 밥을 줄 수 있다', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'pet_species_v1': 'leaf',
+      'coins_v1': 500,
+    });
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byKey(const ValueKey('pet-chip')));
+    // 홈 본문에 친구가 있고, 따로 들어가지 않아도 돌볼 수 있다.
+    expect(find.byKey(const ValueKey('home-pet')), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('home-feed')));
+    await tester.pumpAndSettle();
+
+    expect((await PetStore.load()).meals, 1);
+  });
+
+  testWidgets('친구가 없으면 홈에서 만나러 갈 수 있다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('pet-meet')));
     await tester.pumpAndSettle();
 
     expect(find.text('쿼카 박사'), findsOneWidget);

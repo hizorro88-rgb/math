@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../models/pet.dart';
@@ -35,10 +37,12 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
 
   Future<void> _choose(PetSpecies species) async {
     setState(() => _hatching = species);
-    Sounds.buy();
+    Sounds.play('combo');
     await PetStore.choose(species);
-    await Future<void>.delayed(const Duration(milliseconds: 700));
+    // 흔들흔들 하다가 깨진다.
+    await Future<void>.delayed(const Duration(milliseconds: 1400));
     if (!mounted) return;
+    Sounds.buy();
     setState(() => _hatched = true);
     Speech.speak('${species.name}가 태어났어요!');
   }
@@ -162,10 +166,10 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
                   scale: _hatched ? 1.0 : 0.6,
                   duration: const Duration(milliseconds: 500),
                   curve: Curves.elasticOut,
-                  child: Text(
-                    _hatched ? species.emojiAt(1) : species.egg,
-                    style: const TextStyle(fontSize: 110),
-                  ),
+                  child: _hatched
+                      ? Text(species.emojiAt(1),
+                          style: const TextStyle(fontSize: 110))
+                      : _ShakingEgg(emoji: species.egg),
                 ),
                 const SizedBox(height: 18),
                 if (_hatched) ...[
@@ -211,6 +215,51 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
             child: IgnorePointer(child: SparkleBurst()),
           ),
       ],
+    );
+  }
+}
+
+/// 깨지기 직전의 알: 점점 크게 흔들린다.
+class _ShakingEgg extends StatefulWidget {
+  const _ShakingEgg({required this.emoji});
+
+  final String emoji;
+
+  @override
+  State<_ShakingEgg> createState() => _ShakingEggState();
+}
+
+class _ShakingEggState extends State<_ShakingEgg>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 1400),
+  );
+
+  @override
+  void initState() {
+    super.initState();
+    // 테스트에서는 반복 애니메이션을 끄지만, 이건 한 번만 도는 연출이라 그대로 둔다.
+    _controller.forward();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        final t = _controller.value;
+        // 뒤로 갈수록 크게, 빠르게 흔들린다.
+        final angle = math.sin(t * math.pi * 14) * 0.18 * t;
+        return Transform.rotate(angle: angle, child: child);
+      },
+      child: Text(widget.emoji, style: const TextStyle(fontSize: 110)),
     );
   }
 }
