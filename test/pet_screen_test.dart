@@ -100,9 +100,10 @@ void main() {
       await openRoom(tester);
 
       await tester.tap(find.byKey(const ValueKey('pet-feed')));
-      await tester.pumpAndSettle();
+      await tester.pump(const Duration(milliseconds: 600));
 
       expect(find.textContaining('코인이 모자라요'), findsOneWidget);
+      await tester.pumpAndSettle();
       expect((await PetStore.load()).meals, 0);
     });
 

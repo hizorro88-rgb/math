@@ -414,12 +414,20 @@ void main() {
     expect(Speech.rate, Speech.rateSlow);
   });
 
-  testWidgets('홈에는 읽어주기를 끄는 소리 버튼이 없다', (tester) async {
+  testWidgets('홈에는 읽어주기를 끄는 소리 버튼이 없고, 🔊는 인사를 들려준다', (tester) async {
+    final spoken = <String>[];
+    Speech.debugOnSpeak = spoken.add;
+    addTearDown(() => Speech.debugOnSpeak = null);
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
-    expect(find.byIcon(Icons.volume_up_rounded), findsNothing);
     expect(find.byIcon(Icons.volume_off_rounded), findsNothing);
+    // 파란 🔊는 끄기가 아니라 "듣기" — 눌러도 읽어주기는 켜진 그대로다.
+    spoken.clear();
+    await tester.tap(find.bySemanticsLabel('다시 듣기'));
+    await tester.pump();
+    expect(spoken, isNotEmpty);
+    expect(Speech.enabled, isTrue);
   });
 
   testWidgets('읽어주기가 꺼져 있어도 아이가 🔊를 누르면 들린다', (tester) async {
@@ -742,7 +750,7 @@ void main() {
     await tester.tap(find.text('왕관'));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 400));
-    expect(find.textContaining('코인이 부족해요'), findsOneWidget);
+    expect(find.textContaining('코인이 모자라요'), findsOneWidget);
 
     // 남은 스낵바 타이머를 흘려보낸다.
     await tester.pump(const Duration(seconds: 2));

@@ -1,7 +1,10 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
 import 'bouncy_button.dart';
+import 'kid_notice.dart';
 import 'pulse.dart';
 
 /// 동그란 단계 버튼 (모든 과목 공용).
@@ -30,31 +33,7 @@ class LevelBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    if (!unlocked) {
-      // 잠김: 점선 빈 원 (자물쇠 없음)
-      return SizedBox(
-        width: 56,
-        height: 62,
-        child: CustomPaint(
-          painter: _DashedCirclePainter(),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // 글을 몰라도 "잠김"이 읽히도록 작은 자물쇠를 함께 보여준다.
-              const Icon(Icons.lock_rounded,
-                  size: 13, color: Color(0xFFB3A995)),
-              Text(
-                '$number',
-                style: displayStyle(
-                  fontSize: 15,
-                  color: const Color(0xFF9E9382),
-                ),
-              ),
-            ],
-          ),
-        ),
-      );
-    }
+    if (!unlocked) return _LockedBubble(number: number);
 
     final size = _isCurrent ? 66.0 : 56.0;
     final bubble = Semantics(
@@ -121,6 +100,80 @@ class LevelBubble extends StatelessWidget {
       );
     }
     return bubble;
+  }
+}
+
+/// 잠김: 점선 빈 원. 눌러도 가만히 있으면 아이는 "고장"으로 안다 —
+/// 도리도리 흔들고, 반짝이는 원부터 하라고 그림+목소리로 알려 준다.
+class _LockedBubble extends StatefulWidget {
+  const _LockedBubble({required this.number});
+
+  final int number;
+
+  @override
+  State<_LockedBubble> createState() => _LockedBubbleState();
+}
+
+class _LockedBubbleState extends State<_LockedBubble>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _shake = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 450),
+  );
+
+  @override
+  void dispose() {
+    _shake.dispose();
+    super.dispose();
+  }
+
+  void _tap() {
+    _shake.forward(from: 0);
+    showKidNotice(context, emoji: '👆', text: '반짝이는 동그라미부터 해요!');
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: '${widget.number}단계 (아직 잠김)',
+      onTap: _tap,
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: _tap,
+        child: AnimatedBuilder(
+          animation: _shake,
+          builder: (context, child) => Transform.translate(
+            offset: Offset(
+                math.sin(_shake.value * math.pi * 6) * 6 * (1 - _shake.value),
+                0),
+            child: child,
+          ),
+          child: SizedBox(
+            width: 56,
+            height: 62,
+            child: CustomPaint(
+              painter: _DashedCirclePainter(),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  // 글을 몰라도 "잠김"이 읽히도록 작은 자물쇠를 함께 보여준다.
+                  const Icon(Icons.lock_rounded,
+                      size: 13, color: Color(0xFFB3A995)),
+                  Text(
+                    '${widget.number}',
+                    style: displayStyle(
+                      fontSize: 15,
+                      color: const Color(0xFF9E9382),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 }
 

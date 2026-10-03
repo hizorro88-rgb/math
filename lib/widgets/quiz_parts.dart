@@ -65,6 +65,11 @@ class QuizVoice {
     Speech.speakParts([('괜찮아요! 다시 들어 봐요', 'ko-KR'), (speech, lang)]);
   }
 
+  /// 낱말 만들기 조각을 눌렀을 때 그 조각 소리
+  static void tile(String text, {String lang = 'ko-KR'}) {
+    Speech.speak(text, lang: lang);
+  }
+
   /// 문제 읽기. 처음 나올 때는 한국어 과제를 먼저 읽고 소리를 읽는다.
   /// 아이가 🔊를 눌러 다시 들을 때([force])는 소리만 바로 들려준다.
   /// 다시 나온 문제는 "아까 그 문제!"로 알려 준다.

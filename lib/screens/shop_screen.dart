@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/progress.dart';
 import '../models/shop.dart';
 import '../services/sounds.dart';
+import '../widgets/kid_notice.dart';
 import '../widgets/quokka_avatar.dart';
 
 /// 쿼카 꾸미기 상점: 퀴즈로 모은 코인으로 모자·안경·친구를 산다.
@@ -58,24 +59,11 @@ class _ShopScreenState extends State<ShopScreen> {
       await _load();
       if (!mounted) return;
       // 연타해도 스낵바가 쌓이지 않게 이전 것을 지우고 띄운다.
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text('${item.emoji} ${item.name}을(를) 샀어요!'),
-            duration: const Duration(seconds: 1),
-          ),
-        );
+      showKidNotice(context, emoji: item.emoji, text: '${item.name} 샀어요!');
     } else {
       if (!mounted) return;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(
-          SnackBar(
-            content: Text('코인이 부족해요! ${item.cost - _coins}개 더 모아요 💪'),
-            duration: const Duration(seconds: 1),
-          ),
-        );
+      showKidNotice(context,
+          emoji: '🪙', text: '코인이 모자라요. ${item.cost - _coins}개 더 모아요!');
     }
   }
 

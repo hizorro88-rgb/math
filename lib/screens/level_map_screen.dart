@@ -20,6 +20,7 @@ import '../services/speech.dart';
 import '../theme.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/home_pet_card.dart';
+import '../widgets/kid_notice.dart';
 import '../widgets/parent_gate.dart';
 import '../widgets/pulse.dart';
 import '../models/boss.dart';
@@ -165,13 +166,9 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       if (!mounted) return;
       final enough =
           meal ? pet.coins >= petMealCost : pet.coins >= petDrinkCost;
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(SnackBar(
-          content: Text(
-              enough ? '오늘은 충분히 줬어요. 내일 또 줄까요?' : '코인이 모자라요. 문제를 풀어 볼까요?'),
-          duration: const Duration(seconds: 2),
-        ));
+      enough
+          ? showKidNotice(context, emoji: '😋', text: '배불러요! 내일 또 줘요')
+          : showKidNotice(context, emoji: '🪙', text: '코인이 모자라요. 문제를 풀면 생겨요!');
       return;
     }
     Sounds.play('correct');
@@ -300,12 +297,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
 
   Future<void> _openBoss(bool cleared) async {
     if (cleared) {
-      ScaffoldMessenger.of(context)
-        ..hideCurrentSnackBar()
-        ..showSnackBar(const SnackBar(
-          content: Text('이번 주 보스전은 벌써 클리어했어요! 다음 주에 또 만나요 👑'),
-          duration: Duration(seconds: 2),
-        ));
+      showKidNotice(context, emoji: '👑', text: '이번 주 보스는 이겼어요! 다음 주에 또 만나요');
       return;
     }
     await Navigator.of(context).push(
@@ -371,14 +363,11 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
   Future<void> _buyFreeze() async {
     final ok = await DailyStore.buyFreeze();
     if (!mounted) return;
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(SnackBar(
-        content: Text(ok
-            ? '🛡️ 스트릭 지킴이를 샀어요! 하루 걸러도 스트릭이 이어져요'
-            : '코인이 부족하거나 이미 충분히 갖고 있어요'),
-        duration: const Duration(seconds: 2),
-      ));
+    ok
+        ? showKidNotice(context,
+            emoji: '🛡️', text: '지킴이가 생겼어요! 하루 쉬어도 불꽃이 안 꺼져요')
+        : showKidNotice(context,
+            emoji: '🪙', text: '코인이 모자라거나 지킴이가 이미 있어요');
     if (ok) _refresh();
   }
 
@@ -1461,12 +1450,8 @@ class _DailyCard extends StatelessWidget {
               // 누르면 스트릭 지킴이가 뭔지 알려준다.
               Builder(
                 builder: (context) => GestureDetector(
-                  onTap: () => ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content:
-                          Text('🛡️ 스트릭 지킴이: 하루 못 놀아도 연속 기록을 지켜줘요!'),
-                    ),
-                  ),
+                  onTap: () => showKidNotice(context,
+                      emoji: '🛡️', text: '지킴이가 있으면 하루 쉬어도 불꽃이 안 꺼져요'),
                   child: Text(
                     '🛡️ 스트릭 지킴이 ×${daily.freezes}',
                     style: TextStyle(

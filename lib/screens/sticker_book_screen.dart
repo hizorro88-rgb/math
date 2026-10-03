@@ -7,6 +7,7 @@ import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../theme.dart';
 import '../widgets/bouncy_button.dart';
+import '../widgets/kid_notice.dart';
 import '../widgets/parent_gate.dart';
 
 /// 스티커북: 퀴즈를 통과하면 받은 스티커를
@@ -127,7 +128,7 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
   Future<void> _tapBoardSlot(int slot) async {
     if (_board[slot] != null) return; // 이미 붙은 칸
     if (_tickets < 1) {
-      _snack('🎟️ 붙일 스티커가 없어요. 퀴즈 한 판을 통과하면 1장을 받아요!');
+      _snack('🎟️', '스티커가 없어요. 한 판 통과하면 1장 생겨요!');
       return;
     }
     final emoji = await _pickStickerDesign();
@@ -219,7 +220,7 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
     final brush = _brush;
     if (_erasing || brush == null) return;
     if (_canvas.length >= CanvasStore.maxPlaced) {
-      _snack('꾸미기 판이 가득 찼어요! ✋ 떼어내기로 조금 정리해 볼까요?');
+      _snack('✋', '판이 가득 찼어요! 몇 개 떼어 볼까요?');
       return;
     }
     Sounds.correct(1);
@@ -279,12 +280,8 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
     CanvasStore.save(_canvas);
   }
 
-  void _snack(String message) {
-    ScaffoldMessenger.of(context)
-      ..hideCurrentSnackBar()
-      ..showSnackBar(
-          SnackBar(content: Text(message), duration: const Duration(seconds: 2)));
-  }
+  void _snack(String emoji, String message) =>
+      showKidNotice(context, emoji: emoji, text: message);
 
   Future<void> _tapSlot(int pageIndex, int stickerIndex) async {
     final collected = _collected;
@@ -297,7 +294,7 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
       return;
     }
     if (_tickets < 1) {
-      _snack('🎟️ 붙일 스티커가 없어요. 퀴즈 한 판을 통과하면 1장을 받아요!');
+      _snack('🎟️', '스티커가 없어요. 한 판 통과하면 1장 생겨요!');
       return;
     }
 
@@ -325,7 +322,7 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
         message: '보너스 🪙 ${result.bonusCoins}을 받았어요!',
       );
     } else {
-      _snack('${sticker.emoji} ${sticker.name} 스티커를 붙였어요!');
+      _snack(sticker.emoji, '${sticker.name} 붙였어요!');
     }
   }
 

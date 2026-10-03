@@ -121,6 +121,8 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
     _ensureTiles();
     if (_picked.contains(index)) return;
     setState(() => _picked.add(index));
+    // 누른 조각을 소리 내어 읽어 준다 — 글자를 몰라도 소리로 맞춰 본다.
+    QuizVoice.tile(_question.tiles[index], lang: 'ko-KR');
     if (_picked.length >= _question.answer.length) {
       _selectChoice([for (final i in _picked) _question.tiles[i]].join());
     }

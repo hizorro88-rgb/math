@@ -8,6 +8,7 @@ import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../theme.dart';
 import '../widgets/bouncy_button.dart';
+import '../widgets/kid_notice.dart';
 import '../widgets/sparkle_burst.dart';
 
 /// 친구가 지내는 방. 좌우로 돌아다니는 모습을 보고, 밥과 물을 준다.
@@ -79,13 +80,9 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
       final state = _state;
       final enough = state != null &&
           (meal ? state.coins >= petMealCost : state.coins >= petDrinkCost);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content:
-              Text(enough ? '오늘은 충분히 줬어요. 내일 또 줄까요?' : '코인이 모자라요. 문제를 풀어 볼까요?'),
-          duration: const Duration(seconds: 2),
-        ),
-      );
+      enough
+          ? showKidNotice(context, emoji: '😋', text: '배불러요! 내일 또 줘요')
+          : showKidNotice(context, emoji: '🪙', text: '코인이 모자라요. 문제를 풀면 생겨요!');
       return;
     }
     Sounds.play('correct');

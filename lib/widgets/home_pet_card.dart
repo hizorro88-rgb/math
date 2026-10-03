@@ -4,8 +4,10 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 
 import '../models/pet.dart';
+import '../services/speech.dart';
 import '../theme.dart';
 import 'bouncy_button.dart';
+import 'quiz_parts.dart';
 
 /// 홈 화면 맨 위에서 친구가 살아 움직이는 카드.
 ///
@@ -46,9 +48,17 @@ class _HomePetCardState extends State<HomePetCard> {
   Timer? _walkTimer;
   final _random = math.Random();
 
+  /// 앱을 켜고 홈에 처음 왔을 때 한 번만 인사를 읽어 준다
+  /// (다른 화면에서 돌아올 때마다 말하면 시끄럽다).
+  static bool _greeted = false;
+
   @override
   void initState() {
     super.initState();
+    if (!_greeted) {
+      _greeted = true;
+      Speech.speak(_plain(widget.greeting));
+    }
     if (AppMotion.loops) {
       _walkTimer = Timer.periodic(const Duration(milliseconds: 2400), (_) {
         if (!mounted) return;
@@ -79,14 +89,26 @@ class _HomePetCardState extends State<HomePetCard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Text(
-            widget.greeting,
-            style: const TextStyle(
-              fontSize: 15,
-              fontWeight: FontWeight.bold,
-              color: AppColors.ink,
-              height: 1.3,
-            ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  widget.greeting,
+                  style: const TextStyle(
+                    fontSize: 15,
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.ink,
+                    height: 1.3,
+                  ),
+                ),
+              ),
+              // 글을 못 읽어도 친구가 무슨 말을 하는지 들을 수 있다.
+              QuizSpeakButton(
+                size: 34,
+                onTap: () =>
+                    Speech.speak(_plain(widget.greeting), force: true),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
           if (pet.chosen) _buildPet(pet) else _buildInvite(),
@@ -324,3 +346,9 @@ class _HomePetCardState extends State<HomePetCard> {
     );
   }
 }
+
+/// 읽어 줄 때는 줄바꿈과 이모지를 뺀다.
+String _plain(String text) => text
+    .replaceAll('\n', ' ')
+    .replaceAll(RegExp(r'[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]', unicode: true), '')
+    .trim();

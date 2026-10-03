@@ -92,9 +92,11 @@ void main() {
     await tester.ensureVisible(find.text('사자'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('사자'));
-    await tester.pumpAndSettle();
+    // 알림 말풍선은 잠깐 떠 있다 사라진다 — 떠 있는 동안 확인한다.
+    await tester.pump(const Duration(milliseconds: 600));
 
-    expect(find.textContaining('사자 스티커를 붙였어요'), findsOneWidget);
+    expect(find.textContaining('사자 붙였어요'), findsOneWidget);
+    await tester.pumpAndSettle();
     expect(await StickerStore.tickets(), 0);
     expect((await StickerStore.load())[0], {0});
   });
@@ -169,9 +171,10 @@ void main() {
     await tester.ensureVisible(find.text('사자'));
     await tester.pumpAndSettle();
     await tester.tap(find.text('사자'));
-    await tester.pumpAndSettle();
+    await tester.pump(const Duration(milliseconds: 600));
 
-    expect(find.textContaining('붙일 스티커가 없어요'), findsOneWidget);
+    expect(find.textContaining('스티커가 없어요'), findsOneWidget);
+    await tester.pumpAndSettle();
     expect(await StickerStore.count(), 0);
   });
 
