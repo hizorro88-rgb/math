@@ -1,6 +1,7 @@
 import 'curriculum.dart';
 import 'daily.dart';
 import 'korean_curriculum.dart';
+import 'pet.dart';
 import 'progress.dart';
 import 'stats.dart';
 
@@ -12,7 +13,12 @@ class BadgeData {
     required this.krStars,
     required this.points,
     required this.milestones,
+    this.otherStars = 0,
   });
+
+  /// 수학·한글 말고 다른 과목(영어·일본어·중국어·한자)에서 모은 별.
+  /// 별은 어느 과목에서 모아도 같은 별이다 — 홈 ⭐·친구 성장과 같은 셈법.
+  final int otherStars;
 
   final LearningStats stats;
   final List<int> mathStars;
@@ -23,7 +29,9 @@ class BadgeData {
   final List<int> milestones;
 
   int get totalStars =>
-      mathStars.fold(0, (a, b) => a + b) + krStars.fold(0, (a, b) => a + b);
+      mathStars.fold<int>(0, (a, b) => a + b) +
+      krStars.fold<int>(0, (a, b) => a + b) +
+      otherStars;
 
   int get mathAnswered => stats.mathCorrect + stats.mathWrong;
   int get krAnswered => stats.krTotalCorrect + stats.krTotalWrong;
@@ -194,10 +202,19 @@ final List<LearnBadge> allBadges = [
 ];
 
 /// 지금까지의 기록을 불러와 배지 판정에 쓴다.
-Future<BadgeData> loadBadgeData() async => BadgeData(
-      stats: await StatsStore.load(),
-      mathStars: await ProgressStore.load(),
-      krStars: await KoreanProgressStore.load(),
-      points: await ProgressStore.loadPoints(),
-      milestones: await DailyStore.claimedMilestones(),
-    );
+Future<BadgeData> loadBadgeData() async {
+  final mathStars = await ProgressStore.load();
+  final krStars = await KoreanProgressStore.load();
+  // 친구 성장과 같은 별 합계(어른 과정 제외)에서 수학·한글을 뺀 나머지
+  final all = await PetStore.totalStars();
+  final mk = mathStars.fold<int>(0, (a, b) => a + b) +
+      krStars.fold<int>(0, (a, b) => a + b);
+  return BadgeData(
+    stats: await StatsStore.load(),
+    mathStars: mathStars,
+    krStars: krStars,
+    points: await ProgressStore.loadPoints(),
+    milestones: await DailyStore.claimedMilestones(),
+    otherStars: all - mk,
+  );
+}
