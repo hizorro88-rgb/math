@@ -38,17 +38,38 @@ class BossStore {
         Profiles.scoped(_weekKey), weekKey(now ?? DateTime.now()));
   }
 
-  /// 보스전 문제: 덧뺄셈·비교·빈칸·10 만들기·시계를 섞어 12문제.
-  static List<Question> buildQuestions({Random? random}) {
+  /// 보스전 문제: 여러 유형을 섞어 12문제. 나이(수학 카테고리 인덱스)에 맞춘다 —
+  /// 4살에게 시계·10 만들기를 내면 다 틀리고 포기한다.
+  /// [age]: 0=4살, 1=5살, 2=6살, 3 이상=7살~ (모르면 7살 기준)
+  static List<Question> buildQuestions({Random? random, int? age}) {
     final generator = QuestionGenerator(random: random);
     List<Question> take(QuizMode mode, int max, int count) => generator
         .generate(QuizConfig(mode: mode, maxNumber: max, questionCount: count));
-    return [
-      ...take(QuizMode.mixed, 10, 4),
-      ...take(QuizMode.compare, 10, 2),
-      ...take(QuizMode.fillBlank, 10, 2),
-      ...take(QuizMode.makeTen, 10, 2),
-      ...take(QuizMode.clock, 12, 2),
-    ]..shuffle(random ?? Random());
+    final level = age ?? 3;
+    final List<Question> questions;
+    if (level <= 1) {
+      // 4·5살: 5까지 세기·크기 비교·덧셈
+      questions = [
+        ...take(QuizMode.counting, 5, 4),
+        ...take(QuizMode.compare, 5, 4),
+        ...take(QuizMode.addition, 5, 4),
+      ];
+    } else if (level == 2) {
+      // 6살: 10까지 덧뺄셈·비교·세기
+      questions = [
+        ...take(QuizMode.mixed, 10, 5),
+        ...take(QuizMode.compare, 10, 3),
+        ...take(QuizMode.counting, 10, 4),
+      ];
+    } else {
+      questions = [
+        ...take(QuizMode.mixed, 10, 4),
+        ...take(QuizMode.compare, 10, 2),
+        ...take(QuizMode.fillBlank, 10, 2),
+        ...take(QuizMode.makeTen, 10, 2),
+        ...take(QuizMode.clock, 12, 2),
+      ];
+    }
+    return questions..shuffle(random ?? Random());
   }
 }

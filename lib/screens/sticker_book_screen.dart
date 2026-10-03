@@ -949,43 +949,15 @@ class _RewardBoardCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              const Spacer(),
-              // 부모가 선물 약속을 적는 버튼 (부모 확인 뒤)
-              GestureDetector(
-                onTap: onEditPromise,
-                child: Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF3C4),
-                    borderRadius: BorderRadius.circular(999),
-                    border:
-                        Border.all(color: const Color(0xFFFFD34D), width: 1.5),
-                  ),
-                  child: const Text(
-                    '🎁 선물 정하기 (부모님)',
-                    style: TextStyle(
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFB05E00),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
           const SizedBox(height: 6),
           Text(
             promise != null
                 ? '20칸을 다 채우면 🎁 $promise!'
                 : '20칸을 다 채우면 깜짝 선물이 와요!',
-            style: TextStyle(
+            style: const TextStyle(
                 fontSize: 13.5,
                 fontWeight: FontWeight.bold,
-                color: Colors.brown.shade400),
+                color: AppColors.brown),
           ),
           const SizedBox(height: 12),
           GridView.count(
@@ -1036,6 +1008,17 @@ class _RewardBoardCard extends StatelessWidget {
                   ),
                 ),
             ],
+          ),
+          // 부모가 선물 약속을 적는 곳 (부모 확인 뒤) — 아이 판 아래 조용한 링크
+          Align(
+            alignment: Alignment.centerRight,
+            child: TextButton(
+              onPressed: onEditPromise,
+              child: const Text(
+                '👨‍👩‍👧 선물 약속 정하기',
+                style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
+              ),
+            ),
           ),
         ],
       ),

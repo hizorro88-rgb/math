@@ -93,7 +93,7 @@ void main() {
     await scrollAndTap(tester, find.text('1').first);
     expect(find.bySemanticsLabel(RegExp('수 세기 첫걸음 · 1단계')), findsOneWidget);
     expect(find.text('몇 개일까요?'), findsOneWidget); // 4살 첫 단계는 수 세기
-    expect(find.text('🪙 0'), findsOneWidget);
+    expect(find.text('🪙 +0'), findsOneWidget); // 이번 판에 번 코인
   });
 
   testWidgets('잠긴 단계 원을 누르면 그림+말로 반짝이는 원부터 하라고 알려 준다', (tester) async {
@@ -416,7 +416,7 @@ void main() {
     await scrollAndTap(tester, find.text('맞춤 복습'));
 
     // 뺄셈 연습 한 판이 바로 열린다.
-    expect(find.text('🪙 0'), findsOneWidget);
+    expect(find.text('🪙 +0'), findsOneWidget);
     expect(find.text('맞춤 복습'), findsNothing);
   });
 
@@ -532,7 +532,7 @@ void main() {
 
     expect(find.text('👑'), findsOneWidget);
     // 문제 진행 바와 점수 표시가 있는 퀴즈 화면이다.
-    expect(find.text('🪙 0'), findsOneWidget);
+    expect(find.text('🪙 +0'), findsOneWidget);
 
     // 시작 전이면 X로 바로 나온다.
     await tester.tap(find.byIcon(Icons.close_rounded));
@@ -701,6 +701,18 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('subject-6')));
     await tester.pumpAndSettle();
     expect(find.text('부모님 확인'), findsOneWidget);
+  });
+
+  testWidgets('어른 과정을 보다 껐어도 다음에 켜면 아이 과목으로 돌아온다', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'subject_v2': 6, // 영어회화(어른)
+      'subject_kid_v1': 1, // 마지막 아이 과목: 한글
+    });
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getInt('subject_v2'), 1);
+    expect(find.text('한글 첫걸음'), findsOneWidget);
   });
 
   testWidgets('놀이판의 오늘의 미션을 누르면 미션 시트가 열린다', (tester) async {

@@ -24,7 +24,7 @@ class StageLevel {
 ///
 /// - 정보 카드(흰 바탕 + 테두리, 반경 22). 진행 막대·"0/10" 글자는 없다 —
 ///   원이 차는 것 자체가 진행이다.
-/// - 아직 못 여는 묶음은 원 10개 대신 접힌 한 줄(🔒 그림). 누르면 "앞 묶음부터!"
+/// - 아직 못 여는 묶음은 원 10개 대신 접힌 한 줄(빈 동그라미). 누르면 "앞 묶음부터!"
 class StageUnitCard extends StatelessWidget {
   const StageUnitCard({
     super.key,
@@ -74,7 +74,9 @@ class StageUnitCard extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(child: Text(title, style: displayStyle(fontSize: 18))),
         if (_locked)
-          const Icon(Icons.lock_rounded, color: AppColors.inkMuted, size: 22),
+          // 🔒(자물쇠)는 '어른이 여는 것'에만 — 진행 잠금은 빈 점선 동그라미
+          const Icon(Icons.radio_button_unchecked_rounded,
+              color: AppColors.inkMuted, size: 22),
       ],
     );
 

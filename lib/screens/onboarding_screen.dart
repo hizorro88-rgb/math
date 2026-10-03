@@ -121,171 +121,186 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   // ① 어른 화면 한 장
   Widget _buildGrownUp() {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 28),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          const Center(child: QuokkaFace(size: 72)),
-          const SizedBox(height: 6),
-          Text(
-            '보호자님, 30초면 돼요',
-            textAlign: TextAlign.center,
-            style: displayStyle(fontSize: 22),
-          ),
-          const SizedBox(height: 4),
-          const Text(
-            '정한 뒤에 아이에게 폰을 건네주세요',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
-          ),
-          _label('아이 이름 (안 써도 돼요)'),
-          TextField(
-            controller: _nameController,
-            maxLength: 8,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-            decoration: InputDecoration(
-              hintText: '예: 하늘',
-              hintStyle: const TextStyle(
-                color: AppColors.inkMuted,
-                fontWeight: FontWeight.normal,
-              ),
-              counterText: '',
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(18),
-                borderSide: const BorderSide(color: AppColors.outline),
-              ),
-            ),
-          ),
-          _label('얼굴'),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              for (final avatar in profileAvatars)
-                GestureDetector(
-                  onTap: () => setState(() => _emoji = avatar),
-                  child: Container(
-                    width: 64,
-                    height: 64,
-                    decoration: BoxDecoration(
-                      color: _emoji == avatar
-                          ? AppColors.selectedFill
-                          : Colors.white,
-                      shape: BoxShape.circle,
-                      border: Border.all(
-                        color: _emoji == avatar
-                            ? AppColors.green
-                            : AppColors.outline,
-                        width: 3,
-                      ),
-                    ),
-                    child: Center(
-                      child: Text(avatar, style: const TextStyle(fontSize: 30)),
-                    ),
-                  ),
+    // 건네주기 버튼은 아래에 고정 — 첫 화면에서 바로 보인다
+    return Column(
+      children: [
+        Expanded(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.fromLTRB(24, 20, 24, 16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const Center(child: QuokkaFace(size: 72)),
+                const SizedBox(height: 6),
+                Text(
+                  '보호자님, 30초면 돼요',
+                  textAlign: TextAlign.center,
+                  style: displayStyle(fontSize: 22),
                 ),
-            ],
-          ),
-          _label('나이 (맞는 단계를 추천해요)'),
-          Wrap(
-            alignment: WrapAlignment.center,
-            spacing: 10,
-            runSpacing: 10,
-            children: [
-              for (var i = 0; i < Curriculum.categories.length; i++)
-                GestureDetector(
-                  onTap: () => setState(() => _ageIndex = i),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    decoration: BoxDecoration(
-                      color: _ageIndex == i
-                          ? AppColors.selectedFill
-                          : Colors.white,
+                const SizedBox(height: 4),
+                const Text(
+                  '정한 뒤에 아이에게 폰을 건네주세요',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
+                ),
+                _label('아이 이름 (안 써도 돼요)'),
+                TextField(
+                  controller: _nameController,
+                  maxLength: 8,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                      fontSize: 20, fontWeight: FontWeight.bold),
+                  decoration: InputDecoration(
+                    hintText: '예: 하늘',
+                    hintStyle: const TextStyle(
+                      color: AppColors.inkMuted,
+                      fontWeight: FontWeight.normal,
+                    ),
+                    counterText: '',
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(18),
-                      border: Border.all(
-                        color: _ageIndex == i
-                            ? AppColors.green
-                            : AppColors.outline,
-                        width: 3,
-                      ),
-                    ),
-                    child: Text(
-                      '${Curriculum.categories[i].emoji} '
-                      '${Curriculum.categories[i].title}',
-                      style: const TextStyle(
-                          fontSize: 17, fontWeight: FontWeight.bold),
+                      borderSide: const BorderSide(color: AppColors.outline),
                     ),
                   ),
                 ),
-            ],
-          ),
-          _label('소리'),
-          Row(
-            children: [
-              Expanded(
-                child: BouncyButton(
-                  key: const ValueKey('sound-test'),
-                  color: AppColors.listen,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  onTap: () =>
-                      Speech.speak('안녕? 나는 쿼카야. 우리 같이 놀면서 공부하자!', force: true),
-                  child: const Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.volume_up_rounded, color: Colors.white),
-                      SizedBox(width: 6),
-                      Text(
-                        '소리 확인',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                _label('얼굴'),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    for (final avatar in profileAvatars)
+                      GestureDetector(
+                        onTap: () => setState(() => _emoji = avatar),
+                        child: Container(
+                          width: 64,
+                          height: 64,
+                          decoration: BoxDecoration(
+                            color: _emoji == avatar
+                                ? AppColors.selectedFill
+                                : Colors.white,
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: _emoji == avatar
+                                  ? AppColors.green
+                                  : AppColors.outline,
+                              width: 3,
+                            ),
+                          ),
+                          child: Center(
+                            child: Text(avatar,
+                                style: const TextStyle(fontSize: 30)),
+                          ),
                         ),
                       ),
-                    ],
-                  ),
+                  ],
                 ),
-              ),
-              const SizedBox(width: 12),
-              const Text('효과음', style: TextStyle(fontWeight: FontWeight.bold)),
-              Switch(
-                key: const ValueKey('effects-switch'),
-                value: _effectsOn,
-                activeTrackColor: AppColors.green,
-                onChanged: (v) => setState(() => _effectsOn = v),
-              ),
-            ],
-          ),
-          const SizedBox(height: 28),
-          BouncyButton(
-            key: const ValueKey('handoff-go'),
-            color: AppColors.green,
-            padding: const EdgeInsets.symmetric(vertical: 16),
-            onTap: _handOff,
-            child: const Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  '아이에게 건네주기',
-                  style: TextStyle(
-                    fontSize: 21,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+                _label('나이 (맞는 단계를 추천해요)'),
+                Wrap(
+                  alignment: WrapAlignment.center,
+                  spacing: 10,
+                  runSpacing: 10,
+                  children: [
+                    for (var i = 0; i < Curriculum.categories.length; i++)
+                      GestureDetector(
+                        onTap: () => setState(() => _ageIndex = i),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          decoration: BoxDecoration(
+                            color: _ageIndex == i
+                                ? AppColors.selectedFill
+                                : Colors.white,
+                            borderRadius: BorderRadius.circular(18),
+                            border: Border.all(
+                              color: _ageIndex == i
+                                  ? AppColors.green
+                                  : AppColors.outline,
+                              width: 3,
+                            ),
+                          ),
+                          child: Text(
+                            '${Curriculum.categories[i].emoji} '
+                            '${Curriculum.categories[i].title}',
+                            style: const TextStyle(
+                                fontSize: 17, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
-                SizedBox(width: 6),
-                Icon(Icons.play_arrow_rounded, color: Colors.white, size: 30),
+                _label('소리'),
+                Row(
+                  children: [
+                    Expanded(
+                      child: BouncyButton(
+                        key: const ValueKey('sound-test'),
+                        color: AppColors.listen,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                        onTap: () => Speech.speak('안녕? 나는 쿼카야. 우리 같이 놀면서 공부하자!',
+                            force: true),
+                        child: const Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.volume_up_rounded, color: Colors.white),
+                            SizedBox(width: 6),
+                            Text(
+                              '소리 확인',
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    const Text('효과음',
+                        style: TextStyle(fontWeight: FontWeight.bold)),
+                    Switch(
+                      key: const ValueKey('effects-switch'),
+                      value: _effectsOn,
+                      activeTrackColor: AppColors.green,
+                      onChanged: (v) => setState(() => _effectsOn = v),
+                    ),
+                  ],
+                ),
               ],
             ),
           ),
-        ],
-      ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 4, 24, 16),
+          child: SizedBox(
+            width: double.infinity,
+            child: BouncyButton(
+              key: const ValueKey('handoff-go'),
+              color: AppColors.green,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              onTap: _handOff,
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Text(
+                    '아이에게 건네주기',
+                    style: TextStyle(
+                      fontSize: 21,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
+                    ),
+                  ),
+                  SizedBox(width: 6),
+                  Icon(Icons.play_arrow_rounded, color: Colors.white, size: 30),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

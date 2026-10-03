@@ -740,8 +740,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const SizedBox(height: 14),
           const Text(
             ''
-            '이 앱은 서버 없이 모든 기록을 폰 안에만 저장하고,\n'
-            '아이의 개인정보를 수집하지 않아요.',
+            '기록은 이 폰에 저장돼요. 클라우드에 로그인하면\n'
+            '진도만 계정에 저장하고, 아이의 개인정보는 수집하지 않아요.',
             textAlign: TextAlign.center,
             style: TextStyle(
                 fontSize: 12.5, color: AppColors.inkSoft, height: 1.6),

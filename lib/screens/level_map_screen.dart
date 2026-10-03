@@ -145,13 +145,14 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
   ];
   static const _subjectKey = 'subject_v2';
   static const _subjectKeyOld = 'subject_korean_v1'; // 예전 한글/수학 토글
+  static const _kidSubjectKey = 'subject_kid_v1'; // 마지막 아이 과목
 
   @override
   void initState() {
     super.initState();
     _dataFuture = _load();
     _dataFuture.then(_maybeEvolve);
-    final subjectLoaded = _loadSubject();
+    final subjectLoaded = _loadSubject(fresh: true);
     if (widget.firstRun) {
       _nudgeDrink = true;
       Future.wait([_dataFuture, subjectLoaded]).then((r) async {
@@ -171,11 +172,18 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
   /// 첫 판 뒤 홈: 물 주기를 반짝이게 (한 번 주면 꺼진다)
   bool _nudgeDrink = false;
 
-  Future<void> _loadSubject() async {
+  /// [fresh]: 앱을 켰거나 프로필을 바꿨을 때 — 지난번에 어른 과정(영어회화)을
+  /// 보다 껐어도 아이가 여는 홈은 아이 과목으로 돌아온다 (▶가 어른 과정을 열지 않게).
+  Future<void> _loadSubject({bool fresh = false}) async {
     final prefs = await SharedPreferences.getInstance();
     var subject = prefs.getInt(Profiles.scoped(_subjectKey));
     subject ??=
         (prefs.getBool(Profiles.scoped(_subjectKeyOld)) ?? false) ? 1 : 0;
+    if (subject >= _subjects.length) subject = 0;
+    if (fresh && _subjects[subject].$3) {
+      subject = prefs.getInt(Profiles.scoped(_kidSubjectKey)) ?? 0;
+      await prefs.setInt(Profiles.scoped(_subjectKey), subject);
+    }
     if (mounted && subject != _subject) setState(() => _subject = subject!);
   }
 
@@ -183,6 +191,10 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     setState(() => _subject = subject);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setInt(Profiles.scoped(_subjectKey), subject);
+    // 마지막으로 고른 아이 과목 (어른 과정에서 돌아올 자리)
+    if (!_subjects[subject].$3) {
+      await prefs.setInt(Profiles.scoped(_kidSubjectKey), subject);
+    }
   }
 
   /// 홈에서 바로 밥·물 주기. 못 주면 이유를 알려 준다.
@@ -394,16 +406,17 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     );
   }
 
-  Future<void> _openBoss(bool cleared) async {
+  Future<void> _openBoss(bool cleared, int? age) async {
     if (cleared) {
       showKidNotice(context, emoji: '👑', text: '이번 주 보스는 이겼어요! 다음 주에 또 만나요');
       return;
     }
     await Navigator.of(context).push(
       MaterialPageRoute(
-        builder: (_) => const QuizScreen(
-          config: QuizConfig(mode: QuizMode.mixed, maxNumber: 10),
+        builder: (_) => QuizScreen(
+          config: const QuizConfig(mode: QuizMode.mixed, maxNumber: 10),
           bossMode: true,
+          bossAge: age,
         ),
       ),
     );
@@ -542,10 +555,12 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
   }
 
   Future<void> _openProfiles() async {
+    final before = Profiles.activeId;
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const ProfileScreen()),
     );
     _refresh(); // 프로필이 바뀌면 진행도·코인 등을 다시 불러온다.
+    if (Profiles.activeId != before) _loadSubject(fresh: true);
   }
 
   /// 과목 고르기 창: 아이 과목은 2열 큰 칸, 어른 과정(영어회화)은
@@ -895,8 +910,13 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                       wrongCount: data.wrongCount,
                       stickerTickets: data.stickerTickets,
                       onMissions: () => _openMissions(data),
-                      onBoss: () => _openBoss(data.bossCleared),
-                      onWrongNotes: _openWrongNotes,
+                      onBoss: () =>
+                          _openBoss(data.bossCleared, data.recommendedCategory),
+                      // 다 고쳤으면 빈 화면 대신 그림+목소리로 칭찬
+                      onWrongNotes: data.wrongCount == 0
+                          ? () => showKidNotice(context,
+                              emoji: '✅', text: '틀린 문제를 다 고쳤어! 최고!')
+                          : _openWrongNotes,
                       onShop: _openShop,
                       onStickers: _openStickerBook,
                       onBadges: _openBadges,
@@ -1821,54 +1841,36 @@ class _CategoryCard extends StatelessWidget {
                           padding: const EdgeInsets.symmetric(
                               horizontal: 8, vertical: 2),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFFFF6D8),
+                            color: AppColors.rewardSurface,
                             borderRadius: BorderRadius.circular(999),
-                            border: Border.all(
-                                color: const Color(0xFFFFD34D), width: 1.5),
+                            border:
+                                Border.all(color: AppColors.amber, width: 1.5),
                           ),
                           child: const Text(
                             '👍 추천',
                             style: TextStyle(
-                              fontSize: 11,
+                              fontSize: 12,
                               fontWeight: FontWeight.bold,
-                              color: Color(0xFFB8860B),
+                              color: AppColors.ink,
                             ),
                           ),
                         ),
                       ],
                     ],
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    desc,
-                    style:
-                        const TextStyle(fontSize: 13, color: AppColors.inkSoft),
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(5),
-                          child: LinearProgressIndicator(
-                            value: total == 0 ? 0 : cleared / total,
-                            minHeight: 8,
-                            backgroundColor: const Color(0xFFEBE3D2),
-                            color: color,
-                          ),
-                        ),
+                  // 글 설명·숫자 대신 막대 하나 (시작했을 때만) — 설명은 어른용이라 뺐다
+                  if (cleared > 0) ...[
+                    const SizedBox(height: 8),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(5),
+                      child: LinearProgressIndicator(
+                        value: total == 0 ? 0 : cleared / total,
+                        minHeight: 8,
+                        backgroundColor: AppColors.line,
+                        color: color,
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '$cleared/$total',
-                        style: const TextStyle(
-                          fontSize: 12,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.inkSoft,
-                        ),
-                      ),
-                    ],
-                  ),
+                    ),
+                  ],
                 ],
               ),
             ),
@@ -1922,9 +1924,11 @@ class _QuickStartButton extends StatelessWidget {
               Container(
                 width: 52,
                 height: 52,
-                decoration: const BoxDecoration(
-                  color: Colors.white,
+                // 단원색 원 — ➖ 같은 회색 기호도 또렷하게 보이게
+                decoration: BoxDecoration(
+                  color: Color.lerp(next.color, Colors.white, 0.55),
                   shape: BoxShape.circle,
+                  border: Border.all(color: Colors.white, width: 3),
                 ),
                 alignment: Alignment.center,
                 child: Text(next.emoji, style: const TextStyle(fontSize: 28)),

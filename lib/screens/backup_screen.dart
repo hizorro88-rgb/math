@@ -12,7 +12,7 @@ import 'level_map_screen.dart';
 import '../theme.dart';
 
 /// 진도 백업·복원 화면 (부모 게이트 뒤의 리포트에서 열림).
-/// 서버 없이 텍스트 코드 하나로 진도를 지키고, 새 폰으로 옮긴다.
+/// 텍스트 코드 하나로 진도를 지키고, 새 폰으로 옮긴다 (로그인 없이도 된다).
 class BackupScreen extends StatefulWidget {
   const BackupScreen({super.key});
 
@@ -130,7 +130,7 @@ class _BackupScreenState extends State<BackupScreen> {
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Text(
-              '이 앱은 서버 없이 모든 기록을 폰 안에만 저장해요. '
+              '기록은 이 폰에 저장돼요 (클라우드에 로그인하면 계정에도 저장돼요). '
               '백업 코드를 만들어 메모장이나 메신저(나에게 보내기)에 보관해 두면, '
               '앱을 지웠거나 폰을 바꿔도 코드를 붙여넣어 진도를 그대로 되살릴 수 있어요.',
               style: TextStyle(fontSize: 13.5, height: 1.5),

@@ -182,9 +182,6 @@ class _LockedBubbleState extends State<_LockedBubble>
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  // 글을 몰라도 "잠김"이 읽히도록 작은 자물쇠를 함께 보여준다.
-                  const Icon(Icons.lock_rounded,
-                      size: 13, color: Color(0xFFB3A995)),
                   Text(
                     '${widget.number}',
                     style: displayStyle(

@@ -32,6 +32,7 @@ class QuizScreen extends StatefulWidget {
     required this.config,
     this.level,
     this.bossMode = false,
+    this.bossAge,
   });
 
   final QuizConfig config;
@@ -41,6 +42,9 @@ class QuizScreen extends StatefulWidget {
 
   /// 주간 보스전: 여러 유형을 섞은 12문제, 통과하면 보너스 코인
   final bool bossMode;
+
+  /// 보스전 난이도를 맞출 나이(수학 카테고리 인덱스)
+  final int? bossAge;
 
   @override
   State<QuizScreen> createState() => _QuizScreenState();
@@ -112,7 +116,7 @@ class _QuizScreenState extends State<QuizScreen> {
   void initState() {
     super.initState();
     final questions = widget.bossMode
-        ? BossStore.buildQuestions()
+        ? BossStore.buildQuestions(age: widget.bossAge)
         : QuestionGenerator().generate(widget.config);
     _baseCount = questions.length;
     _dots = QuizDotTracker(_baseCount);

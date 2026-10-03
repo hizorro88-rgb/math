@@ -2,6 +2,7 @@ import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preschool_math/models/boss.dart';
+import 'package:preschool_math/models/question.dart';
 import 'package:preschool_math/models/profile.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -46,5 +47,14 @@ void main() {
         expect(q.choices.toSet(), hasLength(4));
       }
     });
+  });
+
+  test('4·5살 보스전은 5까지 세기·비교·덧셈만 (시계·10 만들기 없음)', () {
+    final qs = BossStore.buildQuestions(random: Random(3), age: 0);
+    expect(qs, hasLength(BossStore.questionCount));
+    expect(qs.map((q) => q.op).toSet().length, greaterThan(1)); // 여러 유형
+    for (final q in qs) {
+      expect(q.op, isNot(QuestionOp.clock));
+    }
   });
 }

@@ -300,8 +300,9 @@ class QuizTopBar extends StatelessWidget {
               _Chip(text: '✨$combo', color: const Color(0xFFFFE8D2)),
               const SizedBox(width: 6),
             ],
+            // 이번 판에 번 코인 (+N) — 홈·결과의 '가진 코인'과 헷갈리지 않게
             if (coins != null)
-              _Chip(text: '🪙 $coins', color: AppColors.rewardSurface),
+              _Chip(text: '🪙 +$coins', color: AppColors.rewardSurface),
           ],
         ),
       ),
@@ -1028,7 +1029,7 @@ class QuizFeedbackPanel extends StatelessWidget {
 
 /// 퀴즈 화면 틀: 문제는 위, 답은 엄지가 닿는 아래쪽.
 /// 화면이 작으면 스크롤되고, 크면 답이 바닥에 붙는다.
-class QuizScaffold extends StatelessWidget {
+class QuizScaffold extends StatefulWidget {
   const QuizScaffold({
     super.key,
     required this.topBar,
@@ -1051,6 +1052,36 @@ class QuizScaffold extends StatelessWidget {
   final Key? sparkleKey;
 
   @override
+  State<QuizScaffold> createState() => _QuizScaffoldState();
+}
+
+class _QuizScaffoldState extends State<QuizScaffold> {
+  final _scroll = ScrollController();
+
+  @override
+  void didUpdateWidget(covariant QuizScaffold old) {
+    super.didUpdateWidget(old);
+    // 정답/오답 판이 올라오면 화면이 줄어든다 — 보기(정답 칸)가 가려지지 않게
+    // 맨 아래(보기 쪽)로 굴린다.
+    if (old.feedback == null && widget.feedback != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!_scroll.hasClients) return;
+        _scroll.animateTo(
+          _scroll.position.maxScrollExtent,
+          duration: const Duration(milliseconds: 250),
+          curve: Curves.easeOut,
+        );
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
@@ -1058,10 +1089,11 @@ class QuizScaffold extends StatelessWidget {
           children: [
             Column(
               children: [
-                topBar,
+                widget.topBar,
                 Expanded(
                   child: LayoutBuilder(
                     builder: (context, constraints) => SingleChildScrollView(
+                      controller: _scroll,
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: ConstrainedBox(
                         constraints:
@@ -1070,15 +1102,15 @@ class QuizScaffold extends StatelessWidget {
                           child: Column(
                             children: [
                               const SizedBox(height: 12),
-                              card,
+                              widget.card,
                               const Spacer(),
-                              if (cheer != null) ...[
+                              if (widget.cheer != null) ...[
                                 const SizedBox(height: 12),
-                                cheer!,
+                                widget.cheer!,
                               ],
                               const SizedBox(height: 16),
                               const Spacer(),
-                              answers,
+                              widget.answers,
                               const SizedBox(height: 16),
                             ],
                           ),
@@ -1087,12 +1119,12 @@ class QuizScaffold extends StatelessWidget {
                     ),
                   ),
                 ),
-                if (feedback != null) feedback!,
+                if (widget.feedback != null) widget.feedback!,
               ],
             ),
-            if (sparkle)
+            if (widget.sparkle)
               Positioned.fill(
-                child: IgnorePointer(child: SparkleBurst(key: sparkleKey)),
+                child: IgnorePointer(child: SparkleBurst(key: widget.sparkleKey)),
               ),
           ],
         ),
