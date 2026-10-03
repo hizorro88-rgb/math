@@ -57,8 +57,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   }
 
   Future<void> _finish({required bool soundOn}) async {
+    // 읽어주기는 글을 모르는 아이가 혼자 풀 수 있게 하는 기능이라 여기서 끄지 않는다.
+    // '효과음 없이'는 딩동 소리만 끈다 (읽어주기는 설정 > 부모님 확인 뒤에 끌 수 있다).
     await Sounds.setEnabled(soundOn);
-    await Speech.setEnabled(soundOn);
+    await Speech.setEnabled(true);
     final name = _nameController.text.trim();
     await Profiles.update(
       Profiles.activeId,
@@ -346,7 +348,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
           padding: const EdgeInsets.symmetric(vertical: 14),
           onTap: () => _finish(soundOn: false),
           child: Text(
-            '소리 없이 할래요',
+            '효과음 없이 할래요',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 17,

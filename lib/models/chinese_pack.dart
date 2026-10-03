@@ -104,7 +104,7 @@ final LanguagePack chinesePack = LanguagePack(
       title: '중국어 소리',
       emoji: '🐼',
       desc: '소리를 듣고 그림·숫자를 찾아요',
-      color: const Color(0xFFE23B3B),
+      color: const Color(0xFF5B6CF0),
       units: [
         LangUnit(title: '낱말 소리 찾기', emoji: '🔊', typeIndex: 0),
         LangUnit(title: '숫자 소리 찾기', emoji: '👂', typeIndex: 1),

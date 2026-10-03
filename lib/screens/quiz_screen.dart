@@ -105,7 +105,7 @@ class _QuizScreenState extends State<QuizScreen> {
     '역시 최고예요!',
   ];
   static const _wrongSpeeches = [
-    '아쉬워요. 정답은 X이에요.',
+    '괜찮아요. 정답은 X이에요.',
     '괜찮아요! 정답은 X이에요.',
     '거의 다 왔어요! 정답은 X이에요.',
     '다음엔 맞힐 거예요. 정답은 X이에요.',
@@ -137,7 +137,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
   bool get _answered => _selectedChoice != null;
   bool get _isCorrect => _selectedChoice == _question.answer;
-  Color get _themeColor => widget.level?.unit.color ?? const Color(0xFF3DA35D);
+  Color get _themeColor => widget.level?.unit.color ?? AppColors.green;
 
   @override
   void initState() {
@@ -163,7 +163,8 @@ class _QuizScreenState extends State<QuizScreen> {
     _speakQuestion();
   }
 
-  void _speakQuestion() => Speech.speak(_question.speechText);
+  void _speakQuestion({bool force = false}) =>
+      Speech.speak(_question.speechText, force: force);
 
   /// 세로셈: 현재 문제에 맞는 자리 칸을 준비한다 (정답 자리수만큼).
   void _ensureSlots() {
@@ -676,7 +677,7 @@ class _QuizScreenState extends State<QuizScreen> {
             top: -8,
             right: -8,
             child: GestureDetector(
-              onTap: _speakQuestion,
+              onTap: () => _speakQuestion(force: true),
               child: Container(
                 width: 44,
                 height: 44,
@@ -800,13 +801,13 @@ class _QuizScreenState extends State<QuizScreen> {
     if (!_answered) return const SizedBox.shrink();
 
     final color =
-        _isCorrect ? const Color(0xFFD7FFB8) : const Color(0xFFFFDFE0);
+        _isCorrect ? AppColors.selectedFill : AppColors.wrongSurface;
     final textColor =
-        _isCorrect ? const Color(0xFF2E7D46) : const Color(0xFFEA2B2B);
+        _isCorrect ? AppColors.greenPressed : AppColors.wrongInk;
     final message =
         _isCorrect
         ? _correctPanels[_currentIndex % _correctPanels.length]
-        : '아쉬워요! 정답은 ${_question.answerLabel}';
+        : '괜찮아요! 정답은 ${_question.answerLabel}';
 
     final isLast = _currentIndex + 1 >= _entries.length;
 
@@ -860,9 +861,7 @@ class _QuizScreenState extends State<QuizScreen> {
             ),
             const SizedBox(height: 14),
             BouncyButton(
-              color: _isCorrect
-                  ? const Color(0xFF3DA35D)
-                  : const Color(0xFFEA2B2B),
+              color: AppColors.green,
               onTap: _next,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -891,7 +890,7 @@ class _QuizScreenState extends State<QuizScreen> {
               // 2초 동안 줄어드는 막대: 다 줄면 자동으로 다음 문제로
               AutoNextBar(
                 key: ValueKey('auto-next-$_currentIndex'),
-                color: const Color(0xFF3DA35D),
+                color: AppColors.green,
                 onDone: _next,
               ),
             ],
@@ -960,7 +959,7 @@ class _VerticalProblem extends StatelessWidget {
       final digit = slots[place];
       final isActive = !answered && place == activePlace;
       final borderColor = answered
-          ? (correct ? const Color(0xFF3DA35D) : const Color(0xFFEA2B2B))
+          ? (correct ? AppColors.correct : AppColors.wrong)
           : isActive
               ? themeColor
               : Colors.grey.shade300;
@@ -970,7 +969,7 @@ class _VerticalProblem extends StatelessWidget {
         margin: const EdgeInsets.symmetric(horizontal: 2),
         decoration: BoxDecoration(
           color: answered
-              ? (correct ? const Color(0xFFD7FFB8) : const Color(0xFFFFDFE0))
+              ? (correct ? AppColors.selectedFill : AppColors.wrongSurface)
               : isActive
                   ? themeColor.withValues(alpha: 0.08)
                   : Colors.white,
@@ -1044,19 +1043,19 @@ class _ChoiceButton extends StatelessWidget {
           AppColors.ink,
         ),
       _ChoiceState.correct => (
-          const Color(0xFFD7FFB8),
-          const Color(0xFF3DA35D),
-          const Color(0xFF2E7D46),
+          AppColors.selectedFill,
+          AppColors.green,
+          AppColors.greenPressed,
         ),
       _ChoiceState.wrong => (
-          const Color(0xFFFFDFE0),
-          const Color(0xFFEA2B2B),
-          const Color(0xFFEA2B2B),
+          AppColors.wrongSurface,
+          AppColors.wrong,
+          AppColors.wrongInk,
         ),
       _ChoiceState.disabled => (
-          Colors.grey.shade100,
-          Colors.grey.shade300,
-          Colors.grey.shade400,
+          AppColors.cream,
+          AppColors.line,
+          AppColors.inkMuted,
         ),
     };
 

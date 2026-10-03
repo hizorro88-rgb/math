@@ -21,6 +21,7 @@ import '../theme.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/home_pet_card.dart';
 import '../widgets/parent_gate.dart';
+import '../widgets/pulse.dart';
 import '../models/boss.dart';
 import '../models/quiz_config.dart';
 import 'badge_screen.dart';
@@ -228,6 +229,9 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     if (PremiumStore.isCategoryFree(categoryIndex)) return true;
     if (await PremiumStore.hasPass()) return true;
     if (!mounted) return false;
+    // 아이가 먼저 보는 건 부모 문제(곱셈)가 아니라 그림 한 장 + 목소리.
+    final grownUp = await _showLockedSheet();
+    if (grownUp != true || !mounted) return false;
     final ok = await checkParentGate(context);
     if (!ok || !mounted) return false;
     await Navigator.of(context).push(
@@ -235,6 +239,63 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     );
     _refresh();
     return false;
+  }
+
+  /// 잠긴 카드를 아이가 눌렀을 때: 🔒 그림과 음성으로 "어른이랑 열어요".
+  /// 큰 초록 버튼은 아이가 계속 놀 수 있는 쪽(닫기), 어른 버튼은 작게.
+  /// true면 어른이 열겠다고 고른 것.
+  Future<bool?> _showLockedSheet() {
+    Speech.speak('여기는 어른이랑 같이 열어요');
+    return showModalBottomSheet<bool>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const Text('🔒', textAlign: TextAlign.center,
+                  style: TextStyle(fontSize: 64)),
+              const SizedBox(height: 6),
+              Text('어른이랑 같이 열어요',
+                  textAlign: TextAlign.center,
+                  style: displayStyle(fontSize: 24)),
+              const SizedBox(height: 20),
+              BouncyButton(
+                key: const ValueKey('locked-back'),
+                color: AppColors.green,
+                onTap: () => Navigator.of(context).pop(false),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.play_arrow_rounded,
+                        color: Colors.white, size: 30),
+                    SizedBox(width: 4),
+                    Text('열린 곳에서 놀기',
+                        style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.white)),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 10),
+              TextButton(
+                key: const ValueKey('locked-grownup'),
+                onPressed: () => Navigator.of(context).pop(true),
+                child: const Text('👨‍👩‍👧 어른이 열기',
+                    style: TextStyle(fontSize: 15, color: AppColors.inkSoft)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Future<void> _openBoss(bool cleared) async {
@@ -500,7 +561,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                   data.stars[l.number - 1] >= 1)
               .length,
           total: category.totalLevels,
-          recommended: data.recommendedCategory == category.index,
+          // 잠긴 카드를 추천하면 아이가 부모 확인 창에 막힌다 — 놀 수 있는 곳만.
+          recommended: _mathStartCategory(data) == category.index,
           locked: !data.hasPass && category.index > 0,
           onTap: () => _openCategory(category),
         );
@@ -537,6 +599,103 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
         const SizedBox(height: 12),
       ],
     ];
+  }
+
+  /// 수학에서 아이가 시작할 카테고리: 고른 나이가 열려 있으면 그 나이,
+  /// 이용권이 없어 잠겨 있으면 무료 카테고리.
+  int _mathStartCategory(_MapData data) {
+    final age = data.recommendedCategory ?? 0;
+    return data.hasPass || PremiumStore.isCategoryFree(age) ? age : 0;
+  }
+
+  /// 홈의 "▶ 바로 시작": 지금 과목에서 다음에 풀 단계 하나.
+  /// 안 푼 단계 → 별이 덜 찬 단계 순으로 찾고, 잠긴 카테고리는 건너뛴다.
+  _NextUp? _nextUp(_MapData data) {
+    bool playable(int category) =>
+        data.hasPass || PremiumStore.isCategoryFree(category);
+
+    int? pick(List<int> categories, List<int> stars,
+        bool Function(int number) unlocked, int startCategory) {
+      for (final want in [0, 1, 2]) {
+        for (final from in [startCategory, 0]) {
+          for (var i = 0; i < categories.length; i++) {
+            if (categories[i] < from || !playable(categories[i])) continue;
+            if (stars[i] == want && unlocked(i + 1)) return i;
+          }
+        }
+      }
+      return null;
+    }
+
+    Future<void> go(Widget screen) async {
+      await Navigator.of(context)
+          .push(MaterialPageRoute(builder: (_) => screen));
+      _refresh();
+    }
+
+    switch (_subject) {
+      case 0:
+        final levels = Curriculum.levels;
+        final i = pick(
+            [for (final l in levels) l.unit.category.index],
+            data.stars,
+            (n) => ProgressStore.isUnlocked(data.stars, n),
+            _mathStartCategory(data));
+        if (i == null) return null;
+        final l = levels[i];
+        return _NextUp(l.unit.emoji, l.unit.title, l.unit.category.color,
+            () => go(QuizScreen(config: l.config, level: l)));
+      case 1:
+        final levels = KoreanCurriculum.levels;
+        final i = pick(
+            [for (final l in levels) l.unit.category.index],
+            data.krStars,
+            (n) => KoreanProgressStore.isUnlocked(data.krStars, n),
+            0);
+        if (i == null) return null;
+        final l = levels[i];
+        return _NextUp(
+            l.unit.emoji,
+            l.unit.title,
+            l.unit.category.color,
+            () => go(KoreanQuizScreen(
+                type: l.unit.type, stage: l.stage, level: l)));
+      case 2:
+        final levels = EnglishCurriculum.levels;
+        final i = pick(
+            [for (final l in levels) l.unit.category.index],
+            data.enStars,
+            (n) => EnglishProgressStore.isUnlocked(data.enStars, n),
+            0);
+        if (i == null) return null;
+        final l = levels[i];
+        return _NextUp(
+            l.unit.emoji,
+            l.unit.title,
+            l.unit.category.color,
+            () => go(EnglishQuizScreen(
+                type: l.unit.type, stage: l.stage, level: l)));
+      default:
+        final pack = languagePacks[_subject - 3];
+        final stars = data.langStars[_subject - 3];
+        final levels = pack.levels;
+        final i = pick(
+            [for (final l in levels) l.unit.category.index],
+            stars,
+            (n) => LangProgressStore.isUnlocked(pack, stars, n),
+            0);
+        if (i == null) return null;
+        final l = levels[i];
+        return _NextUp(
+            l.unit.emoji,
+            l.unit.title,
+            l.unit.category.color,
+            () => go(LanguageQuizScreen(
+                pack: pack,
+                typeIndex: l.unit.typeIndex,
+                stage: l.stage,
+                level: l)));
+    }
   }
 
   /// 오늘 활동에 따라 친구의 인사말이 달라진다.
@@ -592,7 +751,6 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 onPetCare: _carePet,
                 pet: data.pet,
                 onSettingsTap: _openSettings,
-                onSoundChanged: () => setState(() {}),
                 subjectEmojis: [for (final s in _subjects) s.$1],
                 subjectLabels: [for (final s in _subjects) s.$2],
                 subject: _subject,
@@ -602,6 +760,11 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 padding: const EdgeInsets.all(16),
                 child: Column(
                   children: [
+                    // ── 0. 바로 시작: 글을 못 읽어도 ▶ 하나면 다음 판이 열린다 ──
+                    if (_nextUp(data) case final next?) ...[
+                      _QuickStartButton(next: next),
+                      const SizedBox(height: 18),
+                    ],
                     // ── 1. 배우기 (과목은 상단 헤더의 이모지 버튼으로 바꾼다) ──
                     const _SectionTitle('📚 배우기'),
                     // 고른 과목의 카테고리를 골라 들어간다.
@@ -911,7 +1074,6 @@ class _Header extends StatelessWidget {
     required this.onPetCare,
     required this.pet,
     required this.onSettingsTap,
-    required this.onSoundChanged,
     required this.subjectEmojis,
     required this.subjectLabels,
     required this.subject,
@@ -936,7 +1098,6 @@ class _Header extends StatelessWidget {
   /// 지금 친구 상태
   final PetState pet;
   final VoidCallback onSettingsTap;
-  final VoidCallback onSoundChanged;
 
   /// 현재 과목 표시용 (이모지·이름). 칩을 누르면 과목 고르기 창이 뜬다.
   final List<String> subjectEmojis;
@@ -1049,25 +1210,6 @@ class _Header extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 3),
-                        // 한 번에 전부 끄기/켜기 (효과음+읽어주기)
-                        GestureDetector(
-                          onTap: () async {
-                            final anyOn = Sounds.enabled || Speech.enabled;
-                            await Sounds.setEnabled(!anyOn);
-                            await Speech.setEnabled(!anyOn);
-                            onSoundChanged();
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.all(5),
-                            child: Icon(
-                              Sounds.enabled || Speech.enabled
-                                  ? Icons.volume_up_rounded
-                                  : Icons.volume_off_rounded,
-                              color: Colors.white,
-                              size: 24,
-                            ),
-                          ),
-                        ),
                         GestureDetector(
                           onTap: onSettingsTap,
                           child: const Padding(
@@ -1700,6 +1842,79 @@ class _CategoryCard extends StatelessWidget {
               ? Icon(Icons.lock_rounded, color: Colors.grey.shade400)
               : const Icon(Icons.chevron_right, color: Colors.grey),
         ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 홈에서 바로 열 다음 단계
+class _NextUp {
+  const _NextUp(this.emoji, this.title, this.color, this.open);
+
+  final String emoji;
+  final String title;
+  final Color color;
+  final Future<void> Function() open;
+}
+
+/// 홈의 가장 큰 초록 버튼 — 누르면 다음 판이 바로 열린다.
+/// 초록 = 앞으로. 숨쉬듯 커졌다 작아져 "여기"를 글 없이 알려준다.
+class _QuickStartButton extends StatelessWidget {
+  const _QuickStartButton({required this.next});
+
+  final _NextUp next;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: '바로 시작 ${next.title}',
+      excludeSemantics: true,
+      child: Pulse(
+        scale: 1.03,
+        child: BouncyButton(
+          key: const ValueKey('quick-start'),
+          color: AppColors.green,
+          borderRadius: 24,
+          padding: const EdgeInsets.fromLTRB(14, 12, 18, 12),
+          onTap: next.open,
+          child: Row(
+            children: [
+              Container(
+                width: 52,
+                height: 52,
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                alignment: Alignment.center,
+                child: Text(next.emoji, style: const TextStyle(fontSize: 28)),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('바로 시작',
+                        style: displayStyle(fontSize: 24, color: Colors.white)),
+                    Text(
+                      next.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white.withValues(alpha: 0.9),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.play_circle_fill_rounded,
+                  size: 48, color: Colors.white),
+            ],
+          ),
         ),
       ),
     );

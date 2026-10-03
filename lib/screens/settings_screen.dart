@@ -468,6 +468,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
               SwitchListTile(
                 value: Speech.enabled,
                 onChanged: (value) async {
+                  // 읽어주기는 글을 모르는 아이가 혼자 푸는 데 꼭 필요해서,
+                  // 끌 때만 부모 확인을 거친다 (아이가 실수로 끄지 않게).
+                  if (!value) {
+                    final ok = await checkParentGate(context);
+                    if (!ok || !mounted) return;
+                  }
                   await Speech.setEnabled(value);
                   if (value) Speech.speak('안녕하세요!');
                   setState(() {});

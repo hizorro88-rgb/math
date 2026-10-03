@@ -130,7 +130,7 @@ class Curriculum {
         title: '4살',
         emoji: '🍼',
         desc: '5까지 수 세기',
-        color: const Color(0xFF3DA35D),
+        color: const Color(0xFFD65DB1),
         units: [
           Unit(
               title: '수 세기 첫걸음',
@@ -214,7 +214,7 @@ class Curriculum {
         title: '7살',
         emoji: '🎒',
         desc: '10까지 덧셈·뺄셈 · 시계 읽기 (학교 갈 준비!)',
-        color: const Color(0xFFFF4B4B),
+        color: const Color(0xFF5B6CF0),
         units: [
           Unit(
               title: '덧셈 도전',

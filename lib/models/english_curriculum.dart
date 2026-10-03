@@ -90,7 +90,7 @@ class EnglishCurriculum {
         title: '알파벳 첫걸음',
         emoji: '🅰️',
         desc: '소리로 알파벳과 친해져요',
-        color: const Color(0xFFFF4B4B),
+        color: const Color(0xFFD65DB1),
         units: [
           EnUnit(
               title: '알파벳 소리 찾기',

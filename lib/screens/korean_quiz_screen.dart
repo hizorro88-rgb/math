@@ -14,6 +14,7 @@ import '../models/wrong_notes.dart';
 import '../services/cloud_sync.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
+import '../theme.dart';
 import '../widgets/auto_next_bar.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/listen_guard.dart';
@@ -107,7 +108,8 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
     _speakQuestion();
   }
 
-  void _speakQuestion() => Speech.speak(_question.speech);
+  void _speakQuestion({bool force = false}) =>
+      Speech.speak(_question.speech, force: force);
 
   void _ensureTiles() {
     if (_pickedIndex == _currentIndex) return;
@@ -171,7 +173,7 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
     } else {
       Sounds.wrong();
       HapticFeedback.heavyImpact().ignore();
-      Speech.speak('아쉬워요. 정답은 ${_question.answerText}예요.');
+      Speech.speak('괜찮아요. 정답은 ${_question.answerText}예요.');
     }
   }
 
@@ -433,7 +435,9 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
               const SizedBox(height: 12),
               GestureDetector(
                 // 🔊 표시(듣기 문제)는 눌러서 다시 들을 수 있다.
-                onTap: _question.display == '🔊' ? _speakQuestion : null,
+                onTap: _question.display == '🔊'
+                    ? () => _speakQuestion(force: true)
+                    : null,
                 child: FittedBox(
                   fit: BoxFit.scaleDown,
                   child: Text(
@@ -472,8 +476,8 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
                           decoration: BoxDecoration(
                             color: _answered
                                 ? (_isCorrect
-                                    ? const Color(0xFFD7FFB8)
-                                    : const Color(0xFFFFDFE0))
+                                    ? AppColors.selectedFill
+                                    : AppColors.wrongSurface)
                                 : i == _picked.length
                                     ? _themeColor.withValues(alpha: 0.08)
                                     : Colors.white,
@@ -481,8 +485,8 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
                             border: Border.all(
                               color: _answered
                                   ? (_isCorrect
-                                      ? const Color(0xFF3DA35D)
-                                      : const Color(0xFFEA2B2B))
+                                      ? AppColors.correct
+                                      : AppColors.wrong)
                                   : i == _picked.length
                                       ? _themeColor
                                       : Colors.grey.shade300,
@@ -511,7 +515,7 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
             top: -6,
             right: -6,
             child: IconButton(
-              onPressed: _speakQuestion,
+              onPressed: () => _speakQuestion(force: true),
               icon: Icon(
                 Icons.volume_up_rounded,
                 size: 30,
@@ -628,11 +632,11 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
     if (!_answered) return const SizedBox.shrink();
 
     final color =
-        _isCorrect ? const Color(0xFFD7FFB8) : const Color(0xFFFFDFE0);
+        _isCorrect ? AppColors.selectedFill : AppColors.wrongSurface;
     final textColor =
-        _isCorrect ? const Color(0xFF2E7D46) : const Color(0xFFEA2B2B);
+        _isCorrect ? AppColors.greenPressed : AppColors.wrongInk;
     final message =
-        _isCorrect ? '정답이에요! 🎉' : '아쉬워요! 정답은 ${_question.answerText}';
+        _isCorrect ? '정답이에요! 🎉' : '괜찮아요! 정답은 ${_question.answerText}';
 
     final isLast = _currentIndex + 1 >= _entries.length;
 
@@ -686,9 +690,7 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
             ),
             const SizedBox(height: 14),
             BouncyButton(
-              color: _isCorrect
-                  ? const Color(0xFF3DA35D)
-                  : const Color(0xFFEA2B2B),
+              color: AppColors.green,
               onTap: _next,
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -717,7 +719,7 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
               // 2초 동안 줄어드는 막대: 다 줄면 자동으로 다음 문제로
               AutoNextBar(
                 key: ValueKey('auto-next-$_currentIndex'),
-                color: const Color(0xFF3DA35D),
+                color: AppColors.green,
                 onDone: _next,
               ),
             ],
@@ -750,21 +752,21 @@ class _KrChoiceButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final (background, border, textColor) = switch (state) {
       _KrChoiceState.idle =>
-        (Colors.white, Colors.grey.shade300, Colors.black87),
+        (Colors.white, AppColors.outline, AppColors.ink),
       _KrChoiceState.correct => (
-          const Color(0xFFD7FFB8),
-          const Color(0xFF3DA35D),
-          const Color(0xFF2E7D46),
+          AppColors.selectedFill,
+          AppColors.green,
+          AppColors.greenPressed,
         ),
       _KrChoiceState.wrong => (
-          const Color(0xFFFFDFE0),
-          const Color(0xFFEA2B2B),
-          const Color(0xFFEA2B2B),
+          AppColors.wrongSurface,
+          AppColors.wrong,
+          AppColors.wrongInk,
         ),
       _KrChoiceState.disabled => (
-          Colors.grey.shade100,
-          Colors.grey.shade300,
-          Colors.grey.shade400,
+          AppColors.cream,
+          AppColors.line,
+          AppColors.inkMuted,
         ),
     };
 

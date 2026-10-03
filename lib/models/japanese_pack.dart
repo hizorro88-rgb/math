@@ -116,7 +116,7 @@ final LanguagePack japanesePack = LanguagePack(
       title: 'かな 첫걸음',
       emoji: '🌸',
       desc: '소리로 히라가나와 친해져요',
-      color: const Color(0xFFFF4B6E),
+      color: const Color(0xFFD65DB1),
       units: [
         LangUnit(title: 'かな 소리 찾기', emoji: '🔊', typeIndex: 0),
         LangUnit(title: 'あいうえお 순서', emoji: '🐾', typeIndex: 1),
@@ -146,7 +146,7 @@ final LanguagePack japanesePack = LanguagePack(
       title: 'カタカナ 도전',
       emoji: '🗼',
       desc: '가타카나 소리·짝·낱말을 익혀요',
-      color: const Color(0xFFE0637C),
+      color: const Color(0xFFFF9600),
       units: [
         LangUnit(title: 'カナ 소리 찾기', emoji: '🎧', typeIndex: 6),
         LangUnit(title: '히라가나·가타카나 짝', emoji: '🀄', typeIndex: 7),

@@ -202,7 +202,7 @@ void main() {
     // 1번 문제를 일부러 틀린다.
     final wrongExpr = expr();
     await answer(correct: false);
-    expect(find.textContaining('아쉬워요'), findsOneWidget);
+    expect(find.textContaining('괜찮아요'), findsOneWidget);
     await tester.tap(find.text('계속하기'));
     await tester.pumpAndSettle();
 
@@ -393,15 +393,18 @@ void main() {
     expect(find.text('맞춤 복습'), findsNothing);
   });
 
-  testWidgets('설정에서 효과음과 읽어주기를 따로 끄고, 말 빠르기를 바꾼다', (tester) async {
+  testWidgets('설정에서 읽어주기는 부모 확인 뒤에만 꺼지고, 말 빠르기를 바꾼다', (tester) async {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
     await tester.tap(find.byIcon(Icons.settings_rounded));
     await tester.pumpAndSettle();
 
+    // 글을 못 읽는 아이에게 읽어주기는 생명줄 — 아이 혼자 끄지 못한다.
     await tester.tap(find.text('문제 읽어주기'));
     await tester.pumpAndSettle();
+    expect(find.text('부모님 확인'), findsOneWidget);
+    await passParentGate(tester);
     expect(Speech.enabled, isFalse);
     expect(Sounds.enabled, isTrue); // 효과음은 그대로
 
@@ -410,19 +413,54 @@ void main() {
     expect(Speech.rate, Speech.rateSlow);
   });
 
-  testWidgets('헤더 소리 버튼은 효과음·읽어주기를 한 번에 껐다 켠다', (tester) async {
+  testWidgets('홈에는 읽어주기를 끄는 소리 버튼이 없다', (tester) async {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.volume_up_rounded));
-    await tester.pumpAndSettle();
-    expect(Sounds.enabled, isFalse);
-    expect(Speech.enabled, isFalse);
+    expect(find.byIcon(Icons.volume_up_rounded), findsNothing);
+    expect(find.byIcon(Icons.volume_off_rounded), findsNothing);
+  });
 
-    await tester.tap(find.byIcon(Icons.volume_off_rounded));
+  testWidgets('읽어주기가 꺼져 있어도 아이가 🔊를 누르면 들린다', (tester) async {
+    Speech.enabled = false;
+    final spoken = <String>[];
+    Speech.debugOnSpeak = spoken.add;
+    addTearDown(() => Speech.debugOnSpeak = null);
+    await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
-    expect(Sounds.enabled, isTrue);
-    expect(Speech.enabled, isTrue);
+
+    await tester.tap(find.byKey(const ValueKey('quick-start')));
+    await tester.pumpAndSettle();
+    expect(spoken, isEmpty); // 자동 읽기는 꺼진 그대로
+    await tester.tap(find.byIcon(Icons.volume_up_rounded).first);
+    await tester.pump();
+    expect(spoken, isNotEmpty);
+  });
+
+  testWidgets('홈의 바로 시작 버튼은 다음에 풀 단계를 바로 연다', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'level_stars_v5': ['3', '2'],
+    });
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('quick-start')));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('· 3단계'), findsOneWidget);
+  });
+
+  testWidgets('이용권이 없으면 고른 나이가 잠겨 있어도 바로 시작은 열린 곳으로 간다',
+      (tester) async {
+    SharedPreferences.setMockInitialValues({'age_category_v1': 3});
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    // 잠긴 7살 카드에는 추천 표시가 붙지 않는다.
+    expect(find.text('👍 추천'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('quick-start')));
+    await tester.pumpAndSettle();
+    expect(find.text('부모님 확인'), findsNothing);
+    expect(find.textContaining('· 1단계'), findsOneWidget);
   });
 
   testWidgets('주간 보스전에 들어가면 보스전 라벨과 문제가 보인다', (tester) async {
@@ -602,8 +640,22 @@ void main() {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
-    // 5살(두 번째 카테고리)은 잠겨 있다 → 부모 게이트가 뜬다.
+    // 5살(두 번째 카테고리)은 잠겨 있다 → 아이에게는 그림 안내가 먼저 뜬다.
     await scrollAndTap(tester, find.text('5살'));
+    expect(find.text('어른이랑 같이 열어요'), findsOneWidget);
+    expect(find.text('부모님 확인'), findsNothing);
+
+    // 큰 초록 버튼은 아이가 계속 노는 쪽 — 닫힌다.
+    await tester.tap(find.byKey(const ValueKey('locked-back')));
+    await tester.pumpAndSettle();
+    expect(find.text('어른이랑 같이 열어요'), findsNothing);
+
+    // 어른 버튼 → 부모 게이트 (같은 카드 연타 방지 시간이 지나도록 실제로 기다린다)
+    await tester.runAsync(
+        () => Future<void>.delayed(const Duration(milliseconds: 450)));
+    await scrollAndTap(tester, find.text('5살'));
+    await tester.tap(find.byKey(const ValueKey('locked-grownup')));
+    await tester.pumpAndSettle();
     expect(find.text('부모님 확인'), findsOneWidget);
 
     // 곱셈 문제를 키패드로 풀면 이용권 화면이 열린다.

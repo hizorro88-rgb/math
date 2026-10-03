@@ -34,30 +34,51 @@ class AppColors {
   /// 카드 아웃라인
   static const outline = Color(0xFFEADFCC);
 
-  /// 과목 포인트색 (앱바가 아니라 칩·카드 액센트에만 쓴다)
-  static const math = Color(0xFF3DA35D);
-  static const korean = Color(0xFFFF8B5C);
-  static const english = Color(0xFF4D96FF);
-  static const japanese = Color(0xFFFF6B9D);
-  static const chinese = Color(0xFFF4B740);
+  /// ── 색의 뜻 (글을 못 읽는 아이는 색으로 판단한다 — 뜻을 바꾸지 말 것) ──
+  /// 초록 = 앞으로·선택됨·정답 / 코랄 = 오답(테두리에만) / 앰버 = 별·코인·보상
+  /// / 점선 회색 = 아직. 단원·보기 색에는 빨강·초록 계열을 쓰지 않는다.
 
-  /// 퀴즈 보기 4색 (파스텔)
+  /// 정답 (테두리·글자) — 브랜드 초록과 같다
+  static const correct = green;
+
+  /// 정답 칸·선택된 칸 바탕 (라임)
+  static const selectedFill = Color(0xFFD7FFB8);
+
+  /// 오답 (고른 칸 테두리에만)
+  static const wrong = coral;
+
+  /// 틀렸을 때 아래 판 바탕 — 꾸짖는 빨강이 아니라 따뜻한 살구색
+  static const wrongSurface = Color(0xFFFFF1E6);
+
+  /// 틀렸을 때 판 글자 (갈색 — 격려하는 말투에 맞춘다)
+  static const wrongInk = Color(0xFF9A5B2E);
+
+  /// 별·코인·보상 바탕
+  static const rewardSurface = Color(0xFFFFF4D6);
+
+  /// 흐린 글자·비활성 (차가운 회색 대신 따뜻한 회갈색)
+  static const inkMuted = Color(0xFFA79A88);
+
+  /// 구분선·비활성 테두리
+  static const line = Color(0xFFEBE3D2);
+
+  /// 퀴즈 보기 4색 (파스텔). 정답 초록과 헷갈리지 않게 초록 대신 라벤더.
   static const choiceFills = [
     Color(0xFFE3F2FF),
     Color(0xFFFFEDE3),
-    Color(0xFFEAF9E6),
+    Color(0xFFF1E9FF),
     Color(0xFFFFF4D6),
   ];
   static const choiceBorders = [
     Color(0xFF9CCBEF),
     Color(0xFFF0BC9C),
-    Color(0xFFA8D89A),
+    Color(0xFFC9B3F0),
     Color(0xFFE8CF8B),
   ];
 }
 
 /// 설정 화면에 보여줄 앱 버전 (pubspec version과 함께 올린다)
-const appVersionLabel = '1.32.1';
+const appVersionLabel = '1.33.0';
 
 /// 제목·버튼·숫자용 라운드 서체 (본문은 NotoSansKR)
 const kDisplayFont = 'Jua';

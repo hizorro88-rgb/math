@@ -130,11 +130,19 @@ class Speech {
 
   static String _currentLang = 'ko-KR';
 
+  /// 테스트에서 무엇을 읽었는지 확인하는 갈고리 (TTS 채널은 응답이 없다).
+  @visibleForTesting
+  static void Function(String text)? debugOnSpeak;
+
   /// 읽던 것을 멈추고 새로 읽는다. 실패해도(테스트 등) 조용히 넘어간다.
   /// 호출하는 쪽에서 기다릴 필요 없음(fire-and-forget).
   /// [lang]으로 언어를 바꿔 읽을 수 있다 (영어 낱말은 'en-US').
-  static Future<void> speak(String text, {String lang = 'ko-KR'}) async {
-    if (!enabled) return;
+  /// [force]는 아이가 직접 🔊를 눌러 듣겠다고 할 때 — 자동 읽어주기가
+  /// 꺼져 있어도 그 한 번은 들려준다 (눌렀는데 소리가 안 나면 고장으로 안다).
+  static Future<void> speak(String text,
+      {String lang = 'ko-KR', bool force = false}) async {
+    if (!enabled && !force) return;
+    debugOnSpeak?.call(text);
     try {
       await _tts.stop();
       if (lang != _currentLang) {

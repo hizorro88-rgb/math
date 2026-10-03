@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../theme.dart';
 import 'bouncy_button.dart';
+import 'pulse.dart';
 
 /// 동그란 단계 버튼 (모든 과목 공용).
 /// - 잠김: 자물쇠 대신 조용한 점선 빈 원 — "여긴 아직"이 아니라 "다음에 올 곳"
@@ -109,7 +110,7 @@ class LevelBubble extends StatelessWidget {
       return Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          _Pulse(child: bubble),
+          Pulse(child: bubble),
           const SizedBox(height: 7),
           Text(
             '여기부터!',
@@ -119,44 +120,6 @@ class LevelBubble extends StatelessWidget {
       );
     }
     return bubble;
-  }
-}
-
-class _Pulse extends StatefulWidget {
-  const _Pulse({required this.child});
-
-  final Widget child;
-
-  @override
-  State<_Pulse> createState() => _PulseState();
-}
-
-class _PulseState extends State<_Pulse> with SingleTickerProviderStateMixin {
-  late final AnimationController _controller = AnimationController(
-    vsync: this,
-    duration: const Duration(milliseconds: 900),
-  );
-
-  @override
-  void initState() {
-    super.initState();
-    if (AppMotion.loops) _controller.repeat(reverse: true);
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return ScaleTransition(
-      scale: Tween(begin: 1.0, end: 1.07).animate(
-        CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
-      ),
-      child: widget.child,
-    );
   }
 }
 
