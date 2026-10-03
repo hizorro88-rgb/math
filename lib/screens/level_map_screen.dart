@@ -22,6 +22,7 @@ import '../widgets/bouncy_button.dart';
 import '../widgets/home_pet_card.dart';
 import '../widgets/kid_notice.dart';
 import '../widgets/parent_gate.dart';
+import '../widgets/pet_parts.dart';
 import '../widgets/pulse.dart';
 import '../models/boss.dart';
 import '../models/quiz_config.dart';
@@ -81,6 +82,7 @@ class _MapData {
     required this.stickerTickets,
     required this.foldPrevAges,
     required this.pet,
+    this.grown,
   });
 
   final List<int> stars;
@@ -118,6 +120,9 @@ class _MapData {
 
   /// 홈 맨 위에서 함께 지내는 친구
   final PetState pet;
+
+  /// 이번에 불러오면서 자란 단계 (진화 연출용, 없으면 null)
+  final int? grown;
 }
 
 class _LevelMapScreenState extends State<LevelMapScreen> {
@@ -144,6 +149,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
   void initState() {
     super.initState();
     _dataFuture = _load();
+    _dataFuture.then(_maybeEvolve);
     final subjectLoaded = _loadSubject();
     if (widget.firstRun) {
       _nudgeDrink = true;
@@ -188,12 +194,13 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       enough
           ? showKidNotice(context,
               face: face,
-              emoji: meal ? '😋' : '💦',
+              emoji: '🌙',
               text: meal ? '배불러요! 내일 또 줘요' : '물은 충분해요! 내일 또 줘요')
           : showKidNotice(context,
               face: face,
               emoji: '🪙',
-              text: '코인이 모자라요. 초록 ▶ 문제를 풀면 생겨요!');
+              text: '코인이 모자라요. 문제 풀러 갈까?',
+              action: _playNext);
       return;
     }
     Sounds.play('correct');
@@ -220,11 +227,28 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       _refresh();
       return;
     }
-    await Navigator.of(context).push(
+    final result = await Navigator.of(context).push<String>(
       MaterialPageRoute(builder: (_) => const PetRoomScreen()),
     );
     if (!mounted) return;
     _refresh();
+    // 방에서 "문제 풀러 가기 ▶"를 골랐으면 바로 다음 판으로
+    if (result == 'play') _playNext();
+  }
+
+  /// 홈의 "바로 시작"과 같은 판을 연다 (알림의 ▶에서도 쓴다).
+  Future<void> _playNext() async {
+    final data = await _dataFuture;
+    if (!mounted) return;
+    await _nextUp(data)?.open();
+  }
+
+  /// 공부·돌봄으로 조건을 넘겼으면 홈에서도 바로 자란다 (방에 들어가지 않아도).
+  Future<void> _maybeEvolve(_MapData data) async {
+    final grown = data.grown;
+    final species = data.pet.species;
+    if (grown == null || species == null || !mounted) return;
+    await showPetEvolution(context, species: species, stage: grown);
   }
 
   Future<_MapData> _load() async {
@@ -251,6 +275,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       foldPrevAges:
           prefs.getBool(Profiles.scoped(LevelMapScreen.foldPrevAgesKey)) ??
               true,
+      grown: await PetStore.evolveIfReady(),
       pet: await PetStore.load(),
     );
   }
@@ -349,6 +374,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     if (!mounted) return;
     setState(() {
       _dataFuture = _load();
+      _dataFuture.then(_maybeEvolve);
       _prevAgesExpanded = false; // 기본은 정돈된(접힌) 화면
     });
     _loadSubject(); // 프로필이 바뀌면 그 아이가 보던 과목으로

@@ -56,6 +56,9 @@ class AppColors {
   /// 듣기 버튼 전용 파랑 — "파란 동그라미 = 소리 듣기" 한 가지 뜻으로만 쓴다
   static const listen = Color(0xFF2B9BE0);
 
+  /// 친구 물 막대 (밥 막대는 amber)
+  static const petWater = Color(0xFF4DA8FF);
+
   /// 별·코인·보상 바탕
   static const rewardSurface = Color(0xFFFFF4D6);
 
@@ -81,7 +84,7 @@ class AppColors {
 }
 
 /// 설정 화면에 보여줄 앱 버전 (pubspec version과 함께 올린다)
-const appVersionLabel = '1.36.0';
+const appVersionLabel = '1.37.0';
 
 /// 제목·버튼·숫자용 라운드 서체 (본문은 NotoSansKR)
 const kDisplayFont = 'Jua';

@@ -251,4 +251,34 @@ void main() {
       expect((await PetStore.load()).chosen, isFalse);
     });
   });
+
+  test('친구는 종마다 동물 하나로 자라고, 아이 얼굴·쿼카와 겹치지 않는다', () {
+    for (final s in petSpeciesList) {
+      expect(s.stages.toSet(), hasLength(1), reason: '${s.id}: 단계마다 다른 동물이면 "바뀌었다"로 보인다');
+      expect(profileAvatars, isNot(contains(s.stages.first)), reason: s.id);
+    }
+    final animals = {for (final s in petSpeciesList) s.stages.first};
+    expect(animals, hasLength(petSpeciesList.length));
+  });
+
+  test('생각 풍선은 더 모자란 쪽 하나만, 졸릴 때는 💤만', () {
+    PetState st(int f, int h) => PetState(
+          species: petSpeciesList.first,
+          stage: 1,
+          meals: 0,
+          drinks: 0,
+          stars: 0,
+          fullness: f,
+          hydration: h,
+          mealsToday: 0,
+          drinksToday: 0,
+          coins: 0,
+        );
+    expect(st(25, 60).wantsMeal, isTrue);
+    expect(st(25, 60).wantsDrink, isFalse);
+    expect(st(60, 25).wantsDrink, isTrue);
+    expect(st(10, 10).sleepy, isTrue);
+    expect(st(10, 10).wantsMeal, isFalse);
+    expect(st(80, 80).wantsMeal || st(80, 80).wantsDrink, isFalse);
+  });
 }

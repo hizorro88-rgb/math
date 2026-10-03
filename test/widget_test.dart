@@ -646,6 +646,24 @@ void main() {
     expect((await PetStore.load()).meals, 1);
   });
 
+  testWidgets('조건을 채웠으면 친구 방에 안 들어가도 홈에서 자란다', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'pet_species_v1': 'leaf',
+      'pet_stage_v1': 1,
+      'pet_meals_v1': 5,
+      'pet_drinks_v1': 5,
+      'level_stars_v5': ['3', '3', '3', '3'], // 별 12개 (10개 필요)
+    });
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('자랐어요'), findsOneWidget);
+    expect((await PetStore.load()).stage, 2);
+    await tester.tap(find.byKey(const ValueKey('evolve-ok')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const ValueKey('evolve-ok')), findsNothing);
+  });
+
   testWidgets('친구가 없으면 홈에서 만나러 갈 수 있다', (tester) async {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();

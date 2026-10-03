@@ -7,6 +7,7 @@ import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../theme.dart';
 import '../widgets/bouncy_button.dart';
+import '../widgets/pet_parts.dart';
 import '../widgets/pulse.dart';
 import '../widgets/quokka_avatar.dart';
 import '../widgets/sparkle_burst.dart';
@@ -256,8 +257,7 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
                     curve: Curves.elasticOut,
                     builder: (context, t, child) =>
                         Transform.scale(scale: t, child: child),
-                    child: Text(species.emojiAt(1),
-                        style: const TextStyle(fontSize: 110)),
+                    child: PetSprite(species: species, stage: 1, size: 150),
                   ),
                   const SizedBox(height: 8),
                   Text('${species.name} 탄생!',
@@ -293,7 +293,7 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
           children: [
             Text('🪙 +$petHatchGift', style: displayStyle(fontSize: 26)),
             const SizedBox(height: 12),
-            _Gauge(value: _fullness, color: AppColors.amber, emoji: '🍚'),
+            PetGauge(meal: true, value: _fullness, height: 18),
             const SizedBox(height: 16),
             Pulse(
               child: BouncyButton(
@@ -313,7 +313,7 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
       case _Phase.done:
         return Column(
           children: [
-            _Gauge(value: _fullness, color: AppColors.amber, emoji: '🍚'),
+            PetGauge(meal: true, value: _fullness, height: 18),
             const SizedBox(height: 22),
             SizedBox(
               width: double.infinity,
@@ -348,41 +348,6 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
   }
 }
 
-/// 배부름 막대 (밥을 주면 차오르는 게 눈에 보이게)
-class _Gauge extends StatelessWidget {
-  const _Gauge({required this.value, required this.color, required this.emoji});
-
-  final int value;
-  final Color color;
-  final String emoji;
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        Text(emoji, style: const TextStyle(fontSize: 26)),
-        const SizedBox(width: 8),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(10),
-            child: TweenAnimationBuilder<double>(
-              tween: Tween(end: value / 100),
-              duration: const Duration(milliseconds: 700),
-              curve: Curves.easeOut,
-              builder: (context, v, _) => LinearProgressIndicator(
-                value: v,
-                minHeight: 18,
-                color: color,
-                backgroundColor: AppColors.line,
-              ),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-}
-
 /// 한 번 도리도리 흔들리는 연출 (키가 바뀌면 다시 흔들린다)
 class _Wobble extends StatelessWidget {
   const _Wobble({
@@ -409,89 +374,4 @@ class _Wobble extends StatelessWidget {
       child: child,
     );
   }
-}
-
-/// 친구마다 색이 다른 알. 글을 못 읽어도 색으로 고를 수 있다.
-/// [cracks]만큼 금이 간다 (톡톡 두드리기).
-class PetEgg extends StatelessWidget {
-  const PetEgg({
-    super.key,
-    required this.color,
-    this.size = 64,
-    this.cracks = 0,
-  });
-
-  final Color color;
-  final double size;
-  final int cracks;
-
-  @override
-  Widget build(BuildContext context) {
-    return SizedBox(
-      width: size * 0.8,
-      height: size,
-      child: CustomPaint(painter: _EggPainter(color, cracks)),
-    );
-  }
-}
-
-class _EggPainter extends CustomPainter {
-  _EggPainter(this.color, this.cracks);
-
-  final Color color;
-  final int cracks;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final w = size.width;
-    final h = size.height;
-    // 위가 좁고 아래가 넓은 알 모양
-    final egg = Path()
-      ..moveTo(w / 2, 0)
-      ..cubicTo(w * 0.85, 0, w, h * 0.45, w, h * 0.63)
-      ..cubicTo(w, h * 0.88, w * 0.78, h, w / 2, h)
-      ..cubicTo(w * 0.22, h, 0, h * 0.88, 0, h * 0.63)
-      ..cubicTo(0, h * 0.45, w * 0.15, 0, w / 2, 0)
-      ..close();
-    final light = Color.lerp(color, Colors.white, 0.55)!;
-    canvas.drawPath(
-      egg,
-      Paint()
-        ..shader = LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [light, color],
-        ).createShader(Offset.zero & size),
-    );
-    canvas.drawPath(
-      egg,
-      Paint()
-        ..style = PaintingStyle.stroke
-        ..strokeWidth = math.max(2, w * 0.03)
-        ..color = Color.lerp(color, Colors.black, 0.2)!,
-    );
-    // 점무늬
-    final dot = Paint()..color = Colors.white.withValues(alpha: 0.7);
-    canvas.drawCircle(Offset(w * 0.35, h * 0.42), w * 0.08, dot);
-    canvas.drawCircle(Offset(w * 0.64, h * 0.58), w * 0.06, dot);
-    canvas.drawCircle(Offset(w * 0.45, h * 0.74), w * 0.05, dot);
-    // 금: 두드릴수록 늘어난다
-    final crack = Paint()
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = math.max(2, w * 0.025)
-      ..strokeCap = StrokeCap.round
-      ..color = Color.lerp(color, Colors.black, 0.45)!;
-    for (var c = 0; c < cracks; c++) {
-      final y = h * (0.38 + c * 0.1);
-      final zig = Path()..moveTo(w * 0.2, y);
-      for (var i = 1; i <= 6; i++) {
-        zig.lineTo(w * (0.2 + i * 0.1), y + (i.isOdd ? -h * 0.04 : h * 0.03));
-      }
-      canvas.drawPath(zig, crack);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _EggPainter old) =>
-      old.color != color || old.cracks != cracks;
 }

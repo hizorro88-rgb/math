@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:preschool_math/models/pet.dart';
+import 'package:preschool_math/widgets/pet_parts.dart';
 import 'package:preschool_math/models/profile.dart';
 import 'package:preschool_math/models/progress.dart';
 import 'package:preschool_math/screens/pet_intro_screen.dart';
@@ -95,9 +96,13 @@ void main() {
 
       expect(find.byKey(const ValueKey('pet-feed')), findsOneWidget);
       expect(find.byKey(const ValueKey('pet-drink')), findsOneWidget);
-      expect(find.text('배부름'), findsOneWidget);
-      expect(find.text('목마름'), findsOneWidget);
-      expect(find.textContaining('별 모으기'), findsOneWidget);
+      // 막대 이름은 글 대신 🍚·💧 그림 (가득 찰수록 좋다, '목마름' 같은 반대 뜻 글 없음)
+      expect(find.text('목마름'), findsNothing);
+      expect(find.byType(PetGauge), findsNWidgets(2));
+      // 성장 조건은 ⭐·🍚·💧 원 + 다음 모습 ❔
+      expect(find.byType(PetGrowth), findsOneWidget);
+      expect(find.text('⭐'), findsOneWidget);
+      expect(find.text('❔'), findsOneWidget);
     });
 
     testWidgets('밥을 주면 코인이 줄고 남은 횟수가 바뀐다', (tester) async {
@@ -136,11 +141,12 @@ void main() {
       Profiles.activeId = 1;
       await openRoom(tester);
 
-      expect(find.textContaining('축하해요'), findsOneWidget);
+      expect(find.textContaining('자랐어요'), findsOneWidget);
       expect(find.byKey(const ValueKey('evolve-ok')), findsOneWidget);
       expect((await PetStore.load()).stage, 2);
 
-      // 확인을 누르면 방으로 돌아온다.
+      // 확인을 누르면 방으로 돌아온다 (버튼은 새 모습이 나온 뒤에 보인다).
+      await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('evolve-ok')));
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('evolve-ok')), findsNothing);

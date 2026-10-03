@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
@@ -7,7 +6,7 @@ import '../models/pet.dart';
 import '../services/speech.dart';
 import '../theme.dart';
 import 'bouncy_button.dart';
-import 'pulse.dart';
+import 'pet_parts.dart';
 import 'quiz_parts.dart';
 
 /// 홈 화면 맨 위에서 친구가 살아 움직이는 카드.
@@ -51,7 +50,6 @@ class _HomePetCardState extends State<HomePetCard> {
   double _x = 0.5;
   bool _facingRight = true;
   Timer? _walkTimer;
-  final _random = math.Random();
 
   /// 앱을 켜고 홈에 처음 왔을 때 한 번만 인사를 읽어 준다
   /// (다른 화면에서 돌아올 때마다 말하면 시끄럽다).
@@ -64,16 +62,15 @@ class _HomePetCardState extends State<HomePetCard> {
       _greeted = true;
       Speech.speak(_plain(widget.greeting));
     }
-    if (AppMotion.loops) {
-      _walkTimer = Timer.periodic(const Duration(milliseconds: 2400), (_) {
-        if (!mounted) return;
-        setState(() {
-          final target = 0.1 + _random.nextDouble() * 0.8;
-          _facingRight = target > _x;
-          _x = target;
-        });
+    _walkTimer = startPetWalk((target) {
+      // 아기(1단계)·졸린 친구는 제자리에서 콩콩·새근새근
+      final pet = widget.pet;
+      if (!mounted || pet.stage <= 1 || pet.sleepy) return;
+      setState(() {
+        _facingRight = target > _x;
+        _x = target;
       });
-    }
+    });
   }
 
   @override
@@ -96,19 +93,34 @@ class _HomePetCardState extends State<HomePetCard> {
         children: [
           Row(
             children: [
+              // 누가 말하는지 보이게: 친구 얼굴 + 말풍선
+              if (pet.chosen) ...[
+                Text(pet.species!.emojiAt(pet.stage),
+                    style: const TextStyle(fontSize: 26)),
+                const SizedBox(width: 6),
+              ],
               Expanded(
-                child: Text(
-                  widget.nudgeDrink && pet.chosen
-                      ? '${pet.species!.name}가 목말라요! 💧\n물 주기를 눌러 봐!'
-                      : widget.greeting,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.ink,
-                    height: 1.3,
+                child: Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  decoration: BoxDecoration(
+                    color: AppColors.cream,
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                  child: Text(
+                    widget.nudgeDrink && pet.chosen
+                        ? '${pet.species!.name}가 목말라요! 💧\n물 주기를 눌러 봐!'
+                        : widget.greeting,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.ink,
+                      height: 1.3,
+                    ),
                   ),
                 ),
               ),
+              const SizedBox(width: 6),
               // 글을 못 읽어도 친구가 무슨 말을 하는지 들을 수 있다.
               QuizSpeakButton(
                 size: 34,
@@ -165,23 +177,19 @@ class _HomePetCardState extends State<HomePetCard> {
     return Column(
       children: [
         Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildMiniRoom(pet),
             const SizedBox(width: 10),
             Expanded(
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    pet.species?.name ?? '내 친구',
-                    style: displayStyle(fontSize: 16),
-                  ),
+                  Text(pet.species?.name ?? '내 친구',
+                      style: displayStyle(fontSize: 17)),
                   const SizedBox(height: 8),
-                  _gauge('🍚', pet.fullness, const Color(0xFFFFB703)),
+                  PetGauge(meal: true, value: pet.fullness, height: 10),
                   const SizedBox(height: 6),
-                  _gauge('💧', pet.hydration, const Color(0xFF4D96FF)),
+                  PetGauge(meal: false, value: pet.hydration, height: 10),
                 ],
               ),
             ),
@@ -191,168 +199,105 @@ class _HomePetCardState extends State<HomePetCard> {
         Row(
           children: [
             Expanded(
-              child: _careButton(
+              child: PetCareButton(
                 key: const ValueKey('home-feed'),
-                label: '밥 주기',
-                emoji: '🍚',
-                cost: petMealCost,
-                left: petDailyCareLimit - pet.mealsToday,
-                enabled: pet.canFeed,
+                meal: true,
+                state: pet,
+                compact: true,
+                nudge: pet.wantsMeal,
                 onTap: () => widget.onCare(meal: true),
               ),
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: _maybePulse(
-                widget.nudgeDrink && pet.canDrink,
-                _careButton(
-                  key: const ValueKey('home-drink'),
-                  label: '물 주기',
-                  emoji: '💧',
-                  cost: petDrinkCost,
-                  left: petDailyCareLimit - pet.drinksToday,
-                  enabled: pet.canDrink,
-                  onTap: () => widget.onCare(meal: false),
-                ),
+              child: PetCareButton(
+                key: const ValueKey('home-drink'),
+                meal: false,
+                state: pet,
+                compact: true,
+                nudge: widget.nudgeDrink || pet.wantsDrink,
+                onTap: () => widget.onCare(meal: false),
               ),
             ),
           ],
         ),
+        const SizedBox(height: 8),
+        // 자라기까지 ⭐·🍚·💧 — 누르면 친구 방으로
+        Semantics(
+          button: true,
+          label: '친구 방',
+          onTap: widget.onOpenRoom,
+          child: GestureDetector(
+            key: const ValueKey('home-pet'),
+            onTap: widget.onOpenRoom,
+            child: Container(
+              padding: const EdgeInsets.fromLTRB(6, 6, 2, 6),
+              decoration: BoxDecoration(
+                color: AppColors.cream,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: AppColors.outline, width: 1.5),
+              ),
+              child: Row(
+                children: [
+                  Expanded(child: PetGrowth(state: pet, compact: true)),
+                  const Icon(Icons.chevron_right_rounded,
+                      color: AppColors.inkMuted),
+                ],
+              ),
+            ),
+          ),
+        ),
       ],
     );
   }
 
-  /// 친구가 어슬렁거리는 작은 방 (누르면 진짜 방으로 들어간다)
+  /// 친구가 어슬렁거리는 작은 방 (누르면 깡충, 문지르면 💗)
   Widget _buildMiniRoom(PetState pet) {
-    return GestureDetector(
-      key: const ValueKey('home-pet'),
-      onTap: widget.onOpenRoom,
-      child: Container(
-        width: 112,
-        height: 96,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(16),
-          gradient: const LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: [Color(0xFFFFF3DC), Color(0xFFF3DFBE)],
-          ),
+    final species = pet.species!;
+    return Container(
+      width: 120,
+      height: 104,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        gradient: const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0xFFFFF3DC), Color(0xFFF3DFBE)],
         ),
-        clipBehavior: Clip.antiAlias,
-        child: LayoutBuilder(builder: (context, box) {
-          const petSize = 46.0;
-          return Stack(
-            children: [
-              // 바닥선
-              Positioned(
-                left: 0,
-                right: 0,
-                bottom: 16,
-                child: Container(height: 2, color: const Color(0xFFE0C9A6)),
-              ),
-              if (pet.sleepy)
-                const Positioned(
-                  right: 6,
-                  top: 6,
-                  child: Text('💤', style: TextStyle(fontSize: 15)),
-                ),
-              // 단계 표시
-              Positioned(
-                left: 6,
-                top: 5,
-                child: Text(
-                  petStageNames[pet.stage - 1],
-                  style: const TextStyle(
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.inkSoft,
-                  ),
-                ),
-              ),
-              AnimatedPositioned(
-                duration: const Duration(milliseconds: 2200),
-                curve: Curves.easeInOut,
-                left: (box.maxWidth - petSize) * _x,
-                bottom: 12,
-                width: petSize,
-                child: Transform.flip(
-                  flipX: !_facingRight,
-                  child: Opacity(
-                    opacity: pet.sleepy ? 0.65 : 1,
-                    child: Text(
-                      pet.species?.emojiAt(pet.stage) ?? '🥚',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(fontSize: 38),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          );
-        }),
       ),
-    );
-  }
-
-  Widget _maybePulse(bool on, Widget child) => on ? Pulse(child: child) : child;
-
-  Widget _gauge(String emoji, int value, Color color) {
-    return Row(
-      children: [
-        Text(emoji, style: const TextStyle(fontSize: 13)),
-        const SizedBox(width: 5),
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              value: value / 100,
-              minHeight: 9,
-              backgroundColor: const Color(0xFFF0E8DA),
-              valueColor: AlwaysStoppedAnimation(color),
+      child: LayoutBuilder(builder: (context, box) {
+        const spriteBox = 56 * 1.25;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            // 바닥선
+            Positioned(
+              left: 0,
+              right: 0,
+              bottom: 14,
+              child: Container(height: 2, color: const Color(0xFFE0C9A6)),
             ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _careButton({
-    required Key key,
-    required String label,
-    required String emoji,
-    required int cost,
-    required int left,
-    required bool enabled,
-    required VoidCallback onTap,
-  }) {
-    return BouncyButton(
-      key: key,
-      color: enabled ? const Color(0xFFFFF8ED) : const Color(0xFFF2EEE6),
-      shadowColor: Colors.grey.shade300,
-      border: Border.all(color: AppColors.outline, width: 2),
-      borderRadius: 14,
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      onTap: onTap,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Text(emoji, style: const TextStyle(fontSize: 17)),
-          const SizedBox(width: 5),
-          Flexible(
-            child: FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
-                left > 0 ? '$label 🪙$cost' : '오늘 다 줬어요',
-                style: TextStyle(
-                  fontSize: 13.5,
-                  fontWeight: FontWeight.bold,
-                  color: enabled ? AppColors.ink : AppColors.inkSoft,
-                ),
+            AnimatedPositioned(
+              duration: const Duration(milliseconds: 2200),
+              curve: Curves.easeInOut,
+              left: (box.maxWidth - spriteBox) * _x,
+              bottom: 10,
+              child: PetSprite(
+                species: species,
+                stage: pet.stage,
+                size: 56,
+                sleepy: pet.sleepy,
+                wish: pet.wantsMeal
+                    ? '🍚'
+                    : pet.wantsDrink
+                        ? '💧'
+                        : null,
+                flip: !_facingRight,
               ),
             ),
-          ),
-        ],
-      ),
+          ],
+        );
+      }),
     );
   }
 }

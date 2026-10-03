@@ -20,6 +20,7 @@ void showKidNotice(
   required String text,
   String? speech,
   String? face,
+  VoidCallback? action,
 }) {
   Speech.speak(speech ?? text);
   _current?.remove();
@@ -32,6 +33,7 @@ void showKidNotice(
       emoji: emoji,
       text: text,
       face: face,
+      action: action,
       onDone: () {
         if (_current == entry) _current = null;
         if (entry.mounted) entry.remove();
@@ -50,11 +52,15 @@ class _KidNotice extends StatefulWidget {
     required this.text,
     required this.onDone,
     this.face,
+    this.action,
   });
 
   final String emoji;
   final String text;
   final String? face;
+
+  /// 다음 할 일 (▶ 원). 누르면 알림을 닫고 실행한다.
+  final VoidCallback? action;
   final VoidCallback onDone;
 
   @override
@@ -69,7 +75,9 @@ class _KidNoticeState extends State<_KidNotice>
     vsync: this,
     // 읽어 주는 동안은 떠 있게: 글자 수 × 0.2초 + 1.5초 (2.8~5초)
     duration: Duration(
-        milliseconds: (widget.text.length * 200 + 1500).clamp(2800, 5000)),
+        milliseconds: widget.action != null
+            ? 5000
+            : (widget.text.length * 200 + 1500).clamp(2800, 5000)),
   )
     ..addStatusListener((s) {
       if (s == AnimationStatus.completed) widget.onDone();
@@ -138,6 +146,26 @@ class _KidNoticeState extends State<_KidNotice>
                       style: displayStyle(fontSize: 17).copyWith(height: 1.3),
                     ),
                   ),
+                  if (widget.action != null) ...[
+                    const SizedBox(width: 8),
+                    GestureDetector(
+                      key: const ValueKey('kid-notice-go'),
+                      onTap: () {
+                        widget.onDone();
+                        widget.action!();
+                      },
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: const BoxDecoration(
+                          color: AppColors.green,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.play_arrow_rounded,
+                            color: Colors.white, size: 30),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

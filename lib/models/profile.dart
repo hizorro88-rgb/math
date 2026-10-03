@@ -11,8 +11,8 @@ class Profile {
 
 /// 프로필을 만들 때 고르는 동물 아바타
 const List<String> profileAvatars = [
-  '🐣',
   '🐰',
+  '🐣',
   '🦊',
   '🐻',
   '🐯',
@@ -67,7 +67,7 @@ class Profiles {
       );
     }
     if (profiles.isEmpty) {
-      const first = Profile(id: 1, emoji: '🐣', name: '우리 아이');
+      const first = Profile(id: 1, emoji: '🐰', name: '우리 아이');
       await _save([first]);
       return [first];
     }

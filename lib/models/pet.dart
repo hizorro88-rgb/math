@@ -41,15 +41,17 @@ class PetSpecies {
   final String hint;
   final Color color;
 
-  /// 1~5단계 모습. 지금은 임시 이모지이고, 도트 그림이 준비되면 이 자리를
-  /// assets/images/pets/<id>_<단계>.png 로 바꾼다.
+  /// 1~5단계 모습. 아이에게 "자랐다"로 보이게 종마다 동물 하나로 고정하고,
+  /// 단계는 크기와 종 색 덧그림(껍데기·목도리·망토·날개)으로 보여 준다
+  /// (lib/widgets/pet_parts.dart의 PetSprite). 지금은 임시 이모지이고,
+  /// 도트 그림이 준비되면 assets/images/pets/<id>_<단계>.png 로 바꾼다.
   final List<String> stages;
 
   String emojiAt(int stage) => stages[stage.clamp(1, stages.length) - 1];
 }
 
 /// 단계 이름 (1~5)
-const petStageNames = ['아기', '꼬마', '친구', '어른', '전설'];
+const petStageNames = ['아기', '꼬마', '어린이', '어른', '전설'];
 
 /// 고를 수 있는 세 친구
 const petSpeciesList = <PetSpecies>[
@@ -59,7 +61,7 @@ const petSpeciesList = <PetSpecies>[
     egg: '🥚',
     hint: '풀잎 냄새가 나요',
     color: Color(0xFF3DA35D),
-    stages: ['🌱', '🌿', '🍀', '🌳', '🌲'],
+    stages: ['🐸', '🐸', '🐸', '🐸', '🐸'],
   ),
   PetSpecies(
     id: 'drop',
@@ -67,7 +69,7 @@ const petSpeciesList = <PetSpecies>[
     egg: '🥚',
     hint: '찰랑찰랑 물소리가 나요',
     color: Color(0xFF4D96FF),
-    stages: ['🫧', '🐟', '🐬', '🐋', '🐳'],
+    stages: ['🐳', '🐳', '🐳', '🐳', '🐳'],
   ),
   PetSpecies(
     id: 'ember',
@@ -75,7 +77,7 @@ const petSpeciesList = <PetSpecies>[
     egg: '🥚',
     hint: '따끈따끈 햇살 같아요',
     color: Color(0xFFFF8B5C),
-    stages: ['🐣', '🐤', '🐥', '🦅', '🦉'],
+    stages: ['🐱', '🐱', '🐱', '🐱', '🐱'],
   ),
 ];
 
@@ -176,6 +178,10 @@ class PetState {
 
   /// 배도 고프고 목도 마르면 졸려 보인다 (벌이 아니라 표정일 뿐)
   bool get sleepy => fullness <= 20 && hydration <= 20;
+
+  /// 머리 위 생각 풍선(💭🍚 / 💭💧)을 띄울 때 — 둘 중 더 모자란 쪽 하나만
+  bool get wantsMeal => !sleepy && fullness <= 30 && fullness <= hydration;
+  bool get wantsDrink => !sleepy && hydration <= 30 && hydration < fullness;
 
   /// 다음 단계까지 얼마나 왔는지 0.0~1.0 (세 조건의 평균)
   double get progress {
