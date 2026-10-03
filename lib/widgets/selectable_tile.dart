@@ -28,6 +28,7 @@ class SelectableTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final tile = AnimatedContainer(
       duration: const Duration(milliseconds: 150),
+      width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
       decoration: BoxDecoration(
         color: selected ? AppColors.selectedFill : Colors.white,
