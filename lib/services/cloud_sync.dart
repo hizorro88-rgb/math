@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../firebase_options.dart';
@@ -30,11 +31,13 @@ class CloudSync {
   static Future<void> init() async {
     if (DefaultFirebaseOptions.currentPlatform.apiKey == 'TODO') return;
     try {
-      // 웹에서 Firebase JS 로딩이 차단된 환경(회사망 등)이면 영영 끝나지
+      // 웹에서 Firebase JS 로딩이 차단된 환경(학교망·오프라인)이면 영영 끝나지
       // 않을 수 있어, 시간을 정해 두고 안 되면 클라우드 없이 계속 간다.
+      // 그동안 아이는 스플래시만 보고 있으므로 웹은 짧게 기다린다
+      // (정상 네트워크면 1초 안에 끝난다). 앱은 네트워크를 타지 않아 넉넉히 둔다.
       await Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
-      ).timeout(const Duration(seconds: 8));
+      ).timeout(const Duration(seconds: kIsWeb ? 3 : 8));
       available = true;
     } catch (_) {
       available = false;

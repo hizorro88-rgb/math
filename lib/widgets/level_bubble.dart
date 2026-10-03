@@ -56,45 +56,50 @@ class LevelBubble extends StatelessWidget {
     }
 
     final size = _isCurrent ? 66.0 : 56.0;
-    final bubble = GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          gradient: _cleared
-              ? LinearGradient(
-                  begin: Alignment.topCenter,
-                  end: Alignment.bottomCenter,
-                  colors: [color, BouncyButton.darken(color, 0.08)],
-                )
-              : null,
-          color: _cleared ? null : Colors.white,
-          shape: BoxShape.circle,
-          border: Border.all(color: color, width: 3),
-          boxShadow: [
-            BoxShadow(
-              color: _cleared
-                  ? BouncyButton.darken(color, 0.15)
-                  : AppColors.outline,
-              offset: const Offset(0, 3),
-              blurRadius: 0,
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Text(
-              '$number',
-              style: displayStyle(
-                fontSize: _isCurrent ? 24 : 18,
-                color: _cleared ? Colors.white : color,
+    final bubble = Semantics(
+      button: true,
+      label: '$number단계',
+      excludeSemantics: true,
+      child: GestureDetector(
+        onTap: onTap,
+        child: Container(
+          width: size,
+          height: size,
+          decoration: BoxDecoration(
+            gradient: _cleared
+                ? LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [color, BouncyButton.darken(color, 0.08)],
+                  )
+                : null,
+            color: _cleared ? null : Colors.white,
+            shape: BoxShape.circle,
+            border: Border.all(color: color, width: 3),
+            boxShadow: [
+              BoxShadow(
+                color: _cleared
+                    ? BouncyButton.darken(color, 0.15)
+                    : AppColors.outline,
+                offset: const Offset(0, 3),
+                blurRadius: 0,
               ),
-            ),
-            if (_cleared)
-              Text('⭐' * stars, style: const TextStyle(fontSize: 7)),
-          ],
+            ],
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                '$number',
+                style: displayStyle(
+                  fontSize: _isCurrent ? 24 : 18,
+                  color: _cleared ? Colors.white : color,
+                ),
+              ),
+              if (_cleared)
+                Text('⭐' * stars, style: const TextStyle(fontSize: 7)),
+            ],
+          ),
         ),
       ),
     );

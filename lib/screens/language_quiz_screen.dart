@@ -520,8 +520,8 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
                 Text(
                   _question.subDisplay,
                   textAlign: TextAlign.center,
-                  // 한자 구절처럼 짧은 것은 크게, 회화 뜻풀이처럼 길면 작게
-                  style: _question.subDisplay.length > 10
+                  // 한자 구절·낱말처럼 짧은 것(6자 이하)은 크게, 회화 뜻풀이처럼 길면 작게
+                  style: _question.subDisplay.length > 6
                       ? TextStyle(
                           fontSize: 17,
                           fontWeight: FontWeight.w600,
