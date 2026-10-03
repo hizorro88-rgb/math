@@ -181,10 +181,10 @@ class _PetSpriteState extends State<PetSprite> with TickerProviderStateMixin {
         // 3단계: 종 색 목도리
         if (stage == 3)
           Positioned(
-            bottom: a * 0.12,
+            bottom: a * 0.0,
             child: Container(
-              width: a * 0.62,
-              height: a * 0.13,
+              width: a * 0.7,
+              height: a * 0.12,
               decoration: BoxDecoration(
                 color: color,
                 borderRadius: BorderRadius.circular(a),
@@ -606,9 +606,10 @@ class PetGrowth extends StatelessWidget {
       child: Stack(
         alignment: Alignment.center,
         children: [
+          // 다음 모습은 그림자로만 — 자라 봐야 알 수 있다
           ColorFiltered(
             colorFilter: const ColorFilter.mode(
-                Color(0x33000000), BlendMode.srcATop),
+                Color(0xFFC9BCA6), BlendMode.srcIn),
             child: PetSprite(
               species: species,
               stage: state.stage + 1,
@@ -616,7 +617,9 @@ class PetGrowth extends StatelessWidget {
               interactive: false,
             ),
           ),
-          Text('❔', style: TextStyle(fontSize: compact ? 16 : 24)),
+          Text('?',
+              style: displayStyle(
+                  fontSize: compact ? 18 : 28, color: Colors.white)),
         ],
       ),
     );

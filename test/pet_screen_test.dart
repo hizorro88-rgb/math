@@ -102,7 +102,7 @@ void main() {
       // 성장 조건은 ⭐·🍚·💧 원 + 다음 모습 ❔
       expect(find.byType(PetGrowth), findsOneWidget);
       expect(find.text('⭐'), findsOneWidget);
-      expect(find.text('❔'), findsOneWidget);
+      expect(find.text('?'), findsOneWidget);
     });
 
     testWidgets('밥을 주면 코인이 줄고 남은 횟수가 바뀐다', (tester) async {
