@@ -57,7 +57,7 @@ const petSpeciesList = <PetSpecies>[
     id: 'leaf',
     name: '새싹이',
     egg: '🥚',
-    hint: '초록빛이 돌아요',
+    hint: '풀잎 냄새가 나요',
     color: Color(0xFF3DA35D),
     stages: ['🌱', '🌿', '🍀', '🌳', '🌲'],
   ),
@@ -65,7 +65,7 @@ const petSpeciesList = <PetSpecies>[
     id: 'drop',
     name: '방울이',
     egg: '🥚',
-    hint: '시원한 소리가 나요',
+    hint: '찰랑찰랑 물소리가 나요',
     color: Color(0xFF4D96FF),
     stages: ['🫧', '🐟', '🐬', '🐋', '🐳'],
   ),
@@ -73,7 +73,7 @@ const petSpeciesList = <PetSpecies>[
     id: 'ember',
     name: '햇살이',
     egg: '🥚',
-    hint: '따끈따끈해요',
+    hint: '따끈따끈 햇살 같아요',
     color: Color(0xFFFF8B5C),
     stages: ['🐣', '🐤', '🐥', '🦅', '🦉'],
   ),
@@ -109,6 +109,14 @@ const petStageRules = <PetStageRule>[
   PetStageRule(stars: 100, meals: 50, drinks: 50),
   PetStageRule(stars: 200, meals: 100, drinks: 100),
 ];
+
+/// 갓 태어났을 때 배부름·목마름 (졸려 보이는 기준 20보다 높다 — 벌이 아니라
+/// "첫 밥을 줘 볼까?"의 계기). 첫 밥으로 막대가 차오르는 걸 아이가 직접 본다.
+const petStartGauge = 50;
+
+/// 부화 선물 코인 — 첫 밥(10)과 첫 물(5)을 줄 수 있을 만큼만.
+/// 크게 주면 공부 없이 돌봄을 사게 된다.
+const petHatchGift = 20;
 
 /// 밥과 물 가격 (한 판에 약 150코인 버는 것에 맞춰 부담 없게 잡았다)
 const petMealCost = 10;
@@ -286,10 +294,19 @@ class PetStore {
     await prefs.setInt(Profiles.scoped(_stageKey), 1);
     await prefs.setInt(Profiles.scoped(_mealsKey), 0);
     await prefs.setInt(Profiles.scoped(_drinksKey), 0);
-    await prefs.setInt(Profiles.scoped(_fullnessKey), 100);
-    await prefs.setInt(Profiles.scoped(_hydrationKey), 100);
+    await prefs.setInt(Profiles.scoped(_fullnessKey), petStartGauge);
+    await prefs.setInt(Profiles.scoped(_hydrationKey), petStartGauge);
     await prefs.setString(
         Profiles.scoped(_tickKey), DateTime.now().toIso8601String());
+  }
+
+  /// 부화 선물: 프로필마다 한 번만 [petHatchGift] 코인을 준다.
+  static Future<void> giveHatchGift() async {
+    final prefs = await SharedPreferences.getInstance();
+    final key = Profiles.scoped('pet_hatch_gift_v1');
+    if (prefs.getBool(key) ?? false) return;
+    await prefs.setBool(key, true);
+    await ProgressStore.giftCoins(petHatchGift);
   }
 
   /// 밥이나 물을 준다. 코인이 모자라거나 오늘 다 줬으면 false.

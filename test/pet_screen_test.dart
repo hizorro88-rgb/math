@@ -43,24 +43,42 @@ void main() {
       expect(find.byKey(const ValueKey('pick-0')), findsOneWidget);
     });
 
-    testWidgets('고르면 알이 부화하고 저장된다', (tester) async {
+    testWidgets('고르면 톡톡 세 번에 부화하고, 선물 코인으로 첫 밥을 준다', (tester) async {
       await tester.pumpWidget(const MaterialApp(home: PetIntroScreen()));
       await tester.pumpAndSettle();
 
       await tester.tap(find.byKey(const ValueKey('egg-1')));
       await tester.pumpAndSettle();
       await tester.tap(find.byKey(const ValueKey('pick-1')));
-      // 알이 흔들리다 깨지는 데 700ms가 걸린다.
-      await tester.pump();
-      await tester.pump(const Duration(milliseconds: 900));
       await tester.pumpAndSettle();
-
-      expect(find.textContaining('태어났어요'), findsWidgets);
-      expect(find.byKey(const ValueKey('hatch-done')), findsOneWidget);
-
       final saved = await PetStore.load();
       expect(saved.chosen, isTrue);
       expect(saved.species?.id, petSpeciesList[1].id);
+
+      // 두 번까지는 금만 가고, 세 번째에 깨진다.
+      for (var i = 0; i < 2; i++) {
+        await tester.tap(find.byKey(const ValueKey('egg-tap')));
+        await tester.pumpAndSettle();
+      }
+      expect(find.byKey(const ValueKey('gift')), findsNothing);
+      await tester.tap(find.byKey(const ValueKey('egg-tap')));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('탄생'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('gift')));
+      await tester.pumpAndSettle();
+      expect(await ProgressStore.loadCoins(), petHatchGift);
+      await tester.tap(find.byKey(const ValueKey('first-feed')));
+      await tester.pumpAndSettle();
+      expect(await ProgressStore.loadCoins(), petHatchGift - petMealCost);
+      expect((await PetStore.load()).fullness, greaterThan(petStartGauge));
+      expect(find.byKey(const ValueKey('hatch-done')), findsOneWidget);
+    });
+
+    test('부화 선물은 프로필마다 한 번만', () async {
+      await PetStore.giveHatchGift();
+      await PetStore.giveHatchGift();
+      expect(await ProgressStore.loadCoins(), petHatchGift);
     });
   });
 

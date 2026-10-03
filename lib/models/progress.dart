@@ -195,6 +195,13 @@ class ProgressStore {
   }
 
   /// 코인이 충분하면 차감하고 true를 돌려준다.
+  /// 선물 코인: 코인만 늘리고 누적 점수(칭호)는 그대로 둔다.
+  static Future<void> giftCoins(int amount) async {
+    final coins = await loadCoins();
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setInt(Profiles.scoped(_coinsKey), coins + amount);
+  }
+
   static Future<bool> spendCoins(int cost) async {
     final prefs = await SharedPreferences.getInstance();
     final coins = prefs.getInt(Profiles.scoped(_coinsKey)) ?? 0;

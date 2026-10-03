@@ -7,6 +7,7 @@ import '../models/pet.dart';
 import '../services/speech.dart';
 import '../theme.dart';
 import 'bouncy_button.dart';
+import 'pulse.dart';
 import 'quiz_parts.dart';
 
 /// 홈 화면 맨 위에서 친구가 살아 움직이는 카드.
@@ -21,7 +22,11 @@ class HomePetCard extends StatefulWidget {
     required this.onOpenRoom,
     required this.onMeet,
     required this.onCare,
+    this.nudgeDrink = false,
   });
+
+  /// 첫 판을 마치고 왔을 때: "목말라요!"로 물 주기를 처음 해 보게 이끈다.
+  final bool nudgeDrink;
 
   final PetState pet;
 
@@ -93,7 +98,9 @@ class _HomePetCardState extends State<HomePetCard> {
             children: [
               Expanded(
                 child: Text(
-                  widget.greeting,
+                  widget.nudgeDrink && pet.chosen
+                      ? '${pet.species!.name}가 목말라요! 💧\n물 주기를 눌러 봐!'
+                      : widget.greeting,
                   style: const TextStyle(
                     fontSize: 15,
                     fontWeight: FontWeight.bold,
@@ -105,8 +112,7 @@ class _HomePetCardState extends State<HomePetCard> {
               // 글을 못 읽어도 친구가 무슨 말을 하는지 들을 수 있다.
               QuizSpeakButton(
                 size: 34,
-                onTap: () =>
-                    Speech.speak(_plain(widget.greeting), force: true),
+                onTap: () => Speech.speak(_plain(widget.greeting), force: true),
               ),
             ],
           ),
@@ -127,8 +133,7 @@ class _HomePetCardState extends State<HomePetCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('함께 공부할 친구가 기다려요',
-                  style: displayStyle(fontSize: 15)),
+              Text('함께 공부할 친구가 기다려요', style: displayStyle(fontSize: 15)),
               const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
@@ -198,14 +203,17 @@ class _HomePetCardState extends State<HomePetCard> {
             ),
             const SizedBox(width: 8),
             Expanded(
-              child: _careButton(
-                key: const ValueKey('home-drink'),
-                label: '물 주기',
-                emoji: '💧',
-                cost: petDrinkCost,
-                left: petDailyCareLimit - pet.drinksToday,
-                enabled: pet.canDrink,
-                onTap: () => widget.onCare(meal: false),
+              child: _maybePulse(
+                widget.nudgeDrink && pet.canDrink,
+                _careButton(
+                  key: const ValueKey('home-drink'),
+                  label: '물 주기',
+                  emoji: '💧',
+                  cost: petDrinkCost,
+                  left: petDailyCareLimit - pet.drinksToday,
+                  enabled: pet.canDrink,
+                  onTap: () => widget.onCare(meal: false),
+                ),
               ),
             ),
           ],
@@ -286,6 +294,8 @@ class _HomePetCardState extends State<HomePetCard> {
     );
   }
 
+  Widget _maybePulse(bool on, Widget child) => on ? Pulse(child: child) : child;
+
   Widget _gauge(String emoji, int value, Color color) {
     return Row(
       children: [
@@ -350,5 +360,6 @@ class _HomePetCardState extends State<HomePetCard> {
 /// 읽어 줄 때는 줄바꿈과 이모지를 뺀다.
 String _plain(String text) => text
     .replaceAll('\n', ' ')
-    .replaceAll(RegExp(r'[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]', unicode: true), '')
+    .replaceAll(
+        RegExp(r'[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}]', unicode: true), '')
     .trim();

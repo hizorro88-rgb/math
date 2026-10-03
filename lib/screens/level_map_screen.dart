@@ -48,7 +48,11 @@ import 'wrong_notes_screen.dart';
 /// 홈 화면: 마스코트 인사, 칭호 카드, 오늘의 미션,
 /// 그리고 나이·학년별(4살~초3) 학습 카테고리.
 class LevelMapScreen extends StatefulWidget {
-  const LevelMapScreen({super.key});
+  const LevelMapScreen({super.key, this.firstRun = false});
+
+  /// 첫 실행에서 친구를 막 만나고 왔으면: 첫 판을 바로 열고,
+  /// 돌아오면 친구에게 물을 주게 이끈다 (공부 → 코인 → 돌봄을 한 번에 겪는다).
+  final bool firstRun;
 
   /// 아이 나이보다 앞의 수학 카테고리를 홈에서 접어둘지 (프로필 스코프, 기본 켜짐).
   /// 설정 > 부모님 메뉴 > 우리 아이 단계에서 바꾼다.
@@ -140,8 +144,22 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
   void initState() {
     super.initState();
     _dataFuture = _load();
-    _loadSubject();
+    final subjectLoaded = _loadSubject();
+    if (widget.firstRun) {
+      _nudgeDrink = true;
+      Future.wait([_dataFuture, subjectLoaded]).then((r) async {
+        if (!mounted) return;
+        final next = _nextUp(r[0] as _MapData);
+        if (next == null) return;
+        await next.open();
+        if (!mounted) return;
+        Speech.speak('친구가 목말라요! 물을 줘 볼까?');
+      });
+    }
   }
+
+  /// 첫 판 뒤 홈: 물 주기를 반짝이게 (한 번 주면 꺼진다)
+  bool _nudgeDrink = false;
 
   Future<void> _loadSubject() async {
     final prefs = await SharedPreferences.getInstance();
@@ -180,6 +198,13 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     }
     Sounds.play('correct');
     Speech.speak(meal ? '냠냠 맛있어요!' : '꿀꺽꿀꺽!');
+    if (!meal && _nudgeDrink) {
+      _nudgeDrink = false;
+      // 다음 할 일: 또 한 판 (초록 ▶)
+      Future<void>.delayed(const Duration(milliseconds: 1200), () {
+        if (mounted) Speech.speak('고마워! 초록 ▶ 누르면 또 놀 수 있어!');
+      });
+    }
     _refresh();
   }
 
@@ -188,10 +213,12 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     final pet = await PetStore.load();
     if (!mounted) return;
     if (!pet.chosen) {
-      final picked = await Navigator.of(context).push<bool>(
+      // 처음 만나는 거면 부화·첫 밥까지 하고 홈으로 돌아온다 (방으로 바로 가지 않는다).
+      await Navigator.of(context).push<bool>(
         MaterialPageRoute(builder: (_) => const PetIntroScreen()),
       );
-      if (!mounted || picked != true) return;
+      _refresh();
+      return;
     }
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const PetRoomScreen()),
@@ -563,7 +590,9 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
               .length,
           total: category.totalLevels,
           // 잠긴 카드를 추천하면 아이가 부모 확인 창에 막힌다 — 놀 수 있는 곳만.
-          recommended: _mathStartCategory(data) == category.index,
+          recommended: data.recommendedCategory != null &&
+              _mathStartCategory(data) == data.recommendedCategory &&
+              data.recommendedCategory == category.index,
           locked: !data.hasPass && category.index > 0,
           onTap: () => _openCategory(category),
         );
@@ -701,17 +730,18 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
 
   /// 오늘 활동에 따라 친구의 인사말이 달라진다.
   String _greetingFor(_MapData data) {
-    // 기본 이름("우리 아이")이면 호칭이 어색하지 않게 "친구"로 부른다.
-    final name = data.profile.name == '우리 아이' ? '친구' : data.profile.name;
+    // 이름을 안 정했으면 이름 없이 부른다 ("친구"는 펫을 뜻하는 말이라 쓰지 않는다).
+    final hasName = data.profile.name != '우리 아이';
+    final to = hasName ? '${data.profile.name}, ' : '';
     final daily = data.daily;
     if (daily.rounds >= 3) {
-      return '$name, 오늘 벌써\n${daily.rounds}판이나 풀었어! 🎉';
+      return '$to오늘 벌써\n${daily.rounds}판이나 풀었어! 🎉';
     }
     if (daily.rounds >= 1) {
-      return '$name, 좋아!\n오늘 미션까지 가 보자 📋';
+      return '$to좋아!\n오늘 미션까지 가 보자 📋';
     }
     if (daily.streak >= 3) {
-      return '$name, ${daily.streak}일째\n함께라니 최고야! 🔥';
+      return '$to${daily.streak}일째\n함께라니 최고야! 🔥';
     }
     // 오늘 첫 방문: 다음에 할 일(초록 ▶)을 말로 알려 준다.
     final hour = DateTime.now().hour;
@@ -720,7 +750,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
         : hour < 18
             ? '안녕, 반가워!'
             : '자기 전에 한 판 어때?';
-    return '$name, $hello\n초록 ▶ 누르면 시작이야!';
+    return '$to$hello\n초록 ▶ 누르면 시작이야!';
   }
 
   @override
@@ -754,6 +784,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 onProfileTap: _openProfiles,
                 onPetTap: _openPet,
                 onPetCare: _carePet,
+                nudgeDrink: _nudgeDrink,
                 pet: data.pet,
                 onSettingsTap: _openSettings,
                 subjectEmojis: [for (final s in _subjects) s.$1],
@@ -1077,6 +1108,7 @@ class _Header extends StatelessWidget {
     required this.onProfileTap,
     required this.onPetTap,
     required this.onPetCare,
+    this.nudgeDrink = false,
     required this.pet,
     required this.onSettingsTap,
     required this.subjectEmojis,
@@ -1099,6 +1131,7 @@ class _Header extends StatelessWidget {
 
   /// 홈에서 바로 돌보기 (밥·물)
   final Future<void> Function({required bool meal}) onPetCare;
+  final bool nudgeDrink;
 
   /// 지금 친구 상태
   final PetState pet;
@@ -1240,6 +1273,7 @@ class _Header extends StatelessWidget {
               onOpenRoom: onPetTap,
               onMeet: onPetTap,
               onCare: onPetCare,
+              nudgeDrink: nudgeDrink,
             ),
             const SizedBox(height: 14),
             Row(

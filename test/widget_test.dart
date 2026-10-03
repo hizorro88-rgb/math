@@ -313,39 +313,52 @@ void main() {
     expect(find.text('계속하기'), findsOneWidget);
   });
 
-  testWidgets('첫 실행 온보딩: 이름·나이·소리를 고르고 홈으로 간다', (tester) async {
+  testWidgets('첫 실행: 어른 화면 한 장 → 건네주기 → 알 → 톡톡 부화 → 선물·첫 밥 → 첫 판 → 홈',
+      (tester) async {
     await tester.pumpWidget(const PreschoolMathApp(showOnboarding: true));
     await tester.pumpAndSettle();
 
-    // ① 아바타 + 이름
-    await scrollAndTap(tester, find.text('🦊'));
+    // ① 어른 화면 한 장: 이름·얼굴·나이·소리
     await tester.enterText(find.byType(TextField), '하늘');
-    await scrollAndTap(tester, find.text('다음'));
+    await scrollAndTap(tester, find.text('🦊'));
+    await scrollAndTap(tester, find.textContaining('4살'));
+    await scrollAndTap(tester, find.byKey(const ValueKey('handoff-go')));
 
-    // ② 이름 바로 다음에 박사님이 함께할 친구를 고르게 한다
+    // ② 건네주기 → 아무 데나 누르면 아이 구간
+    expect(find.text('화면을 눌러 봐!'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('handoff')));
+    await tester.pumpAndSettle();
+
+    // ③ 알 고르기 → 톡톡 세 번
     expect(find.text('쿼카 박사'), findsOneWidget);
     await tester.tap(find.byKey(const ValueKey('egg-0')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(const ValueKey('pick-0')));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 1600)); // 흔들흔들 → 부화
     await tester.pumpAndSettle();
-    await tester.tap(find.byKey(const ValueKey('hatch-done')));
-    await tester.pumpAndSettle();
+    for (var i = 0; i < 3; i++) {
+      await tester.tap(find.byKey(const ValueKey('egg-tap')));
+      await tester.pumpAndSettle();
+    }
     expect((await PetStore.load()).chosen, isTrue);
 
-    // ③ 나이 고르기
-    await scrollAndTap(tester, find.textContaining('6살'));
-    await scrollAndTap(tester, find.text('다음'));
+    // ④ 선물 → 첫 밥 (코인 0이어도 첫 밥을 줄 수 있다)
+    await tester.tap(find.byKey(const ValueKey('gift')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('first-feed')));
+    await tester.pumpAndSettle();
+    expect((await PetStore.load()).meals, 1);
 
-    // ④ 소리 확인 후 시작
-    expect(find.text('소리를 확인해 볼까요?'), findsOneWidget);
-    await scrollAndTap(tester, find.text('잘 들려요! 시작하기'));
+    // ⑤ 첫 문제로 바로
+    await tester.tap(find.byKey(const ValueKey('hatch-done')));
+    await tester.pumpAndSettle();
+    expect(find.bySemanticsLabel(RegExp('· 1단계')), findsOneWidget);
 
-    // 홈: 바뀐 프로필과 나이 추천 배지가 보인다.
+    // 그만하고 홈으로: 바뀐 프로필·나이 추천·물 주기 안내
+    await tester.tap(find.byIcon(Icons.close_rounded));
+    await tester.pumpAndSettle();
     expect(find.text('쿼카 학교'), findsOneWidget);
     expect(find.text('🦊'), findsOneWidget); // 헤더 프로필 아바타
-    expect(find.textContaining('하늘,'), findsOneWidget); // 인사말에 이름
+    expect(find.textContaining('목말라요'), findsOneWidget);
     await tester.ensureVisible(find.text('👍 추천'));
     expect(find.text('👍 추천'), findsOneWidget);
     expect(Sounds.enabled, isTrue);
@@ -476,8 +489,8 @@ void main() {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
-    // 잠긴 7살 카드에는 추천 표시가 붙지 않는다.
-    expect(find.text('👍 추천'), findsOneWidget);
+    // 고른 나이(7살)가 잠겨 있으면 추천 표시를 붙이지 않는다 (8살에게 '4살 추천'도 이상하다).
+    expect(find.text('👍 추천'), findsNothing);
     await tester.tap(find.byKey(const ValueKey('quick-start')));
     await tester.pumpAndSettle();
     expect(find.text('부모님 확인'), findsNothing);
@@ -868,5 +881,7 @@ void main() {
     final prefs = await SharedPreferences.getInstance();
     expect(prefs.getInt('p2_age_category_v1'), 2); // 6살 = 인덱스 2
     expect(Profiles.activeId, 2); // 만든 프로필로 바로 전환
+    // 새 아이도 알 고르기부터 (첫 실행과 같은 길)
+    expect(find.text('쿼카 박사'), findsOneWidget);
   });
 }

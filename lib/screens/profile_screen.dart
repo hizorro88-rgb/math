@@ -10,6 +10,7 @@ import '../widgets/quokka_avatar.dart';
 import 'level_map_screen.dart';
 import 'onboarding_screen.dart';
 import 'pass_screen.dart';
+import 'pet_intro_screen.dart';
 
 /// 프로필 선택 화면: 누가 놀지 고르고, 프로필을 만들고 고치고 지운다.
 /// 진행도·코인·미션은 프로필마다 따로 저장된다.
@@ -72,7 +73,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
       context: context,
       builder: (context) => const _ProfileDialog(),
     );
-    if (created == true) await _load();
+    if (created != true || !mounted) return;
+    // 새 아이도 첫 실행과 같은 길: 알 고르기 → 톡톡 부화 → 첫 선물·첫 밥 → 홈
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const PetIntroScreen()),
+    );
+    if (!mounted) return;
+    await _select((await Profiles.active()));
   }
 
   Future<void> _editProfile(Profile profile) async {
@@ -299,8 +306,9 @@ class _ProfileDialogState extends State<_ProfileDialog> {
   }
 
   Future<void> _save() async {
-    final name = _nameController.text.trim();
-    if (name.isEmpty) return;
+    // 이름은 안 써도 된다 (눌렀는데 아무 일도 없으면 고장으로 안다).
+    final typed = _nameController.text.trim();
+    final name = typed.isEmpty ? '우리 아이' : typed;
     final editing = widget.editing;
     int profileId;
     if (editing != null) {

@@ -158,14 +158,16 @@ void main() {
       expect(s.stage, 1);
     });
 
-    test('고르면 아기 단계로 시작하고 배가 부르다', () async {
+    test('고르면 아기 단계로 시작하고 배는 반쯤 차 있다', () async {
       await PetStore.choose(petSpeciesList[1]);
       final s = await PetStore.load();
       expect(s.chosen, isTrue);
       expect(s.species?.id, 'drop');
       expect(s.stage, 1);
-      expect(s.fullness, 100);
-      expect(s.hydration, 100);
+      // 반쯤 찬 채로 태어난다 — 첫 밥으로 차오르는 걸 직접 본다 (졸린 기준보다는 높다).
+      expect(s.fullness, petStartGauge);
+      expect(s.hydration, petStartGauge);
+      expect(s.sleepy, isFalse);
       expect(s.meals, 0);
     });
 
