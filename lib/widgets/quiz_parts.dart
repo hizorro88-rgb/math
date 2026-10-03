@@ -172,7 +172,7 @@ class QuizProgressDots extends StatelessWidget {
             ),
           ],
           // 끝이 어디인지 그림으로
-          SizedBox(width: gap + 2),
+          const SizedBox(width: gap + 2),
           Text('🏁', style: TextStyle(fontSize: size + 2)),
         ],
       );

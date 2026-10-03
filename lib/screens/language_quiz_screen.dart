@@ -669,9 +669,9 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
+                const Text(
                   '이렇게 들렸어요',
-                  style: const TextStyle(fontSize: 13, color: AppColors.inkSoft),
+                  style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
                 ),
                 const SizedBox(height: 4),
                 Text(
