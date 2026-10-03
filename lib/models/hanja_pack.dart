@@ -67,7 +67,7 @@ final LanguagePack hanjaPack = LanguagePack(
   emoji: '📜',
   ttsLang: 'ko-KR',
   types: const [
-    LangUnitType('한자 소리 찾기', '소리→한자', '🔊', listening: true), // 0
+    LangUnitType('한자 소리 찾기', '소리→한자', '👂', listening: true), // 0
     LangUnitType('한자 보고 뜻 찾기', '한자→뜻', '📖', textDisplay: true), // 1
     LangUnitType('뜻 보고 한자 찾기', '뜻→한자', '🔍', textDisplay: true), // 2
     LangUnitType('그림 보고 한자 찾기', '그림→한자', '🖼️'), // 3
@@ -80,8 +80,8 @@ final LanguagePack hanjaPack = LanguagePack(
       desc: '하늘 천, 땅 지 — 훈음으로 한자를 만나요',
       color: const Color(0xFF7E57C2),
       units: [
-        LangUnit(title: '한자 소리 찾기', emoji: '🔊', typeIndex: 0),
-        LangUnit(title: '한자 보고 뜻 찾기', emoji: '📖', typeIndex: 1),
+        LangUnit(title: '한자 소리 찾기', emoji: '👂', typeIndex: 0),
+        LangUnit(title: '한자 보고 뜻 찾기', emoji: '🔍', typeIndex: 1),
       ],
     ),
     LangCategory(

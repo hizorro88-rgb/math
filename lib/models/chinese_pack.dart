@@ -91,7 +91,7 @@ final LanguagePack chinesePack = LanguagePack(
   emoji: '🀄',
   ttsLang: 'zh-CN',
   types: const [
-    LangUnitType('낱말 소리 찾기', '낱말 소리', '🔊', listening: true), // 0
+    LangUnitType('낱말 소리 찾기', '낱말 소리', '👂', listening: true), // 0
     LangUnitType('숫자 소리 찾기', '숫자 소리', '👂', listening: true), // 1
     LangUnitType('한자 보고 그림 찾기', '한자→그림', '🔍', textDisplay: true), // 2
     LangUnitType('그림 보고 한자 찾기', '그림→한자', '🖼️'), // 3
@@ -106,7 +106,7 @@ final LanguagePack chinesePack = LanguagePack(
       desc: '소리를 듣고 그림·숫자를 찾아요',
       color: const Color(0xFF5B6CF0),
       units: [
-        LangUnit(title: '낱말 소리 찾기', emoji: '🔊', typeIndex: 0),
+        LangUnit(title: '낱말 소리 찾기', emoji: '👂', typeIndex: 0),
         LangUnit(title: '숫자 소리 찾기', emoji: '👂', typeIndex: 1),
       ],
     ),

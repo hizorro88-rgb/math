@@ -101,7 +101,7 @@ final LanguagePack japanesePack = LanguagePack(
   emoji: '🎌',
   ttsLang: 'ja-JP',
   types: const [
-    LangUnitType('かな 소리 찾기', 'かな 소리', '🔊', listening: true), // 0
+    LangUnitType('かな 소리 찾기', 'かな 소리', '👂', listening: true), // 0
     LangUnitType('あいうえお 순서', '순서', '🐾', textDisplay: true), // 1
     LangUnitType('낱말 듣고 그림 찾기', '듣고 그림', '🔍', textDisplay: true), // 2
     LangUnitType('그림 보고 낱말 찾기', '그림→낱말', '🖼️'), // 3
@@ -118,7 +118,7 @@ final LanguagePack japanesePack = LanguagePack(
       desc: '소리로 히라가나와 친해져요',
       color: const Color(0xFFD65DB1),
       units: [
-        LangUnit(title: 'かな 소리 찾기', emoji: '🔊', typeIndex: 0),
+        LangUnit(title: 'かな 소리 찾기', emoji: '👂', typeIndex: 0),
         LangUnit(title: 'あいうえお 순서', emoji: '🐾', typeIndex: 1),
       ],
     ),

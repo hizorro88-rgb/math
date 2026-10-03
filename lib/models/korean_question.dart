@@ -14,7 +14,7 @@ enum KrQuizType {
   listenVowel('모음 소리 찾기', '모음 소리', '🎵'),
 
   /// 음절 소리를 듣고 글자를 찾는다 (가 → 가)
-  listenSyllable('글자 소리 찾기', '글자 소리', '🔊'),
+  listenSyllable('글자 소리 찾기', '글자 소리', '👂'),
 
   /// 가나다 순서에서 다음 글자를 찾는다 (가 나 다 ?)
   syllableOrder('가나다 순서', '가나다', '🐾'),

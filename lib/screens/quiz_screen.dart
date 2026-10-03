@@ -131,6 +131,7 @@ class _QuizScreenState extends State<QuizScreen> {
       task: '',
       speech: _question.speechText,
       retry: _isRetryQuestion,
+      bonus: _isBonusQuestion,
       force: force);
 
   /// 세로셈: 현재 문제에 맞는 자리 칸을 준비한다 (정답 자리수만큼).
@@ -147,6 +148,8 @@ class _QuizScreenState extends State<QuizScreen> {
     final index = _slots.indexOf(null);
     if (index == -1) return;
     setState(() => _slots[index] = digit);
+    // 누른 숫자를 읽어 준다 (다 채우면 채점 음성이 이어진다).
+    if (_slots.contains(null)) QuizVoice.tile('$digit');
 
     if (!_slots.contains(null)) {
       var value = 0;
@@ -374,7 +377,9 @@ class _QuizScreenState extends State<QuizScreen> {
         line: _answered
               ? null
               : quizCheerLine(
-                  index: _currentIndex, retry: _isRetryQuestion),
+                  index: _currentIndex,
+                  retry: _isRetryQuestion,
+                  bonus: _isBonusQuestion),
           reaction: _answered ? _isCorrect : null,
       ),
       answers: _question.vertical ? _buildKeypad() : _buildChoices(),

@@ -28,7 +28,7 @@ class DailyMission {
 /// 전체 미션 풀. 매일 이 중 3개가 뽑힌다 (1번은 항상 '퀴즈 3판').
 const List<DailyMission> dailyMissions = [
   DailyMission(
-      id: 'rounds3', emoji: '🎯', title: '퀴즈 3판 풀기', target: 3, reward: 30),
+      id: 'rounds3', emoji: '🔁', title: '퀴즈 3판 풀기', target: 3, reward: 30),
   DailyMission(
       id: 'correct20',
       emoji: '✏️',

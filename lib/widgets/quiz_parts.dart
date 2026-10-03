@@ -40,13 +40,17 @@ class QuizVoice {
   ];
 
   /// 맞혔을 때. 연속 정답은 그 자체가 사건이 되게 따로 읽어 준다.
-  static void correct(int combo) {
-    if (combo == 3) {
-      Speech.speak('와, 3개 연속이에요!');
-    } else if (combo == 5) {
-      Speech.speak('대단해요, 5연속!');
+  /// [say]가 있으면 먼저 읽는다 — 낱말 만들기를 끝내면 만든 낱말을 들려준 뒤 칭찬.
+  static void correct(int combo, {String? say, String lang = 'ko-KR'}) {
+    final praise = combo == 3
+        ? '와, 3개 연속이에요!'
+        : combo == 5
+            ? '대단해요, 5연속!'
+            : _correct[_random.nextInt(_correct.length)];
+    if (say == null) {
+      Speech.speak(praise);
     } else {
-      Speech.speak(_correct[_random.nextInt(_correct.length)]);
+      Speech.speakParts([(say, lang), (praise, 'ko-KR')]);
     }
   }
 
@@ -78,6 +82,7 @@ class QuizVoice {
     required String speech,
     String lang = 'ko-KR',
     bool retry = false,
+    bool bonus = false,
     bool force = false,
   }) {
     if (force) {
@@ -89,6 +94,7 @@ class QuizVoice {
         (speech.endsWith('?') || speech.endsWith('요') || speech.endsWith('요.'));
     Speech.speakParts([
       if (retry) ('아까 그 문제예요!', 'ko-KR'),
+      if (bonus) ('보너스 문제! 맞히면 코인 두 배!', 'ko-KR'),
       if (!selfContained) (task, 'ko-KR'),
       (speech, lang),
     ]);
@@ -203,7 +209,7 @@ class _Dot extends StatelessWidget {
     final (fill, border) = switch (state) {
       QuizDot.pending => (AppColors.line, AppColors.line),
       QuizDot.correct => (AppColors.correct, AppColors.correct),
-      QuizDot.missed => (AppColors.wrongSurface, AppColors.wrong),
+      QuizDot.missed => (const Color(0xFFFFC9A8), const Color(0xFFFFC9A8)),
       QuizDot.fixed => (AppColors.selectedFill, AppColors.correct),
     };
     final s = active ? size * 1.4 : size;
@@ -289,7 +295,7 @@ class QuizTopBar extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             if (combo >= 3) ...[
-              _Chip(text: '🔥$combo', color: const Color(0xFFFFE8D2)),
+              _Chip(text: '✨$combo', color: const Color(0xFFFFE8D2)),
               const SizedBox(width: 6),
             ],
             _Chip(text: '🪙 $coins', color: AppColors.rewardSurface),
@@ -479,18 +485,17 @@ class QuizCard extends StatelessWidget {
 
 // ───────────────────────── 쿼카 응원 ─────────────────────────
 
-const _cheerAsking = [
-  '천천히 잘 보자!',
-  '음… 어떤 게 답일까?',
-  '쿼카랑 같이 해 보자!',
-  '할 수 있어!',
-  '이번 문제도 재밌겠다!',
-];
-/// 문제를 풀 때 쿼카가 하는 말 (리빌드마다 흔들리지 않게 문항 번호로 고른다).
-String quizCheerLine({required int index, required bool retry}) {
+/// 쿼카가 말풍선을 띄우는 때는 특별한 순간뿐 (다시 나온 문제·보너스·절반).
+/// 매 문제 글을 띄우면 아이에게는 읽지 못하는 소음이다.
+String? quizCheerLine({
+  required int index,
+  required bool retry,
+  bool bonus = false,
+}) {
   if (retry) return '아까 그 문제야! 할 수 있어!';
+  if (bonus) return '⚡ 보너스! 맞히면 🪙 두 배!';
   if (index == 5) return '절반 왔어! 조금만 더!';
-  return _cheerAsking[index % _cheerAsking.length];
+  return null;
 }
 
 /// 문제 카드와 보기 사이의 쿼카 선생님.
@@ -963,7 +968,7 @@ class QuizFeedbackPanel extends StatelessWidget {
                       borderRadius: BorderRadius.circular(999),
                     ),
                     child: Text(
-                      fire ? '+$gained 🪙🔥' : '+$gained 🪙',
+                      fire ? '+$gained 🪙✨' : '+$gained 🪙',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,

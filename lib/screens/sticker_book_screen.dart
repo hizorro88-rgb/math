@@ -254,25 +254,16 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
   }
 
   Future<void> _clearCanvas() async {
-    final ok = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-        title: const Text('꾸미기 판을 다 지울까요?'),
-        content: const Text('붙인 스티커가 모두 떨어져요.\n(모은 스티커는 그대로예요!)'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('취소'),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('다 지우기'),
-          ),
-        ],
-      ),
+    final ok = await showKidConfirm(
+      context,
+      emoji: '🗑️',
+      question: '판을 다 지울까요?',
+      detail: '모은 스티커는 그대로예요',
+      speech: '판을 다 지울까요? 초록 버튼을 누르면 그대로 둬요',
+      keepLabel: '그대로 둘래요',
+      actionLabel: '🗑️ 다 지우기',
     );
-    if (ok != true || !mounted) return;
+    if (!ok || !mounted) return;
     setState(() {
       _canvas = [];
       _erasing = false;
@@ -304,7 +295,6 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
     if (!mounted || result == null) return;
 
     Sounds.correct(1);
-    Speech.speak('${sticker.name} 스티커!');
     await _load();
     if (!mounted) return;
 
@@ -332,6 +322,7 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
     required String message,
   }) async {
     Sounds.complete();
+    Speech.speak(title);
     await showDialog<void>(
       context: context,
       builder: (context) => Dialog(

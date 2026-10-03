@@ -78,7 +78,7 @@ class ResultScreen extends StatelessWidget {
   int get _lineIndex => (correctCount * 7 + totalCount) % 3;
 
   static const _messages = [
-    ['괜찮아요! 다시 해 볼까요? 🌱', '한 번 더 하면 늘어요! 🌱', '시작이 반이에요! 🌱'], // 0별
+    ['괜찮아요! 다시 해 볼까요? 🙂', '한 번 더 하면 늘어요! 🙂', '시작이 반이에요! 🙂'], // 0별
     ['잘했어요! 조금만 더 힘내요 💪', '좋아요, 감 잡았어요! 💪', '점점 잘하고 있어요! 💪'],
     ['정말 잘했어요! 👏', '멋져요, 별 두 개! 👏', '거의 다 왔어요! 👏'],
     ['와, 최고예요! 🏆', '완벽에 가까워요! 🏆', '오늘의 주인공이에요! 🏆'],
@@ -638,7 +638,7 @@ class _MissionBanner extends StatelessWidget {
       child: Column(
         children: [
           const Text(
-            '🎯 오늘의 미션 완료!',
+            '📋 오늘의 미션 완료!',
             style: TextStyle(
               fontSize: 17,
               fontWeight: FontWeight.bold,

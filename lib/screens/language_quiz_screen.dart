@@ -151,6 +151,7 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
       speech: _question.speech,
       lang: widget.pack.ttsLang,
       retry: _isRetryQuestion,
+      bonus: _isBonusQuestion,
       force: force);
 
   void _ensureTiles() {
@@ -166,7 +167,10 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
     if (_picked.contains(index)) return;
     setState(() => _picked.add(index));
     // 누른 조각을 소리 내어 읽어 준다 — 글자를 몰라도 소리로 맞춰 본다.
-    QuizVoice.tile(_question.tiles[index], lang: widget.pack.ttsLang);
+    // (마지막 조각이면 채점할 때 완성된 낱말을 통째로 읽는다)
+    if (_picked.length < _question.slotCount) {
+      QuizVoice.tile(_question.tiles[index], lang: widget.pack.ttsLang);
+    }
     if (_picked.length >= _question.slotCount) {
       _selectChoice(
         [for (final i in _picked) _question.tiles[i]].join(_question.tileJoin),
@@ -218,7 +222,8 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
     if (_isCorrect) {
       Sounds.correct(_combo);
       HapticFeedback.lightImpact().ignore();
-      QuizVoice.correct(_isRetryQuestion ? 0 : _combo);
+      QuizVoice.correct(_isRetryQuestion ? 0 : _combo,
+          say: _question.tiles.isNotEmpty ? choice : null, lang: widget.pack.ttsLang);
     } else {
       Sounds.wrong();
       HapticFeedback.heavyImpact().ignore();
@@ -360,7 +365,9 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
                 line: _answered
               ? null
               : quizCheerLine(
-                  index: _currentIndex, retry: _isRetryQuestion),
+                  index: _currentIndex,
+                  retry: _isRetryQuestion,
+                  bonus: _isBonusQuestion),
           reaction: _answered ? _isCorrect : null,
               ),
         answers: _isSpeakingQuestion

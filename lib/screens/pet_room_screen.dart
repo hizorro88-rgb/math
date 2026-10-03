@@ -80,9 +80,16 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
       final state = _state;
       final enough = state != null &&
           (meal ? state.coins >= petMealCost : state.coins >= petDrinkCost);
+      final face = state?.species?.emojiAt(state.stage);
       enough
-          ? showKidNotice(context, emoji: '😋', text: '배불러요! 내일 또 줘요')
-          : showKidNotice(context, emoji: '🪙', text: '코인이 모자라요. 문제를 풀면 생겨요!');
+          ? showKidNotice(context,
+              face: face,
+              emoji: meal ? '😋' : '💦',
+              text: meal ? '배불러요! 내일 또 줘요' : '물은 충분해요! 내일 또 줘요')
+          : showKidNotice(context,
+              face: face,
+              emoji: '🪙',
+              text: '코인이 모자라요. 문제를 풀면 생겨요!');
       return;
     }
     Sounds.play('correct');

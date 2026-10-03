@@ -68,7 +68,7 @@ class _KoreanCategoryScreenState extends State<KoreanCategoryScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Text('📖', style: TextStyle(fontSize: 24)),
+                    const Text('💡', style: TextStyle(fontSize: 24)),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(

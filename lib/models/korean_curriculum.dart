@@ -91,7 +91,7 @@ class KoreanCurriculum {
     final categories = [
       KrCategory(
         title: '한글 첫걸음',
-        emoji: '🌱',
+        emoji: '🍼',
         desc: '그림과 소리로 낱말과 친해져요',
         color: const Color(0xFF1CB0F6),
         units: [
@@ -113,7 +113,7 @@ class KoreanCurriculum {
         color: const Color(0xFFFF9600),
         units: [
           KrUnit(
-              title: '글자 소리 찾기', emoji: '🔊', type: KrQuizType.listenSyllable),
+              title: '글자 소리 찾기', emoji: '👂', type: KrQuizType.listenSyllable),
           KrUnit(
               title: '자음 소리 찾기',
               emoji: '🎼',

@@ -93,6 +93,18 @@ void main() {
     expect(find.text('🪙 0'), findsOneWidget);
   });
 
+  testWidgets('잠긴 단계 원을 누르면 그림+말로 반짝이는 원부터 하라고 알려 준다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await scrollAndTap(tester, find.text('4살'));
+    await tester.tap(find.bySemanticsLabel('2단계 (아직 잠김)').first);
+    await tester.pump(const Duration(milliseconds: 600));
+    expect(find.text('반짝이는 동그라미부터 해요!'), findsOneWidget);
+    await tester.pumpAndSettle();
+    expect(find.text('반짝이는 동그라미부터 해요!'), findsNothing);
+  });
+
   testWidgets('통과한 기록이 있으면 다음 단계가 열리고 점수가 보인다', (tester) async {
     // 일부러 예전 v2 키로 저장해서 마이그레이션도 함께 확인한다.
     SharedPreferences.setMockInitialValues({
@@ -163,7 +175,7 @@ void main() {
     // 다시 X → '그만하기'를 누르면 지도로 나간다.
     await tester.tap(find.byIcon(Icons.close_rounded));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('그만하기'));
+    await tester.tap(find.text('🏠 그만하기'));
     await tester.pumpAndSettle();
     expect(find.text('몇 개일까요?'), findsNothing);
   });

@@ -67,7 +67,7 @@ const petSpeciesList = <PetSpecies>[
     egg: '🥚',
     hint: '시원한 소리가 나요',
     color: Color(0xFF4D96FF),
-    stages: ['💧', '🐟', '🐬', '🐋', '🐳'],
+    stages: ['🫧', '🐟', '🐬', '🐋', '🐳'],
   ),
   PetSpecies(
     id: 'ember',

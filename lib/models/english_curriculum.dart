@@ -94,7 +94,7 @@ class EnglishCurriculum {
         units: [
           EnUnit(
               title: '알파벳 소리 찾기',
-              emoji: '🔊',
+              emoji: '👂',
               type: EnQuizType.listenLetter),
           EnUnit(title: 'ABC 순서', emoji: '🐾', type: EnQuizType.alphabetOrder),
           EnUnit(

@@ -107,6 +107,7 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
       task: _question.instruction,
       speech: _question.speech,
       retry: _isRetryQuestion,
+      bonus: _isBonusQuestion,
       force: force);
 
   void _ensureTiles() {
@@ -122,7 +123,10 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
     if (_picked.contains(index)) return;
     setState(() => _picked.add(index));
     // 누른 조각을 소리 내어 읽어 준다 — 글자를 몰라도 소리로 맞춰 본다.
-    QuizVoice.tile(_question.tiles[index], lang: 'ko-KR');
+    // (마지막 조각이면 채점할 때 완성된 낱말을 통째로 읽는다)
+    if (_picked.length < _question.answer.length) {
+      QuizVoice.tile(_question.tiles[index], lang: 'ko-KR');
+    }
     if (_picked.length >= _question.answer.length) {
       _selectChoice([for (final i in _picked) _question.tiles[i]].join());
     }
@@ -171,7 +175,8 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
     if (_isCorrect) {
       Sounds.correct(_combo);
       HapticFeedback.lightImpact().ignore();
-      QuizVoice.correct(_isRetryQuestion ? 0 : _combo);
+      QuizVoice.correct(_isRetryQuestion ? 0 : _combo,
+          say: _question.tiles.isNotEmpty ? choice : null);
     } else {
       Sounds.wrong();
       HapticFeedback.heavyImpact().ignore();
@@ -298,7 +303,9 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
           line: _answered
               ? null
               : quizCheerLine(
-                  index: _currentIndex, retry: _isRetryQuestion),
+                  index: _currentIndex,
+                  retry: _isRetryQuestion,
+                  bonus: _isBonusQuestion),
           reaction: _answered ? _isCorrect : null,
         ),
         answers:

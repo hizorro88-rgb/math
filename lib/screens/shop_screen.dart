@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/progress.dart';
 import '../models/shop.dart';
 import '../services/sounds.dart';
+import '../services/speech.dart';
 import '../widgets/kid_notice.dart';
 import '../widgets/quokka_avatar.dart';
 
@@ -44,10 +45,14 @@ class _ShopScreenState extends State<ShopScreen> {
   Future<void> _onItemTap(ShopItem item) async {
     if (_owned.contains(item.id)) {
       // 보유 중: 착용 ↔ 벗기
+      // 소리 없이 바뀌면 아이는 눌린 줄 모른다 — 딩동 + 한마디.
       if (_isEquipped(item)) {
         await ShopStore.unequip(item);
+        Speech.speak('${item.name} 벗었어요');
       } else {
         await ShopStore.equip(item);
+        Sounds.play('correct');
+        Speech.speak('${item.name} 멋져요!');
       }
       await _load();
       return;

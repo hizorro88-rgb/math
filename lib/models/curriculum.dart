@@ -134,13 +134,13 @@ class Curriculum {
         units: [
           Unit(
               title: '수 세기 첫걸음',
-              emoji: '🐣',
+              emoji: '🔢',
               mode: QuizMode.counting,
               startMax: 2,
               endMax: 3),
           Unit(
               title: '5까지 세기',
-              emoji: '🐤',
+              emoji: '🔢',
               mode: QuizMode.counting,
               startMax: 4,
               endMax: 5),
@@ -160,7 +160,7 @@ class Curriculum {
         units: [
           Unit(
               title: '10까지 세기',
-              emoji: '🐥',
+              emoji: '🔢',
               mode: QuizMode.counting,
               startMax: 6,
               endMax: 10),
@@ -172,7 +172,7 @@ class Curriculum {
               endMax: 10),
           Unit(
               title: '덧셈 첫걸음',
-              emoji: '🐞',
+              emoji: '➕',
               mode: QuizMode.addition,
               startMax: 3,
               endMax: 5),
@@ -186,13 +186,13 @@ class Curriculum {
         units: [
           Unit(
               title: '뺄셈 첫걸음',
-              emoji: '🐰',
+              emoji: '➖',
               mode: QuizMode.subtraction,
               startMax: 3,
               endMax: 5),
           Unit(
               title: '섞어서 연습',
-              emoji: '🦝',
+              emoji: '🎲',
               mode: QuizMode.mixed,
               startMax: 4,
               endMax: 5),
@@ -204,7 +204,7 @@ class Curriculum {
               endMax: 5),
           Unit(
               title: '20까지 세기',
-              emoji: '🦉',
+              emoji: '🔢',
               mode: QuizMode.counting,
               startMax: 11,
               endMax: 20),
@@ -218,19 +218,19 @@ class Curriculum {
         units: [
           Unit(
               title: '덧셈 도전',
-              emoji: '🦊',
+              emoji: '➕',
               mode: QuizMode.addition,
               startMax: 6,
               endMax: 10),
           Unit(
               title: '뺄셈 도전',
-              emoji: '🐼',
+              emoji: '➖',
               mode: QuizMode.subtraction,
               startMax: 6,
               endMax: 10),
           Unit(
               title: '섞어서 도전',
-              emoji: '🦁',
+              emoji: '🎲',
               mode: QuizMode.mixed,
               startMax: 7,
               endMax: 10),
@@ -243,7 +243,7 @@ class Curriculum {
           // 시계의 기준값은 분: 12(정각만) → 24(몇 시 반 섞임)
           Unit(
               title: '시계 읽기',
-              emoji: '🕐',
+              emoji: '🕒',
               mode: QuizMode.clock,
               startMax: 12,
               endMax: 24),
@@ -251,19 +251,19 @@ class Curriculum {
       ),
       AgeCategory(
         title: '초등 1학년',
-        emoji: '✏️',
+        emoji: '📕',
         desc: '받아올림·받아내림 · 세로셈 · 시계 보기',
         color: const Color(0xFFA560E8),
         units: [
           Unit(
               title: '큰 수 덧셈',
-              emoji: '🐘',
+              emoji: '➕',
               mode: QuizMode.addition,
               startMax: 11,
               endMax: 15),
           Unit(
               title: '큰 수 뺄셈',
-              emoji: '🦒',
+              emoji: '➖',
               mode: QuizMode.subtraction,
               startMax: 11,
               endMax: 15),
@@ -275,13 +275,13 @@ class Curriculum {
               endMax: 10),
           Unit(
               title: '받아올림 덧셈',
-              emoji: '🐳',
+              emoji: '➕',
               mode: QuizMode.addition,
               startMax: 16,
               endMax: 20),
           Unit(
               title: '받아내림 뺄셈',
-              emoji: '🦈',
+              emoji: '➖',
               mode: QuizMode.subtraction,
               startMax: 16,
               endMax: 20),
@@ -305,7 +305,7 @@ class Curriculum {
               endMax: 24),
           Unit(
               title: '덧뺄셈 마스터',
-              emoji: '🦄',
+              emoji: '🎲',
               mode: QuizMode.mixed,
               startMax: 16,
               endMax: 20),
@@ -319,25 +319,25 @@ class Curriculum {
         units: [
           Unit(
               title: '두 자리 덧셈',
-              emoji: '🚂',
+              emoji: '➕',
               mode: QuizMode.addition,
               startMax: 25,
               endMax: 50),
           Unit(
               title: '받아올림 세로 덧셈',
-              emoji: '🚜',
+              emoji: '🧮',
               mode: QuizMode.verticalAdd,
               startMax: 50,
               endMax: 99),
           Unit(
               title: '받아내림 세로 뺄셈',
-              emoji: '⛵',
+              emoji: '📝',
               mode: QuizMode.verticalSub,
               startMax: 50,
               endMax: 99),
           Unit(
               title: '두 자리 뺄셈',
-              emoji: '🚁',
+              emoji: '➖',
               mode: QuizMode.subtraction,
               startMax: 25,
               endMax: 50),
@@ -349,25 +349,25 @@ class Curriculum {
               endMax: 5),
           Unit(
               title: '곱셈 첫걸음 (2~3단)',
-              emoji: '🐹',
+              emoji: '✖️',
               mode: QuizMode.multiplication,
               startMax: 2,
               endMax: 3),
           Unit(
               title: '곱셈 쑥쑥 (4~5단)',
-              emoji: '🐨',
+              emoji: '✖️',
               mode: QuizMode.multiplication,
               startMax: 4,
               endMax: 5),
           Unit(
               title: '곱셈 점프 (6~7단)',
-              emoji: '🐙',
+              emoji: '✖️',
               mode: QuizMode.multiplication,
               startMax: 6,
               endMax: 7),
           Unit(
               title: '곱셈 완성 (8~9단)',
-              emoji: '🦅',
+              emoji: '✖️',
               mode: QuizMode.multiplication,
               startMax: 8,
               endMax: 9),
@@ -381,31 +381,31 @@ class Curriculum {
         units: [
           Unit(
               title: '나눗셈 첫걸음',
-              emoji: '🐬',
+              emoji: '➗',
               mode: QuizMode.division,
               startMax: 3,
               endMax: 5),
           Unit(
               title: '나눗셈 도전',
-              emoji: '🦕',
+              emoji: '➗',
               mode: QuizMode.division,
               startMax: 6,
               endMax: 9),
           Unit(
               title: '큰 수 곱셈',
-              emoji: '🚀',
+              emoji: '✖️',
               mode: QuizMode.multiplication,
               startMax: 11,
               endMax: 19),
           Unit(
               title: '세 자리 덧뺄셈',
-              emoji: '🏰',
+              emoji: '🎲',
               mode: QuizMode.mixed,
               startMax: 100,
               endMax: 400),
           Unit(
               title: '수학 왕 되기',
-              emoji: '👑',
+              emoji: '🎲',
               mode: QuizMode.mixed,
               startMax: 400,
               endMax: 999),
@@ -426,19 +426,19 @@ class Curriculum {
               endMax: 5),
           Unit(
               title: '분수 도전',
-              emoji: '🧀',
+              emoji: '🍕',
               mode: QuizMode.fraction,
               startMax: 6,
               endMax: 12),
           Unit(
               title: '소수 첫걸음',
-              emoji: '💧',
+              emoji: '📏',
               mode: QuizMode.decimal,
               startMax: 4,
               endMax: 9),
           Unit(
               title: '소수 도전',
-              emoji: '🌊',
+              emoji: '📏',
               mode: QuizMode.decimal,
               startMax: 10,
               endMax: 50),

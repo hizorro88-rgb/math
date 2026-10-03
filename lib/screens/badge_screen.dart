@@ -106,7 +106,7 @@ class _BadgeCard extends StatelessWidget {
           Opacity(
             opacity: earned ? 1 : 0.35,
             child: Text(
-              earned ? badge.emoji : '🔒',
+              earned ? badge.emoji : '❔',
               style: const TextStyle(fontSize: 36),
             ),
           ),

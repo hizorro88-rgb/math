@@ -69,7 +69,7 @@ const convExpressionsPerLevel =
 
 /// 문제 유형 (저장 통계가 순서 기반이라 뒤에만 추가할 것)
 const _convTypes = [
-  LangUnitType('뜻 고르기', '뜻', '📖', textDisplay: true),
+  LangUnitType('뜻 고르기', '뜻', '🔍', textDisplay: true),
   LangUnitType('영어로 말하기', '영어', '🗣️', textDisplay: true),
   LangUnitType('듣고 고르기', '듣기', '👂', listening: true),
   LangUnitType('빈칸 채우기', '빈칸', '✏️', textDisplay: true),
@@ -288,7 +288,7 @@ final conversationPack = LanguagePack(
   categories: [
     LangCategory(
       title: '기초 회화 1000',
-      emoji: '🌱',
+      emoji: '🔰',
       desc: '여행·일상에서 바로 쓰는 필수 표현 1000개',
       color: const Color(0xFF4D96FF),
       units: [for (var i = 0; i < 10; i++) _convUnit(i)],

@@ -166,9 +166,16 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       if (!mounted) return;
       final enough =
           meal ? pet.coins >= petMealCost : pet.coins >= petDrinkCost;
+      final face = pet.species?.emojiAt(pet.stage);
       enough
-          ? showKidNotice(context, emoji: '😋', text: '배불러요! 내일 또 줘요')
-          : showKidNotice(context, emoji: '🪙', text: '코인이 모자라요. 문제를 풀면 생겨요!');
+          ? showKidNotice(context,
+              face: face,
+              emoji: meal ? '😋' : '💦',
+              text: meal ? '배불러요! 내일 또 줘요' : '물은 충분해요! 내일 또 줘요')
+          : showKidNotice(context,
+              face: face,
+              emoji: '🪙',
+              text: '코인이 모자라요. 초록 ▶ 문제를 풀면 생겨요!');
       return;
     }
     Sounds.play('correct');
@@ -361,13 +368,18 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
   }
 
   Future<void> _buyFreeze() async {
+    final had = (await DailyStore.load()).freezes;
     final ok = await DailyStore.buyFreeze();
     if (!mounted) return;
+    if (!ok && had >= DailyStore.maxFreezes) {
+      showKidNotice(context, emoji: '🛡️', text: '지킴이는 벌써 넉넉해요!');
+      return;
+    }
     ok
         ? showKidNotice(context,
             emoji: '🛡️', text: '지킴이가 생겼어요! 하루 쉬어도 불꽃이 안 꺼져요')
         : showKidNotice(context,
-            emoji: '🪙', text: '코인이 모자라거나 지킴이가 이미 있어요');
+            emoji: '🪙', text: '코인이 모자라요. 문제를 풀면 생겨요!');
     if (ok) _refresh();
   }
 
@@ -696,15 +708,19 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       return '$name, 오늘 벌써\n${daily.rounds}판이나 풀었어! 🎉';
     }
     if (daily.rounds >= 1) {
-      return '$name, 좋아!\n오늘 미션까지 가 보자 🎯';
+      return '$name, 좋아!\n오늘 미션까지 가 보자 📋';
     }
     if (daily.streak >= 3) {
       return '$name, ${daily.streak}일째\n함께라니 최고야! 🔥';
     }
+    // 오늘 첫 방문: 다음에 할 일(초록 ▶)을 말로 알려 준다.
     final hour = DateTime.now().hour;
-    if (hour < 12) return '$name, 좋은 아침이야!\n오늘도 같이 배우자!';
-    if (hour < 18) return '$name, 오늘도 왔구나!\n계속 기다렸어!';
-    return '$name, 자기 전에\n한 판 어때? 헤헤!';
+    final hello = hour < 12
+        ? '좋은 아침이야!'
+        : hour < 18
+            ? '안녕, 반가워!'
+            : '자기 전에 한 판 어때?';
+    return '$name, $hello\n초록 ▶ 누르면 시작이야!';
   }
 
   @override
@@ -820,7 +836,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                       ..._mathCategoryCards(data),
                     const SizedBox(height: 10),
                     // ── 2. 오늘의 도전: 매일 한 번씩 들르는 것들 ──
-                    const _SectionTitle('🔥 오늘의 도전'),
+                    const _SectionTitle('☀️ 오늘의 도전'),
                     _DailyCard(
                         daily: data.daily,
                         coins: data.coins,
@@ -1416,7 +1432,7 @@ class _DailyCard extends StatelessWidget {
           Row(
             children: [
               const Text(
-                '🎯 오늘의 미션',
+                '📋 오늘의 미션',
                 style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
@@ -1596,7 +1612,7 @@ class _FoldCard extends StatelessWidget {
       onTap: onTap,
       child: Row(
         children: [
-          const Text('🌱', style: TextStyle(fontSize: 18)),
+          const Text('✅', style: TextStyle(fontSize: 18)),
           const SizedBox(width: 8),
           Text(
             expanded ? '이전 단계 접기' : '이전 단계 $count개',

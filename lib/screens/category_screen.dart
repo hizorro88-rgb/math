@@ -66,7 +66,7 @@ class _CategoryScreenState extends State<CategoryScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Text('📖', style: TextStyle(fontSize: 24)),
+                    const Text('💡', style: TextStyle(fontSize: 24)),
                     const SizedBox(width: 10),
                     Expanded(
                       child: Text(
