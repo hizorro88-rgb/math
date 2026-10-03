@@ -66,7 +66,10 @@ void main() {
 
     expect(find.text('쿼카 학교'), findsOneWidget);
     expect(find.text('자유 연습'), findsOneWidget);
-    expect(find.text('지금 나는 알!'), findsOneWidget);
+    // 놀이판 6칸 (오늘 줄 + 모으기 줄)
+    for (final tile in ['오늘의 미션', '주간 보스전', '오답 노트', '꾸미기 가게', '스티커북', '배지 도감']) {
+      expect(find.bySemanticsLabel(tile), findsOneWidget, reason: tile);
+    }
 
     // 7개 카테고리
     for (final title in ['4살', '5살', '6살', '7살']) {
@@ -118,7 +121,12 @@ void main() {
     // 1, 2단계 통과 → 총 별 5개, 누적 점수 250점(병아리 칭호)
     expect(find.text('⭐ 5'), findsOneWidget);
     expect(find.text('🪙 250'), findsOneWidget);
-    expect(find.text('지금 나는 병아리!'), findsOneWidget);
+    // 칭호는 띠 — 배지 도감 맨 위에서 본다 (250점 = 노랑 띠)
+    await tester.tap(find.bySemanticsLabel('배지 도감'));
+    await tester.pumpAndSettle();
+    expect(find.text('지금 나는 노랑 띠!'), findsOneWidget);
+    await tester.pageBack();
+    await tester.pumpAndSettle();
 
     await scrollAndTap(tester, find.text('4살'));
     expect(find.text('3').first, findsOneWidget);
@@ -662,6 +670,34 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('evolve-ok')));
     await tester.pumpAndSettle();
     expect(find.byKey(const ValueKey('evolve-ok')), findsNothing);
+  });
+
+  testWidgets('어른 과정(영어회화)은 과목 시트에서 부모 확인을 거쳐야 고른다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const ValueKey('subject-picker')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.byKey(const ValueKey('subject-6')));
+    await tester.tap(find.byKey(const ValueKey('subject-6')));
+    await tester.pumpAndSettle();
+    expect(find.text('부모님 확인'), findsOneWidget);
+  });
+
+  testWidgets('놀이판의 오늘의 미션을 누르면 미션 시트가 열린다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.bySemanticsLabel('오늘의 미션'));
+    await tester.pumpAndSettle();
+    expect(find.text('▶▶▶'), findsOneWidget); // 미션은 그림으로 ('퀴즈 3판')
+  });
+
+  testWidgets('어른이 영어회화를 공부해도 아이 친구 별은 늘지 않는다', (tester) async {
+    SharedPreferences.setMockInitialValues({
+      'lang_enconv_stars_v1': ['3', '3', '3', '3', '3'],
+    });
+    expect(await PetStore.totalStars(), 0);
   });
 
   testWidgets('친구가 없으면 홈에서 만나러 갈 수 있다', (tester) async {

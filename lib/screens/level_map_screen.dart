@@ -240,6 +240,43 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     if (result == 'play') _playNext();
   }
 
+  Future<void> _openWrongNotes() async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(builder: (_) => const WrongNotesScreen()),
+    );
+    _refresh();
+  }
+
+  /// 오늘의 미션 시트: 그림 줄 + 진행 막대, 읽어 준다. 🛡️ 지킴이도 여기서.
+  Future<void> _openMissions(_MapData data) async {
+    final daily = data.daily;
+    final left = daily.missions.where((m) => !daily.isDone(m)).length;
+    Speech.speak(left == 0
+        ? '오늘의 미션을 다 했어요! 최고!'
+        : '오늘의 미션이 $left개 남았어요. 문제를 풀면 채워져요!');
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: AppColors.cream,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      builder: (context) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+          child: _DailyCard(
+            daily: daily,
+            coins: data.coins,
+            onBuyFreeze: () {
+              Navigator.of(context).pop();
+              _buyFreeze();
+            },
+          ),
+        ),
+      ),
+    );
+  }
+
   /// 홈의 "바로 시작"과 같은 판을 연다 (알림의 ▶에서도 쓴다).
   Future<void> _playNext() async {
     final data = await _dataFuture;
@@ -513,11 +550,44 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
     _refresh(); // 프로필이 바뀌면 진행도·코인 등을 다시 불러온다.
   }
 
-  /// 과목 고르기 창: 큰 버튼으로 과목 하나를 고른다.
+  /// 과목 고르기 창: 아이 과목은 2열 큰 칸, 어른 과정(영어회화)은
+  /// 구분선 아래 조용한 줄 — 아이가 실수로 들어가지 않게 부모 확인을 거친다.
   Future<void> _openSubjectPicker() async {
+    Speech.speak('어떤 과목을 배울까?');
+    final kids = [
+      for (var i = 0; i < _subjects.length; i++)
+        if (!_subjects[i].$3) i,
+    ];
+    final adults = [
+      for (var i = 0; i < _subjects.length; i++)
+        if (_subjects[i].$3) i,
+    ];
+    Widget kidTile(BuildContext context, int i) {
+      final selected = i == _subject;
+      return BouncyButton(
+        key: ValueKey('subject-$i'),
+        color: selected ? AppColors.selectedFill : Colors.white,
+        shadowColor: selected ? AppColors.correct : AppColors.outline,
+        border: Border.all(
+          color: selected ? AppColors.correct : AppColors.outline,
+          width: selected ? 3 : 2,
+        ),
+        borderRadius: 22,
+        padding: const EdgeInsets.symmetric(vertical: 12),
+        onTap: () => Navigator.of(context).pop(i),
+        child: Column(
+          children: [
+            Text(_subjects[i].$1, style: const TextStyle(fontSize: 34)),
+            const SizedBox(height: 2),
+            Text(_subjects[i].$2, style: displayStyle(fontSize: 17)),
+          ],
+        ),
+      );
+    }
+
     final picked = await showModalBottomSheet<int>(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: AppColors.cream,
       isScrollControlled: true,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
@@ -535,69 +605,50 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 style: displayStyle(fontSize: 20),
               ),
               const SizedBox(height: 14),
-              for (var i = 0; i < _subjects.length; i++) ...[
-                BouncyButton(
-                  key: ValueKey('subject-$i'),
-                  color: i == _subject ? const Color(0xFFD7FFB8) : Colors.white,
-                  shadowColor: i == _subject
-                      ? const Color(0xFFB5E48C)
-                      : Colors.grey.shade300,
-                  border: Border.all(
-                    color: i == _subject
-                        ? const Color(0xFF3DA35D)
-                        : Colors.grey.shade300,
-                    width: 2,
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  onTap: () => Navigator.of(context).pop(i),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(_subjects[i].$1,
-                          style: const TextStyle(fontSize: 22)),
-                      const SizedBox(width: 8),
-                      Text(
-                        _subjects[i].$2,
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      if (_subjects[i].$3) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 8, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFEDE7FF),
-                            borderRadius: BorderRadius.circular(999),
-                          ),
-                          child: const Text(
-                            '어른',
-                            style: TextStyle(
-                              fontSize: 12,
-                              fontWeight: FontWeight.bold,
-                              color: Color(0xFF6C4FD8),
-                            ),
-                          ),
-                        ),
-                      ],
-                      if (i == _subject) ...[
-                        const SizedBox(width: 6),
-                        const Icon(Icons.check_rounded,
-                            size: 20, color: Color(0xFF2E7D46)),
-                      ],
-                    ],
-                  ),
+              for (var r = 0; r < kids.length; r += 2) ...[
+                if (r > 0) const SizedBox(height: 10),
+                Row(
+                  children: [
+                    Expanded(child: kidTile(context, kids[r])),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: r + 1 < kids.length
+                          ? kidTile(context, kids[r + 1])
+                          : const SizedBox.shrink(),
+                    ),
+                  ],
                 ),
-                if (i != _subjects.length - 1) const SizedBox(height: 8),
+              ],
+              if (adults.isNotEmpty) ...[
+                const SizedBox(height: 18),
+                const Divider(color: AppColors.line, thickness: 2),
+                for (final i in adults)
+                  TextButton(
+                    key: ValueKey('subject-$i'),
+                    onPressed: () => Navigator.of(context).pop(i),
+                    child: Text(
+                      '👨‍👩‍👧 어른 공부 · ${_subjects[i].$1} ${_subjects[i].$2}'
+                      '${i == _subject ? ' ✓' : ''}',
+                      style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.inkSoft,
+                      ),
+                    ),
+                  ),
               ],
             ],
           ),
         ),
       ),
     );
-    if (picked != null) _setSubject(picked);
+    if (picked == null || !mounted) return;
+    // 어른 과정은 부모 확인 뒤에 (이미 그 과목이면 다시 묻지 않는다)
+    if (_subjects[picked].$3 && picked != _subject) {
+      final ok = await checkParentGate(context);
+      if (!ok || !mounted) return;
+    }
+    _setSubject(picked);
   }
 
   /// 수학 카테고리 카드 목록. 아이 나이(추천 카테고리)보다 앞의 단계는
@@ -797,8 +848,11 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
           final totalStars = data.stars.fold<int>(0, (sum, s) => sum + s) +
               data.krStars.fold<int>(0, (sum, s) => sum + s) +
               data.enStars.fold<int>(0, (sum, s) => sum + s) +
-              [for (final l in data.langStars) ...l]
-                  .fold<int>(0, (sum, s) => sum + s);
+              [
+                for (var i = 0; i < languagePacks.length; i++)
+                  // 어른 과정(영어회화) 별은 아이 별에 섞지 않는다
+                  if (!languagePacks[i].forAdults) ...data.langStars[i]
+              ].fold<int>(0, (sum, s) => sum + s);
 
           return ListView(
             padding: EdgeInsets.zero,
@@ -806,7 +860,6 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
               _Header(
                 title: '쿼카 학교',
                 greeting: _greetingFor(data),
-                totalStars: totalStars,
                 coins: data.coins,
                 equipped: data.equipped,
                 profile: data.profile,
@@ -821,6 +874,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 subjectLabels: [for (final s in _subjects) s.$2],
                 subject: _subject,
                 onSubjectPickerTap: _openSubjectPicker,
+                beltColor: rankForPoints(data.points).color,
               ),
               Padding(
                 padding: const EdgeInsets.all(16),
@@ -831,8 +885,31 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                       _QuickStartButton(next: next),
                       const SizedBox(height: 18),
                     ],
+                    // 맞춤 복습: 있을 때만 ▶ 밑에 얇은 줄로
+                    if (data.review != null) ...[
+                      _ReviewStrip(
+                        review: data.review!,
+                        onTap: () => _openReview(data.review!),
+                      ),
+                      const SizedBox(height: 14),
+                    ],
+                    // ── 1. 놀이판: 오늘 줄 + 모으기 줄 (자리 고정, 글 없이 그림 칸) ──
+                    _PlayBoard(
+                      daily: data.daily,
+                      bossCleared: data.bossCleared,
+                      wrongCount: data.wrongCount,
+                      stickerTickets: data.stickerTickets,
+                      onMissions: () => _openMissions(data),
+                      onBoss: () => _openBoss(data.bossCleared),
+                      onWrongNotes: _openWrongNotes,
+                      onShop: _openShop,
+                      onStickers: _openStickerBook,
+                      onBadges: _openBadges,
+                    ),
+                    const SizedBox(height: 22),
+                    // ── 2. 배우기 (과목은 상단 헤더의 과목 칩으로 바꾼다) ──
                     // ── 1. 배우기 (과목은 상단 헤더의 이모지 버튼으로 바꾼다) ──
-                    const _SectionTitle('📚 배우기'),
+                    _SectionTitle('📚 배우기', trailing: '⭐ $totalStars'),
                     // 고른 과목의 카테고리를 골라 들어간다.
                     if (_subject == 1)
                       for (final category in KoreanCurriculum.categories) ...[
@@ -895,224 +972,28 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                       ]
                     else
                       ..._mathCategoryCards(data),
-                    const SizedBox(height: 10),
-                    // ── 2. 오늘의 도전: 매일 한 번씩 들르는 것들 ──
-                    const _SectionTitle('☀️ 오늘의 도전'),
-                    _DailyCard(
-                        daily: data.daily,
-                        coins: data.coins,
-                        onBuyFreeze: _buyFreeze),
-                    const SizedBox(height: 14),
-                    // 주간 보스전
-                    BouncyButton(
-                      color: data.bossCleared
-                          ? Colors.white
-                          : const Color(0xFFFFF6D8),
-                      shadowColor: data.bossCleared
-                          ? Colors.grey.shade300
-                          : const Color(0xFFFFD34D),
-                      borderRadius: 22,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 14),
-                      onTap: () => _openBoss(data.bossCleared),
-                      child: Row(
-                        children: [
-                          const Text('👑', style: TextStyle(fontSize: 30)),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  '주간 보스전',
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  data.bossCleared
-                                      ? '이번 주 클리어! 다음 주에 또 만나요 ✅'
-                                      : '여러 유형 섞어 12문제 · 통과하면 +100 🪙',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.chevron_right, color: Colors.grey),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    // 맞춤 복습: 요즘 어려워한 유형을 한 판 더
-                    if (data.review != null) ...[
-                      BouncyButton(
-                        color: const Color(0xFFF3E8FF),
-                        shadowColor: const Color(0xFFD8B4FE),
-                        borderRadius: 22,
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 14, vertical: 14),
-                        onTap: () => _openReview(data.review!),
-                        child: Row(
-                          children: [
-                            const Text('🩹', style: TextStyle(fontSize: 30)),
-                            const SizedBox(width: 10),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    '맞춤 복습',
-                                    style: TextStyle(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.bold,
-                                    ),
-                                  ),
-                                  Text(
-                                    '${data.review!.subject} ${data.review!.emoji} '
-                                    '${data.review!.label} · 조금 어려웠죠? 한 판 더!',
-                                    style: TextStyle(
-                                      fontSize: 12,
-                                      color: Colors.grey.shade700,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Icon(Icons.chevron_right, color: Colors.grey),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 14),
-                    ],
-                    // 오답 노트: 자리를 고정해 두고(위치 기억),
-                    // 틀린 게 쌓였을 때만 분홍으로 눈에 띄게 한다.
-                    BouncyButton(
-                      color: data.wrongCount > 0
-                          ? const Color(0xFFFDE8F4)
-                          : Colors.white,
-                      shadowColor: data.wrongCount > 0
-                          ? const Color(0xFFF2A9D4)
-                          : Colors.grey.shade300,
-                      borderRadius: 22,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 14),
-                      onTap: () async {
-                        await Navigator.of(context).push(
-                          MaterialPageRoute(
-                              builder: (_) => const WrongNotesScreen()),
-                        );
-                        _refresh();
-                      },
-                      child: Row(
-                        children: [
-                          const Text('📒', style: TextStyle(fontSize: 30)),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  '오답 노트',
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  data.wrongCount > 0
-                                      ? '틀린 문제 ${data.wrongCount}개 · 맞히면 노트에서 사라져요'
-                                      : '지금은 비어 있어요 · 틀린 문제가 생기면 여기 모여요',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade700,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          const Icon(Icons.chevron_right, color: Colors.grey),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 14),
-                    // 자유 연습: 단계와 무관한 학습이라 도전 묶음에 둔다.
+                    const SizedBox(height: 4),
+                    // 자유 연습: 단계와 상관없는 놀이라 배우기 목록 끝에
                     BouncyButton(
                       color: Colors.white,
-                      shadowColor: Colors.grey.shade300,
+                      shadowColor: AppColors.outline,
                       borderRadius: 22,
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 14),
+                          horizontal: 14, vertical: 12),
                       onTap: _openPractice,
                       child: Row(
                         children: [
-                          const Text('🎨', style: TextStyle(fontSize: 30)),
+                          const Text('🎠', style: TextStyle(fontSize: 30)),
                           const SizedBox(width: 10),
                           Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                const Text(
-                                  '자유 연습',
-                                  style: TextStyle(
-                                    fontSize: 17,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  '단계와 상관없이 하고 싶은 것만 골라 연습해요',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: Colors.grey.shade700,
-                                  ),
-                                ),
-                              ],
-                            ),
+                            child: Text('자유 연습',
+                                style: displayStyle(fontSize: 18)),
                           ),
-                          const Icon(Icons.chevron_right, color: Colors.grey),
+                          const Icon(Icons.chevron_right_rounded,
+                              color: AppColors.inkMuted),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 10),
-                    // ── 3. 모으기·꾸미기: 보상 구경 ──
-                    const _SectionTitle('🎁 모으기·꾸미기'),
-                    IntrinsicHeight(
-                      child: Row(
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          Expanded(
-                              child: _MenuCard(
-                            emoji: '🛍️',
-                            title: '꾸미기 가게',
-                            subtitle: '쿼카 꾸미기',
-                            onTap: _openShop,
-                          )),
-                          const SizedBox(width: 10),
-                          Expanded(
-                              child: _MenuCard(
-                            emoji: '📔',
-                            title: '스티커북',
-                            subtitle: data.stickerTickets > 0
-                                ? '🎟️ ${data.stickerTickets}장!'
-                                : '골라 붙이기',
-                            onTap: _openStickerBook,
-                          )),
-                          const SizedBox(width: 10),
-                          Expanded(
-                              child: _MenuCard(
-                            emoji: '🏅',
-                            title: '배지 도감',
-                            subtitle: '모은 배지',
-                            onTap: _openBadges,
-                          )),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    _RankCard(points: data.points),
                   ],
                 ),
               ),
@@ -1130,7 +1011,6 @@ class _Header extends StatelessWidget {
   const _Header({
     required this.title,
     required this.greeting,
-    required this.totalStars,
     required this.coins,
     required this.equipped,
     required this.profile,
@@ -1145,11 +1025,14 @@ class _Header extends StatelessWidget {
     required this.subjectLabels,
     required this.subject,
     required this.onSubjectPickerTap,
+    required this.beltColor,
   });
+
+  /// 칭호(띠) 색 — 프로필 얼굴 고리
+  final Color beltColor;
 
   final String title;
   final String greeting;
-  final int totalStars;
   final int coins;
   final List<ShopItem> equipped;
   final Profile profile;
@@ -1254,6 +1137,29 @@ class _Header extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
+                        // 🪙 잔액 (퀴즈·결과와 같은 자리·같은 모양) — 누르면 꾸미기 가게
+                        GestureDetector(
+                          onTap: onOwlTap,
+                          child: Container(
+                            height: 34,
+                            padding:
+                                const EdgeInsets.symmetric(horizontal: 10),
+                            alignment: Alignment.center,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(999),
+                            ),
+                            child: Text(
+                              '🪙 $coins',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.ink,
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
                         // 프로필 바꾸기 (아바타만 — 이름은 아래 인사말에 나온다)
                         GestureDetector(
                           key: const ValueKey('profile-chip'),
@@ -1264,10 +1170,8 @@ class _Header extends StatelessWidget {
                             decoration: BoxDecoration(
                               shape: BoxShape.circle,
                               color: Colors.white.withValues(alpha: 0.25),
-                              border: Border.all(
-                                color: Colors.white.withValues(alpha: 0.6),
-                                width: 1.5,
-                              ),
+                              // 띠 색 고리 — 공부할수록 색이 바뀐다
+                              border: Border.all(color: beltColor, width: 3),
                             ),
                             child: Center(
                               child: Text(
@@ -1278,13 +1182,14 @@ class _Header extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 3),
+                        // 설정은 어른 것이라 살짝 흐리게
                         GestureDetector(
                           onTap: onSettingsTap,
-                          child: const Padding(
-                            padding: EdgeInsets.all(5),
+                          child: Padding(
+                            padding: const EdgeInsets.all(5),
                             child: Icon(
                               Icons.settings_rounded,
-                              color: Colors.white,
+                              color: Colors.white.withValues(alpha: 0.7),
                               size: 24,
                             ),
                           ),
@@ -1304,14 +1209,6 @@ class _Header extends StatelessWidget {
               onMeet: onPetTap,
               onCare: onPetCare,
               nudgeDrink: nudgeDrink,
-            ),
-            const SizedBox(height: 14),
-            Row(
-              children: [
-                _StatChip(text: '⭐ $totalStars'),
-                const SizedBox(width: 10),
-                _StatChip(text: '🪙 $coins'),
-              ],
             ),
           ],
         ),
@@ -1360,110 +1257,6 @@ class _HeaderScenePainter extends CustomPainter {
 
   @override
   bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
-}
-
-class _StatChip extends StatelessWidget {
-  const _StatChip({required this.text});
-
-  final String text;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-      decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.25),
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.6)),
-      ),
-      child: Text(
-        text,
-        style: const TextStyle(
-          fontSize: 17,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-      ),
-    );
-  }
-}
-
-/// 누적 점수로 자라는 칭호 카드
-class _RankCard extends StatelessWidget {
-  const _RankCard({required this.points});
-
-  final int points;
-
-  @override
-  Widget build(BuildContext context) {
-    final rank = rankForPoints(points);
-    final next = nextRankFor(points);
-    final progress = next == null
-        ? 1.0
-        : (points - rank.minPoints) / (next.minPoints - rank.minPoints);
-
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            offset: const Offset(0, 4),
-            blurRadius: 10,
-          ),
-        ],
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 54,
-            height: 54,
-            decoration: BoxDecoration(
-              color: const Color(0xFFFFF6D8),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Center(
-              child: Text(rank.emoji, style: const TextStyle(fontSize: 30)),
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '지금 나는 ${rank.title}!',
-                  style: const TextStyle(
-                    fontSize: 17,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 6),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(6),
-                  child: LinearProgressIndicator(
-                    value: progress.clamp(0.0, 1.0),
-                    minHeight: 10,
-                    backgroundColor: const Color(0xFFF0EAD2),
-                    color: const Color(0xFFFFC800),
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  next == null
-                      ? '최고 칭호까지 다 모았어요! 🎉'
-                      : '${next.emoji} ${next.title}까지 ${next.minPoints - points}코인',
-                  style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 /// 오늘의 미션 카드: 진행 바와 보상, 연속 출석 🔥, 스트릭 지킴이 🧊
@@ -1711,66 +1504,238 @@ class _FoldCard extends StatelessWidget {
 
 /// 홈 화면 섹션 제목: 이 구역이 무엇을 하는 곳인지 한 줄로 알려준다.
 class _SectionTitle extends StatelessWidget {
-  const _SectionTitle(this.text);
+  const _SectionTitle(this.text, {this.trailing});
 
   final String text;
+
+  /// 오른쪽 끝의 작은 표시 (예: '⭐ 73')
+  final String? trailing;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(left: 6, bottom: 10),
-      child: Align(
-        alignment: Alignment.centerLeft,
-        child: Text(
-          text,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: Colors.grey.shade600,
-          ),
-        ),
+      padding: const EdgeInsets.only(left: 6, right: 6, bottom: 10),
+      child: Row(
+        children: [
+          Text(text, style: displayStyle(fontSize: 17)),
+          const Spacer(),
+          if (trailing != null)
+            Text(
+              trailing!,
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: AppColors.ink,
+              ),
+            ),
+        ],
       ),
     );
   }
 }
 
-/// 꾸미기 가게 / 스티커북 / 배지 도감으로 들어가는 메뉴 카드
-class _MenuCard extends StatelessWidget {
-  const _MenuCard({
-    required this.emoji,
-    required this.title,
-    required this.subtitle,
-    required this.onTap,
-  });
+/// 맞춤 복습: 요즘 어려워한 유형 — ▶ 밑의 얇은 보조 줄 (있을 때만)
+class _ReviewStrip extends StatelessWidget {
+  const _ReviewStrip({required this.review, required this.onTap});
 
-  final String emoji;
-  final String title;
-  final String subtitle;
+  final ReviewSuggestion review;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
     return BouncyButton(
       color: Colors.white,
-      shadowColor: Colors.grey.shade300,
-      borderRadius: 22,
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
+      shadowColor: AppColors.outline,
+      borderRadius: 999,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
       onTap: onTap,
-      child: Column(
+      child: Row(
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 32)),
-          const SizedBox(height: 6),
-          Text(
-            title,
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          const Text('🩹', style: TextStyle(fontSize: 22)),
+          const SizedBox(width: 8),
+          Text('맞춤 복습', style: displayStyle(fontSize: 16)),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              '${review.subject} ${review.emoji} '
+              '${review.label} · 조금 어려웠죠? 한 판 더!',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 12, color: AppColors.inkSoft),
+            ),
           ),
-          const SizedBox(height: 2),
-          Text(
-            subtitle,
-            textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 13, color: Colors.grey),
-          ),
+          const Icon(Icons.play_arrow_rounded, color: AppColors.green),
         ],
+      ),
+    );
+  }
+}
+
+/// 놀이판 6칸: 오늘 줄(미션·보스·오답) + 모으기 줄(가게·스티커·배지).
+/// 자리는 늘 고정 — 숨기지 않고, 다 한 칸은 ✅ 도장을 찍고 흐리게 한다.
+/// 칸마다 배지는 하나만 (🔥N · 숫자 · 🎟️N). 펄스는 ▶에만 쓰므로 여기엔 없다.
+class _PlayBoard extends StatelessWidget {
+  const _PlayBoard({
+    required this.daily,
+    required this.bossCleared,
+    required this.wrongCount,
+    required this.stickerTickets,
+    required this.onMissions,
+    required this.onBoss,
+    required this.onWrongNotes,
+    required this.onShop,
+    required this.onStickers,
+    required this.onBadges,
+  });
+
+  final DailyState daily;
+  final bool bossCleared;
+  final int wrongCount;
+  final int stickerTickets;
+  final VoidCallback onMissions;
+  final VoidCallback onBoss;
+  final VoidCallback onWrongNotes;
+  final VoidCallback onShop;
+  final VoidCallback onStickers;
+  final VoidCallback onBadges;
+
+  @override
+  Widget build(BuildContext context) {
+    final missionsDone = daily.missions.every(daily.isDone);
+    Widget row(List<Widget> tiles) => Row(
+          children: [
+            for (var i = 0; i < tiles.length; i++) ...[
+              if (i > 0) const SizedBox(width: 10),
+              Expanded(child: tiles[i]),
+            ],
+          ],
+        );
+    return Column(
+      children: [
+        row([
+          _HomeTile(
+            emoji: '📋',
+            title: '오늘의 미션',
+            badge: daily.streak > 0 ? '🔥${daily.streak}' : null,
+            done: missionsDone,
+            onTap: onMissions,
+          ),
+          _HomeTile(
+            emoji: '👑',
+            title: '주간 보스전',
+            done: bossCleared,
+            onTap: onBoss,
+          ),
+          _HomeTile(
+            emoji: '📒',
+            title: '오답 노트',
+            badge: wrongCount > 0 ? '$wrongCount' : null,
+            done: wrongCount == 0,
+            onTap: onWrongNotes,
+          ),
+        ]),
+        const SizedBox(height: 10),
+        row([
+          _HomeTile(emoji: '🛍️', title: '꾸미기 가게', onTap: onShop),
+          _HomeTile(
+            emoji: '📔',
+            title: '스티커북',
+            badge: stickerTickets > 0 ? '🎟️$stickerTickets' : null,
+            onTap: onStickers,
+          ),
+          _HomeTile(emoji: '🏅', title: '배지 도감', onTap: onBadges),
+        ]),
+      ],
+    );
+  }
+}
+
+/// 놀이판 한 칸: 큰 그림 + 이름 한 줄 + (배지 하나 / ✅ 도장)
+class _HomeTile extends StatelessWidget {
+  const _HomeTile({
+    required this.emoji,
+    required this.title,
+    required this.onTap,
+    this.badge,
+    this.done = false,
+  });
+
+  final String emoji;
+  final String title;
+  final VoidCallback onTap;
+  final String? badge;
+
+  /// 오늘 할 건 다 한 칸 (✅ 도장 + 살짝 흐리게)
+  final bool done;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: title,
+      onTap: onTap,
+      excludeSemantics: true,
+      child: BouncyButton(
+        color: Colors.white,
+        shadowColor: AppColors.outline,
+        borderRadius: 22,
+        padding: EdgeInsets.zero,
+        onTap: onTap,
+        child: SizedBox(
+          height: 104,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Center(
+                child: Opacity(
+                  opacity: done ? 0.55 : 1,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(emoji, style: const TextStyle(fontSize: 38)),
+                      const SizedBox(height: 4),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: FittedBox(
+                          fit: BoxFit.scaleDown,
+                          child: Text(title,
+                              style: displayStyle(fontSize: 15)),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (done)
+                const Positioned(
+                  top: 6,
+                  right: 8,
+                  child: Text('✅', style: TextStyle(fontSize: 18)),
+                )
+              else if (badge != null)
+                Positioned(
+                  top: 6,
+                  right: 6,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: AppColors.amber,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Text(
+                      badge!,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.ink,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
       ),
     );
   }

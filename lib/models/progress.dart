@@ -1,3 +1,4 @@
+import 'package:flutter/painting.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'profile.dart';
@@ -23,26 +24,30 @@ const int retryPoints = 5;
 /// 단계를 마쳤을 때 별 개수에 따라 주는 보너스 점수.
 int completionBonus(int stars) => stars * 10;
 
-/// 누적 점수로 얻는 칭호. 점수가 쌓일수록 멋진 동물로 자란다.
+/// 누적 점수로 얻는 칭호 — 태권도처럼 띠 색이 바뀐다.
+/// (예전 동물 사다리는 아이 얼굴·친구 그림과 겹쳐서 띠로 바꿨다. 기준 점수는 그대로)
 class Rank {
-  const Rank(this.emoji, this.title, this.minPoints);
+  const Rank(this.emoji, this.title, this.minPoints, this.color);
 
   final String emoji;
   final String title;
   final int minPoints;
+
+  /// 띠 색 (프로필 얼굴 고리·배지 도감의 띠 그림)
+  final Color color;
 }
 
 const List<Rank> ranks = [
-  Rank('🥚', '알', 0),
-  Rank('🐣', '병아리', 100),
-  Rank('🐿️', '다람쥐', 300),
-  Rank('🐰', '토끼', 600),
-  Rank('🦊', '여우', 1000),
-  Rank('🐼', '판다', 1500),
-  Rank('🦁', '사자', 2100),
-  Rank('🐘', '코끼리', 2800),
-  Rank('🦄', '유니콘', 3600),
-  Rank('👑', '수학 왕', 4500),
+  Rank('⚪', '흰 띠', 0, Color(0xFFF4F1EA)),
+  Rank('🟡', '노랑 띠', 100, Color(0xFFFFD43B)),
+  Rank('🟠', '주황 띠', 300, Color(0xFFFF922B)),
+  Rank('🟢', '초록 띠', 600, Color(0xFF51CF66)),
+  Rank('🔵', '파랑 띠', 1000, Color(0xFF4D96FF)),
+  Rank('🟣', '보라 띠', 1500, Color(0xFF9C6ADE)),
+  Rank('🔴', '빨강 띠', 2100, Color(0xFFFA5252)),
+  Rank('🟤', '갈색 띠', 2800, Color(0xFF8C5A2B)),
+  Rank('⚫', '검정 띠', 3600, Color(0xFF343A40)),
+  Rank('🥇', '금 띠', 4500, Color(0xFFFFB703)),
 ];
 
 /// 지금 점수의 칭호

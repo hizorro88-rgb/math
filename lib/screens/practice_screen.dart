@@ -28,7 +28,9 @@ class _PracticeScreenState extends State<PracticeScreen> {
     ('🧮', '수학'),
     ('📖', '한글'),
     ('🔤', '영어'),
-    for (final pack in languagePacks) (pack.emoji, pack.name),
+    // 어른 과정(영어회화)은 아이 자유 연습에서 뺀다 (맨 뒤에 있어서 번호는 그대로)
+    for (final pack in languagePacks)
+      if (!pack.forAdults) (pack.emoji, pack.name),
   ];
 
   QuizMode _mode = QuizMode.addition;

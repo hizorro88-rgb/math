@@ -28,31 +28,31 @@ class DailyMission {
 /// 전체 미션 풀. 매일 이 중 3개가 뽑힌다 (1번은 항상 '퀴즈 3판').
 const List<DailyMission> dailyMissions = [
   DailyMission(
-      id: 'rounds3', emoji: '🔁', title: '퀴즈 3판 풀기', target: 3, reward: 30),
+      id: 'rounds3', emoji: '▶▶▶', title: '퀴즈 3판 풀기', target: 3, reward: 30),
   DailyMission(
       id: 'correct20',
-      emoji: '✏️',
+      emoji: '✓20',
       title: '정답 20개 맞히기',
       target: 20,
       reward: 40),
   DailyMission(
       id: 'correct30',
-      emoji: '📚',
+      emoji: '✓30',
       title: '정답 30개 맞히기',
       target: 30,
       reward: 60),
   DailyMission(
-      id: 'stars5', emoji: '⭐', title: '별 5개 받기', target: 5, reward: 50),
+      id: 'stars5', emoji: '⭐5', title: '별 5개 받기', target: 5, reward: 50),
   DailyMission(
-      id: 'perfect1', emoji: '🏆', title: '별 3개로 통과하기', target: 1, reward: 40),
+      id: 'perfect1', emoji: '⭐⭐⭐', title: '별 3개로 통과하기', target: 1, reward: 40),
   DailyMission(
-      id: 'math1', emoji: '🧮', title: '수학 1판 풀기', target: 1, reward: 20),
+      id: 'math1', emoji: '🧮▶', title: '수학 1판 풀기', target: 1, reward: 20),
   DailyMission(
-      id: 'korean1', emoji: '📖', title: '한글 1판 풀기', target: 1, reward: 20),
+      id: 'korean1', emoji: '📖▶', title: '한글 1판 풀기', target: 1, reward: 20),
   DailyMission(
-      id: 'english1', emoji: '🔤', title: '영어 1판 풀기', target: 1, reward: 20),
+      id: 'english1', emoji: '🔤▶', title: '영어 1판 풀기', target: 1, reward: 20),
   DailyMission(
-      id: 'rounds5', emoji: '🏃', title: '퀴즈 5판 풀기', target: 5, reward: 50),
+      id: 'rounds5', emoji: '▶×5', title: '퀴즈 5판 풀기', target: 5, reward: 50),
 ];
 
 DailyMission _missionById(String id) =>

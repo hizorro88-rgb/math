@@ -236,7 +236,9 @@ class PetStore {
       await ProgressStore.load(),
       await KoreanProgressStore.load(),
       await EnglishProgressStore.load(),
-      for (final pack in languagePacks) await LangProgressStore.load(pack),
+      // 어른 과정(영어회화) 별로 아이 친구가 자라지 않게 뺀다
+      for (final pack in languagePacks)
+        if (!pack.forAdults) await LangProgressStore.load(pack),
     ]) {
       sum += stars.fold<int>(0, (a, b) => a + b);
     }

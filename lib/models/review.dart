@@ -114,6 +114,7 @@ class Review {
     }
 
     for (final pack in languagePacks) {
+      if (pack.forAdults) continue; // 어른 과정은 아이 복습에 넣지 않는다
       final correct = stats.langCorrect[pack.id];
       final wrong = stats.langWrong[pack.id];
       if (correct == null || wrong == null) continue;

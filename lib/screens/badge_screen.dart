@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 
 import '../models/badges.dart';
+import '../models/progress.dart';
+import '../theme.dart';
 
 /// 배지 도감: 지금까지 모은 배지와 앞으로 모을 배지.
 class BadgeScreen extends StatefulWidget {
@@ -12,6 +14,7 @@ class BadgeScreen extends StatefulWidget {
 
 class _BadgeScreenState extends State<BadgeScreen> {
   late final Future<BadgeData> _dataFuture = loadBadgeData();
+  late final Future<int> _pointsFuture = ProgressStore.loadPoints();
 
   @override
   Widget build(BuildContext context) {
@@ -35,6 +38,13 @@ class _BadgeScreenState extends State<BadgeScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              // 내 띠: 공부할수록 띠 색이 바뀐다 (숫자 대신 막대)
+              FutureBuilder<int>(
+                future: _pointsFuture,
+                builder: (context, snap) =>
+                    _BeltCard(points: snap.data ?? 0),
+              ),
+              const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
@@ -124,6 +134,125 @@ class _BadgeCard extends StatelessWidget {
             badge.desc,
             textAlign: TextAlign.center,
             style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 띠 카드: 지금 띠 + 다음 띠까지 막대
+class _BeltCard extends StatelessWidget {
+  const _BeltCard({required this.points});
+
+  final int points;
+
+  @override
+  Widget build(BuildContext context) {
+    final rank = rankForPoints(points);
+    final next = nextRankFor(points);
+    final progress = next == null
+        ? 1.0
+        : (points - rank.minPoints) / (next.minPoints - rank.minPoints);
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.outline, width: 2),
+      ),
+      child: Row(
+        children: [
+          _Belt(color: rank.color),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text('지금 나는 ${rank.title}!',
+                    style: displayStyle(fontSize: 18)),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(999),
+                        child: LinearProgressIndicator(
+                          value: progress.clamp(0.0, 1.0),
+                          minHeight: 12,
+                          backgroundColor: AppColors.line,
+                          color: next?.color ?? rank.color,
+                        ),
+                      ),
+                    ),
+                    if (next != null) ...[
+                      const SizedBox(width: 8),
+                      _Belt(color: next.color, small: true),
+                    ],
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// 띠 그림 (매듭이 있는 색 띠)
+class _Belt extends StatelessWidget {
+  const _Belt({required this.color, this.small = false});
+
+  final Color color;
+  final bool small;
+
+  @override
+  Widget build(BuildContext context) {
+    final w = small ? 34.0 : 64.0;
+    final edge = Color.lerp(color, Colors.black, 0.25)!;
+    return SizedBox(
+      width: w,
+      height: w * 0.6,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Container(
+            height: w * 0.22,
+            decoration: BoxDecoration(
+              color: color,
+              borderRadius: BorderRadius.circular(4),
+              border: Border.all(color: edge, width: 1.5),
+            ),
+          ),
+          // 매듭 + 늘어진 끈
+          Positioned(
+            top: w * 0.12,
+            child: Container(
+              width: w * 0.22,
+              height: w * 0.22,
+              decoration: BoxDecoration(
+                color: color,
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: edge, width: 1.5),
+              ),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            left: w * 0.36,
+            child: Transform.rotate(
+              angle: 0.35,
+              child: Container(width: w * 0.1, height: w * 0.26, color: color),
+            ),
+          ),
+          Positioned(
+            bottom: 0,
+            right: w * 0.36,
+            child: Transform.rotate(
+              angle: -0.35,
+              child: Container(width: w * 0.1, height: w * 0.26, color: color),
+            ),
           ),
         ],
       ),
