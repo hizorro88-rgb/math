@@ -95,10 +95,10 @@ class ResultScreen extends StatefulWidget {
 
 class _ResultScreenState extends State<ResultScreen>
     with SingleTickerProviderStateMixin {
-  /// 전체 연출 (약 4초). 화면을 누르면 끝으로 건너뛴다.
+  /// 전체 연출 (약 3초). 화면을 누르면 끝으로 건너뛴다.
   late final AnimationController _show = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 4000),
+    duration: const Duration(milliseconds: 3000),
   )..forward();
 
   late final bool _firstRun;
