@@ -447,6 +447,25 @@ void main() {
     expect(Speech.rate, Speech.rateSlow);
   });
 
+  testWidgets('효과음 끄기도 부모 확인 뒤에, 한 번 통과하면 그 화면에선 다시 묻지 않는다', (tester) async {
+    await tester.pumpWidget(const PreschoolMathApp());
+    await tester.pumpAndSettle();
+    await tester.tap(find.bySemanticsLabel('설정'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('효과음'));
+    await tester.pumpAndSettle();
+    expect(find.text('부모님 확인'), findsOneWidget);
+    await passParentGate(tester);
+    expect(Sounds.enabled, isFalse);
+
+    // 같은 화면에서 읽어주기를 꺼도 다시 묻지 않는다
+    await tester.tap(find.text('문제 읽어주기'));
+    await tester.pumpAndSettle();
+    expect(find.text('부모님 확인'), findsNothing);
+    expect(Speech.enabled, isFalse);
+  });
+
   testWidgets('홈에는 읽어주기를 끄는 소리 버튼이 없고, 🔊는 인사를 들려준다', (tester) async {
     final spoken = <String>[];
     Speech.debugOnSpeak = spoken.add;

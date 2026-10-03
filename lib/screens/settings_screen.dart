@@ -26,6 +26,17 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
+  /// 이 화면에 있는 동안 부모 확인은 한 번만 (처음 세팅할 때 다섯 번씩 묻지 않게).
+  /// 화면을 나가면 잊는다 — 전역으로 기억하면 아이가 다음에 그냥 들어온다.
+  bool _gateOk = false;
+
+  Future<bool> _gate() async {
+    if (_gateOk) return true;
+    final ok = await checkParentGate(context);
+    if (ok) _gateOk = true;
+    return ok;
+  }
+
   DateTime? _lastSync;
   bool _syncing = false;
   bool _reminderOn = false;
@@ -59,7 +70,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   /// 우리 아이 단계 시트: 나이 고르기(추천·접기 기준) + 이전 단계 접어두기.
   /// 홈 화면 구성을 바꾸는 부모의 결정이라 게이트를 거친다.
   Future<void> _openAgeSheet() async {
-    final ok = await checkParentGate(context);
+    final ok = await _gate();
     if (!ok || !mounted) return;
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
@@ -200,7 +211,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   /// 매일 알림 토글 (부모님 메뉴라 게이트를 거친다).
   /// 리포트 화면의 토글과 같은 저장값을 읽고 쓴다.
   Future<void> _toggleReminder(bool value) async {
-    final ok = await checkParentGate(context);
+    final ok = await _gate();
     if (!ok || !mounted) return;
     if (value) {
       final enabled = await Reminders.enable();
@@ -220,7 +231,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   /// 클라우드 로그인: 부모 확인 → 이메일/비밀번호 입력 → 로그인 또는 가입.
   /// 로그인하면 클라우드 기록을 반영해 홈부터 다시 연다.
   Future<void> _cloudLogin() async {
-    final ok = await checkParentGate(context);
+    final ok = await _gate();
     if (!ok || !mounted) return;
 
     final emailController = TextEditingController();
@@ -348,7 +359,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   Future<void> _openBackup() async {
     // 복원은 기록을 통째로 바꾸는 일이라 부모 확인을 거친다.
-    final ok = await checkParentGate(context);
+    final ok = await _gate();
     if (!ok || !mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute(builder: (_) => const BackupScreen()),
@@ -358,7 +369,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   /// 전체 열기(가족용): 부모 확인 뒤 코드가 맞으면
   /// 모든 단계 자물쇠와 유료 과목 잠금을 푼다. 다시 누르면 잠글 수 있다.
   Future<void> _toggleAllUnlock() async {
-    final ok = await checkParentGate(context);
+    final ok = await _gate();
     if (!ok || !mounted) return;
 
     if (PremiumStore.allUnlocked) {
@@ -445,14 +456,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               SwitchListTile(
                 value: Sounds.enabled,
                 onChanged: (value) async {
+                  // 끄는 건 어른만 (켜는 건 누구나)
+                  if (!value) {
+                    final ok = await _gate();
+                    if (!ok || !mounted) return;
+                  }
                   await Sounds.setEnabled(value);
-                  if (value) Sounds.correct(1); // 켜졌는지 바로 들려준다
+                  if (value) Sounds.pop(); // 켜졌는지 바로 들려준다
                   setState(() {});
                 },
                 secondary: const SizedBox(
                     width: 34,
                     child: Center(
-                        child: Text('🔔', style: TextStyle(fontSize: 26)))),
+                        child: Text('🎵', style: TextStyle(fontSize: 26)))),
                 title: const Text(
                   '효과음',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -467,7 +483,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   // 읽어주기는 글을 모르는 아이가 혼자 푸는 데 꼭 필요해서,
                   // 끌 때만 부모 확인을 거친다 (아이가 실수로 끄지 않게).
                   if (!value) {
-                    final ok = await checkParentGate(context);
+                    final ok = await _gate();
                     if (!ok || !mounted) return;
                   }
                   await Speech.setEnabled(value);
@@ -482,7 +498,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   '문제 읽어주기',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                subtitle: Text(keepAll('글을 몰라도 풀 수 있게 문제·정답을 읽어줘요')),
+                subtitle: const Text('글을 몰라도 혼자 풀 수 있게'),
                 activeTrackColor: AppColors.green,
               ),
               const Divider(height: 1),
@@ -514,7 +530,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Padding(
             padding: EdgeInsets.only(left: 8, bottom: 8),
             child: Text(
-              '🔒 부모님 메뉴',
+              '👨‍👩‍👧 부모님 메뉴',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
@@ -525,16 +541,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _card(
             children: [
               ListTile(
-                leading: const Icon(Icons.insert_chart_rounded,
-                    color: Color(0xFF4D96FF)),
+                leading: const SizedBox(
+                    width: 34,
+                    child: Center(
+                        child: Text('📊', style: TextStyle(fontSize: 26)))),
                 title: const Text(
                   '학습 리포트',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                subtitle: Text(keepAll('과목별 정답률과 일주일 학습 기록을 봐요')),
+                subtitle: const Text('이번 주 할 일·과목별 정답률'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () async {
-                  final ok = await checkParentGate(context);
+                  final ok = await _gate();
                   if (!ok || !context.mounted) return;
                   await Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const ReportScreen()),
@@ -543,8 +561,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
               const Divider(height: 1),
               ListTile(
-                leading: const Icon(Icons.family_restroom_rounded,
-                    color: Color(0xFF8C5A2B)),
+                leading: const SizedBox(
+                    width: 34,
+                    child: Center(
+                        child: Text('🎫', style: TextStyle(fontSize: 26)))),
                 title: const Text(
                   '가족 이용권',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
@@ -552,7 +572,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 subtitle: const Text('모든 단계 열기 · 프로필 4명'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: () async {
-                  final ok = await checkParentGate(context);
+                  final ok = await _gate();
                   if (!ok || !context.mounted) return;
                   await Navigator.of(context).push(
                     MaterialPageRoute(builder: (_) => const PassScreen()),
@@ -580,13 +600,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
               SwitchListTile(
                 value: _reminderOn,
                 onChanged: _syncing ? null : (value) => _toggleReminder(value),
-                secondary: const Icon(Icons.notifications_rounded,
-                    color: Color(0xFFF4B740)),
+                secondary: const SizedBox(
+                    width: 34,
+                    child: Center(
+                        child: Text('⏰', style: TextStyle(fontSize: 26)))),
                 title: const Text(
                   '매일 학습 알림',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                subtitle: Text(keepAll('저녁마다 오늘의 퀴즈를 잊지 않게 알려줘요')),
+                subtitle:
+                    Text(_reminderOn ? '매일 켠 시각쯤 알려줘요' : '하루 한 번 학습을 잊지 않게'),
                 activeTrackColor: AppColors.green,
               ),
               const Divider(height: 1),
@@ -599,7 +622,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   '진도 백업·옮기기',
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
-                subtitle: Text(keepAll('부모 확인 뒤 백업 코드로 진도를 지키고 옮겨요')),
+                subtitle: const Text('코드로 진도를 지키고 옮겨요'),
                 trailing: const Icon(Icons.chevron_right),
                 onTap: _openBackup,
               ),
@@ -634,7 +657,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                     ),
-                    subtitle: Text(keepAll('로그인하면 다른 기기와 진도가 이어져요')),
+                    subtitle: const Text('다른 기기와 진도가 이어져요'),
                     trailing: _syncing
                         ? const SizedBox(
                             width: 22,
@@ -667,15 +690,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const Divider(height: 1),
                   ListTile(
-                    leading: const Icon(Icons.cloud_upload_rounded,
-                        color: Color(0xFF1CB0F6)),
+                    leading: const SizedBox(
+                        width: 34,
+                        child: Center(
+                            child: Text('🔄', style: TextStyle(fontSize: 26)))),
                     title: const Text('지금 동기화'),
                     onTap: _syncing ? null : _cloudUpload,
                   ),
                   const Divider(height: 1),
                   ListTile(
-                    leading: const Icon(Icons.logout_rounded,
-                        color: AppColors.inkMuted),
+                    leading: const SizedBox(
+                        width: 34,
+                        child: Center(
+                            child: Text('🚪', style: TextStyle(fontSize: 26)))),
                     title: const Text('로그아웃'),
                     onTap: _syncing ? null : _cloudSignOut,
                   ),
@@ -688,8 +715,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
             children: [
               Builder(
                 builder: (context) => ListTile(
-                  leading: const Icon(Icons.info_outline_rounded,
-                      color: AppColors.inkMuted),
+                  leading: const SizedBox(
+                      width: 34,
+                      child: Center(
+                          child: Text('ℹ️', style: TextStyle(fontSize: 26)))),
                   title: const Text('앱 정보',
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -723,11 +752,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _card({required List<Widget> children}) {
+    // 정보 카드 = 테두리 (그림자는 누르는 카드에만)
     return Material(
       color: Colors.white,
-      elevation: 1.5,
-      shadowColor: Colors.black.withValues(alpha: 0.3),
-      borderRadius: BorderRadius.circular(22),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(22),
+        side: const BorderSide(color: AppColors.outline, width: 2),
+      ),
       clipBehavior: Clip.antiAlias,
       child: Column(children: children),
     );

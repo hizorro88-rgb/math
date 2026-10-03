@@ -32,7 +32,11 @@ class StageUnitCard extends StatelessWidget {
     required this.title,
     required this.color,
     required this.levels,
+    this.highlight = true,
   });
+
+  /// 이 묶음에 "지금 할 원"(펄스)을 표시할지 — 지도 전체에서 첫 묶음 하나만
+  final bool highlight;
 
   final String emoji;
   final String title;
@@ -40,6 +44,18 @@ class StageUnitCard extends StatelessWidget {
   final List<StageLevel> levels;
 
   bool get _locked => levels.isNotEmpty && !levels.first.unlocked;
+
+  /// 이 묶음에서 열렸고 아직 안 깬 첫 원
+  StageLevel? get _firstOpen {
+    for (final l in levels) {
+      if (l.unlocked && l.stars == 0) return l;
+    }
+    return null;
+  }
+
+  /// 열렸고 안 깬 원이 있는 묶음인지 (지도가 펄스 묶음을 고를 때)
+  static bool hasOpen(Iterable<(bool unlocked, int stars)> levels) =>
+      levels.any((l) => l.$1 && l.$2 == 0);
 
   @override
   Widget build(BuildContext context) {
@@ -106,6 +122,7 @@ class StageUnitCard extends StatelessWidget {
                   unlocked: level.unlocked,
                   color: color,
                   onTap: level.onTap,
+                  current: highlight && level == _firstOpen,
                 ),
             ],
           ),

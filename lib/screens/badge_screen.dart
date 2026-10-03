@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/badges.dart';
 import '../models/progress.dart';
 import '../theme.dart';
+import '../widgets/bouncy_button.dart';
 import '../widgets/kid_notice.dart';
 
 /// 배지 도감: 지금까지 모은 배지와 앞으로 모을 배지.
@@ -88,7 +89,7 @@ class _BadgeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
+    return PressBounce(
       // 누르면 이름과 얻는 방법을 읽어 준다 (글을 못 읽어도 알 수 있게)
       onTap: () => showKidNotice(
         context,

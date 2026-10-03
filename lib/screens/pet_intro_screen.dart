@@ -52,7 +52,7 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
   }
 
   void _peek(int index, PetSpecies species) {
-    Sounds.play('correct');
+    Sounds.pop();
     Speech.speak(species.hint);
     setState(() {
       _peeked = index;
@@ -74,10 +74,10 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
     if (_phase != _Phase.crack) return;
     setState(() => _taps++);
     if (_taps < _tapsToHatch) {
-      Sounds.play('combo');
+      Sounds.pop();
       return;
     }
-    Sounds.buy();
+    Sounds.complete(); // 부화 = 축하
     setState(() => _phase = _Phase.gift);
     Speech.speak('${_species!.name}가 태어났어요! 선물을 열어 봐!');
   }
@@ -95,7 +95,7 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
     if (!mounted) return;
     final state = await PetStore.load();
     if (!mounted) return;
-    Sounds.play('correct');
+    Sounds.buy(); // 코인을 썼다
     setState(() {
       _fullness = state.fullness;
       _phase = _Phase.done;

@@ -19,7 +19,12 @@ class LevelBubble extends StatelessWidget {
     required this.unlocked,
     required this.color,
     required this.onTap,
+    this.current,
   });
+
+  /// 지금 도전할 원인지 (펄스 + '여기부터!'). null이면 열렸고 안 깬 원.
+  /// 펄스는 화면에 하나만 — 지도가 첫 미완료 원 하나만 true로 준다.
+  final bool? current;
 
   /// 카드 안에서의 번호 (1~10)
   final int number;
@@ -29,7 +34,7 @@ class LevelBubble extends StatelessWidget {
   final VoidCallback onTap;
 
   bool get _cleared => stars >= 1;
-  bool get _isCurrent => unlocked && !_cleared;
+  bool get _isCurrent => current ?? (unlocked && !_cleared);
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +46,7 @@ class LevelBubble extends StatelessWidget {
       label: '$number단계',
       onTap: onTap,
       excludeSemantics: true,
-      child: GestureDetector(
+      child: PressBounce(
         onTap: onTap,
         child: Container(
           width: size,

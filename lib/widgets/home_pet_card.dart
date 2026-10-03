@@ -204,7 +204,8 @@ class _HomePetCardState extends State<HomePetCard> {
                 meal: true,
                 state: pet,
                 compact: true,
-                nudge: pet.wantsMeal,
+                // 펄스는 ▶ 하나 — 배고픔은 친구 머리 위 💭로 보여 준다
+                nudge: false,
                 onTap: () => widget.onCare(meal: true),
               ),
             ),
@@ -215,7 +216,7 @@ class _HomePetCardState extends State<HomePetCard> {
                 meal: false,
                 state: pet,
                 compact: true,
-                nudge: widget.nudgeDrink || pet.wantsDrink,
+                nudge: widget.nudgeDrink,
                 onTap: () => widget.onCare(meal: false),
               ),
             ),

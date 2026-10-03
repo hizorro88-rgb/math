@@ -51,6 +51,12 @@ class Sounds {
     } catch (_) {}
   }
 
+  // 소리의 뜻 (바꾸지 말 것 — 아이는 소리로 무슨 일이 일어났는지 안다)
+  // correct: 정답만 / combo: 연속 정답 / wrong: 오답만 (부드러운 톤)
+  // pop: 눌렀다·골랐다·입었다·붙였다·쓰다듬었다 / buy: 코인을 썼다
+  // complete: 축하(판 통과·부화·진화·완성)
+  static Future<void> pop() => play('pop');
+
   static Future<void> correct(int combo) =>
       play(combo >= 3 ? 'combo' : 'correct');
   static Future<void> wrong() => play('wrong');

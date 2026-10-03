@@ -44,16 +44,31 @@ class Review {
   /// 모든 과목·유형 중 가장 정답률이 낮은 하나를 고른다. 없으면 null.
   static ReviewSuggestion? suggest(LearningStats stats) {
     ReviewSuggestion? best;
-    var bestAccuracy = maxAccuracy + 1;
+    for (final s in all(stats)) {
+      if (s.accuracy > maxAccuracy) continue;
+      if (best == null || s.accuracy < best.accuracy) best = s;
+    }
+    return best;
+  }
+
+  /// 가장 잘하는 유형 하나 (부모 리포트의 "잘한 것"). 없으면 null.
+  static ReviewSuggestion? strongest(LearningStats stats, {int min = 5}) {
+    ReviewSuggestion? top;
+    for (final s in all(stats, min: min)) {
+      if (top == null || s.accuracy > top.accuracy) top = s;
+    }
+    return top;
+  }
+
+  /// [min]문제 이상 푼 모든 유형의 정답률 (어른 과정 제외)
+  static List<ReviewSuggestion> all(LearningStats stats,
+      {int min = minAnswered}) {
+    final found = <ReviewSuggestion>[];
 
     void consider(int correct, int wrong, ReviewSuggestion Function(int) make) {
       final total = correct + wrong;
-      if (total < minAnswered) return;
-      final accuracy = correct * 100 ~/ total;
-      if (accuracy < bestAccuracy) {
-        bestAccuracy = accuracy;
-        best = make(accuracy);
-      }
+      if (total < min) return;
+      found.add(make(correct * 100 ~/ total));
     }
 
     // 수학: 유형별 저장 칸이 있는 연산들
@@ -136,6 +151,6 @@ class Review {
       }
     }
 
-    return best;
+    return found;
   }
 }

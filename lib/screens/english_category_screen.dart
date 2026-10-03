@@ -57,8 +57,21 @@ class _EnglishCategoryScreenState extends State<EnglishCategoryScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              // 펄스(지금 할 원)는 지도 전체에서 첫 미완료 묶음 하나에만
               for (final unit in category.units) ...[
                 _UnitSection(
+                  highlight: unit ==
+                      category.units.firstWhere(
+                          (u) => StageUnitCard.hasOpen([
+                                for (final l in EnglishCurriculum.levels
+                                    .where((l) => l.unit.index == u.index))
+                                  (
+                                    EnglishProgressStore.isUnlocked(
+                                        stars, l.number),
+                                    stars[l.number - 1]
+                                  ),
+                              ]),
+                          orElse: () => category.units.first),
                   unit: unit,
                   stars: stars,
                   onLevelTap: _openLevel,
@@ -79,7 +92,10 @@ class _UnitSection extends StatelessWidget {
     required this.unit,
     required this.stars,
     required this.onLevelTap,
+    this.highlight = true,
   });
+
+  final bool highlight;
 
   final EnUnit unit;
   final List<int> stars;
@@ -91,6 +107,7 @@ class _UnitSection extends StatelessWidget {
         .where((l) => l.unit.index == unit.index)
         .toList();
     return StageUnitCard(
+      highlight: highlight,
       emoji: unit.emoji,
       title: unit.title,
       color: unit.color,

@@ -226,7 +226,8 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
           lang: widget.pack.ttsLang);
     } else {
       Sounds.wrong();
-      HapticFeedback.heavyImpact().ignore();
+      // 틀렸을 때 진동은 맞혔을 때보다 약하게 — 꾸짖는 느낌을 주지 않는다
+      HapticFeedback.selectionClick().ignore();
       QuizVoice.wrongReplay(_question.speech, lang: widget.pack.ttsLang);
     }
   }

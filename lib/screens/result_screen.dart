@@ -380,7 +380,9 @@ class _ResultScreenState extends State<ResultScreen>
     final marks = {
       for (final p in [0.5, 0.7, 0.9]) (n * p).ceil(),
     };
-    final firstMissing = widget.correctCount + 1;
+    // 아직 닿지 못한 첫 ⭐ 칸
+    final nextMark = (marks.toList()..sort())
+        .firstWhere((m) => m > widget.correctCount, orElse: () => -1);
     // (IntrinsicHeight 안이라 LayoutBuilder 대신 화면 너비로 계산한다)
     final width = MediaQuery.sizeOf(context).width - 48;
     final size = math.min(24.0, (width - 4.0 * n) / n);
@@ -396,7 +398,8 @@ class _ResultScreenState extends State<ResultScreen>
                 SizedBox(
                   height: size * 0.8,
                   child: marks.contains(i + 1)
-                      ? (widget.showUnlockHint && i + 1 >= firstMissing
+                      // 못 깬 판: 별 1개가 되는 칸 하나만 깜빡인다 (펄스는 화면에 하나)
+                      ? (widget.showUnlockHint && i + 1 == nextMark
                           ? Pulse(
                               child: Text('⭐',
                                   style: TextStyle(fontSize: size * 0.6)))
@@ -560,8 +563,9 @@ class _ResultScreenState extends State<ResultScreen>
   Widget _buildButtons() {
     Widget primary(String label, IconData icon, VoidCallback onTap,
         {String? face, Key? key}) {
+      // 펄스는 화면에 하나 — 못 깬 판이면 별 칸이 깜빡이므로 버튼은 가만히
       return Pulse(
-        scale: 1.03,
+        scale: widget.showUnlockHint ? 1.0 : 1.03,
         child: BouncyButton(
           key: key,
           color: AppColors.green,

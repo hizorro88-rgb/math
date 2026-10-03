@@ -134,7 +134,7 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
 
     final result = await RewardBoardStore.place(slot, emoji);
     if (result == null || !mounted) return;
-    Sounds.correct(1);
+    Sounds.pop();
     await _load();
     if (!mounted) return;
 
@@ -221,7 +221,7 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
       _snack('✋', '판이 가득 찼어요! 몇 개 떼어 볼까요?');
       return;
     }
-    Sounds.correct(1);
+    Sounds.pop();
     setState(() {
       _canvas.add(PlacedSticker(
         emoji: brush,
@@ -246,7 +246,7 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
 
   void _tapCanvasSticker(int index) {
     if (!_erasing) return;
-    Sounds.wrong();
+    Sounds.pop();
     setState(() => _canvas.removeAt(index));
     CanvasStore.save(_canvas);
   }
@@ -292,7 +292,7 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
     _placing = false;
     if (!mounted || result == null) return;
 
-    Sounds.correct(1);
+    Sounds.pop();
     await _load();
     if (!mounted) return;
 

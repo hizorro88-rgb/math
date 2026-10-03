@@ -126,7 +126,7 @@ class _BackupScreenState extends State<BackupScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFE8EEFF),
+              color: AppColors.rewardSurface,
               borderRadius: BorderRadius.circular(20),
             ),
             child: const Text(
@@ -148,7 +148,7 @@ class _BackupScreenState extends State<BackupScreen> {
                 ),
                 const SizedBox(height: 12),
                 BouncyButton(
-                  color: const Color(0xFF5A78D6),
+                  color: AppColors.green,
                   padding: const EdgeInsets.symmetric(vertical: 14),
                   onTap: _makeCode,
                   child: const Text(
@@ -166,7 +166,7 @@ class _BackupScreenState extends State<BackupScreen> {
                   Container(
                     padding: const EdgeInsets.all(12),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFF5F5F5),
+                      color: AppColors.cream,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: AppColors.outline),
                     ),

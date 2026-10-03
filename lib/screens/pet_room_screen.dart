@@ -87,7 +87,7 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
               action: _goPlay);
       return;
     }
-    Sounds.play('correct');
+    Sounds.buy(); // 코인을 썼다
     Speech.speak(meal ? '냠냠 맛있어요!' : '꿀꺽꿀꺽!');
     await _reload();
   }
@@ -219,7 +219,6 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
                   key: const ValueKey('pet-feed'),
                   meal: true,
                   state: state,
-                  nudge: state.wantsMeal,
                   onTap: () => _care(meal: true),
                 ),
               ),
@@ -229,7 +228,6 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
                   key: const ValueKey('pet-drink'),
                   meal: false,
                   state: state,
-                  nudge: state.wantsDrink,
                   onTap: () => _care(meal: false),
                 ),
               ),

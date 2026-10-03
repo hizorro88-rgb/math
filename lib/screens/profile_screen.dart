@@ -84,6 +84,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _editProfile(Profile profile) async {
+    // 이름·나이를 바꾸는 건 어른만 (나이는 설정에서도 부모 확인 뒤에 바뀐다)
+    final ok = await checkParentGate(context);
+    if (!ok || !mounted) return;
     final changed = await showDialog<bool>(
       context: context,
       builder: (context) => _ProfileDialog(editing: profile),

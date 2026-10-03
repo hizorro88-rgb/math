@@ -5,6 +5,7 @@ import '../models/shop.dart';
 import '../theme.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
+import '../widgets/bouncy_button.dart';
 import '../widgets/kid_notice.dart';
 import '../widgets/quokka_avatar.dart';
 
@@ -52,7 +53,7 @@ class _ShopScreenState extends State<ShopScreen> {
         Speech.speak('${item.name} 벗었어요');
       } else {
         await ShopStore.equip(item);
-        Sounds.play('correct');
+        Sounds.pop();
         Speech.speak('${item.name} 멋져요!');
       }
       await _load();
@@ -240,7 +241,7 @@ class _ItemCard extends StatelessWidget {
       );
     }
 
-    return GestureDetector(
+    return PressBounce(
       onTap: onTap,
       child: Stack(
         clipBehavior: Clip.none,

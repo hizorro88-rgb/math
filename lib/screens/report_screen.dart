@@ -7,8 +7,13 @@ import '../models/korean_question.dart';
 import '../models/language_packs.dart';
 import '../models/progress.dart';
 import '../models/stats.dart';
-import 'backup_screen.dart';
-import 'settings_screen.dart';
+import 'quiz_screen.dart';
+import 'language_quiz_screen.dart';
+import 'korean_quiz_screen.dart';
+import 'english_quiz_screen.dart';
+import '../models/review.dart';
+import '../models/quiz_config.dart';
+import '../models/profile.dart';
 import '../theme.dart';
 
 /// 부모용 학습 리포트: 이번 주 활동, 유형·수 범위별 정답률, 연습 추천.
@@ -53,6 +58,9 @@ class _ReportScreenState extends State<ReportScreen> {
           return ListView(
             padding: const EdgeInsets.all(16),
             children: [
+              // 맨 위: 보호자가 이번 주에 할 일 하나 (잘한 것 하나 · 연습할 것 하나)
+              _WeeklyTodoCard(stats: stats),
+              const SizedBox(height: 14),
               _SummaryCard(stats: stats, clearedLevels: clearedLevels),
               const SizedBox(height: 14),
               _WeekCard(stats: stats),
@@ -83,16 +91,24 @@ class _ReportScreenState extends State<ReportScreen> {
                   const SizedBox(height: 14),
                 ],
                 for (final pack in languagePacks)
-                  if (stats.langAnswered(pack.id) > 0) ...[
+                  if (!pack.forAdults && stats.langAnswered(pack.id) > 0) ...[
+                    _LangCard(pack: pack, stats: stats),
+                    const SizedBox(height: 14),
+                  ],
+                // 어른 과정은 아이 기록과 섞지 않고 맨 아래 따로
+                for (final pack in languagePacks)
+                  if (pack.forAdults && stats.langAnswered(pack.id) > 0) ...[
+                    const Padding(
+                      padding: EdgeInsets.only(left: 4, bottom: 8),
+                      child: Text('👨‍👩‍👧 어른 공부',
+                          style: TextStyle(
+                              fontSize: 15, fontWeight: FontWeight.bold)),
+                    ),
                     _LangCard(pack: pack, stats: stats),
                     const SizedBox(height: 14),
                   ],
               ],
               _AdviceCard(stats: stats),
-              const SizedBox(height: 14),
-              const _ReminderCard(),
-              const SizedBox(height: 14),
-              const _BackupCard(),
               const SizedBox(height: 8),
             ],
           );
@@ -103,18 +119,13 @@ class _ReportScreenState extends State<ReportScreen> {
 }
 
 Widget _reportCard({required String title, required Widget child}) {
+  // 정보 카드 = 테두리 (앱 공용 규칙)
   return Container(
     padding: const EdgeInsets.all(16),
     decoration: BoxDecoration(
       color: Colors.white,
       borderRadius: BorderRadius.circular(22),
-      boxShadow: [
-        BoxShadow(
-          color: Colors.black.withValues(alpha: 0.05),
-          offset: const Offset(0, 4),
-          blurRadius: 10,
-        ),
-      ],
+      border: Border.all(color: AppColors.outline, width: 2),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -594,73 +605,109 @@ class _AdviceCard extends StatelessWidget {
   }
 }
 
-/// 매일 학습 알림: 켜고 끄기는 설정 화면 한 곳에서만 (중복 토글 방지)
-class _ReminderCard extends StatelessWidget {
-  const _ReminderCard();
+
+
+/// 이번 주 할 일 — 보호자가 리포트를 열자마자 "그래서 뭘 하면 되나"를 본다.
+/// 잘한 것 하나(칭찬해 주기) + 연습할 것 하나(▶ 바로 한 판). 5문제 이상 푼 유형만.
+class _WeeklyTodoCard extends StatelessWidget {
+  const _WeeklyTodoCard({required this.stats});
+
+  final LearningStats stats;
+
+  void _practice(BuildContext context, ReviewSuggestion s) {
+    Navigator.of(context).push(MaterialPageRoute(builder: (_) {
+      if (s.krType != null) return KoreanQuizScreen(type: s.krType!);
+      if (s.enType != null) return EnglishQuizScreen(type: s.enType!);
+      if (s.packId != null) {
+        return LanguageQuizScreen(
+          pack: languagePackById(s.packId!),
+          typeIndex: s.langTypeIndex,
+        );
+      }
+      final mode = s.mathMode!;
+      final max = mode == QuizMode.multiplication || mode == QuizMode.division
+          ? 9
+          : 10;
+      return QuizScreen(config: QuizConfig(mode: mode, maxNumber: max));
+    }));
+  }
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      elevation: 1.5,
-      shadowColor: Colors.black.withValues(alpha: 0.3),
-      borderRadius: BorderRadius.circular(22),
-      clipBehavior: Clip.antiAlias,
-      child: ListTile(
-        contentPadding: const EdgeInsets.symmetric(horizontal: 16),
-        leading: const Text('🔔', style: TextStyle(fontSize: 26)),
-        title: const Text(
-          '매일 학습 알림',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        subtitle: const Text(
-          '탭하면 설정으로 가서 켤 수 있어요',
-          style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
-        ),
-        trailing: const Icon(Icons.chevron_right),
-        onTap: () => Navigator.of(context).push(
-          MaterialPageRoute(builder: (_) => const SettingsScreen()),
-        ),
-      ),
+    final all = Review.all(stats, min: 5);
+    final good = Review.strongest(stats);
+    ReviewSuggestion? weak;
+    for (final s in all) {
+      if (s.accuracy >= 80) continue;
+      if (weak == null || s.accuracy < weak.accuracy) weak = s;
+    }
+    return FutureBuilder<Profile>(
+      future: Profiles.active(),
+      builder: (context, snap) {
+        final p = snap.data;
+        return Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: AppColors.rewardSurface,
+            borderRadius: BorderRadius.circular(22),
+            border: Border.all(color: AppColors.amber, width: 2),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                '${p == null ? '' : '${p.emoji} ${p.name} · '}이번 주 할 일',
+                style: displayStyle(fontSize: 20),
+              ),
+              const SizedBox(height: 12),
+              if (good == null && weak == null)
+                const Text(
+                  '아직 기록이 적어요. 하루 한 판씩 풀면 여기에 '
+                  '잘한 것과 연습할 것이 나와요.',
+                  style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
+                ),
+              if (good != null)
+                _line('👍 잘해요',
+                    '${good.subject} ${good.emoji} ${good.label} ${good.accuracy}%'
+                    ' — 칭찬해 주세요'),
+              if (weak != null) ...[
+                const SizedBox(height: 8),
+                _line('💪 연습해요',
+                    '${weak.subject} ${weak.emoji} ${weak.label} ${weak.accuracy}%'),
+                const SizedBox(height: 10),
+                FilledButton.icon(
+                  key: const ValueKey('report-practice'),
+                  style: FilledButton.styleFrom(
+                    backgroundColor: AppColors.green,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  onPressed: () => _practice(context, weak!),
+                  icon: const Icon(Icons.play_arrow_rounded),
+                  label: Text('${weak.label} 한 판 같이 풀기',
+                      style: const TextStyle(
+                          fontSize: 16, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ],
+          ),
+        );
+      },
     );
   }
-}
 
-/// 진도 백업/// 진도 백업·복원 안내 카드 → 백업 화면으로 이동
-class _BackupCard extends StatelessWidget {
-  const _BackupCard();
-
-  @override
-  Widget build(BuildContext context) {
-    return _reportCard(
-      title: '💾 진도 백업·옮기기',
-      child: Column(
+  Widget _line(String head, String body) => Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            '백업 코드를 만들어 두면 앱을 지웠거나 폰을 바꿔도\n진도·별·코인을 그대로 되살릴 수 있어요.',
-            style:
-                TextStyle(fontSize: 13.5, height: 1.5, color: Colors.black54),
-          ),
-          const SizedBox(height: 12),
           SizedBox(
-            width: double.infinity,
-            child: FilledButton(
-              style: FilledButton.styleFrom(
-                backgroundColor: AppColors.green,
-                padding: const EdgeInsets.symmetric(vertical: 12),
-              ),
-              onPressed: () => Navigator.of(context).push(
-                MaterialPageRoute(builder: (_) => const BackupScreen()),
-              ),
-              child: const Text(
-                '백업 화면 열기',
-                style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-              ),
-            ),
+            width: 84,
+            child: Text(head,
+                style: const TextStyle(
+                    fontSize: 15, fontWeight: FontWeight.bold)),
+          ),
+          Expanded(
+            child: Text(body,
+                style: const TextStyle(fontSize: 15, color: AppColors.ink)),
           ),
         ],
-      ),
-    );
-  }
+      );
 }

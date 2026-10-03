@@ -207,7 +207,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
               action: _playNext);
       return;
     }
-    Sounds.play('correct');
+    Sounds.buy(); // 코인을 썼다
     Speech.speak(meal ? '냠냠 맛있어요!' : '꿀꺽꿀꺽!');
     if (!meal && _nudgeDrink) {
       _nudgeDrink = false;
@@ -876,7 +876,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                   children: [
                     // ── 0. 바로 시작: 글을 못 읽어도 ▶ 하나면 다음 판이 열린다 ──
                     if (_nextUp(data) case final next?) ...[
-                      _QuickStartButton(next: next),
+                      // 첫 판 뒤 물 주기를 안내할 때는 ▶ 대신 물 주기가 깜빡인다
+                      _QuickStartButton(next: next, pulse: !_nudgeDrink),
                       const SizedBox(height: 18),
                     ],
                     // 맞춤 복습: 있을 때만 ▶ 밑에 얇은 줄로
@@ -1895,9 +1896,10 @@ class _NextUp {
 /// 홈의 가장 큰 초록 버튼 — 누르면 다음 판이 바로 열린다.
 /// 초록 = 앞으로. 숨쉬듯 커졌다 작아져 "여기"를 글 없이 알려준다.
 class _QuickStartButton extends StatelessWidget {
-  const _QuickStartButton({required this.next});
+  const _QuickStartButton({required this.next, this.pulse = true});
 
   final _NextUp next;
+  final bool pulse;
 
   @override
   Widget build(BuildContext context) {
@@ -1908,7 +1910,7 @@ class _QuickStartButton extends StatelessWidget {
       onTap: next.open,
       excludeSemantics: true,
       child: Pulse(
-        scale: 1.03,
+        scale: pulse ? 1.03 : 1.0,
         child: BouncyButton(
           key: const ValueKey('quick-start'),
           color: AppColors.green,

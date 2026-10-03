@@ -70,6 +70,17 @@ class PreschoolMathApp extends StatelessWidget {
               bodyColor: AppColors.ink,
               displayColor: AppColors.ink,
             ),
+        // 화면 전환은 기기와 상관없이 하나로 (같은 앱인데 폰마다 다르게 넘어가지 않게)
+        pageTransitionsTheme: const PageTransitionsTheme(
+          builders: {
+            TargetPlatform.android: ZoomPageTransitionsBuilder(),
+            TargetPlatform.iOS: ZoomPageTransitionsBuilder(),
+            TargetPlatform.macOS: ZoomPageTransitionsBuilder(),
+            TargetPlatform.windows: ZoomPageTransitionsBuilder(),
+            TargetPlatform.linux: ZoomPageTransitionsBuilder(),
+            TargetPlatform.fuchsia: ZoomPageTransitionsBuilder(),
+          },
+        ),
         // 앱바는 전 화면 브랜드 그린 하나로 통일 (과목색은 칩·카드에만)
         appBarTheme: AppBarTheme(
           backgroundColor: AppColors.green,

@@ -101,7 +101,7 @@ class _PetSpriteState extends State<PetSprite> with TickerProviderStateMixin {
   void _tap() {
     _hop.forward(from: 0);
     setState(() => _hearts++);
-    Sounds.play('correct');
+    Sounds.pop();
     PetStore.load().then((s) => Speech.speak(PetSprite.lineFor(s)));
   }
 
