@@ -237,6 +237,7 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
           builder: (_) => ResultScreen(
+            dots: _dots.dots,
             correctCount: _correctCount,
             totalCount: _baseCount,
             earnedPoints: earned,

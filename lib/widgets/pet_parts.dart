@@ -164,9 +164,9 @@ class _PetSpriteState extends State<PetSprite> with TickerProviderStateMixin {
         // 4~5단계: 종 색 망토 (몸 뒤)
         if (stage >= 4)
           Positioned(
-            bottom: 0,
+            bottom: a * 0.04,
             child: CustomPaint(
-              size: Size(a * 0.95, a * 0.62),
+              size: Size(a * 0.8, a * 0.5),
               painter: _CapePainter(color),
             ),
           ),
@@ -333,14 +333,20 @@ class _CapePainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final w = size.width;
     final h = size.height;
+    // 어깨에서 흘러내리는 망토 (아랫단은 물결)
     final cape = Path()
-      ..moveTo(w * 0.3, 0)
-      ..lineTo(w * 0.7, 0)
-      ..quadraticBezierTo(w * 0.95, h * 0.6, w, h)
-      ..lineTo(0, h)
-      ..quadraticBezierTo(w * 0.05, h * 0.6, w * 0.3, 0)
+      ..moveTo(w * 0.32, 0)
+      ..lineTo(w * 0.68, 0)
+      ..quadraticBezierTo(w * 0.9, h * 0.5, w, h * 0.92)
+      ..quadraticBezierTo(w * 0.83, h * 0.8, w * 0.67, h)
+      ..quadraticBezierTo(w * 0.5, h * 0.84, w * 0.33, h)
+      ..quadraticBezierTo(w * 0.17, h * 0.8, 0, h * 0.92)
+      ..quadraticBezierTo(w * 0.1, h * 0.5, w * 0.32, 0)
       ..close();
-    canvas.drawPath(cape, Paint()..color = color);
+    canvas.drawPath(cape, Paint()..color = color.withValues(alpha: 0.85));
+    // 목 매듭
+    canvas.drawCircle(
+        Offset(w / 2, h * 0.04), w * 0.07, Paint()..color = AppColors.amber);
     canvas.drawPath(
       cape,
       Paint()
@@ -464,7 +470,7 @@ class PetCareButton extends StatelessWidget {
             margin: const EdgeInsets.symmetric(horizontal: 1.5),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: i < left
+              color: i < left && !poor
                   ? (meal ? AppColors.amber : AppColors.petWater)
                   : AppColors.line,
             ),

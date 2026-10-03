@@ -41,6 +41,7 @@ import 'pet_room_screen.dart';
 import 'practice_screen.dart';
 import 'profile_screen.dart';
 import 'quiz_screen.dart';
+import 'result_screen.dart';
 import 'settings_screen.dart';
 import 'shop_screen.dart';
 import 'sticker_book_screen.dart';
@@ -157,7 +158,10 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
         if (!mounted) return;
         final next = _nextUp(r[0] as _MapData);
         if (next == null) return;
+        // 첫 판 결과의 주인공 버튼은 "친구한테 가기"
+        ResultScreen.firstRunPending = true;
         await next.open();
+        ResultScreen.firstRunPending = false;
         if (!mounted) return;
         Speech.speak('친구가 목말라요! 물을 줘 볼까?');
       });
@@ -1020,7 +1024,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                                 ),
                                 Text(
                                   data.wrongCount > 0
-                                      ? '틀린 낱말 ${data.wrongCount}개 · 맞히면 노트에서 사라져요'
+                                      ? '틀린 문제 ${data.wrongCount}개 · 맞히면 노트에서 사라져요'
                                       : '지금은 비어 있어요 · 틀린 문제가 생기면 여기 모여요',
                                   style: TextStyle(
                                     fontSize: 12,

@@ -1,18 +1,29 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
-import '../widgets/quokka_avatar.dart';
 
 import '../models/daily.dart';
+import '../models/pet.dart';
 import '../models/progress.dart';
-import '../models/wrong_notes.dart';
+import '../services/speech.dart';
 import '../theme.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/confetti_burst.dart';
+import '../widgets/pet_parts.dart';
+import '../widgets/pulse.dart';
+import '../widgets/quiz_parts.dart';
+import '../widgets/quokka_avatar.dart';
 import 'sticker_book_screen.dart';
 import 'wrong_notes_screen.dart';
 
-/// 결과 화면: 별·점수·칭호를 보여주고 다음 단계 또는 다시 도전으로 이어진다.
-/// 수학·한글 어느 과목이든 쓸 수 있도록 다음/다시 화면은 빌더로 받는다.
-class ResultScreen extends StatelessWidget {
+/// 결과 화면 — 한 판이 끝난 뒤.
+///
+/// 글을 못 읽어도 알 수 있게 차례로 하나씩 보여 주고(누르면 건너뜀), 한 문장으로 읽어 준다.
+/// ① 진행 점이 차오르며 별이 뜬다 → ② 칭찬 한 줄 → ③ 🪙 이번 판에 늘어난 전부
+/// → ④ 보상 칩 한 줄(🎁👑📋🔥🎟️) → ⑤ 친구가 깡충 → ⑥ 주인공 버튼 하나
+///
+/// 아이가 보는 재화는 ⭐(배움)·🪙(쓰기)·🎟️(모으기) 셋. 나머지 보상은 칩 그림으로만.
+class ResultScreen extends StatefulWidget {
   const ResultScreen({
     super.key,
     required this.correctCount,
@@ -31,7 +42,11 @@ class ResultScreen extends StatelessWidget {
     this.nextBuilder,
     this.homeLabel = '처음으로',
     this.homeIcon = Icons.home_rounded,
+    this.dots,
   });
+
+  /// 첫 실행의 첫 판이면 홈이 켜 둔다 — 결과의 주인공이 "🏠 친구한테 가기"가 된다.
+  static bool firstRunPending = false;
 
   final int correctCount;
   final int totalCount;
@@ -55,13 +70,13 @@ class ResultScreen extends StatelessWidget {
   final int milestoneDays;
   final int milestoneCoins;
 
-  /// 단계 도전이면 '12단계 · 🐞 덧셈 첫걸음' 같은 안내문
+  /// 단계 도전이면 '덧셈 첫걸음 · 2단계' 같은 안내 (어른용, 작게)
   final String? headerText;
 
-  /// 통과하지 못한 단계 도전이면 잠금 해제 안내를 보여준다.
+  /// 통과하지 못한 단계 도전이면 별 1개 자리를 깜빡여 "여기까지!"를 보여 준다.
   final bool showUnlockHint;
 
-  /// 다음 단계 버튼 (통과했을 때만 전달)
+  /// 다음 단계 버튼 (통과했고 열려 있을 때만 전달)
   final String? nextLabel;
   final Widget Function()? nextBuilder;
 
@@ -71,412 +86,205 @@ class ResultScreen extends StatelessWidget {
   final String homeLabel;
   final IconData homeIcon;
 
-  int get _stars => starsForScore(correctCount, totalCount);
+  /// 퀴즈 진행 점 (문제마다 하나). 없으면 맞힌 개수로 만든다.
+  final List<QuizDot>? dots;
 
-  /// 칭찬 문구를 판마다 조금씩 바꾼다. Stateless라 Random 대신
-  /// 점수 기반으로 결정적으로 고른다. [0]은 기존 문구(테스트 고정점).
-  int get _lineIndex => (correctCount * 7 + totalCount) % 3;
+  @override
+  State<ResultScreen> createState() => _ResultScreenState();
+}
 
+class _ResultScreenState extends State<ResultScreen>
+    with SingleTickerProviderStateMixin {
+  /// 전체 연출 (약 4초). 화면을 누르면 끝으로 건너뛴다.
+  late final AnimationController _show = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 4000),
+  )..forward();
+
+  late final bool _firstRun;
+
+  PetState? _pet;
+  int? _coinsNow;
+  Rank? _rankUp;
+
+  int get _stars => starsForScore(widget.correctCount, widget.totalCount);
+
+  /// 이번 판에 실제로 늘어난 코인 전부 (상자·미션·연속 출석 포함)
+  int get _coinTotal =>
+      widget.earnedPoints +
+      widget.chestCoins +
+      widget.milestoneCoins +
+      widget.completedMissions.fold<int>(0, (s, m) => s + m.reward);
+
+  int get _lineIndex => (widget.correctCount * 7 + widget.totalCount) % 3;
+
+  /// 칭찬 한 줄 ([0]은 테스트 고정점)
   static const _messages = [
-    ['괜찮아요! 다시 해 볼까요? 🙂', '한 번 더 하면 늘어요! 🙂', '시작이 반이에요! 🙂'], // 0별
-    ['잘했어요! 조금만 더 힘내요 💪', '좋아요, 감 잡았어요! 💪', '점점 잘하고 있어요! 💪'],
-    ['정말 잘했어요! 👏', '멋져요, 별 두 개! 👏', '거의 다 왔어요! 👏'],
-    ['와, 최고예요! 🏆', '완벽에 가까워요! 🏆', '오늘의 주인공이에요! 🏆'],
+    ['끝까지 풀었네!', '한 번 더 하면 늘어요!', '시작이 반이에요!'], // 0별
+    ['잘했어요! 조금만 더!', '좋아요, 감 잡았어요!', '점점 잘하고 있어요!'],
+    ['정말 잘했어요!', '멋져요, 별 두 개!', '거의 다 왔어요!'],
+    ['와, 최고예요!', '완벽에 가까워요!', '오늘의 주인공이에요!'],
   ];
 
   String get _message => _messages[_stars][_lineIndex];
 
-  void _replace(BuildContext context, Widget Function() builder) {
+  bool get _hasNext => widget.nextLabel != null && widget.nextBuilder != null;
+
+  /// 주인공 버튼: 첫 판이거나, 통과했는데 다음 단계가 막혀 있으면 "친구한테 가기"
+  bool get _friendFirst => _firstRun || (_stars >= 1 && !_hasNext);
+
+  @override
+  void initState() {
+    super.initState();
+    _firstRun = ResultScreen.firstRunPending;
+    ResultScreen.firstRunPending = false;
+    _loadSide();
+    _speak();
+  }
+
+  @override
+  void dispose() {
+    _show.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadSide() async {
+    final pet = await PetStore.load();
+    final coins = await ProgressStore.loadCoins();
+    final points = await ProgressStore.loadPoints();
+    final before = rankForPoints(math.max(0, points - widget.earnedPoints));
+    final after = rankForPoints(points);
+    if (!mounted) return;
+    setState(() {
+      _pet = pet.chosen ? pet : null;
+      _coinsNow = coins;
+      if (after.minPoints > before.minPoints) _rankUp = after;
+    });
+  }
+
+  /// 한 문장으로 읽어 준다: 칭찬 → 별 → 코인 → 다음 할 일
+  void _speak() {
+    final wrong = widget.totalCount - widget.correctCount;
+    final parts = <String>[
+      _message,
+      if (_stars > 0)
+        '별 $_stars개, 코인 $_coinTotal개!'
+      else if (wrong > 0)
+        '틀린 문제는 다시 풀어서 고쳤어. 한 번 더 해 볼까?',
+      if (widget.chestCoins > 0) '보물상자도 찾았어!',
+      if (_friendFirst)
+        '초록 버튼 누르면 친구한테 가!'
+      else if (_hasNext)
+        '초록 버튼 누르면 다음 단계야!',
+    ];
+    Speech.speak(parts.join(' '));
+  }
+
+  void _replace(Widget Function() builder) {
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(builder: (_) => builder()),
     );
   }
 
+  void _goHome() => Navigator.of(context).popUntil((route) => route.isFirst);
+
+  /// 연출 구간 [a, b]에서 0→1
+  double _at(double a, double b) =>
+      Curves.easeOutBack.transform(((_show.value - a) / (b - a)).clamp(0, 1));
+
+  Widget _appear(double a, double b, Widget child) {
+    return AnimatedBuilder(
+      animation: _show,
+      builder: (context, child) {
+        final t = _at(a, b);
+        return Opacity(
+          opacity: t.clamp(0.0, 1.0),
+          child: Transform.scale(scale: 0.7 + 0.3 * t, child: child),
+        );
+      },
+      child: child,
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    final hasNext = nextLabel != null && nextBuilder != null;
-
+    final wrong = widget.totalCount - widget.correctCount;
     return Scaffold(
-      // 화면이 작으면 스크롤되고, 크면 위아래로 넉넉하게 펼쳐진다.
-      body: Stack(
-        children: [
-          // 축하 무드: 상단에서 퍼지는 따뜻한 빛
-          Positioned.fill(
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                gradient: RadialGradient(
-                  center: const Alignment(0, -0.9),
-                  radius: 1.1,
-                  colors: [
-                    AppColors.amber
-                        .withValues(alpha: _stars >= 1 ? 0.22 : 0.08),
-                    AppColors.cream,
-                  ],
+      body: GestureDetector(
+        // 아무 데나 누르면 연출을 건너뛴다
+        behavior: HitTestBehavior.translucent,
+        onTap: () {
+          if (_show.isAnimating) _show.value = 1;
+        },
+        child: Stack(
+          children: [
+            // 축하 무드: 상단에서 퍼지는 따뜻한 빛
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: RadialGradient(
+                    center: const Alignment(0, -0.9),
+                    radius: 1.1,
+                    colors: [
+                      AppColors.amber
+                          .withValues(alpha: _stars >= 1 ? 0.22 : 0.08),
+                      AppColors.cream,
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-          if (_stars >= 1) const Positioned.fill(child: ConfettiBurst()),
-          SafeArea(
-            child: Column(
-              children: [
-                // 내용만 스크롤되고, 다음 단계 버튼은 아래 고정 바에 항상 보인다.
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) => SingleChildScrollView(
-                      padding: const EdgeInsets.fromLTRB(24, 24, 24, 8),
-                      child: ConstrainedBox(
-                        constraints: BoxConstraints(
-                            minHeight: constraints.maxHeight - 32),
-                        child: IntrinsicHeight(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.stretch,
-                            children: [
-                              const Spacer(),
-                              if (headerText != null) ...[
+            if (_stars >= 1) const Positioned.fill(child: ConfettiBurst()),
+            SafeArea(
+              child: Column(
+                children: [
+                  _buildTopBar(),
+                  Expanded(
+                    child: LayoutBuilder(
+                      builder: (context, constraints) => SingleChildScrollView(
+                        padding: const EdgeInsets.fromLTRB(24, 0, 24, 8),
+                        child: ConstrainedBox(
+                          constraints:
+                              BoxConstraints(minHeight: constraints.maxHeight),
+                          child: IntrinsicHeight(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                const Spacer(),
+                                _buildStars(),
+                                const SizedBox(height: 14),
+                                _appear(0.0, 0.2, _buildDots()),
+                                const SizedBox(height: 6),
+                                // 어른용 한 줄 (작게)
                                 Text(
-                                  headerText!,
+                                  '${widget.totalCount}문제 중에 '
+                                  '${widget.correctCount}문제를 맞혔어요!',
                                   textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                      fontSize: 18,
-                                      color: Colors.grey.shade600),
+                                  style: const TextStyle(
+                                      fontSize: 13, color: AppColors.inkMuted),
                                 ),
+                                const SizedBox(height: 16),
+                                _appear(0.35, 0.5, _buildMessage()),
+                                const SizedBox(height: 16),
+                                _appear(0.48, 0.62, _buildCoins()),
                                 const SizedBox(height: 12),
-                              ],
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  for (var i = 0; i < 3; i++)
-                                    TweenAnimationBuilder<double>(
-                                      tween: Tween(begin: 0, end: 1),
-                                      duration:
-                                          Duration(milliseconds: 400 + i * 300),
-                                      curve: Curves.elasticOut,
-                                      builder: (context, value, child) =>
-                                          Transform.scale(
-                                        scale: value,
-                                        child: child,
-                                      ),
-                                      child: Text(
-                                        i < _stars ? '⭐' : '☆',
-                                        style: const TextStyle(fontSize: 64),
-                                      ),
-                                    ),
+                                _buildChips(),
+                                const SizedBox(height: 14),
+                                _appear(0.78, 0.92, _buildPet()),
+                                if (wrong > 0) ...[
+                                  const SizedBox(height: 10),
+                                  Center(child: _wrongNotesChip(wrong)),
                                 ],
-                              ),
-                              const SizedBox(height: 20),
-                              Text(
-                                _message,
-                                textAlign: TextAlign.center,
-                                style: displayStyle(fontSize: 30),
-                              ),
-                              const SizedBox(height: 10),
-                              Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                  const QuokkaFace(size: 48),
-                                  const SizedBox(width: 8),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                        horizontal: 14, vertical: 8),
-                                    decoration: BoxDecoration(
-                                      color: AppColors.brownSurface,
-                                      borderRadius: BorderRadius.circular(16),
-                                    ),
-                                    child: Text(
-                                      const [
-                                        [
-                                          '쿼카랑 같이 다시 해 보자!',
-                                          '연습하면 점점 잘하게 돼!',
-                                          '쿼카가 옆에서 응원할게!'
-                                        ],
-                                        [
-                                          '내일은 별 3개다, 아자!',
-                                          '포기 안 하는 게 멋져!',
-                                          '별 하나도 소중해!'
-                                        ],
-                                        [
-                                          '멋진걸? 헤헤!',
-                                          '쿼카가 감동했어!',
-                                          '별 둘! 대단한걸?'
-                                        ],
-                                        [
-                                          '우와아! 눈이 부셔!',
-                                          '완벽해! 쿼카가 자랑스러워!',
-                                          '별 셋! 오늘의 챔피언!'
-                                        ],
-                                      ][_stars][_lineIndex],
-                                      style: const TextStyle(
-                                        fontSize: 15,
-                                        fontWeight: FontWeight.bold,
-                                        color: AppColors.brown,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              Text(
-                                '$totalCount문제 중에 $correctCount문제를 맞혔어요!',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                    fontSize: 18, color: Colors.grey.shade700),
-                              ),
-                              if (correctCount < totalCount) ...[
-                                const SizedBox(height: 10),
-                                Center(
-                                  child: OutlinedButton.icon(
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: AppColors.brown,
-                                      side: const BorderSide(
-                                          color: AppColors.brown, width: 1.5),
-                                      padding: const EdgeInsets.symmetric(
-                                          horizontal: 18, vertical: 10),
-                                      shape: RoundedRectangleBorder(
-                                        borderRadius:
-                                            BorderRadius.circular(999),
-                                      ),
-                                    ),
-                                    onPressed: () => Navigator.of(context).push(
-                                      MaterialPageRoute(
-                                          builder: (_) =>
-                                              const WrongNotesScreen()),
-                                    ),
-                                    icon: const Icon(Icons.search_rounded,
-                                        size: 20),
-                                    label: Text(
-                                      '틀린 ${totalCount - correctCount}문제 다시 보기',
-                                      style: const TextStyle(
-                                          fontSize: 15,
-                                          fontWeight: FontWeight.bold),
-                                    ),
-                                  ),
-                                ),
+                                const Spacer(),
                               ],
-                              if (showUnlockHint) ...[
-                                const SizedBox(height: 8),
-                                Text(
-                                  '5문제 이상 맞히면 다음 단계가 열려요!',
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                      fontSize: 16,
-                                      color: Colors.grey.shade600),
-                                ),
-                              ],
-                              const SizedBox(height: 20),
-                              _PointsCard(earnedPoints: earnedPoints),
-                              if (bossCleared) ...[
-                                const SizedBox(height: 12),
-                                const _BossBanner(),
-                              ],
-                              if (chestCoins > 0) ...[
-                                const SizedBox(height: 12),
-                                _ChestBanner(coins: chestCoins),
-                              ],
-                              if (stickerEarned) ...[
-                                const SizedBox(height: 12),
-                                const _StickerBanner(),
-                              ],
-                              const _WrongNotesBanner(),
-                              if (milestoneDays > 0) ...[
-                                const SizedBox(height: 12),
-                                _MilestoneBanner(
-                                    days: milestoneDays, coins: milestoneCoins),
-                              ],
-                              if (completedMissions.isNotEmpty) ...[
-                                const SizedBox(height: 12),
-                                _MissionBanner(missions: completedMissions),
-                              ],
-                              const Spacer(),
-                            ],
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                // 하단 고정 버튼 바: 판이 끝나면 스크롤 없이 바로 다음으로
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(24, 4, 24, 12),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      if (hasNext) ...[
-                        BouncyButton(
-                          color: const Color(0xFF3DA35D),
-                          onTap: () => _replace(context, nextBuilder!),
-                          child: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                nextLabel!,
-                                style: const TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              const Icon(
-                                Icons.arrow_forward_rounded,
-                                size: 28,
-                                color: Colors.white,
-                              ),
-                            ],
-                          ),
-                        ),
-                        const SizedBox(height: 10),
-                      ],
-                      if (hasNext)
-                        // 통과: 주인공은 '다음 단계' 하나. 다시 하기는 조용한 보조.
-                        TextButton.icon(
-                          style: TextButton.styleFrom(
-                            minimumSize: const Size(48, 44),
-                          ),
-                          onPressed: () => _replace(context, retryBuilder),
-                          icon: const Icon(Icons.refresh_rounded,
-                              size: 20, color: AppColors.inkSoft),
-                          label: const Text(
-                            '다시 하기',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
-                              color: AppColors.inkSoft,
-                            ),
-                          ),
-                        )
-                      else
-                        // 미통과: 같은 자리의 주인공이 '다시 하기'가 된다.
-                        BouncyButton(
-                          color: const Color(0xFF3DA35D),
-                          onTap: () => _replace(context, retryBuilder),
-                          child: const Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Text(
-                                '다시 하기',
-                                style: TextStyle(
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              SizedBox(width: 8),
-                              Icon(
-                                Icons.refresh_rounded,
-                                size: 28,
-                                color: Colors.white,
-                              ),
-                            ],
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-          // 처음으로: 버튼 바 대신 좌상단 홈 아이콘 (버튼 수 줄이기)
-          SafeArea(
-            child: Align(
-              alignment: Alignment.topLeft,
-              child: Padding(
-                padding: const EdgeInsets.only(left: 6, top: 2),
-                child: IconButton(
-                  tooltip: homeLabel,
-                  onPressed: () =>
-                      Navigator.of(context).popUntil((route) => route.isFirst),
-                  icon: Icon(homeIcon, size: 30, color: AppColors.inkSoft),
-                ),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-/// 보물상자 보너스 배너: 통! 하고 나타나서 보너스 코인을 알려준다.
-class _ChestBanner extends StatelessWidget {
-  const _ChestBanner({required this.coins});
-
-  final int coins;
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.4, end: 1),
-      duration: const Duration(milliseconds: 700),
-      curve: Curves.elasticOut,
-      builder: (context, value, child) =>
-          Transform.scale(scale: value, child: child),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFEFE3FF),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFA560E8), width: 2),
-        ),
-        child: Text(
-          '🎁 보물상자 발견! 보너스 +$coins 🪙',
-          textAlign: TextAlign.center,
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF6B2FB3),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// 스티커 획득 배너: 누르면 스티커북으로 가서 직접 골라 붙인다
-class _StickerBanner extends StatelessWidget {
-  const _StickerBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => const StickerBookScreen()),
-      ),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFDE8F4),
-          borderRadius: BorderRadius.circular(18),
-          border: Border.all(color: const Color(0xFFF2A9D4), width: 2),
-        ),
-        child: Row(
-          children: [
-            const Text('🎟️', style: TextStyle(fontSize: 26)),
-            const SizedBox(width: 10),
-            const Expanded(
-              child: Text(
-                '스티커 1장을 받았어요!\n스티커북에서 골라 붙여 보세요',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.bold,
-                  height: 1.3,
-                  color: Color(0xFFC2185B),
-                ),
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFFD45C8E),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: const Text(
-                '붙이러 가기',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+                  _buildButtons(),
+                ],
               ),
             ),
           ],
@@ -484,246 +292,395 @@ class _StickerBanner extends StatelessWidget {
       ),
     );
   }
-}
 
-/// 오답 노트에 틀린 문제가 남아 있으면 복습을 권하는 배너
-class _WrongNotesBanner extends StatelessWidget {
-  const _WrongNotesBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    return FutureBuilder<int>(
-      future: WrongNoteStore.count(),
-      builder: (context, snapshot) {
-        final count = snapshot.data ?? 0;
-        if (count == 0) return const SizedBox.shrink();
-        return Padding(
-          padding: const EdgeInsets.only(top: 12),
-          child: GestureDetector(
-            onTap: () => Navigator.of(context).push(
-              MaterialPageRoute(builder: (_) => const WrongNotesScreen()),
+  /// 퀴즈 상단바와 같은 자리: 🏠 | 단원 이름(작게) | 🪙 잔액
+  Widget _buildTopBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(6, 8, 16, 0),
+      child: Row(
+        children: [
+          IconButton(
+            tooltip: widget.homeLabel,
+            onPressed: _goHome,
+            icon: Icon(widget.homeIcon, size: 30, color: AppColors.inkSoft),
+          ),
+          Expanded(
+            child: Text(
+              widget.headerText ?? '',
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(fontSize: 14, color: AppColors.inkSoft),
             ),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ),
+          if (_coinsNow != null)
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFF3E0),
-                borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFFFFB74D), width: 2),
+                color: AppColors.rewardSurface,
+                borderRadius: BorderRadius.circular(999),
               ),
-              child: Row(
-                children: [
-                  const Text('📝', style: TextStyle(fontSize: 26)),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Text(
-                      '틀렸던 문제 $count개가 기다려요!\n한 번 더 풀면 오답 노트에서 사라져요',
-                      style: const TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.bold,
-                        height: 1.3,
-                        color: Color(0xFFE65100),
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFFF9800),
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: const Text(
-                      '복습하기',
-                      style: TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ],
+              child: Text(
+                '🪙 $_coinsNow',
+                style:
+                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ),
-          ),
+        ],
+      ),
+    );
+  }
+
+  /// 별 세 개: 점이 차오르는 동안 하나씩 펑. 못 받은 별은 점선(진한 ☆ 대신).
+  Widget _buildStars() {
+    return AnimatedBuilder(
+      animation: _show,
+      builder: (context, _) => Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          for (var i = 0; i < 3; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: i < _stars
+                  ? Transform.scale(
+                      scale: _at(0.12 + i * 0.07, 0.22 + i * 0.07),
+                      child: const Text('⭐', style: TextStyle(fontSize: 62)),
+                    )
+                  : Opacity(
+                      opacity: 0.35,
+                      child: Text(
+                        '☆',
+                        style: TextStyle(
+                          fontSize: 62,
+                          color: AppColors.inkMuted.withValues(alpha: 0.8),
+                        ),
+                      ),
+                    ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  /// 결과 점 줄: 한 번에 맞힌 문제가 왼쪽부터, 고친 문제(✓)가 그 뒤에.
+  /// 별 1·2·3개가 되는 칸 위에 작은 ⭐ 표.
+  Widget _buildDots() {
+    final source = widget.dots ??
+        List.generate(
+          widget.totalCount,
+          (i) => i < widget.correctCount ? QuizDot.correct : QuizDot.missed,
         );
-      },
+    final ordered = [
+      ...source.where((d) => d == QuizDot.correct),
+      ...source.where((d) => d == QuizDot.fixed),
+      ...source.where((d) => d == QuizDot.missed || d == QuizDot.pending),
+    ];
+    final n = ordered.length;
+    // 별 기준(50·70·90%)에 닿는 칸 번호 (1부터)
+    final marks = {
+      for (final p in [0.5, 0.7, 0.9]) (n * p).ceil(),
+    };
+    final firstMissing = widget.correctCount + 1;
+    // (IntrinsicHeight 안이라 LayoutBuilder 대신 화면 너비로 계산한다)
+    final width = MediaQuery.sizeOf(context).width - 48;
+    final size = math.min(24.0, (width - 4.0 * n) / n);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        for (var i = 0; i < n; i++)
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                SizedBox(
+                  height: size * 0.8,
+                  child: marks.contains(i + 1)
+                      ? (widget.showUnlockHint && i + 1 >= firstMissing
+                          ? Pulse(
+                              child: Text('⭐',
+                                  style: TextStyle(fontSize: size * 0.6)))
+                          : Opacity(
+                              opacity: i + 1 <= widget.correctCount ? 1 : 0.35,
+                              child: Text('⭐',
+                                  style: TextStyle(fontSize: size * 0.6)),
+                            ))
+                      : null,
+                ),
+                _ResultDot(state: ordered[i], size: size),
+              ],
+            ),
+          ),
+      ],
     );
   }
-}
 
-/// 주간 보스전 클리어 축하 배너
-class _BossBanner extends StatelessWidget {
-  const _BossBanner();
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.4, end: 1),
-      duration: const Duration(milliseconds: 700),
-      curve: Curves.elasticOut,
-      builder: (context, value, child) =>
-          Transform.scale(scale: value, child: child),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFF6D8),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFB8860B), width: 2),
+  Widget _buildMessage() {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        const QuokkaFace(size: 46),
+        const SizedBox(width: 8),
+        Flexible(
+          child: Text(
+            _message,
+            textAlign: TextAlign.center,
+            style: displayStyle(fontSize: 28),
+          ),
         ),
-        child: const Text(
-          '👑 주간 보스전 클리어! 보너스 +100 🪙',
-          textAlign: TextAlign.center,
-          style: TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.bold,
-            color: Color(0xFF8B6F1F),
+      ],
+    );
+  }
+
+  /// 🪙 이번 판에 늘어난 전부 (숫자가 올라간다)
+  Widget _buildCoins() {
+    return Center(
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 10),
+        decoration: BoxDecoration(
+          color: AppColors.rewardSurface,
+          borderRadius: BorderRadius.circular(999),
+          border: Border.all(color: AppColors.amber, width: 3),
+        ),
+        child: AnimatedBuilder(
+          animation: _show,
+          builder: (context, _) => Text(
+            '🪙 +${(_coinTotal * _at(0.5, 0.66).clamp(0.0, 1.0)).round()}',
+            style: displayStyle(fontSize: 30, color: const Color(0xFF9A6A00)),
           ),
         ),
       ),
     );
   }
-}
 
-/// 스트릭 마일스톤(3·7·14·30일 연속 출석) 축하 배너
-class _MilestoneBanner extends StatelessWidget {
-  const _MilestoneBanner({required this.days, required this.coins});
-
-  final int days;
-  final int coins;
-
-  @override
-  Widget build(BuildContext context) {
-    return TweenAnimationBuilder<double>(
-      tween: Tween(begin: 0.4, end: 1),
-      duration: const Duration(milliseconds: 700),
-      curve: Curves.elasticOut,
-      builder: (context, value, child) =>
-          Transform.scale(scale: value, child: child),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFFE9E0),
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: const Color(0xFFFF7A00), width: 2),
+  /// 보상 칩 한 줄 — 글 없이 그림과 숫자만, 하나씩 퐁.
+  Widget _buildChips() {
+    final chips = <(String, String, VoidCallback?)>[
+      if (widget.chestCoins > 0) ('🎁', '+${widget.chestCoins}', null),
+      if (widget.bossCleared) ('👑', '+100', null),
+      if (widget.completedMissions.isNotEmpty)
+        ('📋', '✓${widget.completedMissions.length}', null),
+      if (widget.milestoneDays > 0) ('🔥', '${widget.milestoneDays}', null),
+      if (widget.stickerEarned)
+        (
+          '🎟️',
+          '+1',
+          () => Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const StickerBookScreen()),
+              ),
         ),
-        child: Text(
-          '🔥 $days일 연속 출석 달성! 보너스 +$coins 🪙',
-          textAlign: TextAlign.center,
+      if (_rankUp != null) (_rankUp!.emoji, '⬆', null),
+    ];
+    if (chips.isEmpty) return const SizedBox.shrink();
+    return Wrap(
+      alignment: WrapAlignment.center,
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        for (var i = 0; i < chips.length; i++)
+          _appear(
+            0.62 + i * 0.04,
+            0.74 + i * 0.04,
+            GestureDetector(
+              onTap: chips[i].$3,
+              child: Container(
+                key: ValueKey('reward-chip-${chips[i].$1}'),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: AppColors.outline, width: 2),
+                ),
+                child: Text(
+                  '${chips[i].$1} ${chips[i].$2}',
+                  style: const TextStyle(
+                      fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+
+  /// 친구 반응: 깡충 + 자라기 원(⭐가 친구를 키운다)
+  Widget _buildPet() {
+    final pet = _pet;
+    final species = pet?.species;
+    if (pet == null || species == null) return const SizedBox.shrink();
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        TweenAnimationBuilder<double>(
+          tween: Tween(begin: 0, end: 1),
+          duration: const Duration(milliseconds: 900),
+          builder: (context, t, child) => Transform.translate(
+            offset: Offset(0, -18 * math.sin(t * math.pi * 2).abs() * (1 - t)),
+            child: child,
+          ),
+          child: PetSprite(
+            species: species,
+            stage: pet.stage,
+            size: 60,
+            interactive: false,
+          ),
+        ),
+        const SizedBox(width: 6),
+        Flexible(child: PetGrowth(state: pet, compact: true)),
+      ],
+    );
+  }
+
+  /// 오답 노트 입구 하나 (홈과 같은 📒, 이번 판 개수)
+  Widget _wrongNotesChip(int wrong) {
+    return TextButton(
+      key: const ValueKey('result-wrong-notes'),
+      style: TextButton.styleFrom(
+        backgroundColor: Colors.white,
+        shape: const StadiumBorder(
+            side: BorderSide(color: AppColors.outline, width: 2)),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      ),
+      onPressed: () => Navigator.of(context).push(
+        MaterialPageRoute(builder: (_) => const WrongNotesScreen()),
+      ),
+      child: Text(
+        '📒 틀렸던 문제 $wrong',
+        style: const TextStyle(
+          fontSize: 15,
+          fontWeight: FontWeight.bold,
+          color: AppColors.inkSoft,
+        ),
+      ),
+    );
+  }
+
+  /// 아래 고정 버튼: 주인공 하나 + 조용한 보조
+  Widget _buildButtons() {
+    Widget primary(String label, IconData icon, VoidCallback onTap,
+        {String? face, Key? key}) {
+      return Pulse(
+        scale: 1.03,
+        child: BouncyButton(
+          key: key,
+          color: AppColors.green,
+          onTap: onTap,
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              if (face != null) ...[
+                Text(face, style: const TextStyle(fontSize: 26)),
+                const SizedBox(width: 8),
+              ],
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
+              const SizedBox(width: 8),
+              Icon(icon, size: 28, color: Colors.white),
+            ],
+          ),
+        ),
+      );
+    }
+
+    Widget quiet(String label, IconData icon, VoidCallback onTap) {
+      return TextButton.icon(
+        style: TextButton.styleFrom(minimumSize: const Size(48, 44)),
+        onPressed: onTap,
+        icon: Icon(icon, size: 20, color: AppColors.inkSoft),
+        label: Text(
+          label,
           style: const TextStyle(
-            fontSize: 17,
+            fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Color(0xFFC24A00),
+            color: AppColors.inkSoft,
           ),
+        ),
+      );
+    }
+
+    final petFace = _pet?.species?.emojiAt(_pet!.stage);
+    final List<Widget> children;
+    if (_friendFirst) {
+      children = [
+        primary('친구한테 가기', Icons.home_rounded, _goHome,
+            face: petFace, key: const ValueKey('result-friend')),
+        const SizedBox(height: 6),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            if (_hasNext)
+              quiet(widget.nextLabel!, Icons.arrow_forward_rounded,
+                  () => _replace(widget.nextBuilder!)),
+            quiet('다시 하기', Icons.refresh_rounded,
+                () => _replace(widget.retryBuilder)),
+          ],
+        ),
+      ];
+    } else if (_hasNext) {
+      // 통과: 주인공은 '다음 단계' 하나. 다시 하기는 조용한 보조.
+      children = [
+        primary(widget.nextLabel!, Icons.arrow_forward_rounded,
+            () => _replace(widget.nextBuilder!)),
+        const SizedBox(height: 6),
+        quiet('다시 하기', Icons.refresh_rounded,
+            () => _replace(widget.retryBuilder)),
+      ];
+    } else {
+      // 미통과: 같은 자리의 주인공이 '다시 하기'가 된다.
+      children = [
+        primary('다시 하기', Icons.refresh_rounded,
+            () => _replace(widget.retryBuilder)),
+      ];
+    }
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(24, 4, 24, 12),
+      child: _appear(
+        0.86,
+        1.0,
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: children,
         ),
       ),
     );
   }
 }
 
-/// 이번 판으로 달성한 데일리 미션 축하 배너
-class _MissionBanner extends StatelessWidget {
-  const _MissionBanner({required this.missions});
+/// 결과 점 하나 (퀴즈 진행 점과 같은 색 뜻)
+class _ResultDot extends StatelessWidget {
+  const _ResultDot({required this.state, required this.size});
 
-  final List<DailyMission> missions;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFEBD6),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: const Color(0xFFFF9600), width: 2),
-      ),
-      child: Column(
-        children: [
-          const Text(
-            '📋 오늘의 미션 완료!',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-              color: Color(0xFFB05E00),
-            ),
-          ),
-          const SizedBox(height: 4),
-          for (final mission in missions)
-            Text(
-              '${mission.emoji} ${mission.title}  +${mission.reward} 🪙',
-              style: const TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFB05E00),
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-}
-
-/// 이번 판 점수가 차오르고, 누적 점수와 칭호를 보여주는 카드
-class _PointsCard extends StatelessWidget {
-  const _PointsCard({required this.earnedPoints});
-
-  final int earnedPoints;
+  final QuizDot state;
+  final double size;
 
   @override
   Widget build(BuildContext context) {
+    final (fill, check) = switch (state) {
+      QuizDot.correct => (AppColors.correct, Colors.white),
+      QuizDot.fixed => (AppColors.selectedFill, AppColors.correct),
+      QuizDot.missed => (const Color(0xFFFFC9A8), null),
+      QuizDot.pending => (AppColors.line, null),
+    };
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+      width: size,
+      height: size,
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF6D8),
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: const Color(0xFFFFD34D), width: 3),
+        color: fill,
+        shape: BoxShape.circle,
+        border: state == QuizDot.fixed
+            ? Border.all(color: AppColors.correct, width: 2)
+            : null,
       ),
-      child: Column(
-        children: [
-          TweenAnimationBuilder<int>(
-            tween: IntTween(begin: 0, end: earnedPoints),
-            duration: const Duration(milliseconds: 900),
-            builder: (context, value, _) => Text(
-              '🪙 +$value코인',
-              style: const TextStyle(
-                fontSize: 30,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFB8860B),
-              ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          FutureBuilder<int>(
-            future: ProgressStore.loadPoints(),
-            builder: (context, snapshot) {
-              final total = snapshot.data;
-              if (total == null) return const SizedBox(height: 20);
-              final rank = rankForPoints(total);
-              final next = nextRankFor(total);
-              return Column(
-                children: [
-                  if (next != null) ...[
-                    Text(
-                      '${next.emoji} ${next.title}까지 ${next.minPoints - total}코인!',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.brown.shade400,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                  ],
-                  Text(
-                    '모은 코인 $total개 · ${rank.emoji} ${rank.title}',
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Colors.brown.shade300,
-                    ),
-                  ),
-                ],
-              );
-            },
-          ),
-        ],
-      ),
+      child: check != null
+          ? Icon(Icons.check_rounded, size: size * 0.7, color: check)
+          : null,
     );
   }
 }
