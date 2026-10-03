@@ -448,8 +448,10 @@ class _EggPainter extends CustomPainter {
     // 위가 좁고 아래가 넓은 알 모양
     final egg = Path()
       ..moveTo(w / 2, 0)
-      ..cubicTo(w * 0.95, 0, w, h * 0.62, w / 2, h)
-      ..cubicTo(0, h * 0.62, w * 0.05, 0, w / 2, 0)
+      ..cubicTo(w * 0.85, 0, w, h * 0.45, w, h * 0.63)
+      ..cubicTo(w, h * 0.88, w * 0.78, h, w / 2, h)
+      ..cubicTo(w * 0.22, h, 0, h * 0.88, 0, h * 0.63)
+      ..cubicTo(0, h * 0.45, w * 0.15, 0, w / 2, 0)
       ..close();
     final light = Color.lerp(color, Colors.white, 0.55)!;
     canvas.drawPath(
