@@ -1870,6 +1870,8 @@ class _QuickStartButton extends StatelessWidget {
     return Semantics(
       button: true,
       label: '바로 시작 ${next.title}',
+      // 자식 버튼의 탭이 접근성 트리에서 빠지므로 여기서 다시 단다.
+      onTap: next.open,
       excludeSemantics: true,
       child: Pulse(
         scale: 1.03,

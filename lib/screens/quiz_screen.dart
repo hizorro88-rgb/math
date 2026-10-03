@@ -2,7 +2,6 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../widgets/quokka_avatar.dart';
 
 import '../models/boss.dart';
 import '../models/curriculum.dart';
@@ -18,11 +17,10 @@ import '../services/cloud_sync.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../theme.dart';
-import '../widgets/auto_next_bar.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/listen_guard.dart';
 import '../widgets/quiz_exit_dialog.dart';
-import '../widgets/sparkle_burst.dart';
+import '../widgets/quiz_parts.dart';
 import 'result_screen.dart';
 
 /// 퀴즈 화면: 문제를 하나씩 풀고, 듀오링고처럼 아래에서 정답 여부를 알려준다.
@@ -60,6 +58,9 @@ class _QuizScreenState extends State<QuizScreen> {
   /// 처음 출제된 문제 수 (별점 계산 기준)
   late final int _baseCount;
 
+  /// 상단바 진행 점 (틀린 문제를 다시 풀어도 점 수는 그대로)
+  late final QuizDotTracker _dots;
+
   /// 남은 문제 큐. 틀린 문제가 뒤에 다시 추가된다.
   final List<_QuizEntry> _entries = [];
   int _currentIndex = 0;
@@ -86,24 +87,7 @@ class _QuizScreenState extends State<QuizScreen> {
   Question get _question => _entries[_currentIndex].question;
   bool get _isRetryQuestion => _entries[_currentIndex].isRetry;
 
-  /// 진행 바 값: 틀린 문제가 뒤에 추가돼 분모가 늘어도 바가 뒤로 가지 않게 한다.
-  double _barShown = 0;
-  double get _barProgress {
-    final p = (_currentIndex + (_answered ? 1 : 0)) / _entries.length;
-    if (p > _barShown) _barShown = p;
-    return _barShown;
-  }
-
-  /// 문구 풀: [0]은 기존 문구(위젯 테스트 고정점).
-  /// 화면 문구는 문항 번호로 결정적으로 고르고, TTS만 랜덤을 쓴다.
-  static const _correctSpeeches = [
-    '정답이에요!',
-    '딩동댕, 맞았어요!',
-    '우와, 정답!',
-    '참 잘했어요!',
-    '대단해요!',
-    '역시 최고예요!',
-  ];
+  /// 문구 풀: 화면 문구는 문항 번호로 결정적으로 고르고, TTS만 랜덤을 쓴다.
   static const _wrongSpeeches = [
     '괜찮아요. 정답은 X이에요.',
     '괜찮아요! 정답은 X이에요.',
@@ -111,27 +95,6 @@ class _QuizScreenState extends State<QuizScreen> {
     '다음엔 맞힐 거예요. 정답은 X이에요.',
   ];
   static const _correctPanels = ['정답이에요! 🎉', '딩동댕! 🎉', '맞았어요! 🎉', '참 잘했어요! 🎉'];
-  static const _cheerAsking = [
-    '쿼카랑 같이 골라 볼까?',
-    '음… 어떤 게 답일까?',
-    '천천히 보면 보여!',
-    '손가락으로 세어 볼까?',
-    '이번 문제도 재밌겠다!',
-  ];
-  static const _cheerCorrect = [
-    '우와아! 잘했어!',
-    '딩동댕! 최고야!',
-    '해낼 줄 알았어!',
-    '박수 짝짝짝!',
-    '쿼카가 깡충 뛰었어!',
-  ];
-  static const _cheerWrong = [
-    '괜찮아, 다시 해 보자!',
-    '실수해도 괜찮아!',
-    '한 번 더 보면 알 수 있어!',
-    '쿼카도 가끔 틀려~',
-  ];
-
   /// 7번째 문제는 ⚡보너스: 맞히면 코인 2배 (재출제 문제에는 없음)
   bool get _isBonusQuestion => _currentIndex == 6 && !_isRetryQuestion;
 
@@ -146,6 +109,7 @@ class _QuizScreenState extends State<QuizScreen> {
         ? BossStore.buildQuestions()
         : QuestionGenerator().generate(widget.config);
     _baseCount = questions.length;
+    _dots = QuizDotTracker(_baseCount);
     _entries.addAll(questions.map(_QuizEntry.new));
     WidgetsBinding.instance.addPostFrameCallback((_) => _start());
   }
@@ -163,8 +127,11 @@ class _QuizScreenState extends State<QuizScreen> {
     _speakQuestion();
   }
 
-  void _speakQuestion({bool force = false}) =>
-      Speech.speak(_question.speechText, force: force);
+  void _speakQuestion({bool force = false}) => QuizVoice.question(
+      task: '',
+      speech: _question.speechText,
+      retry: _isRetryQuestion,
+      force: force);
 
   /// 세로셈: 현재 문제에 맞는 자리 칸을 준비한다 (정답 자리수만큼).
   void _ensureSlots() {
@@ -209,6 +176,8 @@ class _QuizScreenState extends State<QuizScreen> {
     }
     setState(() {
       _selectedChoice = choice;
+      _dots.record(_currentIndex,
+          correct: choice == _question.answer, retry: _isRetryQuestion);
       if (choice == _question.answer) {
         if (_isRetryQuestion) {
           // 다시 풀어서 맞힘: 보너스만 주고 별점·콤보에는 영향 없음
@@ -259,15 +228,8 @@ class _QuizScreenState extends State<QuizScreen> {
     if (_isCorrect) {
       Sounds.correct(_combo);
       HapticFeedback.lightImpact().ignore();
-      // 연속 정답은 그 자체가 사건이 되게 따로 읽어 준다.
-      if (_combo == 3) {
-        Speech.speak('와, 3개 연속이에요!');
-      } else if (_combo == 5) {
-        Speech.speak('대단해요, 5연속!');
-      } else {
-        Speech.speak(
-            _correctSpeeches[_random.nextInt(_correctSpeeches.length)]);
-      }
+      // 맞힌 문제는 바로 다음 판으로 넘어가지만, 다시 푼 문제는 콤보가 없다.
+      QuizVoice.correct(_isRetryQuestion ? 0 : _combo);
     } else {
       Sounds.wrong();
       HapticFeedback.heavyImpact().ignore();
@@ -392,309 +354,103 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Widget _buildScaffold() {
-    return Scaffold(
-      body: SafeArea(
-        child: Stack(
-          children: [
-            Column(
-              children: [
-                _buildTopBar(),
-                // 문제는 위, 답은 아이 엄지가 닿는 아래쪽에.
-                // 화면이 작으면 스크롤되고, 크면 답이 바닥에 붙는다.
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) => SingleChildScrollView(
-                      padding: const EdgeInsets.symmetric(horizontal: 24),
-                      child: ConstrainedBox(
-                        constraints:
-                            BoxConstraints(minHeight: constraints.maxHeight),
-                        child: IntrinsicHeight(
-                          child: Column(
-                            children: [
-                              const Spacer(flex: 1),
-                              _buildQuestionCard(),
-                              const Spacer(flex: 2),
-                              _buildOwlCheer(),
-                              const Spacer(flex: 2),
-                              if (_question.vertical)
-                                _buildKeypad()
-                              else
-                                _buildChoices(),
-                              const SizedBox(height: 16),
-                            ],
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                _buildFeedbackPanel(),
-              ],
-            ),
-            // 5연속 정답부터 화면 가득 반짝반짝!
-            if (_answered && _isCorrect && _combo >= 5)
-              Positioned.fill(
-                child: IgnorePointer(
-                  child: SparkleBurst(key: ValueKey('sparkle$_currentIndex')),
-                ),
-              ),
-          ],
-        ),
+    final level = widget.level;
+    return QuizScaffold(
+      topBar: QuizTopBar(
+        onClose: _confirmExit,
+        dots: _dots.dots,
+        current: _dots.dotFor(_currentIndex),
+        coins: _roundPoints,
+        combo: _combo,
+        color: _themeColor,
+        leading: widget.bossMode ? '👑' : null,
+        label: level != null
+            ? '${level.unit.title} · '
+                '${level.number - level.unit.firstLevelNumber + 1}단계'
+            : null,
       ),
-    );
-  }
-
-  /// 문제 카드 아래의 작은 쿼카 응원
-  Widget _buildOwlCheer() {
-    // 리빌드마다 흔들리지 않게 문항 번호로 결정적으로 고른다.
-    final line = _answered
-        ? (_isCorrect
-            ? _cheerCorrect[_currentIndex % _cheerCorrect.length]
-            : _cheerWrong[_currentIndex % _cheerWrong.length])
-        : _currentIndex == 5 && !_isRetryQuestion
-            ? '절반 왔어! 조금만 더!'
-            : _cheerAsking[_currentIndex % _cheerAsking.length];
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        const QuokkaFace(size: 72),
-        const SizedBox(width: 8),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.brownSurface,
-            borderRadius: BorderRadius.circular(14),
-          ),
-          child: Text(
-            line,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.bold,
-              color: AppColors.brown,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildTopBar() {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
-      child: Row(
-        children: [
-          IconButton(
-            icon: const Icon(Icons.close, size: 28),
-            color: Colors.grey,
-            onPressed: _confirmExit,
-          ),
-          if (widget.bossMode) ...[
-            const Text(
-              '👑 보스전',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFB8860B),
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          if (widget.level != null) ...[
-            Text(
-              '${widget.level!.unit.title} · '
-              '${widget.level!.number - widget.level!.unit.firstLevelNumber + 1}단계',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: AppColors.inkSoft,
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(8),
-              child: TweenAnimationBuilder<double>(
-                tween: Tween(
-                  end: _barProgress,
-                ),
-                duration: const Duration(milliseconds: 300),
-                builder: (context, value, _) => LinearProgressIndicator(
-                  value: value,
-                  minHeight: 14,
-                  backgroundColor: Colors.grey.shade300,
-                  color: _themeColor,
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Text(
-            '문제 ${_currentIndex + 1}/${_entries.length}',
-            style: const TextStyle(
-              fontSize: 13,
-              fontWeight: FontWeight.bold,
-              color: AppColors.inkSoft,
-            ),
-          ),
-          const SizedBox(width: 10),
-          if (_combo >= 2) ...[
-            Text(
-              '🔥$_combo',
-              style: const TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFFFF7A00),
-              ),
-            ),
-            const SizedBox(width: 8),
-          ],
-          Text(
-            '🪙 $_roundPoints',
-            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-        ],
+      card: _buildQuestionCard(),
+      cheer: QuizCheer(
+        line: _answered
+              ? null
+              : quizCheerLine(
+                  index: _currentIndex, retry: _isRetryQuestion),
+          reaction: _answered ? _isCorrect : null,
       ),
+      answers: _question.vertical ? _buildKeypad() : _buildChoices(),
+      feedback: _answered ? _buildFeedbackPanel() : null,
+      // 5연속 정답부터 화면 가득 반짝반짝!
+      sparkle: _answered && _isCorrect && _combo >= 5,
+      sparkleKey: ValueKey('sparkle$_currentIndex'),
     );
   }
 
   Widget _buildQuestionCard() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(28),
-        border:
-            Border.all(color: _themeColor.withValues(alpha: 0.35), width: 3),
-        boxShadow: [
-          BoxShadow(
-            color: _themeColor.withValues(alpha: 0.12),
-            offset: const Offset(0, 6),
-            blurRadius: 14,
-          ),
-        ],
-      ),
-      child: Stack(
-        // 넓은 화면에서도 문제가 카드 가운데 오고,
-        // 우상단 스피커 버튼이 모서리에 잘리지 않게 한다.
-        alignment: Alignment.topCenter,
-        clipBehavior: Clip.none,
+    final Widget body;
+    if (_question.listenOnly) {
+      // 듣고 풀기: 문제 자체가 커다란 듣기 버튼
+      body = Padding(
+        padding: const EdgeInsets.symmetric(vertical: 8),
+        child: QuizSpeakButton(
+          onTap: () => _speakQuestion(force: true),
+          size: 96,
+        ),
+      );
+    } else if (_question.vertical) {
+      // 세로셈: 자리수를 맞춰 세로로 보여주고 자리마다 답 칸을 채운다.
+      _ensureSlots();
+      body = _VerticalProblem(
+        question: _question,
+        slots: _slots,
+        answered: _answered,
+        correct: _isCorrect,
+        themeColor: _themeColor,
+      );
+    } else if (_question.prompt.isNotEmpty) {
+      // 문장 문제(분수·소수·시간)는 여러 줄 그대로 보여준다.
+      body = Column(
         children: [
-          Column(
-            children: [
-              if (_isBonusQuestion) ...[
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFF1C2),
-                    borderRadius: BorderRadius.circular(999),
-                    border:
-                        Border.all(color: const Color(0xFFFFD34D), width: 2),
-                  ),
-                  child: const Text(
-                    '⚡ 보너스 문제! 코인 2배',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFF9A6A00),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-              if (_isRetryQuestion) ...[
-                Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFFFEBD6),
-                    borderRadius: BorderRadius.circular(999),
-                  ),
-                  child: const Text(
-                    '🔁 다시 풀어 봐요!',
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
-                      color: Color(0xFFB05E00),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-              ],
-              if (_question.vertical) ...[
-                // 세로셈: 자리수를 맞춰 세로로 보여주고 자리마다 답 칸을 채운다.
-                Builder(builder: (context) {
-                  _ensureSlots();
-                  return _VerticalProblem(
-                    question: _question,
-                    slots: _slots,
-                    answered: _answered,
-                    correct: _isCorrect,
-                    themeColor: _themeColor,
-                  );
-                }),
-              ] else if (_question.prompt.isNotEmpty) ...[
-                // 문장 문제(분수·소수·시간)는 여러 줄 그대로 보여준다.
-                // (오른쪽 여백은 다시 듣기 버튼 자리)
-                Padding(
-                  padding: const EdgeInsets.only(right: 44),
-                  child: Text(
-                    _question.expression,
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _EmojiHint(question: _question),
-              ] else ...[
-                // 세 자리 수처럼 긴 식은 자동으로 줄어들어 카드 안에 들어간다.
-                // (좌우 패딩은 우상단 스피커 버튼과 겹치지 않기 위한 여백)
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
-                  child: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(
-                      _question.expression,
-                      style: TextStyle(
-                        fontSize: _question.isCounting ? 38 : 48,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                _EmojiHint(question: _question),
-              ],
-            ],
+          Text(
+            _question.expression,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              fontSize: 24,
+              fontWeight: FontWeight.bold,
+              height: 1.4,
+            ),
           ),
-          // 문제를 다시 읽어 주는 버튼 (텍스트와 겹치지 않게 카드 모서리 고정)
-          Positioned(
-            top: -8,
-            right: -8,
-            child: GestureDetector(
-              onTap: () => _speakQuestion(force: true),
-              child: Container(
-                width: 44,
-                height: 44,
-                decoration: BoxDecoration(
-                  color: _themeColor.withValues(alpha: 0.14),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  Icons.volume_up_rounded,
-                  size: 26,
-                  color: _themeColor,
-                ),
+          const SizedBox(height: 12),
+          _EmojiHint(question: _question),
+        ],
+      );
+    } else {
+      // 세 자리 수처럼 긴 식은 자동으로 줄어들어 카드 안에 들어간다.
+      body = Column(
+        children: [
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              _question.expression,
+              style: TextStyle(
+                fontSize: _question.isCounting ? 38 : 48,
+                fontWeight: FontWeight.bold,
               ),
             ),
           ),
+          const SizedBox(height: 12),
+          _EmojiHint(question: _question),
         ],
-      ),
+      );
+    }
+    return QuizCard(
+      color: _themeColor,
+      onSpeak: _question.listenOnly ? null : () => _speakQuestion(force: true),
+      badge: _isRetryQuestion
+          ? const QuizBadge.retry()
+          : _isBonusQuestion
+              ? const QuizBadge.bonus()
+              : null,
+      child: body,
     );
   }
 
@@ -765,138 +521,39 @@ class _QuizScreenState extends State<QuizScreen> {
   }
 
   Widget _buildChoices() {
-    Widget cell(int index) {
-      final choice = _question.choices[index];
-      return Expanded(
-        child: SizedBox(
-          height: 100,
-          child: _ChoiceButton(
-            label: _question.labelFor(choice),
-            state: _choiceState(choice),
-            fillIndex: index,
-            onTap: () => _selectChoice(choice),
-          ),
-        ),
-      );
-    }
-
-    return Column(
+    return QuizChoiceGrid(
+      height: 100,
       children: [
-        Row(children: [cell(0), const SizedBox(width: 12), cell(1)]),
-        const SizedBox(height: 12),
-        Row(children: [cell(2), const SizedBox(width: 12), cell(3)]),
+        for (var i = 0; i < _question.choices.length; i++)
+          QuizChoiceButton(
+            label: _question.labelFor(_question.choices[i]),
+            state: _choiceState(_question.choices[i]),
+            fillIndex: i,
+            fontSize: 36,
+            onTap: () => _selectChoice(_question.choices[i]),
+          ),
       ],
     );
   }
 
-  _ChoiceState _choiceState(int choice) {
-    if (!_answered) return _ChoiceState.idle;
-    if (choice == _question.answer) return _ChoiceState.correct;
-    if (choice == _selectedChoice) return _ChoiceState.wrong;
-    return _ChoiceState.disabled;
+  QuizChoiceState _choiceState(int choice) {
+    if (!_answered) return QuizChoiceState.idle;
+    if (choice == _question.answer) return QuizChoiceState.correct;
+    if (choice == _selectedChoice) return QuizChoiceState.wrong;
+    return QuizChoiceState.disabled;
   }
 
   /// 듀오링고처럼 화면 아래에서 올라오는 정답/오답 안내판
   Widget _buildFeedbackPanel() {
-    if (!_answered) return const SizedBox.shrink();
-
-    final color =
-        _isCorrect ? AppColors.selectedFill : AppColors.wrongSurface;
-    final textColor =
-        _isCorrect ? AppColors.greenPressed : AppColors.wrongInk;
-    final message =
-        _isCorrect
-        ? _correctPanels[_currentIndex % _correctPanels.length]
-        : '괜찮아요! 정답은 ${_question.answerLabel}';
-
-    final isLast = _currentIndex + 1 >= _entries.length;
-
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(28)),
-      ),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    message,
-                    style: TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: textColor,
-                    ),
-                  ),
-                ),
-                if (_isCorrect)
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 6,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(999),
-                    ),
-                    child: Text(
-                      !_isRetryQuestion && _combo >= 3
-                          ? '+$_lastGained코인 🔥'
-                          : '+$_lastGained코인',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: textColor,
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 14),
-            BouncyButton(
-              color: AppColors.green,
-              onTap: _next,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    isLast ? '결과 보기' : '계속하기',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.white,
-                    ),
-                  ),
-                  if (isLast) ...[
-                    const SizedBox(width: 8),
-                    const Icon(
-                      Icons.emoji_events_rounded,
-                      size: 28,
-                      color: Colors.white,
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            if (_isCorrect) ...[
-              const SizedBox(height: 10),
-              // 2초 동안 줄어드는 막대: 다 줄면 자동으로 다음 문제로
-              AutoNextBar(
-                key: ValueKey('auto-next-$_currentIndex'),
-                color: AppColors.green,
-                onDone: _next,
-              ),
-            ],
-          ],
-        ),
-      ),
+    return QuizFeedbackPanel(
+      correct: _isCorrect,
+      correctMessage: _correctPanels[_currentIndex % _correctPanels.length],
+      answerText: _question.answerLabel,
+      gained: _lastGained,
+      fire: !_isRetryQuestion && _combo >= 3,
+      isLast: _currentIndex + 1 >= _entries.length,
+      onNext: _next,
+      autoNextKey: ValueKey('auto-next-$_currentIndex'),
     );
   }
 }
@@ -962,7 +619,7 @@ class _VerticalProblem extends StatelessWidget {
           ? (correct ? AppColors.correct : AppColors.wrong)
           : isActive
               ? themeColor
-              : Colors.grey.shade300;
+              : AppColors.outline;
       return Container(
         width: _cellWidth - 4,
         height: 54,
@@ -1013,100 +670,6 @@ class _VerticalProblem extends StatelessWidget {
         ),
       ],
     );
-  }
-}
-
-enum _ChoiceState { idle, correct, wrong, disabled }
-
-/// 큼직한 3D 보기 버튼
-class _ChoiceButton extends StatelessWidget {
-  const _ChoiceButton({
-    required this.label,
-    required this.state,
-    required this.onTap,
-    this.fillIndex = 0,
-  });
-
-  final String label;
-  final _ChoiceState state;
-  final VoidCallback onTap;
-
-  /// 보기 위치(0~3)별 파스텔 색
-  final int fillIndex;
-
-  @override
-  Widget build(BuildContext context) {
-    final (background, border, textColor) = switch (state) {
-      _ChoiceState.idle => (
-          AppColors.choiceFills[fillIndex % 4],
-          AppColors.choiceBorders[fillIndex % 4],
-          AppColors.ink,
-        ),
-      _ChoiceState.correct => (
-          AppColors.selectedFill,
-          AppColors.green,
-          AppColors.greenPressed,
-        ),
-      _ChoiceState.wrong => (
-          AppColors.wrongSurface,
-          AppColors.wrong,
-          AppColors.wrongInk,
-        ),
-      _ChoiceState.disabled => (
-          AppColors.cream,
-          AppColors.line,
-          AppColors.inkMuted,
-        ),
-    };
-
-    Widget button = AnimatedContainer(
-      duration: const Duration(milliseconds: 150),
-      decoration: BoxDecoration(
-        color: background,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: border, width: 3),
-        boxShadow: state == _ChoiceState.idle
-            ? [
-                BoxShadow(
-                  color: Colors.grey.shade300,
-                  offset: const Offset(0, 4),
-                  blurRadius: 0,
-                ),
-              ]
-            : null,
-      ),
-      child: Center(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: FittedBox(
-            fit: BoxFit.scaleDown,
-            child: Text(
-              label,
-              style: TextStyle(
-                fontSize: 36,
-                fontWeight: FontWeight.bold,
-                color: textColor,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    // 틀린 버튼은 좌우로 도리도리 흔들린다.
-    if (state == _ChoiceState.wrong) {
-      button = TweenAnimationBuilder<double>(
-        tween: Tween(begin: 0, end: 1),
-        duration: const Duration(milliseconds: 500),
-        builder: (context, t, child) => Transform.translate(
-          offset: Offset(math.sin(t * math.pi * 5) * 8 * (1 - t), 0),
-          child: child,
-        ),
-        child: button,
-      );
-    }
-
-    return PressBounce(onTap: onTap, child: button);
   }
 }
 

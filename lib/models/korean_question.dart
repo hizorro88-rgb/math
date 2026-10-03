@@ -195,7 +195,7 @@ class KoreanQuestionGenerator {
         final target = picked.first;
         return KoreanQuestion(
           type: type,
-          instruction: _rot(const ['무슨 소리일까요? 🔊를 눌러 다시 들어요', '소리를 잘 들어 보세요 🔊', '귀 기울여 볼까요? 🔊']),
+          instruction: _rot(const ['무슨 소리일까요?', '소리를 잘 들어 보세요', '귀 기울여 볼까요?']),
           display: '🔊',
           choices: _shuffled([for (final v in picked) v.letter]),
           answer: target.letter,
@@ -211,7 +211,7 @@ class KoreanQuestionGenerator {
         final target = picked.first;
         return KoreanQuestion(
           type: type,
-          instruction: _rot(const ['무슨 소리일까요? 🔊를 눌러 다시 들어요', '소리를 잘 들어 보세요 🔊', '귀 기울여 볼까요? 🔊']),
+          instruction: _rot(const ['무슨 소리일까요?', '소리를 잘 들어 보세요', '귀 기울여 볼까요?']),
           display: '🔊',
           choices: _shuffled(picked),
           answer: target,
@@ -253,7 +253,7 @@ class KoreanQuestionGenerator {
         final target = picked.first;
         return KoreanQuestion(
           type: type,
-          instruction: '무슨 자음일까요? 🔊를 눌러 다시 들어요',
+          instruction: '무슨 자음일까요?',
           display: '🔊',
           choices: _shuffled([for (final c in picked) c.letter]),
           answer: target.letter,

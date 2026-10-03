@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:preschool_math/widgets/quiz_parts.dart';
 import 'package:preschool_math/models/conversation_pack.dart';
 import 'package:preschool_math/models/language_pack.dart';
 import 'package:preschool_math/models/profile.dart';
@@ -60,9 +61,10 @@ void main() {
     expect(find.byKey(const ValueKey('speak-mic')), findsOneWidget);
     expect(find.byKey(const ValueKey('speak-record')), findsOneWidget);
     expect(find.text('눌러서 말하기'), findsOneWidget);
-    expect(find.text('원어민 발음 듣기'), findsOneWidget);
+    // 원어민 발음은 문제 카드의 파란 듣기 버튼 하나로 듣는다.
+    expect(find.bySemanticsLabel('다시 듣기'), findsOneWidget);
     // 보기를 고르는 문제가 아니라서 보기 격자는 없다.
-    expect(find.byType(GridView), findsNothing);
+    expect(find.byType(QuizChoiceGrid), findsNothing);
     // 아직 녹음 전이라 '내 목소리 듣기'는 없다.
     expect(find.byKey(const ValueKey('speak-playback')), findsNothing);
   });

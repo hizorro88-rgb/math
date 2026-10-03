@@ -88,7 +88,7 @@ void main() {
     expect(find.text('🔒'), findsNothing);
 
     await scrollAndTap(tester, find.text('1').first);
-    expect(find.textContaining('수 세기 첫걸음 · 1단계'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('수 세기 첫걸음 · 1단계')), findsOneWidget);
     expect(find.text('몇 개일까요?'), findsOneWidget); // 4살 첫 단계는 수 세기
     expect(find.text('🪙 0'), findsOneWidget);
   });
@@ -112,7 +112,7 @@ void main() {
     expect(find.text('3').first, findsOneWidget);
     await scrollAndTap(tester, find.text('3').first);
 
-    expect(find.textContaining('· 3단계'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('· 3단계')), findsOneWidget);
   });
 
   testWidgets('초등 2학년 곱셈 카테고리는 바로 시작할 수 있다', (tester) async {
@@ -139,7 +139,7 @@ void main() {
     // 4살 → 1단계 입장, 아무것도 안 풀었으면 X로 바로 나간다.
     await scrollAndTap(tester, find.text('4살'));
     await scrollAndTap(tester, find.text('1').first);
-    await tester.tap(find.byIcon(Icons.close));
+    await tester.tap(find.byIcon(Icons.close_rounded));
     await tester.pumpAndSettle();
     expect(find.textContaining('몇 개일까요?'), findsNothing); // 지도로 돌아옴
 
@@ -151,7 +151,7 @@ void main() {
     await tester.tap(choice.first);
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byIcon(Icons.close));
+    await tester.tap(find.byIcon(Icons.close_rounded));
     await tester.pumpAndSettle();
     expect(find.text('정말 그만할까요?'), findsOneWidget);
 
@@ -161,7 +161,7 @@ void main() {
     expect(find.text('정말 그만할까요?'), findsNothing);
 
     // 다시 X → '그만하기'를 누르면 지도로 나간다.
-    await tester.tap(find.byIcon(Icons.close));
+    await tester.tap(find.byIcon(Icons.close_rounded));
     await tester.pumpAndSettle();
     await tester.tap(find.text('그만하기'));
     await tester.pumpAndSettle();
@@ -212,7 +212,7 @@ void main() {
     }
 
     // 11번째로 틀렸던 문제가 다시 나온다.
-    expect(find.text('🔁 다시 풀어 봐요!'), findsOneWidget);
+    expect(find.text('🔁 한 번 더!'), findsOneWidget);
     expect(expr(), wrongExpr);
 
     // 다시 맞히면 +5점 보너스, 별점은 첫 시도 기준(9/10)
@@ -221,7 +221,7 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('$retryAns'));
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('+5코인'), findsOneWidget);
+    expect(find.text('+5 🪙'), findsOneWidget);
     // 2초 막대가 다 줄면 자동으로 결과 화면으로 넘어간다.
     await tester.pumpAndSettle();
     expect(find.text('10문제 중에 9문제를 맞혔어요!'), findsOneWidget);
@@ -355,7 +355,8 @@ void main() {
     await tester.tap(find.text('소리 켜고 시작'));
     await tester.pumpAndSettle();
     expect(Speech.enabled, isTrue);
-    expect(find.text('👂 잘 들어 보세요'), findsOneWidget);
+    // 듣고 풀기는 문제 자체가 커다란 듣기 버튼이다.
+    expect(find.bySemanticsLabel('다시 듣기'), findsOneWidget);
   });
 
   testWidgets('자유 연습에서 한글 유형을 고를 수 있다', (tester) async {
@@ -446,7 +447,7 @@ void main() {
 
     await tester.tap(find.byKey(const ValueKey('quick-start')));
     await tester.pumpAndSettle();
-    expect(find.textContaining('· 3단계'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('· 3단계')), findsOneWidget);
   });
 
   testWidgets('이용권이 없으면 고른 나이가 잠겨 있어도 바로 시작은 열린 곳으로 간다',
@@ -460,7 +461,7 @@ void main() {
     await tester.tap(find.byKey(const ValueKey('quick-start')));
     await tester.pumpAndSettle();
     expect(find.text('부모님 확인'), findsNothing);
-    expect(find.textContaining('· 1단계'), findsOneWidget);
+    expect(find.bySemanticsLabel(RegExp('· 1단계')), findsOneWidget);
   });
 
   testWidgets('주간 보스전에 들어가면 보스전 라벨과 문제가 보인다', (tester) async {
@@ -469,12 +470,12 @@ void main() {
 
     await scrollAndTap(tester, find.text('주간 보스전'));
 
-    expect(find.text('👑 보스전'), findsOneWidget);
+    expect(find.text('👑'), findsOneWidget);
     // 문제 진행 바와 점수 표시가 있는 퀴즈 화면이다.
     expect(find.text('🪙 0'), findsOneWidget);
 
     // 시작 전이면 X로 바로 나온다.
-    await tester.tap(find.byIcon(Icons.close));
+    await tester.tap(find.byIcon(Icons.close_rounded));
     await tester.pumpAndSettle();
     expect(find.text('주간 보스전'), findsOneWidget);
   });
@@ -489,7 +490,7 @@ void main() {
     await scrollAndTap(tester, find.text('시작하기'));
 
     expect(find.text('글자를 순서대로 눌러 낱말을 만들어요'), findsOneWidget);
-    expect(find.byIcon(Icons.backspace_outlined), findsOneWidget);
+    expect(find.byIcon(Icons.backspace_rounded), findsOneWidget);
   });
 
   testWidgets('리포트는 설정의 부모님 메뉴에서 게이트를 풀어야 열린다', (tester) async {

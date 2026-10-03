@@ -142,6 +142,7 @@ class Speech {
   static Future<void> speak(String text,
       {String lang = 'ko-KR', bool force = false}) async {
     if (!enabled && !force) return;
+    _generation++; // 이어 읽던 것이 있으면 끊는다
     debugOnSpeak?.call(text);
     try {
       await _tts.stop();
@@ -151,5 +152,37 @@ class Speech {
       }
       await _tts.speak(text);
     } catch (_) {}
+  }
+
+  /// 새로 읽기 시작할 때마다 올라간다 — 이어 읽기 도중 다른 말이 끼어들면 멈추는 표시.
+  static int _generation = 0;
+
+  /// 여러 조각을 차례로 읽는다 (예: 한국어 과제 → 영어 낱말).
+  /// 글을 못 읽는 아이도 "무엇을 하라는지"를 먼저 듣고 나서 소리를 듣는다.
+  /// 기다릴 필요 없음(fire-and-forget) — 테스트에서는 채널 응답이 없어 첫 조각에서 멈춘다.
+  static Future<void> speakParts(List<(String, String)> parts,
+      {bool force = false}) async {
+    if (!enabled && !force) return;
+    final generation = ++_generation;
+    var first = true;
+    for (final (text, lang) in parts) {
+      if (text.trim().isEmpty) continue;
+      if (generation != _generation) return;
+      debugOnSpeak?.call(text);
+      try {
+        if (first) {
+          await _tts.stop();
+          await _tts.awaitSpeakCompletion(true);
+          first = false;
+        }
+        if (lang != _currentLang) {
+          await _tts.setLanguage(lang);
+          _currentLang = lang;
+        }
+        await _tts.speak(text);
+      } catch (_) {
+        return;
+      }
+    }
   }
 }

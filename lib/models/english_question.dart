@@ -143,7 +143,7 @@ class EnglishQuestionGenerator {
         final target = picked.first;
         return EnglishQuestion(
           type: type,
-          instruction: _rot(const ['무슨 알파벳일까요? 🔊를 눌러 다시 들어요', '어떤 알파벳 소리일까요? 🔊', '소리를 듣고 찾아보세요 🔊']),
+          instruction: _rot(const ['무슨 알파벳일까요?', '어떤 알파벳 소리일까요?', '소리를 듣고 찾아보세요']),
           display: '🔊',
           choices: _shuffled(picked),
           answer: target,

@@ -166,7 +166,7 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
       final target = picked.first;
       return LangQuestion(
         typeIndex: 0,
-        instruction: '무슨 글자일까요? 🔊를 눌러 다시 들어요',
+        instruction: '무슨 글자일까요?',
         display: '🔊',
         choices: [...picked]..shuffle(random),
         answer: target,
@@ -256,7 +256,7 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
       final target = picked.first;
       return LangQuestion(
         typeIndex: 6,
-        instruction: '무슨 글자일까요? 🔊를 눌러 다시 들어요',
+        instruction: '무슨 글자일까요?',
         display: '🔊',
         choices: [...picked]..shuffle(random),
         answer: target,

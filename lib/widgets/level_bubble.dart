@@ -60,6 +60,7 @@ class LevelBubble extends StatelessWidget {
     final bubble = Semantics(
       button: true,
       label: '$number단계',
+      onTap: onTap,
       excludeSemantics: true,
       child: GestureDetector(
         onTap: onTap,
