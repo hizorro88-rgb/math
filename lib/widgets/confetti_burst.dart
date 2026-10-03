@@ -52,8 +52,8 @@ class _ConfettiPainter extends CustomPainter {
       final y = -20 + t * speed * (size.height + 40);
       if (y > size.height) continue;
       final paint = Paint()
-        ..color = _colors[i % _colors.length]
-            .withValues(alpha: (1 - t) * 0.9 + 0.1);
+        ..color =
+            _colors[i % _colors.length].withValues(alpha: (1 - t) * 0.9 + 0.1);
       canvas.save();
       canvas.translate(x + math.sin(t * math.pi * 2 + i) * sway * t, y);
       canvas.rotate(t * math.pi * 4 * (random.nextBool() ? 1 : -1));

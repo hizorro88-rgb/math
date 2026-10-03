@@ -93,12 +93,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: selected ? const Color(0xFFD7FFB8) : Colors.white,
+                  color: selected ? AppColors.selectedFill : Colors.white,
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: selected
-                        ? const Color(0xFF3DA35D)
-                        : Colors.grey.shade300,
+                    color: selected ? AppColors.green : AppColors.outline,
                     width: 2.5,
                   ),
                 ),
@@ -128,7 +126,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     keepAll('나이를 고르면 홈에서 그 단계를 추천하고, '
                         '더 낮은 수학 단계는 접어둘 수 있어요'),
                     textAlign: TextAlign.center,
-                    style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+                    style:
+                        const TextStyle(fontSize: 13, color: AppColors.inkSoft),
                   ),
                   const SizedBox(height: 14),
                   Wrap(
@@ -161,12 +160,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                     subtitle:
                         Text(keepAll('아이 나이보다 낮은 수학 단계를 홈에서 접어요. 기록은 그대로예요.')),
-                    activeTrackColor: const Color(0xFF3DA35D),
+                    activeTrackColor: AppColors.green,
                   ),
                   const SizedBox(height: 6),
                   FilledButton(
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF3DA35D),
+                      backgroundColor: AppColors.green,
                       padding: const EdgeInsets.symmetric(vertical: 14),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
@@ -252,10 +251,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ),
             ),
             const SizedBox(height: 6),
-            Text(
+            const Text(
               '처음이면 [새 계정]으로 가입하세요.\n'
               '같은 계정으로 로그인한 기기끼리 진도가 이어져요.',
-              style: TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
             ),
           ],
         ),
@@ -436,10 +435,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          '설정',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text('설정'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(16),
@@ -462,7 +458,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 subtitle: const Text('정답·오답 딩동 소리'),
-                activeTrackColor: const Color(0xFF3DA35D),
+                activeTrackColor: AppColors.green,
               ),
               const Divider(height: 1),
               SwitchListTile(
@@ -487,7 +483,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(keepAll('글을 몰라도 풀 수 있게 문제·정답을 읽어줘요')),
-                activeTrackColor: const Color(0xFF3DA35D),
+                activeTrackColor: AppColors.green,
               ),
               const Divider(height: 1),
               ListTile(
@@ -515,14 +511,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          Padding(
-            padding: const EdgeInsets.only(left: 8, bottom: 8),
+          const Padding(
+            padding: EdgeInsets.only(left: 8, bottom: 8),
             child: Text(
               '🔒 부모님 메뉴',
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.bold,
-                color: Colors.grey.shade600,
+                color: AppColors.inkSoft,
               ),
             ),
           ),
@@ -591,7 +587,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(keepAll('저녁마다 오늘의 퀴즈를 잊지 않게 알려줘요')),
-                activeTrackColor: const Color(0xFF3DA35D),
+                activeTrackColor: AppColors.green,
               ),
               const Divider(height: 1),
               ListTile(
@@ -678,8 +674,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                   const Divider(height: 1),
                   ListTile(
-                    leading:
-                        const Icon(Icons.logout_rounded, color: Colors.grey),
+                    leading: const Icon(Icons.logout_rounded,
+                        color: AppColors.inkMuted),
                     title: const Text('로그아웃'),
                     onTap: _syncing ? null : _cloudSignOut,
                   ),
@@ -693,7 +689,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               Builder(
                 builder: (context) => ListTile(
                   leading: const Icon(Icons.info_outline_rounded,
-                      color: Colors.grey),
+                      color: AppColors.inkMuted),
                   title: const Text('앱 정보',
                       style:
                           TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
@@ -713,13 +709,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ],
           ),
           const SizedBox(height: 14),
-          Text(
+          const Text(
             ''
             '이 앱은 서버 없이 모든 기록을 폰 안에만 저장하고,\n'
             '아이의 개인정보를 수집하지 않아요.',
             textAlign: TextAlign.center,
             style: TextStyle(
-                fontSize: 12.5, color: Colors.grey.shade600, height: 1.6),
+                fontSize: 12.5, color: AppColors.inkSoft, height: 1.6),
           ),
         ],
       ),

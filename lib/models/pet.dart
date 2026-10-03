@@ -17,8 +17,6 @@ import 'language_packs.dart';
 import 'profile.dart';
 import 'progress.dart';
 
-
-
 /// 펫 한 종류 (5단계 성장 모습을 함께 담는다)
 class PetSpecies {
   const PetSpecies({
@@ -168,8 +166,7 @@ class PetState {
   bool get chosen => species != null;
   bool get isFinalStage => stage >= petStageNames.length;
 
-  PetStageRule? get nextRule =>
-      isFinalStage ? null : petStageRules[stage - 1];
+  PetStageRule? get nextRule => isFinalStage ? null : petStageRules[stage - 1];
 
   bool get canFeed =>
       chosen && mealsToday < petDailyCareLimit && coins >= petMealCost;
@@ -256,8 +253,7 @@ class PetStore {
         if (steps > 0) {
           for (final key in [_fullnessKey, _hydrationKey]) {
             final v = prefs.getInt(Profiles.scoped(key)) ?? 100;
-            await prefs.setInt(
-                Profiles.scoped(key), (v - steps).clamp(0, 100));
+            await prefs.setInt(Profiles.scoped(key), (v - steps).clamp(0, 100));
           }
         } else {
           return; // 아직 한 칸도 안 줄었으면 시각을 그대로 둔다
@@ -279,7 +275,8 @@ class PetStore {
       await prefs.setInt(Profiles.scoped(_drinksTodayKey), 0);
     }
 
-    final species = petSpeciesById(prefs.getString(Profiles.scoped(_speciesKey)));
+    final species =
+        petSpeciesById(prefs.getString(Profiles.scoped(_speciesKey)));
     final state = PetState(
       species: species,
       stage: prefs.getInt(Profiles.scoped(_stageKey)) ?? 1,

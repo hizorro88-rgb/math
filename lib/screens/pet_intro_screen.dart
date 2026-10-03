@@ -100,9 +100,8 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
       _fullness = state.fullness;
       _phase = _Phase.done;
     });
-    Speech.speak(ok
-        ? (widget.firstRun ? '냠냠, 고마워! 이제 같이 문제 풀자!' : '냠냠, 고마워!')
-        : '고마워!');
+    Speech.speak(
+        ok ? (widget.firstRun ? '냠냠, 고마워! 이제 같이 문제 풀자!' : '냠냠, 고마워!') : '고마워!');
   }
 
   @override

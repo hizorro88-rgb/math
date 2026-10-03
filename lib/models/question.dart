@@ -100,7 +100,11 @@ class Question {
     '전부 몇 개인지 맞혀 보세요',
   ];
   static const _compareMaxExprs = ['가장 큰 수는?', '제일 큰 수를 찾아요!', '어떤 수가 가장 클까?'];
-  static const _compareMinExprs = ['가장 작은 수는?', '제일 작은 수를 찾아요!', '어떤 수가 가장 작을까?'];
+  static const _compareMinExprs = [
+    '가장 작은 수는?',
+    '제일 작은 수를 찾아요!',
+    '어떤 수가 가장 작을까?'
+  ];
 
   bool get isCounting => op == QuestionOp.counting;
   bool get isAddition => op == QuestionOp.add;
@@ -132,9 +136,8 @@ class Question {
   String labelFor(int value) => switch (op) {
         QuestionOp.fraction => '${value ~/ 100}/${value % 100}',
         QuestionOp.decimal => (value / 10).toStringAsFixed(1),
-        QuestionOp.clock => value % 60 == 0
-            ? '${value ~/ 60}시'
-            : '${value ~/ 60}시 30분',
+        QuestionOp.clock =>
+          value % 60 == 0 ? '${value ~/ 60}시' : '${value ~/ 60}시 30분',
         QuestionOp.timeCalc => variant == 1
             ? '$value분'
             : value % 60 == 0
@@ -162,8 +165,7 @@ class Question {
           : '$left $opSign □ = $total';
     }
     return switch (op) {
-      QuestionOp.counting =>
-        _countingExprs[variant % _countingExprs.length],
+      QuestionOp.counting => _countingExprs[variant % _countingExprs.length],
       QuestionOp.add => '$left + $right = ?',
       QuestionOp.sub => '$left - $right = ?',
       QuestionOp.mul => '$left × $right = ?',
@@ -796,8 +798,9 @@ class QuestionGenerator {
             final answer = start + dur.$2;
             final wrong = <int>{};
             while (wrong.length < 3) {
-              final cand = answer + (30 + _random.nextInt(3) * 30) *
-                  (_random.nextBool() ? 1 : -1);
+              final cand = answer +
+                  (30 + _random.nextInt(3) * 30) *
+                      (_random.nextBool() ? 1 : -1);
               if (cand >= 60 && cand <= 12 * 60 && cand != answer) {
                 wrong.add(cand);
               }

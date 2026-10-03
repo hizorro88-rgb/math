@@ -149,7 +149,10 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
     case 0:
       final pool = stage >= 5
           ? zhWords
-          : [for (final w in zhWords) if (w.word.length == 1) w];
+          : [
+              for (final w in zhWords)
+                if (w.word.length == 1) w
+            ];
       final picked = pickLangWords(pool, random);
       final target = picked.first;
       return LangQuestion(
@@ -188,7 +191,10 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
     case 2:
       final pool = stage >= 5
           ? zhWords
-          : [for (final w in zhWords) if (w.word.length == 1) w];
+          : [
+              for (final w in zhWords)
+                if (w.word.length == 1) w
+            ];
       final picked = pickLangWords(pool, random);
       final target = picked.first;
       return LangQuestion(
@@ -207,7 +213,10 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
     case 3:
       final pool = stage >= 5
           ? zhWords
-          : [for (final w in zhWords) if (w.word.length == 1) w];
+          : [
+              for (final w in zhWords)
+                if (w.word.length == 1) w
+            ];
       final picked = pickLangWords(pool, random);
       final target = picked.first;
       return LangQuestion(
@@ -225,7 +234,10 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
     case 5:
       final pool = stage >= 5
           ? zhWords
-          : [for (final w in zhWords) if (w.word.length == 1) w];
+          : [
+              for (final w in zhWords)
+                if (w.word.length == 1) w
+            ];
       final picked = pickLangWords(pool, random);
       final target = picked.first;
       return LangQuestion(

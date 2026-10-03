@@ -185,8 +185,7 @@ class SpeakingScore {
 
   /// 통과 기준: 낱말의 60% 이상. 짧은 문장은 하나만 틀려도 크게 깎이므로
   /// 두 낱말 이하는 하나만 맞아도 통과로 본다.
-  bool get passed =>
-      total <= 2 ? matched >= 1 : ratio >= 0.6;
+  bool get passed => total <= 2 ? matched >= 1 : ratio >= 0.6;
 
   /// 아주 잘 말한 경우 (별도 칭찬)
   bool get perfect => total > 0 && matched == total;

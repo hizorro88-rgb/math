@@ -232,8 +232,7 @@ class LangProgressStore {
 
   static Future<List<int>> load(LanguagePack pack) async {
     final prefs = await SharedPreferences.getInstance();
-    final saved =
-        prefs.getStringList(Profiles.scoped(_key(pack))) ?? const [];
+    final saved = prefs.getStringList(Profiles.scoped(_key(pack))) ?? const [];
     return List.generate(
       pack.totalLevels,
       (i) => i < saved.length ? int.tryParse(saved[i]) ?? 0 : 0,
@@ -276,8 +275,7 @@ List<LangWord> pickLangWords(List<LangWord> pool, Random random) {
   final target = pool[random.nextInt(pool.length)];
   final others = [
     for (final w in pool)
-      if (w.word != target.word &&
-          (w.group == null || w.group != target.group))
+      if (w.word != target.word && (w.group == null || w.group != target.group))
         w,
   ]..shuffle(random);
   return [target, ...others.take(3)];

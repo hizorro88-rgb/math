@@ -247,9 +247,7 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
             child: PetGrowth(
               state: state,
               onStarTap: () => showKidNotice(context,
-                  emoji: '⭐',
-                  text: '문제를 풀면 별이 생겨!',
-                  action: _goPlay),
+                  emoji: '⭐', text: '문제를 풀면 별이 생겨!', action: _goPlay),
             ),
           ),
         ],

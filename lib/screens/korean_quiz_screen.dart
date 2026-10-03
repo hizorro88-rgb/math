@@ -80,8 +80,8 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
   @override
   void initState() {
     super.initState();
-    final questions = KoreanQuestionGenerator()
-        .generate(widget.type, stage: widget.stage);
+    final questions =
+        KoreanQuestionGenerator().generate(widget.type, stage: widget.stage);
     _baseCount = questions.length;
     _dots = QuizDotTracker(_baseCount);
     _entries.addAll(questions.map(_KrEntry.new));
@@ -250,8 +250,7 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
                     '${level.number - level.unit.firstLevelNumber + 1}단계'
                 : null,
             showUnlockHint: level != null && stars < 1,
-            nextLabel:
-                next != null ? '다음 단계' : null,
+            nextLabel: next != null ? '다음 단계' : null,
             nextBuilder: next != null
                 ? () => KoreanQuizScreen(
                       type: next.unit.type,
@@ -309,8 +308,7 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
                   bonus: _isBonusQuestion),
           reaction: _answered ? _isCorrect : null,
         ),
-        answers:
-            _question.tiles.isNotEmpty ? _buildTiles() : _buildChoices(),
+        answers: _question.tiles.isNotEmpty ? _buildTiles() : _buildChoices(),
         feedback: _answered ? _buildFeedbackPanel() : null,
         sparkle: _answered && _isCorrect && _combo >= 5,
         sparkleKey: ValueKey('sparkle$_currentIndex'),
@@ -376,9 +374,8 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
                 children: [
                   for (var i = 0; i < _question.answer.length; i++)
                     QuizSlot(
-                      text: i < _picked.length
-                          ? _question.tiles[_picked[i]]
-                          : '',
+                      text:
+                          i < _picked.length ? _question.tiles[_picked[i]] : '',
                       active: i == _picked.length,
                       answered: _answered,
                       correct: _isCorrect,

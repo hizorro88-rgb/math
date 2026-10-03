@@ -89,8 +89,8 @@ class Level {
     return maxNumber <= 6 ? 1 : (maxNumber * 0.55).ceil();
   }
 
-  QuizConfig get config => QuizConfig(
-      mode: unit.mode, maxNumber: maxNumber, minNumber: minNumber);
+  QuizConfig get config =>
+      QuizConfig(mode: unit.mode, maxNumber: maxNumber, minNumber: minNumber);
 }
 
 /// 나이·학년별 교육과정에 맞춘 커리큘럼.

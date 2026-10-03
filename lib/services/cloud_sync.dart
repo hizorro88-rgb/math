@@ -128,9 +128,8 @@ class CloudSync {
       final data = await BackupService.exportData();
       if (data.isEmpty) return false;
       final saved = DateTime.now().toUtc().millisecondsSinceEpoch;
-      await _doc
-          .set({'saved': saved, 'json': jsonEncode(data)})
-          .timeout(const Duration(seconds: 10));
+      await _doc.set({'saved': saved, 'json': jsonEncode(data)}).timeout(
+          const Duration(seconds: 10));
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(_syncAtKey, saved);
       return true;
@@ -164,9 +163,7 @@ class CloudSync {
   static String _authMessage(FirebaseAuthException e) => switch (e.code) {
         'invalid-email' => '이메일 주소 모양이 올바르지 않아요.',
         'user-not-found' => '이 이메일로 만든 계정이 없어요. [새 계정]을 눌러 보세요.',
-        'wrong-password' ||
-        'invalid-credential' =>
-          '이메일 또는 비밀번호가 맞지 않아요.',
+        'wrong-password' || 'invalid-credential' => '이메일 또는 비밀번호가 맞지 않아요.',
         'email-already-in-use' => '이미 가입된 이메일이에요. [로그인]을 눌러 보세요.',
         'weak-password' => '비밀번호를 6자 이상으로 해주세요.',
         'network-request-failed' => '인터넷 연결을 확인해 주세요.',

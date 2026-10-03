@@ -596,8 +596,7 @@ class PetGrowth extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 '${math.min(now, need)}/$need',
-                style:
-                    const TextStyle(fontSize: 11, color: AppColors.inkMuted),
+                style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
               ),
             ],
           ],
@@ -614,8 +613,8 @@ class PetGrowth extends StatelessWidget {
         children: [
           // 다음 모습은 그림자로만 — 자라 봐야 알 수 있다
           ColorFiltered(
-            colorFilter: const ColorFilter.mode(
-                Color(0xFFC9BCA6), BlendMode.srcIn),
+            colorFilter:
+                const ColorFilter.mode(Color(0xFFC9BCA6), BlendMode.srcIn),
             child: PetSprite(
               species: species,
               stage: state.stage + 1,
@@ -762,13 +761,15 @@ class _EvolveViewState extends State<_EvolveView>
                       height: 400,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: Colors.white.withValues(alpha: flash.clamp(0, 1)),
+                        color:
+                            Colors.white.withValues(alpha: flash.clamp(0, 1)),
                       ),
                     ),
                   ),
                 if (showNew)
                   const IgnorePointer(
-                    child: SizedBox(width: 320, height: 320, child: SparkleBurst()),
+                    child: SizedBox(
+                        width: 320, height: 320, child: SparkleBurst()),
                   ),
               ],
             );

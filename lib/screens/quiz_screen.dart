@@ -94,7 +94,13 @@ class _QuizScreenState extends State<QuizScreen> {
     '거의 다 왔어요! 정답은 X이에요.',
     '다음엔 맞힐 거예요. 정답은 X이에요.',
   ];
-  static const _correctPanels = ['정답이에요! 🎉', '딩동댕! 🎉', '맞았어요! 🎉', '참 잘했어요! 🎉'];
+  static const _correctPanels = [
+    '정답이에요! 🎉',
+    '딩동댕! 🎉',
+    '맞았어요! 🎉',
+    '참 잘했어요! 🎉'
+  ];
+
   /// 7번째 문제는 ⚡보너스: 맞히면 코인 2배 (재출제 문제에는 없음)
   bool get _isBonusQuestion => _currentIndex == 6 && !_isRetryQuestion;
 
@@ -260,9 +266,8 @@ class _QuizScreenState extends State<QuizScreen> {
       final stars = starsForScore(_correctCount, _baseCount);
       // 보스전을 통과하면 큰 보너스가 붙고, 이번 주는 잠긴다.
       // 이미 이번 주에 클리어했으면 (결과 화면의 '다시 하기' 등) 보상을 또 주지 않는다.
-      final bossCleared = widget.bossMode &&
-          stars >= 1 &&
-          !await BossStore.isClearedThisWeek();
+      final bossCleared =
+          widget.bossMode && stars >= 1 && !await BossStore.isClearedThisWeek();
       final earned = _roundPoints +
           completionBonus(stars) +
           (bossCleared ? BossStore.reward : 0);
@@ -322,15 +327,12 @@ class _QuizScreenState extends State<QuizScreen> {
                         '${level.number - level.unit.firstLevelNumber + 1}단계'
                     : null,
             showUnlockHint: level != null && stars < 1,
-            nextLabel:
-                next != null ? '다음 단계' : null,
+            nextLabel: next != null ? '다음 단계' : null,
             nextBuilder: next != null
                 ? () => QuizScreen(config: next.config, level: next)
                 : null,
             retryBuilder: () => QuizScreen(
-                config: widget.config,
-                level: level,
-                bossMode: widget.bossMode),
+                config: widget.config, level: level, bossMode: widget.bossMode),
             // 어디서 왔든 홈으로 가는 버튼이라 표현을 하나로 통일한다.
             homeLabel: '처음으로',
           ),
@@ -376,12 +378,12 @@ class _QuizScreenState extends State<QuizScreen> {
       card: _buildQuestionCard(),
       cheer: QuizCheer(
         line: _answered
-              ? null
-              : quizCheerLine(
-                  index: _currentIndex,
-                  retry: _isRetryQuestion,
-                  bonus: _isBonusQuestion),
-          reaction: _answered ? _isCorrect : null,
+            ? null
+            : quizCheerLine(
+                index: _currentIndex,
+                retry: _isRetryQuestion,
+                bonus: _isBonusQuestion),
+        reaction: _answered ? _isCorrect : null,
       ),
       answers: _question.vertical ? _buildKeypad() : _buildChoices(),
       feedback: _answered ? _buildFeedbackPanel() : null,
@@ -470,15 +472,15 @@ class _QuizScreenState extends State<QuizScreen> {
             height: 56,
             margin: const EdgeInsets.all(3),
             decoration: BoxDecoration(
-              color: _answered ? Colors.grey.shade100 : Colors.white,
+              color: _answered ? AppColors.cream : Colors.white,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: Colors.grey.shade300, width: 2),
+              border: Border.all(color: AppColors.outline, width: 2),
               boxShadow: _answered
                   ? null
                   : [
-                      BoxShadow(
-                        color: Colors.grey.shade300,
-                        offset: const Offset(0, 3),
+                      const BoxShadow(
+                        color: AppColors.outline,
+                        offset: Offset(0, 3),
                         blurRadius: 0,
                       ),
                     ],
@@ -496,7 +498,7 @@ class _QuizScreenState extends State<QuizScreen> {
             style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.bold,
-              color: _answered ? Colors.grey.shade400 : Colors.black87,
+              color: _answered ? AppColors.inkMuted : Colors.black87,
             ),
           ),
         );
@@ -517,7 +519,7 @@ class _QuizScreenState extends State<QuizScreen> {
               child: Icon(
                 Icons.backspace_outlined,
                 size: 24,
-                color: _answered ? Colors.grey.shade400 : Colors.grey.shade600,
+                color: _answered ? AppColors.inkMuted : AppColors.inkSoft,
               ),
             ),
           ],
@@ -802,7 +804,7 @@ class _EmojiHint extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
                 decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade300),
+                  border: Border.all(color: AppColors.outline),
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Text(
@@ -942,8 +944,8 @@ class _ClockPainter extends CustomPainter {
     // 숫자 1~12
     for (var n = 1; n <= 12; n++) {
       final angle = (n * 30 - 90) * math.pi / 180;
-      final pos = center +
-          Offset(math.cos(angle), math.sin(angle)) * (radius - 16);
+      final pos =
+          center + Offset(math.cos(angle), math.sin(angle)) * (radius - 16);
       final painter = TextPainter(
         text: TextSpan(
           text: '$n',
@@ -955,7 +957,8 @@ class _ClockPainter extends CustomPainter {
         ),
         textDirection: TextDirection.ltr,
       )..layout();
-      painter.paint(canvas, pos - Offset(painter.width / 2, painter.height / 2));
+      painter.paint(
+          canvas, pos - Offset(painter.width / 2, painter.height / 2));
     }
 
     // 분침 (정각은 12, 30분은 6을 가리킴)
@@ -963,20 +966,17 @@ class _ClockPainter extends CustomPainter {
     canvas.drawLine(
       center,
       center +
-          Offset(math.cos(minuteAngle), math.sin(minuteAngle)) *
-              (radius - 26),
+          Offset(math.cos(minuteAngle), math.sin(minuteAngle)) * (radius - 26),
       Paint()
         ..color = const Color(0xFF1CB0F6)
         ..strokeWidth = 5
         ..strokeCap = StrokeCap.round,
     );
     // 시침 (30분이면 숫자 사이 중간까지 간다)
-    final hourAngle =
-        ((hour % 12) * 30 + minute * 0.5 - 90) * math.pi / 180;
+    final hourAngle = ((hour % 12) * 30 + minute * 0.5 - 90) * math.pi / 180;
     canvas.drawLine(
       center,
-      center +
-          Offset(math.cos(hourAngle), math.sin(hourAngle)) * (radius - 46),
+      center + Offset(math.cos(hourAngle), math.sin(hourAngle)) * (radius - 46),
       Paint()
         ..color = const Color(0xFFEA2B2B)
         ..strokeWidth = 7

@@ -135,7 +135,11 @@ const List<ShopItem> shopItems = [
   ShopItem(
       id: 'puppy', emoji: '🐶', name: '강아지 친구', cost: 550, slot: ItemSlot.side),
   ShopItem(
-      id: 'rocket', emoji: '🚀', name: '장난감 로켓', cost: 700, slot: ItemSlot.side),
+      id: 'rocket',
+      emoji: '🚀',
+      name: '장난감 로켓',
+      cost: 700,
+      slot: ItemSlot.side),
   ShopItem(
       id: 'rainbow', emoji: '🌈', name: '무지개', cost: 800, slot: ItemSlot.side),
   // 배경

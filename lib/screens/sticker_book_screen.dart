@@ -100,14 +100,12 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
                       for (final sticker in page.stickers)
                         GestureDetector(
                           key: ValueKey('design:${sticker.emoji}'),
-                          onTap: () =>
-                              Navigator.of(context).pop(sticker.emoji),
+                          onTap: () => Navigator.of(context).pop(sticker.emoji),
                           child: Container(
                             decoration: BoxDecoration(
                               color: Colors.grey.shade50,
                               borderRadius: BorderRadius.circular(12),
-                              border:
-                                  Border.all(color: Colors.grey.shade200),
+                              border: Border.all(color: AppColors.line),
                             ),
                             child: Center(
                               child: Text(sticker.emoji,
@@ -302,8 +300,7 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
       await _celebrate(
         emoji: '🏆',
         title: '앨범을 다 채웠어요!',
-        message:
-            '축하해요! 보너스 🪙 ${result.bonusCoins}을 받았어요.\n반짝반짝 새 앨범이 시작돼요!',
+        message: '축하해요! 보너스 🪙 ${result.bonusCoins}을 받았어요.\n반짝반짝 새 앨범이 시작돼요!',
       );
     } else if (result.pageCompleted) {
       await _celebrate(
@@ -347,12 +344,12 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
               Text(
                 message,
                 textAlign: TextAlign.center,
-                style: TextStyle(
-                    fontSize: 15, color: Colors.grey.shade600, height: 1.5),
+                style: const TextStyle(
+                    fontSize: 15, color: AppColors.inkSoft, height: 1.5),
               ),
               const SizedBox(height: 20),
               BouncyButton(
-                color: const Color(0xFF3DA35D),
+                color: AppColors.green,
                 padding: const EdgeInsets.symmetric(vertical: 14),
                 onTap: () => Navigator.of(context).pop(),
                 child: const Text(
@@ -380,10 +377,7 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          '스티커북',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text('스티커북'),
       ),
       body: collected == null
           ? const Center(child: CircularProgressIndicator())
@@ -421,10 +415,10 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
                                 '페이지 완성 🪙 ${StickerStore.pageBonus} · '
                                 '앨범 완성 🪙 ${StickerStore.albumBonus} 보너스!',
                         textAlign: TextAlign.center,
-                        style: TextStyle(
+                        style: const TextStyle(
                             fontSize: 13,
                             height: 1.5,
-                            color: Colors.grey.shade700),
+                            color: AppColors.inkSoft),
                       ),
                     ],
                   ),
@@ -494,7 +488,7 @@ class _PageCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
         border: Border.all(
-          color: done ? page.color : Colors.grey.shade200,
+          color: done ? page.color : AppColors.line,
           width: 2.5,
         ),
         boxShadow: [
@@ -514,8 +508,8 @@ class _PageCard extends StatelessWidget {
               const SizedBox(width: 8),
               Text(
                 page.title,
-                style: const TextStyle(
-                    fontSize: 17, fontWeight: FontWeight.bold),
+                style:
+                    const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               done
@@ -537,10 +531,10 @@ class _PageCard extends StatelessWidget {
                     )
                   : Text(
                       '${collected.length}/${page.stickers.length}',
-                      style: TextStyle(
+                      style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
-                          color: Colors.grey.shade600),
+                          color: AppColors.inkSoft),
                     ),
             ],
           ),
@@ -599,7 +593,7 @@ class _StickerSlot extends StatelessWidget {
                 ? color
                 : highlight
                     ? const Color(0xFFFFC107)
-                    : Colors.grey.shade300,
+                    : AppColors.outline,
             width: owned || highlight ? 2 : 1.5,
           ),
         ),
@@ -615,9 +609,9 @@ class _StickerSlot extends StatelessWidget {
             Text(
               sticker.name,
               style: TextStyle(
-                fontSize: 10.5,
+                fontSize: 13,
                 fontWeight: FontWeight.bold,
-                color: owned ? Colors.black87 : Colors.grey.shade400,
+                color: owned ? AppColors.ink : AppColors.inkMuted,
               ),
             ),
           ],
@@ -689,31 +683,29 @@ class _CanvasCard extends StatelessWidget {
               // 지우개 모드
               GestureDetector(
                 onTap: placed.isEmpty ? null : onToggleErase,
+                // 켜짐 = 앱 공용 선택 모양(라임+초록) — 빨강은 오답에만 쓴다
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 6),
+                  constraints: const BoxConstraints(minHeight: 44),
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: erasing
-                        ? const Color(0xFFFFDFE0)
-                        : Colors.grey.shade100,
+                    color: erasing ? AppColors.selectedFill : AppColors.cream,
                     borderRadius: BorderRadius.circular(999),
                     border: Border.all(
-                      color: erasing
-                          ? const Color(0xFFEA2B2B)
-                          : Colors.grey.shade300,
-                      width: 1.5,
+                      color: erasing ? AppColors.correct : AppColors.outline,
+                      width: erasing ? 3 : 2,
                     ),
                   ),
                   child: Text(
-                    '✋ 떼어내기',
+                    erasing ? '✋ 떼어내는 중' : '✋ 떼어내기',
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: placed.isEmpty
-                          ? Colors.grey.shade400
+                          ? AppColors.inkMuted
                           : erasing
-                              ? const Color(0xFFEA2B2B)
-                              : Colors.grey.shade600,
+                              ? AppColors.greenPressed
+                              : AppColors.inkSoft,
                     ),
                   ),
                 ),
@@ -722,12 +714,13 @@ class _CanvasCard extends StatelessWidget {
               GestureDetector(
                 onTap: placed.isEmpty ? null : onClear,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 6),
+                  constraints: const BoxConstraints(minHeight: 44),
+                  alignment: Alignment.center,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
                   decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
+                    color: AppColors.cream,
                     borderRadius: BorderRadius.circular(999),
-                    border: Border.all(color: Colors.grey.shade300, width: 1.5),
+                    border: Border.all(color: AppColors.outline, width: 2),
                   ),
                   child: Text(
                     '🗑️ 모두 지우기',
@@ -735,8 +728,8 @@ class _CanvasCard extends StatelessWidget {
                       fontSize: 12.5,
                       fontWeight: FontWeight.bold,
                       color: placed.isEmpty
-                          ? Colors.grey.shade400
-                          : Colors.grey.shade600,
+                          ? AppColors.inkMuted
+                          : AppColors.inkSoft,
                     ),
                   ),
                 ),
@@ -785,8 +778,7 @@ class _CanvasCard extends StatelessWidget {
                           top: 8,
                           child: Opacity(
                             opacity: 0.7,
-                            child:
-                                Text('🌞', style: TextStyle(fontSize: 28)),
+                            child: Text('🌞', style: TextStyle(fontSize: 28)),
                           ),
                         ),
                         const Positioned(
@@ -794,8 +786,7 @@ class _CanvasCard extends StatelessWidget {
                           top: 14,
                           child: Opacity(
                             opacity: 0.6,
-                            child:
-                                Text('⛅', style: TextStyle(fontSize: 24)),
+                            child: Text('⛅', style: TextStyle(fontSize: 24)),
                           ),
                         ),
                         // 붙인 스티커들 (끌어서 옮길 수 있다)
@@ -851,7 +842,7 @@ class _CanvasCard extends StatelessWidget {
               hasTickets
                   ? '위 칭찬판·스티커북에 스티커를 붙이면\n여기서도 꾸밀 수 있어요!'
                   : '칭찬판이나 스티커북에 붙인 스티커가 생기면\n여기를 마음껏 꾸밀 수 있어요!',
-              style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+              style: const TextStyle(fontSize: 13, color: AppColors.inkSoft),
             )
           else
             SizedBox(
@@ -877,7 +868,7 @@ class _CanvasCard extends StatelessWidget {
                         border: Border.all(
                           color: selected
                               ? const Color(0xFFFFC107)
-                              : Colors.grey.shade300,
+                              : AppColors.outline,
                           width: selected ? 2.5 : 1.5,
                         ),
                       ),
@@ -950,10 +941,10 @@ class _RewardBoardCard extends StatelessWidget {
                 child: Text(
                   '${boards + 1}번째 판 · $filled/${RewardBoardStore.slots}',
                   overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
+                  style: const TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
-                      color: Colors.grey.shade600),
+                      color: AppColors.inkSoft),
                 ),
               ),
             ],
@@ -966,13 +957,13 @@ class _RewardBoardCard extends StatelessWidget {
               GestureDetector(
                 onTap: onEditPromise,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 10, vertical: 6),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(
                     color: const Color(0xFFFFF3C4),
                     borderRadius: BorderRadius.circular(999),
-                    border: Border.all(
-                        color: const Color(0xFFFFD34D), width: 1.5),
+                    border:
+                        Border.all(color: const Color(0xFFFFD34D), width: 1.5),
                   ),
                   child: const Text(
                     '🎁 선물 정하기 (부모님)',
@@ -1019,7 +1010,7 @@ class _RewardBoardCard extends StatelessWidget {
                             ? const Color(0xFFFFD34D)
                             : canPlace
                                 ? const Color(0xFFFFC107)
-                                : Colors.grey.shade300,
+                                : AppColors.outline,
                         width: board[i] != null || canPlace ? 2 : 1.5,
                       ),
                     ),

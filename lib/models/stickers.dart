@@ -200,8 +200,8 @@ class StickerStore {
   /// 지금 앨범에 모은 것 + 예전 앨범에서 모아 봤던 것 (페이지 순서대로)
   static Future<List<Sticker>> collectedStickers() async {
     final prefs = await SharedPreferences.getInstance();
-    final ids = (prefs.getStringList(Profiles.scoped(_seenKey)) ?? const [])
-        .toSet();
+    final ids =
+        (prefs.getStringList(Profiles.scoped(_seenKey)) ?? const []).toSet();
     final collected = await load();
     for (var p = 0; p < collected.length; p++) {
       for (final s in collected[p]) {
@@ -235,8 +235,7 @@ class StickerStore {
   /// 퀴즈를 통과하면 붙일 수 있는 스티커를 준다.
   static Future<int> addTickets(int count) async {
     final prefs = await SharedPreferences.getInstance();
-    final total =
-        (prefs.getInt(Profiles.scoped(_ticketsKey)) ?? 0) + count;
+    final total = (prefs.getInt(Profiles.scoped(_ticketsKey)) ?? 0) + count;
     await prefs.setInt(Profiles.scoped(_ticketsKey), total);
     return total;
   }
@@ -258,10 +257,9 @@ class StickerStore {
     if (collected[pageIndex].contains(stickerIndex)) return null;
     collected[pageIndex].add(stickerIndex);
 
-    final pageCompleted =
-        collected[pageIndex].length == page.stickers.length;
-    final albumCompleted = collected.indexed.every(
-        (e) => e.$2.length == stickerPages[e.$1].stickers.length);
+    final pageCompleted = collected[pageIndex].length == page.stickers.length;
+    final albumCompleted = collected.indexed
+        .every((e) => e.$2.length == stickerPages[e.$1].stickers.length);
 
     await prefs.setInt(Profiles.scoped(_ticketsKey), have - 1);
     // 꾸미기 판 팔레트용: 한 번 모은 스티커는 앨범이 새로 시작돼도 기억한다.

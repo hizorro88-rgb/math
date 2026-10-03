@@ -75,14 +75,13 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
 
   bool get _answered => _selectedChoice != null;
   bool get _isCorrect => _selectedChoice == _question.answer;
-  Color get _themeColor =>
-      widget.level?.unit.color ?? const Color(0xFF5B6CF0);
+  Color get _themeColor => widget.level?.unit.color ?? const Color(0xFF5B6CF0);
 
   @override
   void initState() {
     super.initState();
-    final questions = EnglishQuestionGenerator()
-        .generate(widget.type, stage: widget.stage);
+    final questions =
+        EnglishQuestionGenerator().generate(widget.type, stage: widget.stage);
     _baseCount = questions.length;
     _dots = QuizDotTracker(_baseCount);
     _entries.addAll(questions.map(_EnEntry.new));
@@ -177,7 +176,8 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
       Sounds.correct(_combo);
       HapticFeedback.lightImpact().ignore();
       QuizVoice.correct(_isRetryQuestion ? 0 : _combo,
-          say: _question.tiles.isNotEmpty ? choice : null, lang: _question.speechLang);
+          say: _question.tiles.isNotEmpty ? choice : null,
+          lang: _question.speechLang);
     } else {
       Sounds.wrong();
       HapticFeedback.heavyImpact().ignore();
@@ -251,8 +251,7 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
                     '${level.number - level.unit.firstLevelNumber + 1}단계'
                 : null,
             showUnlockHint: level != null && stars < 1,
-            nextLabel:
-                next != null ? '다음 단계' : null,
+            nextLabel: next != null ? '다음 단계' : null,
             nextBuilder: next != null
                 ? () => EnglishQuizScreen(
                       type: next.unit.type,
@@ -310,8 +309,7 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
                   bonus: _isBonusQuestion),
           reaction: _answered ? _isCorrect : null,
         ),
-        answers:
-            _question.tiles.isNotEmpty ? _buildTiles() : _buildChoices(),
+        answers: _question.tiles.isNotEmpty ? _buildTiles() : _buildChoices(),
         feedback: _answered ? _buildFeedbackPanel() : null,
         sparkle: _answered && _isCorrect && _combo >= 5,
         sparkleKey: ValueKey('sparkle$_currentIndex'),
@@ -380,9 +378,8 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
                 children: [
                   for (var i = 0; i < _question.answer.length; i++)
                     QuizSlot(
-                      text: i < _picked.length
-                          ? _question.tiles[_picked[i]]
-                          : '',
+                      text:
+                          i < _picked.length ? _question.tiles[_picked[i]] : '',
                       active: i == _picked.length,
                       answered: _answered,
                       correct: _isCorrect,

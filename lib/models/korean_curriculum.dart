@@ -115,12 +115,9 @@ class KoreanCurriculum {
           KrUnit(
               title: '글자 소리 찾기', emoji: '👂', type: KrQuizType.listenSyllable),
           KrUnit(
-              title: '자음 소리 찾기',
-              emoji: '🎼',
-              type: KrQuizType.listenConsonant),
+              title: '자음 소리 찾기', emoji: '🎼', type: KrQuizType.listenConsonant),
           KrUnit(title: '가나다 순서', emoji: '🐾', type: KrQuizType.syllableOrder),
-          KrUnit(
-              title: '첫소리 찾기', emoji: '🎯', type: KrQuizType.firstConsonant),
+          KrUnit(title: '첫소리 찾기', emoji: '🎯', type: KrQuizType.firstConsonant),
         ],
       ),
       KrCategory(

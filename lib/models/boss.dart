@@ -41,9 +41,8 @@ class BossStore {
   /// 보스전 문제: 덧뺄셈·비교·빈칸·10 만들기·시계를 섞어 12문제.
   static List<Question> buildQuestions({Random? random}) {
     final generator = QuestionGenerator(random: random);
-    List<Question> take(QuizMode mode, int max, int count) =>
-        generator.generate(
-            QuizConfig(mode: mode, maxNumber: max, questionCount: count));
+    List<Question> take(QuizMode mode, int max, int count) => generator
+        .generate(QuizConfig(mode: mode, maxNumber: max, questionCount: count));
     return [
       ...take(QuizMode.mixed, 10, 4),
       ...take(QuizMode.compare, 10, 2),

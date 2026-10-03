@@ -116,10 +116,8 @@ class Profiles {
         if (p.id != id) p,
     ]);
     final prefs = await SharedPreferences.getInstance();
-    for (final key in prefs
-        .getKeys()
-        .where((k) => k.startsWith('p${id}_'))
-        .toList()) {
+    for (final key
+        in prefs.getKeys().where((k) => k.startsWith('p${id}_')).toList()) {
       await prefs.remove(key);
     }
     if (activeId == id) await setActive(1);

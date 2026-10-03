@@ -101,8 +101,7 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
       widget.pack.types[_question.typeIndex].textDisplay &&
       _question.display.length > 12;
   bool get _isCorrect => _selectedChoice == _question.answer;
-  Color get _themeColor =>
-      widget.level?.unit.color ?? const Color(0xFF5B6CF0);
+  Color get _themeColor => widget.level?.unit.color ?? const Color(0xFF5B6CF0);
 
   @override
   void initState() {
@@ -130,8 +129,8 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
   /// 소리 찾기 유형은 소리가 있어야 풀 수 있으니 먼저 확인한다.
   /// 한 판에 유형이 섞이는 팩도 있어서 문제들을 보고 판단한다.
   Future<void> _start() async {
-    final needsListening = _entries
-        .any((e) => widget.pack.types[e.question.typeIndex].listening);
+    final needsListening =
+        _entries.any((e) => widget.pack.types[e.question.typeIndex].listening);
     if (needsListening) {
       final ready = await ensureListenReady(
         context,
@@ -223,7 +222,8 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
       Sounds.correct(_combo);
       HapticFeedback.lightImpact().ignore();
       QuizVoice.correct(_isRetryQuestion ? 0 : _combo,
-          say: _question.tiles.isNotEmpty ? choice : null, lang: widget.pack.ttsLang);
+          say: _question.tiles.isNotEmpty ? choice : null,
+          lang: widget.pack.ttsLang);
     } else {
       Sounds.wrong();
       HapticFeedback.heavyImpact().ignore();
@@ -297,8 +297,7 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
                     '${level.number - level.unit.firstLevelNumber + 1}단계'
                 : null,
             showUnlockHint: level != null && stars < 1,
-            nextLabel:
-                next != null ? '다음 단계' : null,
+            nextLabel: next != null ? '다음 단계' : null,
             nextBuilder: next != null
                 ? () => LanguageQuizScreen(
                       pack: widget.pack,
@@ -364,12 +363,12 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
             ? null
             : QuizCheer(
                 line: _answered
-              ? null
-              : quizCheerLine(
-                  index: _currentIndex,
-                  retry: _isRetryQuestion,
-                  bonus: _isBonusQuestion),
-          reaction: _answered ? _isCorrect : null,
+                    ? null
+                    : quizCheerLine(
+                        index: _currentIndex,
+                        retry: _isRetryQuestion,
+                        bonus: _isBonusQuestion),
+                reaction: _answered ? _isCorrect : null,
               ),
         answers: _isSpeakingQuestion
             ? _buildSpeakingPanel()
@@ -461,9 +460,8 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
                 children: [
                   for (var i = 0; i < _question.slotCount; i++)
                     QuizSlot(
-                      text: i < _picked.length
-                          ? _question.tiles[_picked[i]]
-                          : '',
+                      text:
+                          i < _picked.length ? _question.tiles[_picked[i]] : '',
                       active: i == _picked.length,
                       answered: _answered,
                       correct: _isCorrect,
@@ -566,8 +564,7 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
         BouncyButton(
           key: const ValueKey('speak-mic'),
           color: _micListening ? const Color(0xFFFFDFE0) : _themeColor,
-          shadowColor:
-              _micListening ? const Color(0xFFEA2B2B) : _themeColor,
+          shadowColor: _micListening ? const Color(0xFFEA2B2B) : _themeColor,
           padding: const EdgeInsets.symmetric(vertical: 16),
           onTap: _answered ? null : _tapMic,
           child: Row(
@@ -584,8 +581,7 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
-                  color:
-                      _micListening ? const Color(0xFFEA2B2B) : Colors.white,
+                  color: _micListening ? const Color(0xFFEA2B2B) : Colors.white,
                 ),
               ),
             ],
@@ -599,11 +595,11 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
               child: BouncyButton(
                 key: const ValueKey('speak-record'),
                 color: _micRecording ? const Color(0xFFFFEBD6) : Colors.white,
-                shadowColor: Colors.grey.shade300,
+                shadowColor: AppColors.outline,
                 border: Border.all(
                   color: _micRecording
                       ? const Color(0xFFEA2B2B)
-                      : Colors.grey.shade300,
+                      : AppColors.outline,
                   width: 2,
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -634,8 +630,8 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
                 child: BouncyButton(
                   key: const ValueKey('speak-playback'),
                   color: Colors.white,
-                  shadowColor: Colors.grey.shade300,
-                  border: Border.all(color: Colors.grey.shade300, width: 2),
+                  shadowColor: AppColors.outline,
+                  border: Border.all(color: AppColors.outline, width: 2),
                   padding: const EdgeInsets.symmetric(vertical: 12),
                   onTap: () => Sounds.playFile(_myVoicePath!),
                   child: const Row(

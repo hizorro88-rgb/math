@@ -35,8 +35,7 @@ class Purchases {
     if (_noStore) return;
     try {
       // 스토어 응답이 늦어도 멈추지 않게 시간 제한을 둔다.
-      available =
-          await _iap.isAvailable().timeout(const Duration(seconds: 8));
+      available = await _iap.isAvailable().timeout(const Duration(seconds: 8));
       if (!available) return;
       _subscription ??= _iap.purchaseStream.listen(_onPurchases);
       final response = await _iap.queryProductDetails({productId});

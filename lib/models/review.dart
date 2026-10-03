@@ -46,8 +46,7 @@ class Review {
     ReviewSuggestion? best;
     var bestAccuracy = maxAccuracy + 1;
 
-    void consider(
-        int correct, int wrong, ReviewSuggestion Function(int) make) {
+    void consider(int correct, int wrong, ReviewSuggestion Function(int) make) {
       final total = correct + wrong;
       if (total < minAnswered) return;
       final accuracy = correct * 100 ~/ total;

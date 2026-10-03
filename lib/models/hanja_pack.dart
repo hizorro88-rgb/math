@@ -193,8 +193,7 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
     default:
       final phrases = hanjaPhrases;
       // 앞 단계는 앞 네 구절(16자 범위), 뒤 단계는 전부.
-      final phrase =
-          phrases[random.nextInt(stage >= 5 ? phrases.length : 4)];
+      final phrase = phrases[random.nextInt(stage >= 5 ? phrases.length : 4)];
       // 앞 단계는 마지막 글자만 가리고, 뒤 단계는 아무 자리나 가린다.
       final blank = stage >= 5 ? random.nextInt(4) : 3;
       final target = phrase[blank];

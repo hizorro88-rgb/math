@@ -77,8 +77,6 @@ class LevelBubble extends StatelessWidget {
                   color: _cleared ? Colors.white : color,
                 ),
               ),
-              if (_cleared)
-                Text('⭐' * stars, style: const TextStyle(fontSize: 7)),
             ],
           ),
         ),
@@ -91,10 +89,32 @@ class LevelBubble extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           Pulse(child: bubble),
-          const SizedBox(height: 7),
+          const SizedBox(height: 6),
+          // 초록 알약 = "여기부터" (초록은 앞으로)
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+            decoration: BoxDecoration(
+              color: AppColors.green,
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              '여기부터!',
+              style: displayStyle(fontSize: 12, color: Colors.white),
+            ),
+          ),
+        ],
+      );
+    }
+    // 통과한 원: 별은 원 밖 아래에 읽을 수 있는 크기로
+    if (_cleared) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          bubble,
+          const SizedBox(height: 3),
           Text(
-            '여기부터!',
-            style: displayStyle(fontSize: 12, color: AppColors.greenPressed),
+            '⭐' * stars + '☆' * (3 - stars),
+            style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
           ),
         ],
       );

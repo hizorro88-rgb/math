@@ -9,6 +9,7 @@ import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../widgets/bouncy_button.dart';
 import 'level_map_screen.dart';
+import '../theme.dart';
 
 /// 진도 백업·복원 화면 (부모 게이트 뒤의 리포트에서 열림).
 /// 서버 없이 텍스트 코드 하나로 진도를 지키고, 새 폰으로 옮긴다.
@@ -33,8 +34,8 @@ class _BackupScreenState extends State<BackupScreen> {
   void _snack(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-          SnackBar(content: Text(message), duration: const Duration(seconds: 2)));
+      ..showSnackBar(SnackBar(
+          content: Text(message), duration: const Duration(seconds: 2)));
   }
 
   Future<void> _makeCode() async {
@@ -117,10 +118,7 @@ class _BackupScreenState extends State<BackupScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          '진도 백업·옮기기',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text('진도 백업·옮기기'),
       ),
       body: ListView(
         padding: const EdgeInsets.all(20),
@@ -170,7 +168,7 @@ class _BackupScreenState extends State<BackupScreen> {
                     decoration: BoxDecoration(
                       color: const Color(0xFFF5F5F5),
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: Colors.grey.shade300),
+                      border: Border.all(color: AppColors.outline),
                     ),
                     child: SelectableText(
                       _code!,
@@ -213,9 +211,8 @@ class _BackupScreenState extends State<BackupScreen> {
                     Expanded(
                       child: BouncyButton(
                         color: Colors.white,
-                        shadowColor: Colors.grey.shade300,
-                        border:
-                            Border.all(color: Colors.grey.shade300, width: 2),
+                        shadowColor: AppColors.outline,
+                        border: Border.all(color: AppColors.outline, width: 2),
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         onTap: _pasteCode,
                         child: const Text(
@@ -230,8 +227,8 @@ class _BackupScreenState extends State<BackupScreen> {
                     Expanded(
                       child: BouncyButton(
                         color: _restoreController.text.trim().isEmpty
-                            ? Colors.grey.shade400
-                            : const Color(0xFF3DA35D),
+                            ? AppColors.inkMuted
+                            : AppColors.green,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                         onTap: _restoring ? () {} : _restore,
                         child: Text(

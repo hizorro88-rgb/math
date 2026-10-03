@@ -151,8 +151,7 @@ class WrongNoteStore {
     final notes = <WrongNote>[];
     for (final row in rows) {
       try {
-        notes.add(
-            WrongNote.fromJson(jsonDecode(row) as Map<String, dynamic>));
+        notes.add(WrongNote.fromJson(jsonDecode(row) as Map<String, dynamic>));
       } catch (_) {} // 깨진 줄은 조용히 건너뛴다
     }
     return notes;

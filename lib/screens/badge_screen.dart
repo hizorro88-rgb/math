@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/badges.dart';
 import '../models/progress.dart';
 import '../theme.dart';
+import '../widgets/kid_notice.dart';
 
 /// 배지 도감: 지금까지 모은 배지와 앞으로 모을 배지.
 class BadgeScreen extends StatefulWidget {
@@ -20,10 +21,7 @@ class _BadgeScreenState extends State<BadgeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          '배지 도감',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text('배지 도감'),
       ),
       body: FutureBuilder<BadgeData>(
         future: _dataFuture,
@@ -41,15 +39,14 @@ class _BadgeScreenState extends State<BadgeScreen> {
               // 내 띠: 공부할수록 띠 색이 바뀐다 (숫자 대신 막대)
               FutureBuilder<int>(
                 future: _pointsFuture,
-                builder: (context, snap) =>
-                    _BeltCard(points: snap.data ?? 0),
+                builder: (context, snap) => _BeltCard(points: snap.data ?? 0),
               ),
               const SizedBox(height: 12),
               Container(
                 padding: const EdgeInsets.all(14),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFEFE3FF),
-                  borderRadius: BorderRadius.circular(18),
+                  color: AppColors.rewardSurface,
+                  borderRadius: BorderRadius.circular(22),
                 ),
                 child: Text(
                   '지금까지 배지 $earnedCount개 / ${allBadges.length}개를 모았어요!',
@@ -57,18 +54,18 @@ class _BadgeScreenState extends State<BadgeScreen> {
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF6B2FB3),
+                    color: AppColors.ink,
                   ),
                 ),
               ),
               const SizedBox(height: 14),
               GridView.count(
-                crossAxisCount: 2,
+                crossAxisCount: 3,
                 shrinkWrap: true,
                 physics: const NeverScrollableScrollPhysics(),
-                mainAxisSpacing: 12,
-                crossAxisSpacing: 12,
-                childAspectRatio: 1.15,
+                mainAxisSpacing: 10,
+                crossAxisSpacing: 10,
+                childAspectRatio: 0.9,
                 children: [
                   for (var i = 0; i < allBadges.length; i++)
                     _BadgeCard(badge: allBadges[i], earned: earned[i]),
@@ -91,51 +88,48 @@ class _BadgeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(10),
-      decoration: BoxDecoration(
-        color: earned ? Colors.white : Colors.grey.shade100,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: earned ? const Color(0xFFFFD34D) : Colors.grey.shade300,
-          width: 3,
-        ),
-        boxShadow: earned
-            ? [
-                BoxShadow(
-                  color: const Color(0xFFFFD34D).withValues(alpha: 0.4),
-                  offset: const Offset(0, 4),
-                  blurRadius: 8,
-                ),
-              ]
-            : null,
+    return GestureDetector(
+      // 누르면 이름과 얻는 방법을 읽어 준다 (글을 못 읽어도 알 수 있게)
+      onTap: () => showKidNotice(
+        context,
+        emoji: earned ? badge.emoji : '❔',
+        text: earned ? '${badge.title}!' : badge.desc,
       ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Opacity(
-            opacity: earned ? 1 : 0.35,
-            child: Text(
-              earned ? badge.emoji : '❔',
-              style: const TextStyle(fontSize: 36),
+      child: Container(
+        padding: const EdgeInsets.all(8),
+        decoration: BoxDecoration(
+          color: earned ? Colors.white : AppColors.cream,
+          borderRadius: BorderRadius.circular(22),
+          border: Border.all(
+            color: earned ? AppColors.amber : AppColors.line,
+            width: earned ? 3 : 2,
+          ),
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // 못 얻은 배지는 그림자(실루엣)로 — 무엇인지 궁금하게
+            earned
+                ? Text(badge.emoji, style: const TextStyle(fontSize: 38))
+                : ColorFiltered(
+                    colorFilter: const ColorFilter.mode(
+                        Color(0xFFD8CFBE), BlendMode.srcIn),
+                    child:
+                        Text(badge.emoji, style: const TextStyle(fontSize: 38)),
+                  ),
+            const SizedBox(height: 6),
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                badge.title,
+                style: displayStyle(
+                  fontSize: 15,
+                  color: earned ? AppColors.ink : AppColors.inkMuted,
+                ),
+              ),
             ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            badge.title,
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.bold,
-              color: earned ? Colors.black87 : Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 2),
-          Text(
-            badge.desc,
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -169,8 +163,7 @@ class _BeltCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('지금 나는 ${rank.title}!',
-                    style: displayStyle(fontSize: 18)),
+                Text('지금 나는 ${rank.title}!', style: displayStyle(fontSize: 18)),
                 const SizedBox(height: 8),
                 Row(
                   children: [

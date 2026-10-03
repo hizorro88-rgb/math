@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../models/progress.dart';
 import '../models/shop.dart';
+import '../theme.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../widgets/kid_notice.dart';
@@ -88,10 +89,7 @@ class _ShopScreenState extends State<ShopScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          '꾸미기 가게',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text('꾸미기 가게'),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: 16),
@@ -132,9 +130,9 @@ class _ShopScreenState extends State<ShopScreen> {
                       const SizedBox(height: 6),
                       Text(
                         _cheerLine(),
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 15,
-                          color: Colors.grey.shade600,
+                          color: AppColors.inkSoft,
                         ),
                       ),
                     ],
@@ -206,74 +204,108 @@ class _ItemCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const green = Color(0xFF3DA35D);
     final dimmed = !owned && !affordable;
+    // 아직 못 사는 물건: 얼마나 모았는지 앰버 막대로 (글 대신 그림)
+    final saved = item.cost == 0 ? 1.0 : 1 - remaining / item.cost;
+
+    final Widget status;
+    if (equipped) {
+      status = _pill('착용 중', AppColors.correct, Colors.white);
+    } else if (owned) {
+      status = _pill('👕 입기', AppColors.selectedFill, AppColors.greenPressed);
+    } else if (affordable) {
+      status = _pill('🪙 ${item.cost}', AppColors.amber, AppColors.ink);
+    } else {
+      status = Column(
+        children: [
+          Text('🪙 ${item.cost}',
+              style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: AppColors.inkMuted)),
+          const SizedBox(height: 3),
+          SizedBox(
+            width: 70,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: saved.clamp(0.0, 1.0),
+                minHeight: 7,
+                color: AppColors.amber,
+                backgroundColor: AppColors.line,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
 
     return GestureDetector(
       onTap: onTap,
-      child: Container(
-        decoration: BoxDecoration(
-          color: equipped ? const Color(0xFFD7FFB8) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: equipped ? green : Colors.grey.shade300,
-            width: 3,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: equipped ? const Color(0xFFB5E48C) : Colors.grey.shade300,
-              offset: const Offset(0, 4),
-              blurRadius: 0,
-            ),
-          ],
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Opacity(
-              opacity: dimmed ? 0.45 : 1,
-              child: Text(item.emoji, style: const TextStyle(fontSize: 36)),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              item.name,
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 4),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+      child: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          Positioned.fill(
+            child: Container(
               decoration: BoxDecoration(
-                color: equipped
-                    ? green
-                    : owned
-                        ? const Color(0xFFE8F5E0)
-                        : dimmed
-                            ? Colors.grey.shade200
-                            : const Color(0xFFFFF6D8),
-                borderRadius: BorderRadius.circular(999),
-              ),
-              child: Text(
-                equipped
-                    ? '착용 중'
-                    : owned
-                        ? '보유 ✓'
-                        : dimmed
-                            ? '🪙 $remaining 더 모으면 돼요'
-                            : '🪙 ${item.cost} · 살 수 있어요!',
-                style: TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: equipped
-                      ? Colors.white
-                      : dimmed
-                          ? const Color(0xFF6B6B6B)
-                          : const Color(0xFF7A6200),
+                color: equipped ? AppColors.selectedFill : Colors.white,
+                borderRadius: BorderRadius.circular(22),
+                border: Border.all(
+                  color: equipped ? AppColors.correct : AppColors.outline,
+                  width: equipped ? 3 : 2,
                 ),
+                boxShadow: [
+                  BoxShadow(
+                    color: equipped ? AppColors.correct : AppColors.outline,
+                    offset: const Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Opacity(
+                    opacity: dimmed ? 0.45 : 1,
+                    child:
+                        Text(item.emoji, style: const TextStyle(fontSize: 36)),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    item.name,
+                    style: const TextStyle(
+                        fontSize: 15, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 4),
+                  status,
+                ],
               ),
             ),
-          ],
-        ),
+          ),
+          if (equipped)
+            const Positioned(
+              top: -6,
+              right: -4,
+              child: CircleAvatar(
+                radius: 12,
+                backgroundColor: AppColors.correct,
+                child: Icon(Icons.check_rounded, size: 16, color: Colors.white),
+              ),
+            ),
+        ],
       ),
     );
   }
+
+  Widget _pill(String text, Color fill, Color ink) => Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
+        decoration: BoxDecoration(
+          color: fill,
+          borderRadius: BorderRadius.circular(999),
+        ),
+        child: Text(
+          text,
+          style:
+              TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: ink),
+        ),
+      );
 }

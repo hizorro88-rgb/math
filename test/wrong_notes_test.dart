@@ -87,8 +87,9 @@ void main() {
     await tester.pumpAndSettle();
 
     await tester.tap(find.text('오리'));
-    await tester.pump();
-    await tester.pump(const Duration(milliseconds: 1300)); // 자동 넘어가기
+    await tester.pumpAndSettle();
+    // 틀렸을 때는 아이가 직접 넘긴다 (정답을 보고 갈 시간)
+    await tester.tap(find.text('결과 보기'));
     await tester.pumpAndSettle();
 
     expect(find.text('1개 중 0개 통과!'), findsOneWidget);

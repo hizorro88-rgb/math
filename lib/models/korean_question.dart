@@ -222,16 +222,18 @@ class KoreanQuestionGenerator {
 
       case KrQuizType.syllableOrder:
         // 뒤 단계에서는 ㅗ행(고노도…)도 섞여 문제 폭이 넓어진다.
-        final row = stage >= 6 && _random.nextBool()
-            ? krSyllablesO
-            : krSyllablesA;
+        final row =
+            stage >= 6 && _random.nextBool() ? krSyllablesO : krSyllablesA;
         // 앞 단계에서는 가나다 첫머리 위주로 나온다.
         final maxStart = stage < 3 ? 5 : row.length - 3;
         final start = _random.nextInt(maxStart);
         final shown = row.sublist(start, start + 3);
         final answer = row[start + 3];
         final wrong = _pick(
-          [for (final s in row) if (s != answer) s],
+          [
+            for (final s in row)
+              if (s != answer) s
+          ],
           3,
         );
         return KoreanQuestion(
@@ -246,9 +248,8 @@ class KoreanQuestionGenerator {
         );
 
       case KrQuizType.listenConsonant:
-        final pool = stage >= 5
-            ? krConsonantNames
-            : krConsonantNames.sublist(0, 7);
+        final pool =
+            stage >= 5 ? krConsonantNames : krConsonantNames.sublist(0, 7);
         final picked = _pick(pool, 4);
         final target = picked.first;
         return KoreanQuestion(
@@ -271,9 +272,8 @@ class KoreanQuestionGenerator {
             krBasicConsonants[_random.nextInt(krBasicConsonants.length)];
         final vowel = vowelPool[_random.nextInt(vowelPool.length)];
         final answer = krCombine(consonant, vowel.letter);
-        final consonantName = krConsonantNames
-            .firstWhere((c) => c.letter == consonant)
-            .name;
+        final consonantName =
+            krConsonantNames.firstWhere((c) => c.letter == consonant).name;
         // 오답: 같은 자음+다른 모음, 다른 자음+같은 모음으로 헷갈리게
         final candidates = <String>{
           for (final v in krVowels) krCombine(consonant, v.letter),
@@ -302,7 +302,10 @@ class KoreanQuestionGenerator {
         final word = pool[_random.nextInt(pool.length)];
         final answer = krFirstConsonant(word.word);
         final wrong = _pick(
-          [for (final c in krBasicConsonants) if (c != answer) c],
+          [
+            for (final c in krBasicConsonants)
+              if (c != answer) c
+          ],
           3,
         );
         return KoreanQuestion(
@@ -350,7 +353,8 @@ class KoreanQuestionGenerator {
     final target = picked.first;
     return KoreanQuestion(
       type: type,
-      instruction: _rot(const ['그림에 맞는 낱말은?', '그림의 이름은 무엇일까요?', '이 그림, 뭐라고 부를까?']),
+      instruction:
+          _rot(const ['그림에 맞는 낱말은?', '그림의 이름은 무엇일까요?', '이 그림, 뭐라고 부를까?']),
       display: target.emoji,
       choices: _shuffled([for (final w in picked) w.word]),
       answer: target.word,

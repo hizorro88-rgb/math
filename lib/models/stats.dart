@@ -220,8 +220,7 @@ class StatsStore {
       QuestionOp.compare => correct ? _compareCorrectKey : _compareWrongKey,
       QuestionOp.pattern => correct ? _patternCorrectKey : _patternWrongKey,
       QuestionOp.clock => correct ? _clockCorrectKey : _clockWrongKey,
-      QuestionOp.fraction =>
-        correct ? _fractionCorrectKey : _fractionWrongKey,
+      QuestionOp.fraction => correct ? _fractionCorrectKey : _fractionWrongKey,
       QuestionOp.decimal => correct ? _decimalCorrectKey : _decimalWrongKey,
       QuestionOp.timeCalc => correct ? _timeCorrectKey : _timeWrongKey,
     });
@@ -263,8 +262,9 @@ class StatsStore {
   static Future<void> recordLangAnswer(LanguagePack pack, int typeIndex,
       {required bool correct}) async {
     final prefs = await SharedPreferences.getInstance();
-    final key = Profiles.scoped(
-        correct ? 'stats_lang_${pack.id}_correct_v1' : 'stats_lang_${pack.id}_wrong_v1');
+    final key = Profiles.scoped(correct
+        ? 'stats_lang_${pack.id}_correct_v1'
+        : 'stats_lang_${pack.id}_wrong_v1');
     final counts = _parseCsv(prefs.getString(key), pack.types.length);
     counts[typeIndex]++;
     await prefs.setString(key, counts.join(','));
@@ -315,8 +315,7 @@ class StatsStore {
       decimalWrong: intOf(_decimalWrongKey),
       timeCorrect: intOf(_timeCorrectKey),
       timeWrong: intOf(_timeWrongKey),
-      bandCorrect: _parseCsv(
-          prefs.getString(Profiles.scoped(_bandCorrectKey)),
+      bandCorrect: _parseCsv(prefs.getString(Profiles.scoped(_bandCorrectKey)),
           statBandNames.length),
       bandWrong: _parseCsv(prefs.getString(Profiles.scoped(_bandWrongKey)),
           statBandNames.length),
@@ -338,8 +337,8 @@ class StatsStore {
       langWrong: {
         for (final pack in languagePacks)
           pack.id: _parseCsv(
-              prefs.getString(
-                  Profiles.scoped('stats_lang_${pack.id}_wrong_v1')),
+              prefs
+                  .getString(Profiles.scoped('stats_lang_${pack.id}_wrong_v1')),
               pack.types.length),
       },
       recentDays: [

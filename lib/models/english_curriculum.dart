@@ -93,12 +93,9 @@ class EnglishCurriculum {
         color: const Color(0xFFD65DB1),
         units: [
           EnUnit(
-              title: '알파벳 소리 찾기',
-              emoji: '👂',
-              type: EnQuizType.listenLetter),
+              title: '알파벳 소리 찾기', emoji: '👂', type: EnQuizType.listenLetter),
           EnUnit(title: 'ABC 순서', emoji: '🐾', type: EnQuizType.alphabetOrder),
-          EnUnit(
-              title: '대문자 소문자 짝', emoji: '🅰️', type: EnQuizType.caseMatch),
+          EnUnit(title: '대문자 소문자 짝', emoji: '🅰️', type: EnQuizType.caseMatch),
         ],
       ),
       EnCategory(

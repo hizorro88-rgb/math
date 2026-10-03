@@ -4,6 +4,7 @@ import '../widgets/quokka_avatar.dart';
 import '../models/premium.dart';
 import '../services/purchases.dart';
 import '../widgets/bouncy_button.dart';
+import '../theme.dart';
 
 /// 가족 이용권 화면 (부모 게이트 뒤에서 열림).
 /// 한 번 결제하면 이 기기의 모든 단계·프로필 4명이 열리고,
@@ -59,8 +60,8 @@ class _PassScreenState extends State<PassScreen> {
   void _snack(String message) {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
-      ..showSnackBar(
-          SnackBar(content: Text(message), duration: const Duration(seconds: 2)));
+      ..showSnackBar(SnackBar(
+          content: Text(message), duration: const Duration(seconds: 2)));
   }
 
   Future<void> _buy() async {
@@ -83,10 +84,7 @@ class _PassScreenState extends State<PassScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          '가족 이용권',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text('가족 이용권'),
       ),
       body: !_loaded
           ? const Center(child: CircularProgressIndicator())
@@ -127,21 +125,19 @@ class _PassScreenState extends State<PassScreen> {
                 const SizedBox(height: 16),
                 _benefit('🗺️', '전 과목 모든 단계 열기',
                     '총 1140단계 — 수학\u00A0430 · 한글\u00A0120 · 영어\u00A080 · 일본어\u00A090 · 중국어\u00A070 · 한자\u00A050 · 영어회화\u00A0300'),
-                _benefit('🧒', '프로필 4명',
-                    '아이마다 프로필을 만들어 각자의 진도로 배워요'),
+                _benefit('🧒', '프로필 4명', '아이마다 프로필을 만들어 각자의 진도로 배워요'),
                 _benefit('🏠', '가족 기기 공유',
                     'Google Play 가족 라이브러리 / Apple 가족 공유를 켜면\n한 번 결제로 가족의 다른 폰·태블릿에서도 쓸 수 있어요'),
-                _benefit('📦', '재설치·기기 변경 시 복원',
-                    '같은 스토어 계정이면 [구매 복원]으로 다시 켤 수 있어요'),
+                _benefit(
+                    '📦', '재설치·기기 변경 시 복원', '같은 스토어 계정이면 [구매 복원]으로 다시 켤 수 있어요'),
                 const SizedBox(height: 20),
                 if (_hasPass)
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: const Color(0xFFD7FFB8),
+                      color: AppColors.selectedFill,
                       borderRadius: BorderRadius.circular(20),
-                      border:
-                          Border.all(color: const Color(0xFF3DA35D), width: 2),
+                      border: Border.all(color: AppColors.green, width: 2),
                     ),
                     child: const Text(
                       '✅ 가족 이용권 사용 중이에요!',
@@ -149,7 +145,7 @@ class _PassScreenState extends State<PassScreen> {
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF2E7D46),
+                        color: AppColors.greenPressed,
                       ),
                     ),
                   )
@@ -157,7 +153,7 @@ class _PassScreenState extends State<PassScreen> {
                   BouncyButton(
                     // 스토어 미연결(웹·개발 빌드)에서는 회색으로 상태를 보여준다.
                     color: Purchases.available
-                        ? const Color(0xFF3DA35D)
+                        ? AppColors.green
                         : const Color(0xFFBFB9AC),
                     padding: const EdgeInsets.symmetric(vertical: 18),
                     onTap: _buy,
@@ -178,27 +174,26 @@ class _PassScreenState extends State<PassScreen> {
                   const SizedBox(height: 10),
                   BouncyButton(
                     color: Colors.white,
-                    shadowColor: Colors.grey.shade300,
-                    border: Border.all(color: Colors.grey.shade300, width: 2),
+                    shadowColor: AppColors.outline,
+                    border: Border.all(color: AppColors.outline, width: 2),
                     padding: const EdgeInsets.symmetric(vertical: 14),
                     onTap: _restore,
-                    child: Text(
+                    child: const Text(
                       '구매 복원',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.grey.shade600,
+                        color: AppColors.inkSoft,
                       ),
                     ),
                   ),
                   if (!Purchases.available) ...[
                     const SizedBox(height: 12),
-                    Text(
+                    const Text(
                       '결제는 스토어(구글 플레이/앱스토어)에서 설치한\n출시 버전에서 할 수 있어요.',
                       textAlign: TextAlign.center,
-                      style:
-                          TextStyle(fontSize: 12, color: Colors.grey.shade600),
+                      style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
                     ),
                   ],
                 ],
@@ -240,7 +235,7 @@ class _PassScreenState extends State<PassScreen> {
                 Text(
                   desc,
                   style:
-                      TextStyle(fontSize: 12.5, color: Colors.grey.shade600),
+                      const TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
                 ),
               ],
             ),

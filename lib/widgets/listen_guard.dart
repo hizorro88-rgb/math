@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../services/speech.dart';
 import 'bouncy_button.dart';
+import '../theme.dart';
 
 /// 듣기 유형(소리로 문제를 내는 퀴즈)에 들어갈 수 있는지 확인한다.
 /// - 기기에 [lang] 음성이 없으면: 안내 후 false (풀 수 없음)
@@ -27,7 +28,7 @@ Future<bool> ensureListenReady(
           // 안드로이드: 기기 TTS 설정으로 바로 이동 (음성 데이터 설치 입구)
           if (Speech.canOpenTtsSettings) ...[
             BouncyButton(
-              color: const Color(0xFF3DA35D),
+              color: AppColors.green,
               padding: const EdgeInsets.symmetric(vertical: 14),
               onTap: () {
                 Navigator.of(context).pop();
@@ -45,13 +46,10 @@ Future<bool> ensureListenReady(
             const SizedBox(height: 10),
           ],
           BouncyButton(
-            color: Speech.canOpenTtsSettings
-                ? Colors.white
-                : const Color(0xFF3DA35D),
-            shadowColor:
-                Speech.canOpenTtsSettings ? Colors.grey.shade300 : null,
+            color: Speech.canOpenTtsSettings ? Colors.white : AppColors.green,
+            shadowColor: Speech.canOpenTtsSettings ? AppColors.outline : null,
             border: Speech.canOpenTtsSettings
-                ? Border.all(color: Colors.grey.shade300, width: 2)
+                ? Border.all(color: AppColors.outline, width: 2)
                 : null,
             padding: const EdgeInsets.symmetric(vertical: 14),
             onTap: () => Navigator.of(context).pop(),
@@ -61,7 +59,7 @@ Future<bool> ensureListenReady(
                 fontSize: Speech.canOpenTtsSettings ? 18 : 20,
                 fontWeight: FontWeight.bold,
                 color: Speech.canOpenTtsSettings
-                    ? Colors.grey.shade600
+                    ? AppColors.inkSoft
                     : Colors.white,
               ),
             ),
@@ -84,7 +82,7 @@ Future<bool> ensureListenReady(
       message: '이 문제는 소리를 듣고 풀어요.\n소리를 켜야 시작할 수 있어요!',
       buttons: [
         BouncyButton(
-          color: const Color(0xFF3DA35D),
+          color: AppColors.green,
           padding: const EdgeInsets.symmetric(vertical: 14),
           onTap: () => Navigator.of(context).pop(true),
           child: const Text(
@@ -99,16 +97,16 @@ Future<bool> ensureListenReady(
         const SizedBox(height: 10),
         BouncyButton(
           color: Colors.white,
-          shadowColor: Colors.grey.shade300,
-          border: Border.all(color: Colors.grey.shade300, width: 2),
+          shadowColor: AppColors.outline,
+          border: Border.all(color: AppColors.outline, width: 2),
           padding: const EdgeInsets.symmetric(vertical: 14),
           onTap: () => Navigator.of(context).pop(false),
-          child: Text(
+          child: const Text(
             '다음에 할래요',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,
-              color: Colors.grey.shade600,
+              color: AppColors.inkSoft,
             ),
           ),
         ),
@@ -138,7 +136,8 @@ Widget _guardDialog(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Text(emoji,
-              textAlign: TextAlign.center, style: const TextStyle(fontSize: 48)),
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 48)),
           const SizedBox(height: 8),
           Text(
             title,
@@ -149,8 +148,8 @@ Widget _guardDialog(
           Text(
             message,
             textAlign: TextAlign.center,
-            style: TextStyle(
-                fontSize: 15, color: Colors.grey.shade600, height: 1.5),
+            style: const TextStyle(
+                fontSize: 15, color: AppColors.inkSoft, height: 1.5),
           ),
           const SizedBox(height: 20),
           ...buttons,

@@ -65,16 +65,18 @@ class PreschoolMathApp extends StatelessWidget {
         scaffoldBackgroundColor: AppColors.cream,
         fontFamily: 'NotoSansKR',
         textTheme: Typography.material2021().black.apply(
-          fontFamily: 'NotoSansKR',
-          fontFamilyFallback: const ['NotoSansKR', 'NotoColorEmoji'],
-          bodyColor: AppColors.ink,
-          displayColor: AppColors.ink,
-        ),
+              fontFamily: 'NotoSansKR',
+              fontFamilyFallback: const ['NotoSansKR', 'NotoColorEmoji'],
+              bodyColor: AppColors.ink,
+              displayColor: AppColors.ink,
+            ),
         // 앱바는 전 화면 브랜드 그린 하나로 통일 (과목색은 칩·카드에만)
         appBarTheme: AppBarTheme(
           backgroundColor: AppColors.green,
           foregroundColor: Colors.white,
-          titleTextStyle: displayStyle(fontSize: 22, color: Colors.white),
+          // 하위 화면 앱바 규칙: 가운데 정렬, Jua 20 — 화면에서 style을 덧씌우지 않는다
+          centerTitle: true,
+          titleTextStyle: displayStyle(fontSize: 20, color: Colors.white),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(

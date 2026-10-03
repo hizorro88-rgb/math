@@ -25,7 +25,11 @@ class BackupService {
 
   /// 백업에 넣지 않는 키: 결제 권한은 코드로 옮기거나 지울 수 없어야 한다.
   /// (이용권은 스토어 [구매 복원]으로만 옮긴다)
-  static const _excludedKeys = {'family_pass_v1', 'all_unlock_v1', 'cloud_sync_at_v1'};
+  static const _excludedKeys = {
+    'family_pass_v1',
+    'all_unlock_v1',
+    'cloud_sync_at_v1'
+  };
 
   /// 지금 쓰는 별 목록 키들 (미리보기의 '통과한 단계' 계산용).
   /// 마이그레이션이 남겨 둔 옛 버전 키를 이중으로 세지 않도록 이름을 못 박는다.
@@ -60,7 +64,10 @@ class BackupService {
       } else if (value is String) {
         data[key] = {'t': 's', 'v': value};
       } else if (value is List) {
-        data[key] = {'t': 'l', 'v': [for (final e in value) '$e']};
+        data[key] = {
+          't': 'l',
+          'v': [for (final e in value) '$e']
+        };
       }
     }
     return data;

@@ -181,8 +181,10 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
       final start = random.nextInt(maxStart);
       final shown = jaKana.sublist(start, start + 3);
       final answer = jaKana[start + 3];
-      final wrong = pickLangItems(
-          [for (final k in jaKana) if (k != answer) k], 3, random);
+      final wrong = pickLangItems([
+        for (final k in jaKana)
+          if (k != answer) k
+      ], 3, random);
       return LangQuestion(
         typeIndex: 1,
         instruction: '다음에 올 글자는?',
@@ -198,7 +200,10 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
     case 2:
       final pool = stage >= 5
           ? jaWords
-          : [for (final w in jaWords) if (w.word.length <= 2) w];
+          : [
+              for (final w in jaWords)
+                if (w.word.length <= 2) w
+            ];
       final picked = pickLangWords(pool, random);
       final target = picked.first;
       return LangQuestion(
@@ -217,7 +222,10 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
     case 3:
       final pool = stage >= 5
           ? jaWords
-          : [for (final w in jaWords) if (w.word.length <= 2) w];
+          : [
+              for (final w in jaWords)
+                if (w.word.length <= 2) w
+            ];
       final picked = pickLangWords(pool, random);
       final target = picked.first;
       return LangQuestion(
@@ -235,8 +243,10 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
     case 4:
       final word = jaWords[random.nextInt(jaWords.length)];
       final answer = word.word[0];
-      final wrong = pickLangItems(
-          [for (final k in jaKana) if (k != answer) k], 3, random);
+      final wrong = pickLangItems([
+        for (final k in jaKana)
+          if (k != answer) k
+      ], 3, random);
       return LangQuestion(
         typeIndex: 4,
         instruction: "'${word.word}'의 첫 글자는?",
@@ -268,8 +278,8 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
     // 히라가나·가타카나 짝 맞추기 (あ ↔ ア)
     case 7:
       final upper = stage >= 5 ? jaKana.length : 15;
-      final indexes = pickLangItems(
-          [for (var i = 0; i < upper; i++) i], 4, random);
+      final indexes =
+          pickLangItems([for (var i = 0; i < upper; i++) i], 4, random);
       final target = indexes.first;
       // 뒤 단계에서는 가타카나를 보여주고 히라가나를 찾기도 한다.
       final showKata = stage >= 5 && random.nextBool();
@@ -305,11 +315,15 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
     default:
       final pool = stage >= 5
           ? jaWords
-          : [for (final w in jaWords) if (w.word.length <= 2) w];
+          : [
+              for (final w in jaWords)
+                if (w.word.length <= 2) w
+            ];
       final word = pool[random.nextInt(pool.length)];
       final letters = word.word.split('');
       final decoys = [
-        for (final k in jaKana) if (!letters.contains(k)) k,
+        for (final k in jaKana)
+          if (!letters.contains(k)) k,
       ]..shuffle(random);
       final tiles = [...letters, ...decoys.take(2)]..shuffle(random);
       return LangQuestion(

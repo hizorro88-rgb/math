@@ -156,7 +156,7 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 14,
-                color: _locked ? AppColors.coral : Colors.grey.shade600,
+                color: _locked ? AppColors.coral : AppColors.inkSoft,
               ),
             ),
             const SizedBox(height: 12),

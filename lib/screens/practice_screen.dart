@@ -6,7 +6,9 @@ import '../models/english_question.dart';
 import '../models/korean_question.dart';
 import '../models/language_packs.dart';
 import '../models/quiz_config.dart';
+import '../theme.dart';
 import '../widgets/bouncy_button.dart';
+import '../widgets/selectable_tile.dart';
 import 'english_quiz_screen.dart';
 import 'korean_quiz_screen.dart';
 import 'language_quiz_screen.dart';
@@ -110,123 +112,134 @@ class _PracticeScreenState extends State<PracticeScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          '자유 연습',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text('자유 연습'),
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              // 과목 고르기 (2열 카드)
-              ..._buildGrid(
-                [for (var i = 0; i < _subjects.length; i++) i],
-                (i) => _ChoiceCard(
-                  emoji: _subjects[i].$1,
-                  label: _subjects[i].$2,
-                  selected: _subject == i,
-                  onTap: () => setState(() => _subject = i),
+        child: Column(
+          children: [
+            Expanded(
+              child: SingleChildScrollView(
+                padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // 과목 고르기 (2열 카드)
+                    ..._buildGrid(
+                      [for (var i = 0; i < _subjects.length; i++) i],
+                      (i) => _ChoiceCard(
+                        emoji: _subjects[i].$1,
+                        label: _subjects[i].$2,
+                        selected: _subject == i,
+                        onTap: () => setState(() => _subject = i),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    const _SectionLabel('어떤 공부를 할까요?'),
+                    const SizedBox(height: 8),
+                    if (_subject == 1)
+                      ..._buildGrid(
+                        KrQuizType.values,
+                        (t) => _ChoiceCard(
+                          emoji: t.emoji,
+                          label: t.label,
+                          selected: _krType == t,
+                          onTap: () => setState(() => _krType = t),
+                        ),
+                      )
+                    else if (_subject == 2)
+                      ..._buildGrid(
+                        EnQuizType.values,
+                        (t) => _ChoiceCard(
+                          emoji: t.emoji,
+                          label: t.label,
+                          selected: _enType == t,
+                          onTap: () => setState(() => _enType = t),
+                        ),
+                      )
+                    else if (_subject >= 3)
+                      // 주제 기반 팩(영어회화)은 유형 대신 배울 주제를 고른다.
+                      ..._buildGrid(
+                        [
+                          for (var i = 0;
+                              i <
+                                  (languagePacks[_subject - 3].unitBased
+                                      ? languagePacks[_subject - 3].units.length
+                                      : languagePacks[_subject - 3]
+                                          .types
+                                          .length);
+                              i++)
+                            i,
+                        ],
+                        (i) {
+                          final pack = languagePacks[_subject - 3];
+                          return _ChoiceCard(
+                            emoji: pack.unitBased
+                                ? pack.units[i].emoji
+                                : pack.types[i].emoji,
+                            label: pack.unitBased
+                                ? pack.units[i].title
+                                : pack.types[i].label,
+                            selected: (_langType[pack.id] ?? 0) == i,
+                            onTap: () => setState(() => _langType[pack.id] = i),
+                          );
+                        },
+                      )
+                    else
+                      ..._buildGrid(
+                        QuizMode.values,
+                        (m) => _ChoiceCard(
+                          emoji: m.emoji,
+                          label: m.label,
+                          selected: _mode == m,
+                          onTap: () => setState(() => _mode = m),
+                        ),
+                      ),
+                    const SizedBox(height: 24),
+                    const _SectionLabel('얼마나 어려울까요?'),
+                    const SizedBox(height: 8),
+                    if (_subject != 0)
+                      Row(
+                        children: [
+                          Expanded(
+                            child: _ChoiceCard(
+                              emoji: '🐣',
+                              label: '쉬워요',
+                              selected: !_langHard,
+                              onTap: () => setState(() => _langHard = false),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _ChoiceCard(
+                              emoji: '🦁',
+                              label: '어려워요',
+                              selected: _langHard,
+                              onTap: () => setState(() => _langHard = true),
+                            ),
+                          ),
+                        ],
+                      )
+                    else
+                      ..._buildGrid(
+                        Difficulty.values,
+                        (d) => _ChoiceCard(
+                          emoji: d.emoji,
+                          label: d.label,
+                          sub: d.description,
+                          selected: _difficulty == d,
+                          onTap: () => setState(() => _difficulty = d),
+                        ),
+                      ),
+                    const SizedBox(height: 8),
+                  ],
                 ),
               ),
-              const SizedBox(height: 16),
-              const _SectionLabel('어떤 공부를 할까요?'),
-              const SizedBox(height: 8),
-              if (_subject == 1)
-                ..._buildGrid(
-                  KrQuizType.values,
-                  (t) => _ChoiceCard(
-                    emoji: t.emoji,
-                    label: t.label,
-                    selected: _krType == t,
-                    onTap: () => setState(() => _krType = t),
-                  ),
-                )
-              else if (_subject == 2)
-                ..._buildGrid(
-                  EnQuizType.values,
-                  (t) => _ChoiceCard(
-                    emoji: t.emoji,
-                    label: t.label,
-                    selected: _enType == t,
-                    onTap: () => setState(() => _enType = t),
-                  ),
-                )
-              else if (_subject >= 3)
-                // 주제 기반 팩(영어회화)은 유형 대신 배울 주제를 고른다.
-                ..._buildGrid(
-                  [
-                    for (var i = 0;
-                        i < (languagePacks[_subject - 3].unitBased
-                            ? languagePacks[_subject - 3].units.length
-                            : languagePacks[_subject - 3].types.length);
-                        i++)
-                      i,
-                  ],
-                  (i) {
-                    final pack = languagePacks[_subject - 3];
-                    return _ChoiceCard(
-                      emoji: pack.unitBased
-                          ? pack.units[i].emoji
-                          : pack.types[i].emoji,
-                      label: pack.unitBased
-                          ? pack.units[i].title
-                          : pack.types[i].label,
-                      selected: (_langType[pack.id] ?? 0) == i,
-                      onTap: () => setState(() => _langType[pack.id] = i),
-                    );
-                  },
-                )
-              else
-                ..._buildGrid(
-                  QuizMode.values,
-                  (m) => _ChoiceCard(
-                    emoji: m.emoji,
-                    label: m.label,
-                    selected: _mode == m,
-                    onTap: () => setState(() => _mode = m),
-                  ),
-                ),
-              const SizedBox(height: 24),
-              const _SectionLabel('얼마나 어려울까요?'),
-              const SizedBox(height: 8),
-              if (_subject != 0)
-                Row(
-                  children: [
-                    Expanded(
-                      child: _ChoiceCard(
-                        emoji: '🐣',
-                        label: '쉬워요',
-                        selected: !_langHard,
-                        onTap: () => setState(() => _langHard = false),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: _ChoiceCard(
-                        emoji: '🦁',
-                        label: '어려워요',
-                        selected: _langHard,
-                        onTap: () => setState(() => _langHard = true),
-                      ),
-                    ),
-                  ],
-                )
-              else
-                ..._buildGrid(
-                  Difficulty.values,
-                  (d) => _ChoiceCard(
-                    emoji: d.emoji,
-                    label: '${d.label}\n(${d.description})',
-                    selected: _difficulty == d,
-                    onTap: () => setState(() => _difficulty = d),
-                  ),
-                ),
-              const SizedBox(height: 28),
-              BouncyButton(
-                color: const Color(0xFF3DA35D),
+            ),
+            // 시작 버튼은 늘 아래에 보인다
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+              child: BouncyButton(
+                color: AppColors.green,
                 padding: const EdgeInsets.symmetric(vertical: 20),
                 onTap: _startQuiz,
                 child: const Row(
@@ -249,32 +262,34 @@ class _PracticeScreenState extends State<PracticeScreen> {
                   ],
                 ),
               ),
-              const SizedBox(height: 8),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  /// 목록을 2열 카드로 배치한다.
+  /// 목록을 3열 칸으로 배치한다 (2열이면 시작 버튼이 너무 아래로 내려간다).
   List<Widget> _buildGrid<T>(List<T> items, Widget Function(T) card) {
+    const cols = 3;
     return [
-      for (var row = 0; row < (items.length + 1) ~/ 2; row++) ...[
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            for (var col = 0; col < 2; col++) ...[
-              Expanded(
-                child: row * 2 + col < items.length
-                    ? card(items[row * 2 + col])
-                    : const SizedBox(),
-              ),
-              if (col == 0) const SizedBox(width: 8),
+      for (var row = 0; row < (items.length + cols - 1) ~/ cols; row++) ...[
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (var col = 0; col < cols; col++) ...[
+                Expanded(
+                  child: row * cols + col < items.length
+                      ? card(items[row * cols + col])
+                      : const SizedBox(),
+                ),
+                if (col < cols - 1) const SizedBox(width: 8),
+              ],
             ],
-          ],
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 10),
       ],
     ];
   }
@@ -294,57 +309,28 @@ class _SectionLabel extends StatelessWidget {
   }
 }
 
-/// 이모지 + 글자로 된 큰 선택 카드
+/// 이모지 + 글자로 된 선택 칸 (앱 공용 선택 모양)
 class _ChoiceCard extends StatelessWidget {
   const _ChoiceCard({
     required this.emoji,
     required this.label,
     required this.selected,
     required this.onTap,
+    this.sub,
   });
 
   final String emoji;
   final String label;
   final bool selected;
   final VoidCallback onTap;
+  final String? sub;
 
   @override
-  Widget build(BuildContext context) {
-    return PressBounce(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-        decoration: BoxDecoration(
-          color: selected ? const Color(0xFFD7FFB8) : Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border: Border.all(
-            color: selected ? const Color(0xFF3DA35D) : Colors.grey.shade300,
-            width: 3,
-          ),
-          boxShadow: [
-            BoxShadow(
-              color: selected ? const Color(0xFFB5E48C) : Colors.grey.shade300,
-              offset: const Offset(0, 4),
-              blurRadius: 0,
-            ),
-          ],
-        ),
-        child: Column(
-          children: [
-            Text(emoji, style: const TextStyle(fontSize: 32)),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  Widget build(BuildContext context) => SelectableTile(
+        emoji: emoji,
+        label: label,
+        selected: selected,
+        onTap: onTap,
+        sub: sub,
+      );
 }

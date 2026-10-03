@@ -230,9 +230,8 @@ class _Dot extends StatelessWidget {
           ? Icon(
               Icons.check_rounded,
               size: s * 0.7,
-              color: state == QuizDot.correct
-                  ? Colors.white
-                  : AppColors.correct,
+              color:
+                  state == QuizDot.correct ? Colors.white : AppColors.correct,
             )
           : null,
     );
@@ -259,7 +258,9 @@ class QuizTopBar extends StatelessWidget {
   final VoidCallback onClose;
   final List<QuizDot> dots;
   final int current;
-  final int coins;
+
+  /// 이번 판 코인 (null이면 🪙 칩을 숨긴다 — 오답 노트처럼 코인이 없는 판)
+  final int? coins;
   final Color color;
 
   /// 연속 정답 수 (3부터 🔥가 보인다)
@@ -291,14 +292,16 @@ class QuizTopBar extends StatelessWidget {
               const SizedBox(width: 6),
             ],
             Expanded(
-              child: QuizProgressDots(dots: dots, current: current, color: color),
+              child:
+                  QuizProgressDots(dots: dots, current: current, color: color),
             ),
             const SizedBox(width: 10),
             if (combo >= 3) ...[
               _Chip(text: '✨$combo', color: const Color(0xFFFFE8D2)),
               const SizedBox(width: 6),
             ],
-            _Chip(text: '🪙 $coins', color: AppColors.rewardSurface),
+            if (coins != null)
+              _Chip(text: '🪙 $coins', color: AppColors.rewardSurface),
           ],
         ),
       ),

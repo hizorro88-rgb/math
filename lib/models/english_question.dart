@@ -119,7 +119,8 @@ class EnglishQuestionGenerator {
         final target = picked.first;
         return EnglishQuestion(
           type: type,
-          instruction: _rot(const ['잘 듣고 알맞은 그림을 찾아요', '소리를 듣고 그림을 골라요', '귀 기울여 듣고 찾아보세요']),
+          instruction: _rot(
+              const ['잘 듣고 알맞은 그림을 찾아요', '소리를 듣고 그림을 골라요', '귀 기울여 듣고 찾아보세요']),
           display: target.shown,
           choices: _shuffled([for (final w in picked) w.emoji]),
           answer: target.emoji,
@@ -143,7 +144,8 @@ class EnglishQuestionGenerator {
         final target = picked.first;
         return EnglishQuestion(
           type: type,
-          instruction: _rot(const ['무슨 알파벳일까요?', '어떤 알파벳 소리일까요?', '소리를 듣고 찾아보세요']),
+          instruction:
+              _rot(const ['무슨 알파벳일까요?', '어떤 알파벳 소리일까요?', '소리를 듣고 찾아보세요']),
           display: '🔊',
           choices: _shuffled(picked),
           answer: target,
@@ -153,8 +155,7 @@ class EnglishQuestionGenerator {
         );
 
       case EnQuizType.caseMatch:
-        final pool =
-            stage >= 5 ? enAlphabet : enAlphabet.sublist(0, 13);
+        final pool = stage >= 5 ? enAlphabet : enAlphabet.sublist(0, 13);
         final picked = _pick(pool, 4);
         final target = picked.first;
         // 뒤 단계에서는 소문자를 보여주고 대문자를 찾기도 한다.
@@ -179,7 +180,10 @@ class EnglishQuestionGenerator {
         final shown = enAlphabet.sublist(start, start + 3);
         final answer = enAlphabet[start + 3];
         final wrong = _pick(
-          [for (final c in enAlphabet) if (c != answer) c],
+          [
+            for (final c in enAlphabet)
+              if (c != answer) c
+          ],
           3,
         );
         return EnglishQuestion(
@@ -198,7 +202,10 @@ class EnglishQuestionGenerator {
         final word = pool[_random.nextInt(pool.length)];
         final answer = word.shown[0];
         final wrong = _pick(
-          [for (final c in enAlphabet) if (c != answer) c],
+          [
+            for (final c in enAlphabet)
+              if (c != answer) c
+          ],
           3,
         );
         return EnglishQuestion(
@@ -219,7 +226,8 @@ class EnglishQuestionGenerator {
         final letters = word.shown.split('');
         // 함정 글자 2개: 낱말에 없는 알파벳
         final decoys = [
-          for (final c in enAlphabet) if (!letters.contains(c)) c,
+          for (final c in enAlphabet)
+            if (!letters.contains(c)) c,
         ]..shuffle(_random);
         final tiles = [...letters, ...decoys.take(2)]..shuffle(_random);
         return EnglishQuestion(
@@ -241,7 +249,8 @@ class EnglishQuestionGenerator {
     final target = picked.first;
     return EnglishQuestion(
       type: type,
-      instruction: _rot(const ['그림에 맞는 낱말은?', '그림의 이름은 무엇일까요?', '이 그림, 뭐라고 부를까?']),
+      instruction:
+          _rot(const ['그림에 맞는 낱말은?', '그림의 이름은 무엇일까요?', '이 그림, 뭐라고 부를까?']),
       display: target.emoji,
       choices: _shuffled([for (final w in picked) w.shown]),
       answer: target.shown,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 
-
 import '../models/english_curriculum.dart';
 import '../models/english_question.dart';
 import '../models/korean_curriculum.dart';
@@ -10,6 +9,7 @@ import '../models/progress.dart';
 import '../models/stats.dart';
 import 'backup_screen.dart';
 import 'settings_screen.dart';
+import '../theme.dart';
 
 /// 부모용 학습 리포트: 이번 주 활동, 유형·수 범위별 정답률, 연습 추천.
 class ReportScreen extends StatefulWidget {
@@ -35,10 +35,7 @@ class _ReportScreenState extends State<ReportScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text(
-          '학습 리포트',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text('학습 리포트'),
       ),
       body: FutureBuilder<(LearningStats, List<int>, List<int>, List<int>)>(
         future: _dataFuture,
@@ -65,11 +62,10 @@ class _ReportScreenState extends State<ReportScreen> {
               if (stats.totalAnswered == 0) ...[
                 _reportCard(
                   title: '과목별 정답률',
-                  child: Text(
+                  child: const Text(
                     '첫 퀴즈를 풀면 과목별 리포트가 열려요!\n'
                     '홈에서 과목 탭을 골라 시작해 보세요.',
-                    style:
-                        TextStyle(fontSize: 14, color: Colors.grey.shade600),
+                    style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -185,7 +181,7 @@ class _SummaryItem extends StatelessWidget {
     return Expanded(
       child: Column(
         children: [
-          Icon(icon, size: 26, color: const Color(0xFF3DA35D)),
+          Icon(icon, size: 26, color: AppColors.green),
           const SizedBox(height: 4),
           Text(
             value,
@@ -193,7 +189,7 @@ class _SummaryItem extends StatelessWidget {
           ),
           Text(
             label,
-            style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+            style: const TextStyle(fontSize: 13, color: AppColors.inkSoft),
           ),
         ],
       ),
@@ -217,9 +213,9 @@ class _WeekCard extends StatelessWidget {
     if (!hasAny) {
       return _reportCard(
         title: '최근 7일 활동',
-        child: Text(
+        child: const Text(
           '이번 주 첫 기록을 기다리고 있어요!\n퀴즈 한 판이 끝나면 막대가 자라나요.',
-          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+          style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
         ),
       );
     }
@@ -244,7 +240,7 @@ class _WeekCard extends StatelessWidget {
                           style: const TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
-                            color: Color(0xFF2E7D46),
+                            color: AppColors.greenPressed,
                           ),
                         ),
                       const SizedBox(height: 2),
@@ -254,8 +250,8 @@ class _WeekCard extends StatelessWidget {
                             : 12 + 58.0 * day.rounds / maxRounds,
                         decoration: BoxDecoration(
                           color: day.rounds == 0
-                              ? Colors.grey.shade200
-                              : const Color(0xFF3DA35D),
+                              ? AppColors.line
+                              : AppColors.green,
                           borderRadius: BorderRadius.circular(6),
                         ),
                       ),
@@ -263,9 +259,9 @@ class _WeekCard extends StatelessWidget {
                       Text(
                         // 'MM-DD' 중 일(day)만 표시
                         day.day.substring(8),
-                        style: TextStyle(
+                        style: const TextStyle(
                           fontSize: 11,
-                          color: Colors.grey.shade600,
+                          color: AppColors.inkSoft,
                         ),
                       ),
                     ],
@@ -312,9 +308,9 @@ class _AccuracyCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           if (learned.isEmpty)
-            Text(
+            const Text(
               '아직 수학 퀴즈를 풀지 않았어요.\n홈에서 🧮 수학 탭을 눌러 시작해 보세요!',
-              style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+              style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
             )
           else
             for (final (label, correct, wrong) in learned) ...[
@@ -324,7 +320,7 @@ class _AccuracyCard extends StatelessWidget {
           if (learned.isNotEmpty && unlearnedCount > 0)
             Text(
               '아직 안 배운 유형 $unlearnedCount개는 배우면 나타나요.',
-              style: TextStyle(fontSize: 12, color: Colors.grey.shade500),
+              style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
             ),
         ],
       ),
@@ -362,11 +358,11 @@ class _AccuracyRow extends StatelessWidget {
             child: LinearProgressIndicator(
               value: accuracy == null ? 0 : accuracy / 100,
               minHeight: 10,
-              backgroundColor: Colors.grey.shade200,
+              backgroundColor: AppColors.line,
               color: accuracy == null
-                  ? Colors.grey
+                  ? AppColors.inkMuted
                   : accuracy >= 80
-                      ? const Color(0xFF3DA35D)
+                      ? AppColors.green
                       : accuracy >= 50
                           ? const Color(0xFFFF9600)
                           : const Color(0xFFFF4B4B),
@@ -381,7 +377,7 @@ class _AccuracyRow extends StatelessWidget {
                 : '$accuracy% ($correct/${correct + wrong})',
             textAlign: TextAlign.right,
             maxLines: 1,
-            style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+            style: const TextStyle(fontSize: 12, color: AppColors.inkSoft),
           ),
         ),
       ],
@@ -400,9 +396,9 @@ class _KoreanCard extends StatelessWidget {
     if (stats.krTotalCorrect + stats.krTotalWrong == 0) {
       return _reportCard(
         title: '📖 한글 정답률',
-        child: Text(
+        child: const Text(
           '아직 한글 퀴즈를 풀지 않았어요.\n홈에서 📖 한글 탭을 눌러 시작해 보세요!',
-          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+          style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
         ),
       );
     }
@@ -435,9 +431,9 @@ class _EnglishCard extends StatelessWidget {
     if (stats.enTotalCorrect + stats.enTotalWrong == 0) {
       return _reportCard(
         title: '🔤 영어 정답률',
-        child: Text(
+        child: const Text(
           '아직 영어 퀴즈를 풀지 않았어요.\n홈에서 🔤 영어 탭을 눌러 시작해 보세요!',
-          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+          style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
         ),
       );
     }
@@ -468,10 +464,9 @@ class _LangCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final correct = stats.langCorrect[pack.id] ??
-        List.filled(pack.types.length, 0);
-    final wrong =
-        stats.langWrong[pack.id] ?? List.filled(pack.types.length, 0);
+    final correct =
+        stats.langCorrect[pack.id] ?? List.filled(pack.types.length, 0);
+    final wrong = stats.langWrong[pack.id] ?? List.filled(pack.types.length, 0);
     final title = '${pack.emoji} ${pack.name} 정답률';
 
     if (stats.langAnswered(pack.id) == 0) {
@@ -480,7 +475,7 @@ class _LangCard extends StatelessWidget {
         child: Text(
           '아직 ${pack.name} 퀴즈를 풀지 않았어요.\n'
           '홈에서 ${pack.emoji} ${pack.name} 탭을 눌러 시작해 보세요!',
-          style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
+          style: const TextStyle(fontSize: 14, color: AppColors.inkSoft),
         ),
       );
     }
@@ -519,12 +514,15 @@ class _AdviceCard extends StatelessWidget {
       ('수 세기', LearningStats.accuracy(stats.countCorrect, stats.countWrong)),
       ('곱셈', LearningStats.accuracy(stats.mulCorrect, stats.mulWrong)),
       ('나눗셈', LearningStats.accuracy(stats.divCorrect, stats.divWrong)),
-      ('큰 수 찾기',
-          LearningStats.accuracy(stats.compareCorrect, stats.compareWrong)),
-      ('규칙 찾기',
-          LearningStats.accuracy(stats.patternCorrect, stats.patternWrong)),
-      ('시계 보기',
-          LearningStats.accuracy(stats.clockCorrect, stats.clockWrong)),
+      (
+        '큰 수 찾기',
+        LearningStats.accuracy(stats.compareCorrect, stats.compareWrong)
+      ),
+      (
+        '규칙 찾기',
+        LearningStats.accuracy(stats.patternCorrect, stats.patternWrong)
+      ),
+      ('시계 보기', LearningStats.accuracy(stats.clockCorrect, stats.clockWrong)),
       for (var i = 0; i < statBandNames.length; i++)
         (
           '${statBandNames[i]} 수',
@@ -547,11 +545,9 @@ class _AdviceCard extends StatelessWidget {
           (
             '${pack.name} ${pack.types[i].shortLabel}',
             LearningStats.accuracy(
-                (stats.langCorrect[pack.id] ?? const [])
-                    .elementAtOrNull(i) ??
+                (stats.langCorrect[pack.id] ?? const []).elementAtOrNull(i) ??
                     0,
-                (stats.langWrong[pack.id] ?? const []).elementAtOrNull(i) ??
-                    0),
+                (stats.langWrong[pack.id] ?? const []).elementAtOrNull(i) ?? 0),
           ),
     ];
     (String, int)? weakest;
@@ -617,9 +613,9 @@ class _ReminderCard extends StatelessWidget {
           '매일 학습 알림',
           style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
         ),
-        subtitle: Text(
+        subtitle: const Text(
           '탭하면 설정으로 가서 켤 수 있어요',
-          style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
+          style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
         ),
         trailing: const Icon(Icons.chevron_right),
         onTap: () => Navigator.of(context).push(
@@ -643,14 +639,15 @@ class _BackupCard extends StatelessWidget {
         children: [
           const Text(
             '백업 코드를 만들어 두면 앱을 지웠거나 폰을 바꿔도\n진도·별·코인을 그대로 되살릴 수 있어요.',
-            style: TextStyle(fontSize: 13.5, height: 1.5, color: Colors.black54),
+            style:
+                TextStyle(fontSize: 13.5, height: 1.5, color: Colors.black54),
           ),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: FilledButton(
               style: FilledButton.styleFrom(
-                backgroundColor: const Color(0xFF3DA35D),
+                backgroundColor: AppColors.green,
                 padding: const EdgeInsets.symmetric(vertical: 12),
               ),
               onPressed: () => Navigator.of(context).push(
