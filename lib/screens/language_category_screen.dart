@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../models/language_pack.dart';
 import '../widgets/stage_parts.dart';
 import 'language_quiz_screen.dart';
+import '../theme.dart';
 
 /// 언어 팩 공용 카테고리 상세: 묶음들과 단계 지도.
 class LanguageCategoryScreen extends StatefulWidget {
@@ -70,13 +71,14 @@ class _LanguageCategoryScreenState extends State<LanguageCategoryScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Text('💡', style: TextStyle(fontSize: 24)),
+                      const Text('💡',
+                          style: TextStyle(fontSize: AppFont.display)),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
                           category.desc,
                           style: const TextStyle(
-                            fontSize: 15,
+                            fontSize: AppFont.body,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

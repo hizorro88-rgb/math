@@ -261,7 +261,8 @@ class _ResultScreenState extends State<ResultScreen>
                                   '${widget.correctCount}문제를 맞혔어요!',
                                   textAlign: TextAlign.center,
                                   style: const TextStyle(
-                                      fontSize: 13, color: AppColors.inkMuted),
+                                      fontSize: AppFont.small,
+                                      color: AppColors.inkMuted),
                                 ),
                                 const SizedBox(height: 16),
                                 _appear(0.35, 0.5, _buildMessage()),
@@ -310,7 +311,8 @@ class _ResultScreenState extends State<ResultScreen>
               textAlign: TextAlign.center,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 14, color: AppColors.inkSoft),
+              style: const TextStyle(
+                  fontSize: AppFont.small, color: AppColors.inkSoft),
             ),
           ),
           if (_coinsNow != null)
@@ -322,8 +324,8 @@ class _ResultScreenState extends State<ResultScreen>
               ),
               child: Text(
                 '🪙 $_coinsNow',
-                style:
-                    const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    fontSize: AppFont.body, fontWeight: FontWeight.bold),
               ),
             ),
         ],
@@ -449,7 +451,7 @@ class _ResultScreenState extends State<ResultScreen>
           animation: _show,
           builder: (context, _) => Text(
             '🪙 +${(_coinTotal * _at(0.5, 0.66).clamp(0.0, 1.0)).round()}',
-            style: displayStyle(fontSize: 30, color: const Color(0xFF9A6A00)),
+            style: displayStyle(fontSize: 30, color: AppColors.rewardInk),
           ),
         ),
       ),
@@ -498,7 +500,7 @@ class _ResultScreenState extends State<ResultScreen>
                 child: Text(
                   '${chips[i].$1} ${chips[i].$2}',
                   style: const TextStyle(
-                      fontSize: 18, fontWeight: FontWeight.bold),
+                      fontSize: AppFont.title, fontWeight: FontWeight.bold),
                 ),
               ),
             ),
@@ -551,7 +553,7 @@ class _ResultScreenState extends State<ResultScreen>
       child: Text(
         '📒 틀렸던 문제 $wrong',
         style: const TextStyle(
-          fontSize: 15,
+          fontSize: AppFont.body,
           fontWeight: FontWeight.bold,
           color: AppColors.inkSoft,
         ),
@@ -580,7 +582,7 @@ class _ResultScreenState extends State<ResultScreen>
               Text(
                 label,
                 style: const TextStyle(
-                  fontSize: 24,
+                  fontSize: AppFont.display,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -601,7 +603,7 @@ class _ResultScreenState extends State<ResultScreen>
         label: Text(
           label,
           style: const TextStyle(
-            fontSize: 16,
+            fontSize: AppFont.body,
             fontWeight: FontWeight.bold,
             color: AppColors.inkSoft,
           ),
@@ -669,7 +671,7 @@ class _ResultDot extends StatelessWidget {
     final (fill, check) = switch (state) {
       QuizDot.correct => (AppColors.correct, Colors.white),
       QuizDot.fixed => (AppColors.selectedFill, AppColors.correct),
-      QuizDot.missed => (const Color(0xFFFFC9A8), null),
+      QuizDot.missed => (AppColors.missedDot, null),
       QuizDot.pending => (AppColors.line, null),
     };
     return Container(

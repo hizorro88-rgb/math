@@ -437,7 +437,7 @@ class PetCareButton extends StatelessWidget {
     final emoji = meal ? '🍚' : '💧';
 
     final chip = done
-        ? const Text('🌙', style: TextStyle(fontSize: 16))
+        ? const Text('🌙', style: TextStyle(fontSize: AppFont.body))
         : Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
@@ -452,7 +452,7 @@ class PetCareButton extends StatelessWidget {
               child: Text(
                 '🪙$cost',
                 style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: AppFont.small,
                   fontWeight: FontWeight.bold,
                   color: AppColors.ink,
                 ),
@@ -484,7 +484,8 @@ class PetCareButton extends StatelessWidget {
             children: [
               Opacity(
                 opacity: done ? 0.5 : 1,
-                child: Text(emoji, style: const TextStyle(fontSize: 24)),
+                child: Text(emoji,
+                    style: const TextStyle(fontSize: AppFont.display)),
               ),
               const SizedBox(width: 6),
               Column(
@@ -549,7 +550,8 @@ class PetGrowth extends StatelessWidget {
     if (rule == null || species == null) {
       return Text('🏆 끝까지 다 키웠어요!',
           textAlign: TextAlign.center,
-          style: displayStyle(fontSize: compact ? 15 : 18));
+          style:
+              displayStyle(fontSize: compact ? AppFont.body : AppFont.title));
     }
     final ring = compact ? 34.0 : 54.0;
     Widget item(String emoji, int now, int need, {VoidCallback? onTap}) {
@@ -596,7 +598,8 @@ class PetGrowth extends StatelessWidget {
               const SizedBox(height: 4),
               Text(
                 '${math.min(now, need)}/$need',
-                style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
+                style: const TextStyle(
+                    fontSize: AppFont.caption, color: AppColors.inkMuted),
               ),
             ],
           ],
@@ -614,7 +617,7 @@ class PetGrowth extends StatelessWidget {
           // 다음 모습은 그림자로만 — 자라 봐야 알 수 있다
           ColorFiltered(
             colorFilter:
-                const ColorFilter.mode(Color(0xFFC9BCA6), BlendMode.srcIn),
+                const ColorFilter.mode(AppColors.silhouette, BlendMode.srcIn),
             child: PetSprite(
               species: species,
               stage: state.stage + 1,
@@ -624,7 +627,7 @@ class PetGrowth extends StatelessWidget {
           ),
           Text('?',
               style: displayStyle(
-                  fontSize: compact ? 18 : 28, color: Colors.white)),
+                  fontSize: compact ? AppFont.title : 28, color: Colors.white)),
         ],
       ),
     );
@@ -657,7 +660,7 @@ Future<void> showPetEvolution(
   return showGeneralDialog<void>(
     context: context,
     barrierDismissible: false,
-    barrierColor: Colors.black.withValues(alpha: 0.6),
+    barrierColor: AppColors.scrim,
     pageBuilder: (context, _, __) =>
         _EvolveView(species: species, stage: stage),
   );
@@ -711,7 +714,8 @@ class _EvolveViewState extends State<_EvolveView>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Text('✨ 자랐어요! ✨',
-                        style: displayStyle(fontSize: 28, color: Colors.white)),
+                        style: displayStyle(
+                            fontSize: AppFont.display, color: Colors.white)),
                     const SizedBox(height: 16),
                     Transform.rotate(
                       angle: shake,
@@ -728,7 +732,8 @@ class _EvolveViewState extends State<_EvolveView>
                     const SizedBox(height: 12),
                     Text(
                       '${widget.species.name} · ${petStageNames[widget.stage - 1]}',
-                      style: displayStyle(fontSize: 22, color: Colors.white),
+                      style: displayStyle(
+                          fontSize: AppFont.display, color: Colors.white),
                     ),
                     const SizedBox(height: 24),
                     Opacity(
@@ -744,7 +749,8 @@ class _EvolveViewState extends State<_EvolveView>
                           children: [
                             Text('좋아!',
                                 style: displayStyle(
-                                    fontSize: 22, color: Colors.white)),
+                                    fontSize: AppFont.display,
+                                    color: Colors.white)),
                             const SizedBox(width: 4),
                             const Icon(Icons.play_arrow_rounded,
                                 color: Colors.white, size: 28),

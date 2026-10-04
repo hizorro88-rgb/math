@@ -95,7 +95,8 @@ class _BackupScreenState extends State<BackupScreen> {
             const Text(
               '지금 기기의 기록은 모두 백업 내용으로 바뀌어요.\n'
               '바뀌기 직전 기록은 자동으로 보관돼서, 이 화면에서 되돌릴 수 있어요.',
-              style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
+              style:
+                  TextStyle(fontSize: AppFont.small, color: AppColors.inkSoft),
             ),
           ],
         ),
@@ -192,7 +193,7 @@ class _BackupScreenState extends State<BackupScreen> {
             text,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: 14,
+              fontSize: AppFont.small,
               fontWeight: bold ? FontWeight.bold : FontWeight.normal,
             ),
           ),
@@ -239,7 +240,7 @@ class _BackupScreenState extends State<BackupScreen> {
               '기록은 이 폰에 저장돼요 (클라우드에 로그인하면 계정에도 저장돼요). '
               '백업 코드를 만들어 메모장이나 메신저(나에게 보내기)에 보관해 두면, '
               '앱을 지웠거나 폰을 바꿔도 코드를 붙여넣어 진도를 그대로 되살릴 수 있어요.',
-              style: TextStyle(fontSize: 13.5, height: 1.5),
+              style: TextStyle(fontSize: AppFont.small, height: 1.5),
             ),
           ),
           const SizedBox(height: 18),
@@ -250,7 +251,8 @@ class _BackupScreenState extends State<BackupScreen> {
               children: [
                 const Text(
                   '모든 프로필의 진도·별·코인·꾸미기가 코드 하나에 담겨요.',
-                  style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
+                  style: TextStyle(
+                      fontSize: AppFont.small, color: AppColors.inkSoft),
                 ),
                 const SizedBox(height: 12),
                 BouncyButton(
@@ -261,7 +263,7 @@ class _BackupScreenState extends State<BackupScreen> {
                     '백업 코드 만들고 복사하기',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: AppFont.body,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -280,13 +282,14 @@ class _BackupScreenState extends State<BackupScreen> {
                       _code!,
                       maxLines: 4,
                       style: const TextStyle(
-                          fontSize: 11, fontFamily: 'monospace'),
+                          fontSize: AppFont.caption, fontFamily: 'monospace'),
                     ),
                   ),
                   const SizedBox(height: 6),
                   const Text(
                     '복사되었어요. 코드가 길어도 전체를 한 번에 붙여넣으면 돼요.',
-                    style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
+                    style: TextStyle(
+                        fontSize: AppFont.caption, color: AppColors.inkSoft),
                   ),
                 ],
               ],
@@ -301,10 +304,11 @@ class _BackupScreenState extends State<BackupScreen> {
                 TextField(
                   controller: _restoreController,
                   maxLines: 3,
-                  style: const TextStyle(fontSize: 12, fontFamily: 'monospace'),
+                  style: const TextStyle(
+                      fontSize: AppFont.caption, fontFamily: 'monospace'),
                   decoration: InputDecoration(
                     hintText: 'OWL1. 로 시작하는 백업 코드를 붙여넣어 주세요',
-                    hintStyle: const TextStyle(fontSize: 13),
+                    hintStyle: const TextStyle(fontSize: AppFont.small),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                     ),
@@ -325,7 +329,8 @@ class _BackupScreenState extends State<BackupScreen> {
                           '📋 붙여넣기',
                           textAlign: TextAlign.center,
                           style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.bold),
+                              fontSize: AppFont.body,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
                     ),
@@ -345,7 +350,7 @@ class _BackupScreenState extends State<BackupScreen> {
                             _restoring ? '복원 중…' : '✅ 복원하기',
                             textAlign: TextAlign.center,
                             style: TextStyle(
-                              fontSize: 15,
+                              fontSize: AppFont.body,
                               fontWeight: FontWeight.bold,
                               color: enabled ? Colors.white : AppColors.inkSoft,
                             ),
@@ -368,8 +373,8 @@ class _BackupScreenState extends State<BackupScreen> {
                   Text(
                     '마지막으로 복원하기 직전 기록이 보관돼 있어요 '
                     '(⭐ ${_undo!.clearedLevels} · 🪙 ${_undo!.coins}).',
-                    style:
-                        const TextStyle(fontSize: 13, color: AppColors.inkSoft),
+                    style: const TextStyle(
+                        fontSize: AppFont.small, color: AppColors.inkSoft),
                   ),
                   const SizedBox(height: 10),
                   BouncyButton(
@@ -382,8 +387,8 @@ class _BackupScreenState extends State<BackupScreen> {
                     child: const Text(
                       '복원하기 전으로 되돌리기',
                       textAlign: TextAlign.center,
-                      style:
-                          TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          fontSize: AppFont.body, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -408,7 +413,8 @@ class _BackupScreenState extends State<BackupScreen> {
         children: [
           Text(
             title,
-            style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                fontSize: AppFont.title, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           child,

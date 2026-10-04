@@ -106,6 +106,11 @@
 - 소리의 뜻(services/sounds.dart): correct·combo=정답만, wrong=오답만,
   pop=누름·입기·붙이기·쓰다듬기, buy=코인 씀, complete=축하.
   오답 진동은 정답보다 약하게. 아이가 직접 누른 🔊만 force로 읽는다.
+- 글자 크기는 theme.dart의 AppFont 6단계만(12 caption·14 small·16 body·
+  18 title·20 heading·24 display). 26 이상 숫자는 그림(이모지)·문제 숫자 전용.
+  색은 AppColors·SceneColors 토큰만 — 화면·위젯에 Color(0x…)·Colors.grey 등 금지
+  (모델의 단원·띠·스티커 색 같은 데이터 색은 예외).
+  test/design_tokens_test.dart가 둘 다 막는다.
 - 앱바는 테마(가운데·Jua 20) — 화면에서 style 덧씌우지 말 것.
   정보 카드=테두리, 누르는 카드=3D 그림자, 반경 22/14/999.
 

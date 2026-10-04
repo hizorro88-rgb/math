@@ -116,7 +116,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: Text(
                   label,
                   style: const TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.bold),
+                      fontSize: AppFont.body, fontWeight: FontWeight.bold),
                 ),
               ),
             );
@@ -132,15 +132,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   Text(
                     '우리 아이 단계 맞추기',
                     textAlign: TextAlign.center,
-                    style: displayStyle(fontSize: 20),
+                    style: displayStyle(fontSize: AppFont.heading),
                   ),
                   const SizedBox(height: 6),
                   Text(
                     keepAll('나이를 고르면 홈에서 그 단계를 추천하고, '
                         '더 낮은 수학 단계는 접어둘 수 있어요'),
                     textAlign: TextAlign.center,
-                    style:
-                        const TextStyle(fontSize: 13, color: AppColors.inkSoft),
+                    style: const TextStyle(
+                        fontSize: AppFont.small, color: AppColors.inkSoft),
                   ),
                   const SizedBox(height: 14),
                   Wrap(
@@ -168,8 +168,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           },
                     title: const Text(
                       '이전 단계 접어두기',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          fontSize: AppFont.body, fontWeight: FontWeight.bold),
                     ),
                     subtitle:
                         Text(keepAll('아이 나이보다 낮은 수학 단계를 홈에서 접어요. 기록은 그대로예요.')),
@@ -187,8 +187,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     onPressed: () => Navigator.of(context).pop(),
                     child: const Text(
                       '완료',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          fontSize: AppFont.body, fontWeight: FontWeight.bold),
                     ),
                   ),
                 ],
@@ -267,7 +267,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             const Text(
               '처음이면 [새 계정]으로 가입하세요.\n'
               '같은 계정으로 로그인한 기기끼리 진도가 이어져요.',
-              style: TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+              style: TextStyle(
+                  fontSize: AppFont.caption, color: AppColors.inkSoft),
             ),
           ],
         ),
@@ -476,7 +477,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Text('🎵', style: TextStyle(fontSize: 26)))),
                 title: const Text(
                   '효과음',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: AppFont.body, fontWeight: FontWeight.bold),
                 ),
                 subtitle: const Text('정답·오답 딩동 소리'),
                 activeTrackColor: AppColors.green,
@@ -501,7 +503,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Text('🗣️', style: TextStyle(fontSize: 26)))),
                 title: const Text(
                   '문제 읽어주기',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: AppFont.body, fontWeight: FontWeight.bold),
                 ),
                 subtitle: const Text('글을 몰라도 혼자 풀 수 있게'),
                 activeTrackColor: AppColors.green,
@@ -514,7 +517,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Text('🐢', style: TextStyle(fontSize: 26)))),
                 title: const Text(
                   '말 빠르기',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: AppFont.body, fontWeight: FontWeight.bold),
                 ),
                 trailing: SegmentedButton<double>(
                   segments: const [
@@ -537,7 +541,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Text(
               '👨‍👩‍👧 부모님 메뉴',
               style: TextStyle(
-                fontSize: 14,
+                fontSize: AppFont.small,
                 fontWeight: FontWeight.bold,
                 color: AppColors.inkSoft,
               ),
@@ -552,7 +556,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Text('📊', style: TextStyle(fontSize: 26)))),
                 title: const Text(
                   '학습 리포트',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: AppFont.body, fontWeight: FontWeight.bold),
                 ),
                 subtitle: const Text('이번 주 할 일·과목별 정답률'),
                 trailing: const Icon(Icons.chevron_right),
@@ -572,7 +577,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Text('🎫', style: TextStyle(fontSize: 26)))),
                 title: const Text(
                   '가족 이용권',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: AppFont.body, fontWeight: FontWeight.bold),
                 ),
                 subtitle: const Text('모든 단계 열기 · 프로필 4명'),
                 trailing: const Icon(Icons.chevron_right),
@@ -592,7 +598,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Text('🪜', style: TextStyle(fontSize: 26)))),
                 title: const Text(
                   '우리 아이 단계',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: AppFont.body, fontWeight: FontWeight.bold),
                 ),
                 subtitle: Text(keepAll(_ageIndex == null
                     ? '나이를 고르면 딱 맞게 보여드려요'
@@ -610,7 +617,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Text('🎁', style: TextStyle(fontSize: 26)))),
                 title: const Text(
                   '칭찬판 선물 약속',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: AppFont.body, fontWeight: FontWeight.bold),
                 ),
                 subtitle: const Text('스티커 20칸을 다 채우면 줄 선물'),
                 trailing: const Icon(Icons.chevron_right),
@@ -635,7 +643,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Text('⏰', style: TextStyle(fontSize: 26)))),
                 title: const Text(
                   '매일 학습 알림',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: AppFont.body, fontWeight: FontWeight.bold),
                 ),
                 subtitle:
                     Text(_reminderOn ? '매일 켠 시각쯤 알려줘요' : '하루 한 번 학습을 잊지 않게'),
@@ -649,7 +658,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         child: Text('💾', style: TextStyle(fontSize: 26)))),
                 title: const Text(
                   '진도 백업·옮기기',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  style: TextStyle(
+                      fontSize: AppFont.body, fontWeight: FontWeight.bold),
                 ),
                 subtitle: const Text('코드로 진도를 지키고 옮겨요'),
                 trailing: const Icon(Icons.chevron_right),
@@ -664,7 +674,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style: const TextStyle(fontSize: 26)),
                   title: const Text(
                     '코드로 전체 열기',
-                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(
+                        fontSize: AppFont.body, fontWeight: FontWeight.bold),
                   ),
                   subtitle: Text(PremiumStore.allUnlocked
                       ? '모든 단계와 과목이 열려 있어요'
@@ -687,8 +698,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             child: Text('☁️', style: TextStyle(fontSize: 26)))),
                     title: const Text(
                       '클라우드 동기화',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                      style: TextStyle(
+                          fontSize: AppFont.body, fontWeight: FontWeight.bold),
                     ),
                     subtitle: const Text('다른 기기와 진도가 이어져요'),
                     trailing: _syncing
@@ -709,7 +720,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     title: Text(
                       CloudSync.email ?? '클라우드 동기화',
                       style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.bold),
+                          fontSize: AppFont.body, fontWeight: FontWeight.bold),
                       overflow: TextOverflow.ellipsis,
                     ),
                     subtitle: Text(_syncTimeLabel()),
@@ -753,8 +764,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       child: Center(
                           child: Text('ℹ️', style: TextStyle(fontSize: 26)))),
                   title: const Text('앱 정보',
-                      style:
-                          TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                      style: TextStyle(
+                          fontSize: AppFont.body, fontWeight: FontWeight.bold)),
                   subtitle: const Text(
                     '쿼카 학교 v$appVersionLabel\n문의: hizorro88@gmail.com (탭하면 복사)',
                     style: TextStyle(height: 1.5),
@@ -777,7 +788,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             '진도만 계정에 저장하고, 아이의 개인정보는 수집하지 않아요.',
             textAlign: TextAlign.center,
             style: TextStyle(
-                fontSize: 12.5, color: AppColors.inkSoft, height: 1.6),
+                fontSize: AppFont.caption,
+                color: AppColors.inkSoft,
+                height: 1.6),
           ),
         ],
       ),

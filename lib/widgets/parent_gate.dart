@@ -146,7 +146,7 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
             Text(
               '부모님 확인',
               textAlign: TextAlign.center,
-              style: displayStyle(fontSize: 22),
+              style: displayStyle(fontSize: AppFont.display),
             ),
             const SizedBox(height: 4),
             Text(
@@ -155,7 +155,7 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
                   : '보호자만 들어갈 수 있어요.\n아래 문제를 풀어 주세요.',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 14,
+                fontSize: AppFont.small,
                 color: _locked ? AppColors.coral : AppColors.inkSoft,
               ),
             ),
@@ -165,7 +165,7 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
                 duration: const Duration(milliseconds: 150),
                 padding: const EdgeInsets.symmetric(vertical: 12),
                 decoration: BoxDecoration(
-                  color: _shake ? const Color(0xFFFFEBEB) : AppColors.cream,
+                  color: _shake ? AppColors.wrongSurface : AppColors.cream,
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
@@ -174,15 +174,15 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
                       padding: const EdgeInsets.symmetric(
                           horizontal: 12, vertical: 5),
                       decoration: BoxDecoration(
-                        color: const Color(0xFFFFF1CC),
+                        color: AppColors.rewardSurface,
                         borderRadius: BorderRadius.circular(999),
                       ),
                       child: const Text(
                         '아래 한글 수를 숫자로 눌러 주세요',
                         style: TextStyle(
-                          fontSize: 14,
+                          fontSize: AppFont.small,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF8A6100),
+                          color: AppColors.rewardInk,
                         ),
                       ),
                     ),
@@ -198,7 +198,7 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
                       _input.isEmpty ? '□ □ □' : _input,
                       textAlign: TextAlign.center,
                       style: const TextStyle(
-                          fontSize: 24,
+                          fontSize: AppFont.display,
                           fontWeight: FontWeight.bold,
                           color: AppColors.inkSoft),
                     ),
@@ -212,7 +212,7 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
                     '앗, 다시 읽어 볼까요? (${3 - _wrongCount}번 남음)',
                     textAlign: TextAlign.center,
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: AppFont.small,
                       fontWeight: FontWeight.bold,
                       color: AppColors.coral,
                     ),
@@ -248,7 +248,7 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
                     child: const Text(
                       '확인',
                       style: TextStyle(
-                        fontSize: 17,
+                        fontSize: AppFont.title,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
@@ -268,7 +268,8 @@ class _ParentGateDialogState extends State<_ParentGateDialog> {
         onTap: () => _tapDigit(digit),
         child: Text(
           '$digit',
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+              fontSize: AppFont.heading, fontWeight: FontWeight.bold),
         ),
       );
 

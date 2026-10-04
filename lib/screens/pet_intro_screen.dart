@@ -123,7 +123,7 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
           // 쿼카 박사 (마스코트가 선생님 역할을 맡는다)
           const QuokkaFace(size: 84),
           const SizedBox(height: 6),
-          Text('쿼카 박사', style: displayStyle(fontSize: 16)),
+          Text('쿼카 박사', style: displayStyle(fontSize: AppFont.body)),
           const SizedBox(height: 10),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -135,7 +135,7 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
             child: Text(
               '알을 눌러 봐!',
               textAlign: TextAlign.center,
-              style: displayStyle(fontSize: 20),
+              style: displayStyle(fontSize: AppFont.heading),
             ),
           ),
           const SizedBox(height: 18),
@@ -175,7 +175,7 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
                 Text(
                   peeked ? species.hint : '❔',
                   style: displayStyle(
-                    fontSize: peeked ? 18 : 26,
+                    fontSize: peeked ? AppFont.title : 26,
                     color: AppColors.ink,
                   ),
                 ),
@@ -195,7 +195,7 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
                           Text(
                             '이 친구!',
                             style: TextStyle(
-                              fontSize: 17,
+                              fontSize: AppFont.title,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,
                             ),
@@ -227,7 +227,8 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
               mainAxisSize: MainAxisSize.min,
               children: [
                 if (!hatched) ...[
-                  Text('톡톡 두드려 봐!', style: displayStyle(fontSize: 26)),
+                  Text('톡톡 두드려 봐!',
+                      style: displayStyle(fontSize: AppFont.display)),
                   const SizedBox(height: 20),
                   GestureDetector(
                     key: const ValueKey('egg-tap'),
@@ -260,7 +261,7 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text('${species.name} 탄생!',
-                      style: displayStyle(fontSize: 26)),
+                      style: displayStyle(fontSize: AppFont.display)),
                   const SizedBox(height: 18),
                   _buildStepAction(species),
                 ],
@@ -303,7 +304,8 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
                 onTap: _feed,
                 child: Text(
                   '🍚 밥 주기',
-                  style: displayStyle(fontSize: 22, color: Colors.white),
+                  style: displayStyle(
+                      fontSize: AppFont.display, color: Colors.white),
                 ),
               ),
             ),
@@ -328,7 +330,8 @@ class _PetIntroScreenState extends State<PetIntroScreen> {
                     children: [
                       Text(
                         widget.firstRun ? '첫 문제 풀기' : '같이 놀기',
-                        style: displayStyle(fontSize: 22, color: Colors.white),
+                        style: displayStyle(
+                            fontSize: AppFont.display, color: Colors.white),
                       ),
                       const SizedBox(width: 6),
                       const Icon(Icons.play_arrow_rounded,

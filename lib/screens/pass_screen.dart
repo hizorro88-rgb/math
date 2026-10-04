@@ -106,7 +106,8 @@ class _PassScreenState extends State<PassScreen> {
                         '한 번 결제로\n온 가족이 함께 배워요',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                            fontSize: 20, fontWeight: FontWeight.bold),
+                            fontSize: AppFont.heading,
+                            fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 10),
                       Text(
@@ -116,15 +117,15 @@ class _PassScreenState extends State<PassScreen> {
                         style: price != null
                             ? displayStyle(fontSize: 30)
                             : const TextStyle(
-                                fontSize: 14,
+                                fontSize: AppFont.small,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.inkSoft),
                       ),
                       const SizedBox(height: 4),
                       const Text(
                         '월 구독 없음 · 광고 없음 · 1회 결제',
-                        style:
-                            TextStyle(fontSize: 13, color: AppColors.inkSoft),
+                        style: TextStyle(
+                            fontSize: AppFont.small, color: AppColors.inkSoft),
                       ),
                     ],
                   ),
@@ -144,7 +145,7 @@ class _PassScreenState extends State<PassScreen> {
                       '✅ 가족 이용권 사용 중이에요!',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: AppFont.title,
                         fontWeight: FontWeight.bold,
                         color: AppColors.greenPressed,
                       ),
@@ -166,7 +167,7 @@ class _PassScreenState extends State<PassScreen> {
                               : '이용권 구매하기 · $price',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: store ? 20 : 16,
+                        fontSize: store ? AppFont.heading : AppFont.body,
                         fontWeight: FontWeight.bold,
                         color: store ? Colors.white : AppColors.inkSoft,
                       ),
@@ -184,7 +185,7 @@ class _PassScreenState extends State<PassScreen> {
                       '구매 복원',
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 16,
+                        fontSize: AppFont.body,
                         fontWeight: FontWeight.bold,
                         color: store ? AppColors.inkSoft : AppColors.inkMuted,
                       ),
@@ -198,7 +199,9 @@ class _PassScreenState extends State<PassScreen> {
                   '📦 앱을 다시 깔거나 기기를 바꿔도 같은 스토어 계정이면 '
                   '[구매 복원]으로 다시 켤 수 있어요.',
                   style: TextStyle(
-                      fontSize: 12.5, color: AppColors.inkSoft, height: 1.5),
+                      fontSize: AppFont.caption,
+                      color: AppColors.inkSoft,
+                      height: 1.5),
                 ),
                 const SizedBox(height: 8),
               ],
@@ -222,7 +225,7 @@ class _PassScreenState extends State<PassScreen> {
             text,
             textAlign: TextAlign.center,
             style: TextStyle(
-              fontSize: head ? 15 : 14,
+              fontSize: head ? AppFont.body : AppFont.small,
               height: 1.25,
               fontWeight: head || pass ? FontWeight.bold : FontWeight.normal,
               color: pass ? AppColors.greenPressed : AppColors.ink,

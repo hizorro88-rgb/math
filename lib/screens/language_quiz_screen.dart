@@ -97,7 +97,7 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
       widget.pack.types[_question.typeIndex].textDisplay &&
       _question.display.length > 12;
   bool get _isCorrect => _selectedChoice == _question.answer;
-  Color get _themeColor => widget.level?.unit.color ?? const Color(0xFF5B6CF0);
+  Color get _themeColor => widget.level?.unit.color ?? AppColors.practice;
 
   @override
   void initState() {
@@ -400,7 +400,7 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
               // 한자 구절·낱말처럼 짧은 것(6자 이하)은 크게, 회화 뜻풀이처럼 길면 작게
               style: _question.subDisplay.length > 6
                   ? const TextStyle(
-                      fontSize: 17,
+                      fontSize: AppFont.title,
                       fontWeight: FontWeight.w600,
                       color: AppColors.inkSoft,
                     )
@@ -526,8 +526,8 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
         // 마이크: 누르고 말하면 채점
         BouncyButton(
           key: const ValueKey('speak-mic'),
-          color: _micListening ? const Color(0xFFFFDFE0) : _themeColor,
-          shadowColor: _micListening ? const Color(0xFFEA2B2B) : _themeColor,
+          color: _micListening ? AppColors.recordingSurface : _themeColor,
+          shadowColor: _micListening ? AppColors.recording : _themeColor,
           padding: const EdgeInsets.symmetric(vertical: 16),
           onTap: _answered ? null : _tapMic,
           child: Row(
@@ -536,15 +536,15 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
               Icon(
                 _micListening ? Icons.stop_rounded : Icons.mic_rounded,
                 size: 26,
-                color: _micListening ? const Color(0xFFEA2B2B) : Colors.white,
+                color: _micListening ? AppColors.recording : Colors.white,
               ),
               const SizedBox(width: 8),
               Text(
                 _micListening ? '듣는 중… (누르면 멈춤)' : '눌러서 말하기',
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: AppFont.title,
                   fontWeight: FontWeight.bold,
-                  color: _micListening ? const Color(0xFFEA2B2B) : Colors.white,
+                  color: _micListening ? AppColors.recording : Colors.white,
                 ),
               ),
             ],
@@ -557,12 +557,12 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
             Expanded(
               child: BouncyButton(
                 key: const ValueKey('speak-record'),
-                color: _micRecording ? const Color(0xFFFFEBD6) : Colors.white,
+                color:
+                    _micRecording ? AppColors.recordingSurface : Colors.white,
                 shadowColor: AppColors.outline,
                 border: Border.all(
-                  color: _micRecording
-                      ? const Color(0xFFEA2B2B)
-                      : AppColors.outline,
+                  color:
+                      _micRecording ? AppColors.recording : AppColors.outline,
                   width: 2,
                 ),
                 padding: const EdgeInsets.symmetric(vertical: 12),
@@ -575,13 +575,13 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
                           ? Icons.stop_circle_rounded
                           : Icons.fiber_manual_record_rounded,
                       size: 20,
-                      color: const Color(0xFFEA2B2B),
+                      color: AppColors.recording,
                     ),
                     const SizedBox(width: 6),
                     Text(
                       _micRecording ? '녹음 멈추기' : '내 목소리 녹음',
                       style: const TextStyle(
-                          fontSize: 15, fontWeight: FontWeight.bold),
+                          fontSize: AppFont.body, fontWeight: FontWeight.bold),
                     ),
                   ],
                 ),
@@ -604,7 +604,8 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
                       SizedBox(width: 6),
                       Text('내 목소리 듣기',
                           style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.bold)),
+                              fontSize: AppFont.body,
+                              fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
@@ -617,7 +618,8 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
           Text(
             _micNotice,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, color: AppColors.inkSoft),
+            style: const TextStyle(
+                fontSize: AppFont.small, color: AppColors.inkSoft),
           ),
         ],
         if (score != null) ...[
@@ -640,13 +642,14 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
               children: [
                 const Text(
                   '이렇게 들렸어요',
-                  style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
+                  style: TextStyle(
+                      fontSize: AppFont.small, color: AppColors.inkSoft),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   score.heard,
                   style: const TextStyle(
-                      fontSize: 17, fontWeight: FontWeight.bold),
+                      fontSize: AppFont.title, fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 Text(
@@ -654,7 +657,7 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
                       ? '낱말을 모두 정확히 말했어요! 🎉'
                       : '${score.total}개 중 ${score.matched}개를 맞게 말했어요',
                   style: TextStyle(
-                    fontSize: 14,
+                    fontSize: AppFont.small,
                     fontWeight: FontWeight.bold,
                     color: score.passed
                         ? AppColors.greenPressed

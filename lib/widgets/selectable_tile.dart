@@ -54,7 +54,7 @@ class SelectableTile extends StatelessWidget {
             textAlign: TextAlign.center,
             maxLines: 2,
             style: const TextStyle(
-              fontSize: 14,
+              fontSize: AppFont.small,
               fontWeight: FontWeight.bold,
               color: AppColors.ink,
               height: 1.2,
@@ -64,7 +64,8 @@ class SelectableTile extends StatelessWidget {
             Text(
               sub!,
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 12, color: AppColors.inkSoft),
+              style: const TextStyle(
+                  fontSize: AppFont.caption, color: AppColors.inkSoft),
             ),
         ],
       ),

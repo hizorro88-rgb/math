@@ -209,7 +209,7 @@ class _Dot extends StatelessWidget {
     final (fill, border) = switch (state) {
       QuizDot.pending => (AppColors.line, AppColors.line),
       QuizDot.correct => (AppColors.correct, AppColors.correct),
-      QuizDot.missed => (const Color(0xFFFFC9A8), const Color(0xFFFFC9A8)),
+      QuizDot.missed => (AppColors.missedDot, AppColors.missedDot),
       QuizDot.fixed => (AppColors.selectedFill, AppColors.correct),
     };
     final s = active ? size * 1.4 : size;
@@ -288,7 +288,7 @@ class QuizTopBar extends StatelessWidget {
               onPressed: onClose,
             ),
             if (leading != null) ...[
-              Text(leading!, style: const TextStyle(fontSize: 22)),
+              Text(leading!, style: const TextStyle(fontSize: AppFont.display)),
               const SizedBox(width: 6),
             ],
             Expanded(
@@ -297,7 +297,7 @@ class QuizTopBar extends StatelessWidget {
             ),
             const SizedBox(width: 10),
             if (combo >= 3) ...[
-              _Chip(text: '✨$combo', color: const Color(0xFFFFE8D2)),
+              _Chip(text: '✨$combo', color: AppColors.rewardSurface),
               const SizedBox(width: 6),
             ],
             // 이번 판에 번 코인 (+N) — 홈·결과의 '가진 코인'과 헷갈리지 않게
@@ -327,7 +327,7 @@ class _Chip extends StatelessWidget {
       child: Text(
         text,
         style: const TextStyle(
-          fontSize: 16,
+          fontSize: AppFont.body,
           fontWeight: FontWeight.bold,
           color: AppColors.ink,
         ),
@@ -388,7 +388,7 @@ class QuizBadge extends StatelessWidget {
   const QuizBadge.bonus({super.key})
       : text = '⚡ 🪙×2',
         fill = AppColors.rewardSurface,
-        ink = const Color(0xFF9A6A00);
+        ink = AppColors.rewardInk;
 
   final String text;
   final Color fill;
@@ -404,7 +404,8 @@ class QuizBadge extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: TextStyle(fontSize: 15, fontWeight: FontWeight.bold, color: ink),
+        style: TextStyle(
+            fontSize: AppFont.body, fontWeight: FontWeight.bold, color: ink),
       ),
     );
   }
@@ -465,7 +466,7 @@ class QuizCard extends StatelessWidget {
                         instruction,
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                          fontSize: 16,
+                          fontSize: AppFont.body,
                           fontWeight: FontWeight.bold,
                           color: AppColors.inkSoft,
                         ),
@@ -551,7 +552,7 @@ class QuizCheer extends StatelessWidget {
                 child: Text(
                   line!,
                   style: const TextStyle(
-                    fontSize: 14,
+                    fontSize: AppFont.small,
                     fontWeight: FontWeight.bold,
                     color: AppColors.brown,
                   ),
@@ -624,7 +625,7 @@ class QuizChoiceButton extends StatelessWidget {
             maxLines: 3,
             overflow: TextOverflow.ellipsis,
             style: TextStyle(
-              fontSize: 16,
+              fontSize: AppFont.body,
               height: 1.25,
               fontWeight: FontWeight.bold,
               color: textColor,
@@ -780,7 +781,7 @@ class QuizSlot extends StatelessWidget {
         child: Text(
           text,
           style: TextStyle(
-            fontSize: wide ? 19 : 26,
+            fontSize: wide ? AppFont.heading : 26,
             fontWeight: FontWeight.bold,
             color: AppColors.ink,
           ),
@@ -841,7 +842,7 @@ class QuizTile extends StatelessWidget {
               : Text(
                   text!,
                   style: TextStyle(
-                    fontSize: wide ? 20 : 26,
+                    fontSize: wide ? AppFont.heading : 26,
                     fontWeight: FontWeight.bold,
                     color: off ? AppColors.inkMuted : AppColors.ink,
                   ),
@@ -915,7 +916,8 @@ class QuizFeedbackPanel extends StatelessWidget {
                   child: correct
                       ? const Icon(Icons.check_rounded,
                           size: 30, color: Colors.white)
-                      : const Text('💡', style: TextStyle(fontSize: 22)),
+                      : const Text('💡',
+                          style: TextStyle(fontSize: AppFont.display)),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -923,7 +925,7 @@ class QuizFeedbackPanel extends StatelessWidget {
                       ? Text(
                           correctMessage,
                           style: TextStyle(
-                            fontSize: 24,
+                            fontSize: AppFont.display,
                             fontWeight: FontWeight.bold,
                             color: ink,
                           ),
@@ -936,7 +938,7 @@ class QuizFeedbackPanel extends StatelessWidget {
                             Text(
                               '괜찮아요! 정답은',
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: AppFont.title,
                                 fontWeight: FontWeight.bold,
                                 color: ink,
                               ),
@@ -953,7 +955,7 @@ class QuizFeedbackPanel extends StatelessWidget {
                               child: Text(
                                 answerText,
                                 style: const TextStyle(
-                                  fontSize: 24,
+                                  fontSize: AppFont.display,
                                   fontWeight: FontWeight.bold,
                                   color: AppColors.ink,
                                 ),
@@ -974,7 +976,7 @@ class QuizFeedbackPanel extends StatelessWidget {
                     child: Text(
                       fire ? '+$gained 🪙✨' : '+$gained 🪙',
                       style: TextStyle(
-                        fontSize: 18,
+                        fontSize: AppFont.title,
                         fontWeight: FontWeight.bold,
                         color: ink,
                       ),
@@ -993,7 +995,7 @@ class QuizFeedbackPanel extends StatelessWidget {
                   Text(
                     isLast ? '결과 보기' : '계속하기',
                     style: const TextStyle(
-                      fontSize: 24,
+                      fontSize: AppFont.display,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),

@@ -73,7 +73,8 @@ class _ReportScreenState extends State<ReportScreen> {
                   child: const Text(
                     '첫 퀴즈를 풀면 과목별 리포트가 열려요!\n'
                     '홈에서 과목 탭을 골라 시작해 보세요.',
-                    style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
+                    style: TextStyle(
+                        fontSize: AppFont.small, color: AppColors.inkSoft),
                   ),
                 ),
                 const SizedBox(height: 14),
@@ -102,7 +103,8 @@ class _ReportScreenState extends State<ReportScreen> {
                       padding: EdgeInsets.only(left: 4, bottom: 8),
                       child: Text('👨‍👩‍👧 어른 공부',
                           style: TextStyle(
-                              fontSize: 15, fontWeight: FontWeight.bold)),
+                              fontSize: AppFont.body,
+                              fontWeight: FontWeight.bold)),
                     ),
                     _LangCard(pack: pack, stats: stats),
                     const SizedBox(height: 14),
@@ -132,7 +134,8 @@ Widget _reportCard({required String title, required Widget child}) {
       children: [
         Text(
           title,
-          style: const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+              fontSize: AppFont.title, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 12),
         child,
@@ -196,11 +199,13 @@ class _SummaryItem extends StatelessWidget {
           const SizedBox(height: 4),
           Text(
             value,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                fontSize: AppFont.display, fontWeight: FontWeight.bold),
           ),
           Text(
             label,
-            style: const TextStyle(fontSize: 13, color: AppColors.inkSoft),
+            style: const TextStyle(
+                fontSize: AppFont.small, color: AppColors.inkSoft),
           ),
         ],
       ),
@@ -226,7 +231,7 @@ class _WeekCard extends StatelessWidget {
         title: '최근 7일 활동',
         child: const Text(
           '이번 주 첫 기록을 기다리고 있어요!\n퀴즈 한 판이 끝나면 막대가 자라나요.',
-          style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
+          style: TextStyle(fontSize: AppFont.small, color: AppColors.inkSoft),
         ),
       );
     }
@@ -249,7 +254,7 @@ class _WeekCard extends StatelessWidget {
                         Text(
                           '${day.rounds}',
                           style: const TextStyle(
-                            fontSize: 12,
+                            fontSize: AppFont.caption,
                             fontWeight: FontWeight.bold,
                             color: AppColors.greenPressed,
                           ),
@@ -271,7 +276,7 @@ class _WeekCard extends StatelessWidget {
                         // 'MM-DD' 중 일(day)만 표시
                         day.day.substring(8),
                         style: const TextStyle(
-                          fontSize: 11,
+                          fontSize: AppFont.caption,
                           color: AppColors.inkSoft,
                         ),
                       ),
@@ -321,7 +326,8 @@ class _AccuracyCard extends StatelessWidget {
           if (learned.isEmpty)
             const Text(
               '아직 수학 퀴즈를 풀지 않았어요.\n홈에서 🧮 수학 탭을 눌러 시작해 보세요!',
-              style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
+              style:
+                  TextStyle(fontSize: AppFont.small, color: AppColors.inkSoft),
             )
           else
             for (final (label, correct, wrong) in learned) ...[
@@ -331,7 +337,8 @@ class _AccuracyCard extends StatelessWidget {
           if (learned.isNotEmpty && unlearnedCount > 0)
             Text(
               '아직 안 배운 유형 $unlearnedCount개는 배우면 나타나요.',
-              style: const TextStyle(fontSize: 12, color: AppColors.inkMuted),
+              style: const TextStyle(
+                  fontSize: AppFont.caption, color: AppColors.inkMuted),
             ),
         ],
       ),
@@ -360,7 +367,8 @@ class _AccuracyRow extends StatelessWidget {
           width: 92,
           child: Text(
             label,
-            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                fontSize: AppFont.small, fontWeight: FontWeight.bold),
           ),
         ),
         Expanded(
@@ -375,8 +383,8 @@ class _AccuracyRow extends StatelessWidget {
                   : accuracy >= 80
                       ? AppColors.green
                       : accuracy >= 50
-                          ? const Color(0xFFFF9600)
-                          : const Color(0xFFFF4B4B),
+                          ? AppColors.amber
+                          : AppColors.coral,
             ),
           ),
         ),
@@ -388,7 +396,8 @@ class _AccuracyRow extends StatelessWidget {
                 : '$accuracy% ($correct/${correct + wrong})',
             textAlign: TextAlign.right,
             maxLines: 1,
-            style: const TextStyle(fontSize: 12, color: AppColors.inkSoft),
+            style: const TextStyle(
+                fontSize: AppFont.caption, color: AppColors.inkSoft),
           ),
         ),
       ],
@@ -409,7 +418,7 @@ class _KoreanCard extends StatelessWidget {
         title: '📖 한글 정답률',
         child: const Text(
           '아직 한글 퀴즈를 풀지 않았어요.\n홈에서 📖 한글 탭을 눌러 시작해 보세요!',
-          style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
+          style: TextStyle(fontSize: AppFont.small, color: AppColors.inkSoft),
         ),
       );
     }
@@ -444,7 +453,7 @@ class _EnglishCard extends StatelessWidget {
         title: '🔤 영어 정답률',
         child: const Text(
           '아직 영어 퀴즈를 풀지 않았어요.\n홈에서 🔤 영어 탭을 눌러 시작해 보세요!',
-          style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
+          style: TextStyle(fontSize: AppFont.small, color: AppColors.inkSoft),
         ),
       );
     }
@@ -486,7 +495,8 @@ class _LangCard extends StatelessWidget {
         child: Text(
           '아직 ${pack.name} 퀴즈를 풀지 않았어요.\n'
           '홈에서 ${pack.emoji} ${pack.name} 탭을 눌러 시작해 보세요!',
-          style: const TextStyle(fontSize: 14, color: AppColors.inkSoft),
+          style: const TextStyle(
+              fontSize: AppFont.small, color: AppColors.inkSoft),
         ),
       );
     }
@@ -579,9 +589,9 @@ class _AdviceCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: const Color(0xFFE7F7F5),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFF2EC4B6), width: 2),
+        border: Border.all(color: AppColors.outline, width: 2),
       ),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -592,9 +602,9 @@ class _AdviceCard extends StatelessWidget {
             child: Text(
               _advice,
               style: const TextStyle(
-                fontSize: 15,
+                fontSize: AppFont.body,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF0B7A70),
+                color: AppColors.ink,
                 height: 1.5,
               ),
             ),
@@ -654,14 +664,15 @@ class _WeeklyTodoCard extends StatelessWidget {
             children: [
               Text(
                 '${p == null ? '' : '${p.emoji} ${p.name} · '}이번 주 할 일',
-                style: displayStyle(fontSize: 20),
+                style: displayStyle(fontSize: AppFont.heading),
               ),
               const SizedBox(height: 12),
               if (good == null && weak == null)
                 const Text(
                   '아직 기록이 적어요. 하루 한 판씩 풀면 여기에 '
                   '잘한 것과 연습할 것이 나와요.',
-                  style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
+                  style: TextStyle(
+                      fontSize: AppFont.small, color: AppColors.inkSoft),
                 ),
               if (good != null)
                 _line(
@@ -683,7 +694,7 @@ class _WeeklyTodoCard extends StatelessWidget {
                   icon: const Icon(Icons.play_arrow_rounded),
                   label: Text('${weak.label} 한 판 같이 풀기',
                       style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
+                          fontSize: AppFont.body, fontWeight: FontWeight.bold)),
                 ),
               ],
             ],
@@ -699,12 +710,13 @@ class _WeeklyTodoCard extends StatelessWidget {
           SizedBox(
             width: 84,
             child: Text(head,
-                style:
-                    const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
+                style: const TextStyle(
+                    fontSize: AppFont.body, fontWeight: FontWeight.bold)),
           ),
           Expanded(
             child: Text(body,
-                style: const TextStyle(fontSize: 15, color: AppColors.ink)),
+                style: const TextStyle(
+                    fontSize: AppFont.body, color: AppColors.ink)),
           ),
         ],
       );

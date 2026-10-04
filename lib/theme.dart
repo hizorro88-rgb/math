@@ -68,6 +68,42 @@ class AppColors {
   /// 구분선·비활성 테두리
   static const line = Color(0xFFEBE3D2);
 
+  /// 보상 글자 (앰버 바탕 위 — 앰버 글자는 흰 바탕에서 안 읽혀서 진한 황토)
+  static const rewardInk = Color(0xFF9A6A00);
+
+  /// 브랜드 초록의 밝은 쪽 (홈 머리 그라데이션 위)
+  static const greenLight = Color(0xFF57BE78);
+
+  /// 단계 밖 판(자유 연습·오답 노트)의 테마색 — 단원 색이 없을 때 하나로
+  static const practice = Color(0xFF8A6FD8);
+
+  /// 마이크가 켜져 있음(듣는 중·녹음 중) — 이 뜻으로만 쓴다
+  static const recording = Color(0xFFEA2B2B);
+  static const recordingSurface = Color(0xFFFFE4E1);
+
+  /// 아직 못 얻은 것의 그림자(실루엣)·점선
+  static const silhouette = Color(0xFFC9BCA6);
+
+  /// 진행 점: 틀린 문제 (코랄을 흐리게 — 꾸짖지 않는 색)
+  static const missedDot = Color(0xFFFFC9A8);
+
+  /// 그림 문제(분수 원 등)의 칠한 부분·선
+  static const figureFill = Color(0xFFB59CF0);
+  static const figureLine = Color(0xFF6A4FC2);
+
+  /// 떠 있는 창(아이 알림)의 그림자, 축하 창 뒤 어둡게
+  static const floatShadow = Color(0x33000000);
+  static const scrim = Color(0x99000000);
+
+  /// 축하 꽃가루 (뜻 없는 장식이라 여러 색)
+  static const confetti = [
+    green,
+    amber,
+    coral,
+    Color(0xFF4D96FF),
+    Color(0xFFFF6B9D),
+  ];
+
   /// 퀴즈 보기 4색 (파스텔). 정답 초록과 헷갈리지 않게 초록 대신 라벤더.
   static const choiceFills = [
     Color(0xFFE3F2FF),
@@ -83,15 +119,53 @@ class AppColors {
   ];
 }
 
+/// 글자 크기 6단계 — 화면의 '글'은 이 여섯 가지만 쓴다.
+/// 26 이상은 글이 아니라 그림(이모지)·문제 숫자 크기라 숫자로 자유롭게 쓴다.
+/// (test/design_tokens_test.dart가 26 미만 숫자를 막는다)
+class AppFont {
+  AppFont._();
+
+  /// 어른용 작은 설명·각주
+  static const caption = 12.0;
+
+  /// 보조 글·칩·부제
+  static const small = 14.0;
+
+  /// 본문·버튼 글
+  static const body = 16.0;
+
+  /// 카드·칸 제목
+  static const title = 18.0;
+
+  /// 화면 제목(앱바)·큰 버튼
+  static const heading = 20.0;
+
+  /// 큰 안내·축하 글
+  static const display = 24.0;
+}
+
+/// 장면(친구 방·꾸미기 판) 배경색 — 화면마다 따로 고르지 않게 여기서만
+class SceneColors {
+  SceneColors._();
+
+  static const wallTop = Color(0xFFFFF3DC);
+  static const wallBottom = Color(0xFFF6E3C5);
+  static const floor = Color(0xFFE0C9A6);
+  static const window = Color(0xFFCDE8FF);
+  static const skyTop = Color(0xFFBBE3FF);
+  static const skyBottom = Color(0xFFE3F4FF);
+  static const grass = Color(0xFFA5D96C);
+}
+
 /// 설정 화면에 보여줄 앱 버전 (pubspec version과 함께 올린다)
-const appVersionLabel = '1.43.0';
+const appVersionLabel = '1.44.0';
 
 /// 제목·버튼·숫자용 라운드 서체 (본문은 NotoSansKR)
 const kDisplayFont = 'Jua';
 
 /// 제목용 스타일 헬퍼
 TextStyle displayStyle({
-  double fontSize = 22,
+  double fontSize = AppFont.display,
   Color color = AppColors.ink,
   FontWeight? weight,
 }) {

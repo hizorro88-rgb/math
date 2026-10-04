@@ -249,7 +249,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                     Text(
                       '시작하기',
                       style: TextStyle(
-                        fontSize: 24,
+                        fontSize: AppFont.display,
                         fontWeight: FontWeight.bold,
                         color: Colors.white,
                       ),
@@ -305,7 +305,8 @@ class _SectionLabel extends StatelessWidget {
   Widget build(BuildContext context) {
     return Text(
       text,
-      style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+      style: const TextStyle(
+          fontSize: AppFont.heading, fontWeight: FontWeight.bold),
     );
   }
 }

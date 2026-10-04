@@ -103,11 +103,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             const Text('👐', style: TextStyle(fontSize: 56)),
             const QuokkaFace(size: 150),
             const SizedBox(height: 18),
-            Text('화면을 눌러 봐!', style: displayStyle(fontSize: 30)),
+            Text('화면을 눌러 봐!', style: displayStyle(fontSize: AppFont.display)),
             const SizedBox(height: 10),
             const Text(
               '이제 아이에게 건네주세요',
-              style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
+              style:
+                  TextStyle(fontSize: AppFont.small, color: AppColors.inkSoft),
             ),
           ],
         ),
@@ -117,7 +118,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
 
   Widget _label(String text) => Padding(
         padding: const EdgeInsets.only(top: 18, bottom: 8),
-        child: Text(text, style: displayStyle(fontSize: 17)),
+        child: Text(text, style: displayStyle(fontSize: AppFont.title)),
       );
 
   // ① 어른 화면 한 장
@@ -136,13 +137,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                 Text(
                   '보호자님, 30초면 돼요',
                   textAlign: TextAlign.center,
-                  style: displayStyle(fontSize: 22),
+                  style: displayStyle(fontSize: AppFont.display),
                 ),
                 const SizedBox(height: 4),
                 const Text(
                   '정한 뒤에 아이에게 폰을 건네주세요',
                   textAlign: TextAlign.center,
-                  style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
+                  style: TextStyle(
+                      fontSize: AppFont.small, color: AppColors.inkSoft),
                 ),
                 _label('아이 이름 (안 써도 돼요)'),
                 TextField(
@@ -150,7 +152,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   maxLength: 8,
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                      fontSize: 20, fontWeight: FontWeight.bold),
+                      fontSize: AppFont.heading, fontWeight: FontWeight.bold),
                   decoration: InputDecoration(
                     hintText: '예: 하늘',
                     hintStyle: const TextStyle(
@@ -196,7 +198,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                           '${Curriculum.categories[i].emoji} '
                           '${Curriculum.categories[i].title}',
                           style: const TextStyle(
-                              fontSize: 17, fontWeight: FontWeight.bold),
+                              fontSize: AppFont.title,
+                              fontWeight: FontWeight.bold),
                         ),
                       ),
                   ],
@@ -219,7 +222,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                             Text(
                               '소리 확인',
                               style: TextStyle(
-                                fontSize: 17,
+                                fontSize: AppFont.title,
                                 fontWeight: FontWeight.bold,
                                 color: Colors.white,
                               ),
@@ -258,7 +261,7 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   Text(
                     '아이에게 건네주기',
                     style: TextStyle(
-                      fontSize: 21,
+                      fontSize: AppFont.heading,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),

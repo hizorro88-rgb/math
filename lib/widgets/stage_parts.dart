@@ -72,7 +72,8 @@ class StageUnitCard extends StatelessWidget {
           child: Text(emoji, style: const TextStyle(fontSize: 26)),
         ),
         const SizedBox(width: 10),
-        Expanded(child: Text(title, style: displayStyle(fontSize: 18))),
+        Expanded(
+            child: Text(title, style: displayStyle(fontSize: AppFont.title))),
         if (_locked)
           // 🔒(자물쇠)는 '어른이 여는 것'에만 — 진행 잠금은 빈 점선 동그라미
           const Icon(Icons.radio_button_unchecked_rounded,

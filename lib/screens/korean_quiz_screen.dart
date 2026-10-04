@@ -9,6 +9,7 @@ import '../models/progress.dart';
 import '../models/stats.dart';
 import '../models/wrong_notes.dart';
 import '../services/sounds.dart';
+import '../theme.dart';
 import '../widgets/listen_guard.dart';
 import '../widgets/quiz_exit_dialog.dart';
 import '../widgets/quiz_parts.dart';
@@ -71,7 +72,7 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
 
   bool get _answered => _selectedChoice != null;
   bool get _isCorrect => _selectedChoice == _question.answer;
-  Color get _themeColor => widget.level?.unit.color ?? const Color(0xFF1CB0F6);
+  Color get _themeColor => widget.level?.unit.color ?? AppColors.practice;
 
   @override
   void initState() {

@@ -125,7 +125,7 @@ class _KidNoticeState extends State<_KidNotice>
                 border: Border.all(color: AppColors.outline, width: 2),
                 boxShadow: const [
                   BoxShadow(
-                    color: Color(0x33000000),
+                    color: AppColors.floatShadow,
                     blurRadius: 16,
                     offset: Offset(0, 6),
                   ),
@@ -143,7 +143,8 @@ class _KidNoticeState extends State<_KidNotice>
                   Expanded(
                     child: Text(
                       widget.text,
-                      style: displayStyle(fontSize: 17).copyWith(height: 1.3),
+                      style: displayStyle(fontSize: AppFont.title)
+                          .copyWith(height: 1.3),
                     ),
                   ),
                   if (widget.action != null) ...[
@@ -212,14 +213,15 @@ Future<bool> showKidConfirm(
             Text(
               question,
               textAlign: TextAlign.center,
-              style: displayStyle(fontSize: 22),
+              style: displayStyle(fontSize: AppFont.display),
             ),
             if (detail != null) ...[
               const SizedBox(height: 6),
               Text(
                 detail,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 14, color: AppColors.inkSoft),
+                style: const TextStyle(
+                    fontSize: AppFont.small, color: AppColors.inkSoft),
               ),
             ],
             const SizedBox(height: 20),
@@ -237,7 +239,7 @@ Future<bool> showKidConfirm(
                   Text(
                     keepLabel,
                     style: const TextStyle(
-                      fontSize: 20,
+                      fontSize: AppFont.heading,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -257,7 +259,7 @@ Future<bool> showKidConfirm(
                 actionLabel,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 17,
+                  fontSize: AppFont.title,
                   fontWeight: FontWeight.bold,
                   color: AppColors.inkSoft,
                 ),

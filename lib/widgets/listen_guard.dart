@@ -37,7 +37,7 @@ Future<bool> ensureListenReady(
               child: const Text(
                 '⚙️ 음성 설치하러 가기',
                 style: TextStyle(
-                  fontSize: 19,
+                  fontSize: AppFont.heading,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -56,7 +56,8 @@ Future<bool> ensureListenReady(
             child: Text(
               Speech.canOpenTtsSettings ? '다음에 할래요' : '알겠어요',
               style: TextStyle(
-                fontSize: Speech.canOpenTtsSettings ? 18 : 20,
+                fontSize:
+                    Speech.canOpenTtsSettings ? AppFont.title : AppFont.heading,
                 fontWeight: FontWeight.bold,
                 color: Speech.canOpenTtsSettings
                     ? AppColors.inkSoft
@@ -88,7 +89,7 @@ Future<bool> ensureListenReady(
           child: const Text(
             '소리 켜고 시작',
             style: TextStyle(
-              fontSize: 20,
+              fontSize: AppFont.heading,
               fontWeight: FontWeight.bold,
               color: Colors.white,
             ),
@@ -104,7 +105,7 @@ Future<bool> ensureListenReady(
           child: const Text(
             '다음에 할래요',
             style: TextStyle(
-              fontSize: 18,
+              fontSize: AppFont.title,
               fontWeight: FontWeight.bold,
               color: AppColors.inkSoft,
             ),
@@ -142,14 +143,15 @@ Widget _guardDialog(
           Text(
             title,
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                fontSize: AppFont.display, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 8),
           Text(
             message,
             textAlign: TextAlign.center,
             style: const TextStyle(
-                fontSize: 15, color: AppColors.inkSoft, height: 1.5),
+                fontSize: AppFont.body, color: AppColors.inkSoft, height: 1.5),
           ),
           const SizedBox(height: 20),
           ...buttons,

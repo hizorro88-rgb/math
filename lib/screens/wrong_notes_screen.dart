@@ -125,7 +125,8 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
           const SizedBox(height: 12),
           Text(
             _neverPlayed ? '여기는 오답 노트!' : '오답 노트가 비었어요! 🎉',
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+                fontSize: AppFont.heading, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 6),
           Text(
@@ -133,7 +134,8 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
                 ? '퀴즈를 풀다가 틀린 문제가 여기 모여요.\n쿼카랑 같이 첫 퀴즈부터 시작해 볼까?'
                 : '틀린 게 하나도 없다니, 쿼카가 깜짝 놀랐어!\n틀린 문제가 생기면 여기 모아 뒀다가 같이 복습해요.',
             textAlign: TextAlign.center,
-            style: const TextStyle(fontSize: 14, color: AppColors.inkSoft),
+            style: const TextStyle(
+                fontSize: AppFont.small, color: AppColors.inkSoft),
           ),
           const SizedBox(height: 20),
           FilledButton.icon(
@@ -145,7 +147,8 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
             icon: const Icon(Icons.play_arrow_rounded),
             label: const Text(
               '퀴즈 풀러 가기',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                  fontSize: AppFont.body, fontWeight: FontWeight.bold),
             ),
           ),
         ],
@@ -170,7 +173,8 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
             Text(
               '${_round.length}개 중 $_passed개 통과!',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  fontSize: AppFont.display, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 6),
             Text(
@@ -178,7 +182,8 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
                   ? '맞힌 낱말은 노트에서 사라졌어요. 깨끗해졌네요! ✨'
                   : '맞힌 낱말은 노트에서 사라졌어요. 남은 낱말은 다음에 또 만나요!',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 14, color: AppColors.inkSoft),
+              style: const TextStyle(
+                  fontSize: AppFont.small, color: AppColors.inkSoft),
             ),
             const SizedBox(height: 24),
             BouncyButton(
@@ -189,7 +194,7 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
                 '한 번 더 풀기',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 18,
+                  fontSize: AppFont.title,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),
@@ -206,7 +211,7 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
                 '끝내기',
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 16,
+                  fontSize: AppFont.body,
                   fontWeight: FontWeight.bold,
                   color: AppColors.inkSoft,
                 ),
@@ -221,7 +226,7 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
   Widget _quiz() {
     final note = _note;
     final listen = note.display == '🔊';
-    const color = Color(0xFFFF9600);
+    const color = AppColors.practice;
     return QuizScaffold(
       topBar: QuizTopBar(
         onClose: () => Navigator.of(context).pop(),
@@ -260,7 +265,7 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
               Text(
                 note.subDisplay,
                 textAlign: TextAlign.center,
-                style: const TextStyle(fontSize: 24),
+                style: const TextStyle(fontSize: AppFont.display),
               ),
             ],
           ],

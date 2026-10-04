@@ -98,7 +98,7 @@ class _ShopScreenState extends State<ShopScreen> {
               child: Text(
                 '🪙 $_coins',
                 style: const TextStyle(
-                  fontSize: 20,
+                  fontSize: AppFont.heading,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -117,13 +117,7 @@ class _ShopScreenState extends State<ShopScreen> {
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(24),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.05),
-                        offset: const Offset(0, 4),
-                        blurRadius: 10,
-                      ),
-                    ],
+                    border: Border.all(color: AppColors.outline, width: 2),
                   ),
                   child: Column(
                     children: [
@@ -132,7 +126,7 @@ class _ShopScreenState extends State<ShopScreen> {
                       Text(
                         _cheerLine(),
                         style: const TextStyle(
-                          fontSize: 15,
+                          fontSize: AppFont.body,
                           color: AppColors.inkSoft,
                         ),
                       ),
@@ -150,7 +144,7 @@ class _ShopScreenState extends State<ShopScreen> {
                       ItemSlot.bg => '🖼️ 뒤에 깔리는 배경',
                     },
                     style: const TextStyle(
-                      fontSize: 18,
+                      fontSize: AppFont.title,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -221,7 +215,7 @@ class _ItemCard extends StatelessWidget {
         children: [
           Text('🪙 ${item.cost}',
               style: const TextStyle(
-                  fontSize: 13,
+                  fontSize: AppFont.small,
                   fontWeight: FontWeight.bold,
                   color: AppColors.inkMuted)),
           const SizedBox(height: 3),
@@ -274,7 +268,7 @@ class _ItemCard extends StatelessWidget {
                   Text(
                     item.name,
                     style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.bold),
+                        fontSize: AppFont.body, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 4),
                   status,
@@ -305,8 +299,8 @@ class _ItemCard extends StatelessWidget {
         ),
         child: Text(
           text,
-          style:
-              TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: ink),
+          style: TextStyle(
+              fontSize: AppFont.small, fontWeight: FontWeight.bold, color: ink),
         ),
       );
 }

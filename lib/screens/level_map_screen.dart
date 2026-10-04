@@ -372,7 +372,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
               const SizedBox(height: 6),
               Text('어른이랑 같이 열어요',
                   textAlign: TextAlign.center,
-                  style: displayStyle(fontSize: 24)),
+                  style: displayStyle(fontSize: AppFont.display)),
               const SizedBox(height: 20),
               BouncyButton(
                 key: const ValueKey('locked-back'),
@@ -386,7 +386,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                     SizedBox(width: 4),
                     Text('열린 곳에서 놀기',
                         style: TextStyle(
-                            fontSize: 18,
+                            fontSize: AppFont.title,
                             fontWeight: FontWeight.bold,
                             color: Colors.white)),
                   ],
@@ -397,7 +397,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                 key: const ValueKey('locked-grownup'),
                 onPressed: () => Navigator.of(context).pop(true),
                 child: const Text('👨‍👩‍👧 어른이 열기',
-                    style: TextStyle(fontSize: 15, color: AppColors.inkSoft)),
+                    style: TextStyle(
+                        fontSize: AppFont.body, color: AppColors.inkSoft)),
               ),
             ],
           ),
@@ -592,7 +593,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
           children: [
             Text(_subjects[i].$1, style: const TextStyle(fontSize: 34)),
             const SizedBox(height: 2),
-            Text(_subjects[i].$2, style: displayStyle(fontSize: 17)),
+            Text(_subjects[i].$2, style: displayStyle(fontSize: AppFont.title)),
           ],
         ),
       );
@@ -615,7 +616,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
               Text(
                 '어떤 과목을 배울까?',
                 textAlign: TextAlign.center,
-                style: displayStyle(fontSize: 20),
+                style: displayStyle(fontSize: AppFont.heading),
               ),
               const SizedBox(height: 14),
               for (var r = 0; r < kids.length; r += 2) ...[
@@ -643,7 +644,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                       '👨‍👩‍👧 어른 공부 · ${_subjects[i].$1} ${_subjects[i].$2}'
                       '${i == _subject ? ' ✓' : ''}',
                       style: const TextStyle(
-                        fontSize: 15,
+                        fontSize: AppFont.body,
                         fontWeight: FontWeight.bold,
                         color: AppColors.inkSoft,
                       ),
@@ -1003,7 +1004,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                           const SizedBox(width: 10),
                           Expanded(
                             child: Text('자유 연습',
-                                style: displayStyle(fontSize: 18)),
+                                style: displayStyle(fontSize: AppFont.title)),
                           ),
                           const Icon(Icons.chevron_right_rounded,
                               color: AppColors.inkMuted),
@@ -1080,7 +1081,7 @@ class _Header extends StatelessWidget {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFF57BE78), AppColors.green],
+          colors: [AppColors.greenLight, AppColors.green],
         ),
         borderRadius: BorderRadius.vertical(bottom: Radius.circular(32)),
       ),
@@ -1105,7 +1106,8 @@ class _Header extends StatelessWidget {
                     children: [
                       Text(
                         title,
-                        style: displayStyle(fontSize: 22, color: Colors.white),
+                        style: displayStyle(
+                            fontSize: AppFont.display, color: Colors.white),
                       ),
                       const SizedBox(width: 8),
                       // 좁은 화면에서도 넘치지 않게 오른쪽 묶음 전체를 축소한다.
@@ -1133,13 +1135,14 @@ class _Header extends StatelessWidget {
                                     children: [
                                       Text(
                                         subjectEmojis[subject],
-                                        style: const TextStyle(fontSize: 16),
+                                        style: const TextStyle(
+                                            fontSize: AppFont.body),
                                       ),
                                       const SizedBox(width: 5),
                                       Text(
                                         subjectLabels[subject],
                                         style: const TextStyle(
-                                          fontSize: 14,
+                                          fontSize: AppFont.small,
                                           fontWeight: FontWeight.bold,
                                           color: AppColors.ink,
                                         ),
@@ -1169,7 +1172,7 @@ class _Header extends StatelessWidget {
                                   child: Text(
                                     '🪙 $coins',
                                     style: const TextStyle(
-                                      fontSize: 15,
+                                      fontSize: AppFont.body,
                                       fontWeight: FontWeight.bold,
                                       color: AppColors.ink,
                                     ),
@@ -1198,7 +1201,8 @@ class _Header extends StatelessWidget {
                                     child: Center(
                                       child: Text(
                                         profile.emoji,
-                                        style: const TextStyle(fontSize: 17),
+                                        style: const TextStyle(
+                                            fontSize: AppFont.title),
                                       ),
                                     ),
                                   ),
@@ -1303,13 +1307,7 @@ class _DailyCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            offset: const Offset(0, 4),
-            blurRadius: 10,
-          ),
-        ],
+        border: Border.all(color: AppColors.outline, width: 2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1318,22 +1316,23 @@ class _DailyCard extends StatelessWidget {
             children: [
               const Text(
                 '📋 오늘의 미션',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    fontSize: AppFont.title, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               Container(
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFFFEBD6),
+                  color: AppColors.rewardSurface,
                   borderRadius: BorderRadius.circular(999),
                 ),
                 child: Text(
                   daily.streak > 0 ? '🔥 ${daily.streak}일 연속' : '오늘도 도전!',
                   style: const TextStyle(
-                    fontSize: 13,
+                    fontSize: AppFont.small,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFFB05E00),
+                    color: AppColors.rewardInk,
                   ),
                 ),
               ),
@@ -1356,7 +1355,7 @@ class _DailyCard extends StatelessWidget {
                   child: Text(
                     '🛡️ 스트릭 지킴이 ×${daily.freezes}',
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: AppFont.small,
                       fontWeight: FontWeight.bold,
                       color: AppColors.inkSoft,
                     ),
@@ -1375,23 +1374,22 @@ class _DailyCard extends StatelessWidget {
                           horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: affordable
-                            ? const Color(0xFFEAF4E6)
-                            : const Color(0xFFF0EBE1),
+                            ? AppColors.selectedFill
+                            : AppColors.lockedNode,
                         borderRadius: BorderRadius.circular(999),
                         border: Border.all(
-                          color: affordable
-                              ? AppColors.green
-                              : const Color(0xFFCFC6B5),
+                          color:
+                              affordable ? AppColors.correct : AppColors.line,
                         ),
                       ),
                       child: Text(
                         affordable ? '받기 · 🪙 200' : '🪙 200 모이면 여기서 받아요',
                         style: TextStyle(
-                          fontSize: 12,
+                          fontSize: AppFont.caption,
                           fontWeight: FontWeight.bold,
                           color: affordable
-                              ? AppColors.green
-                              : const Color(0xFF8F8574),
+                              ? AppColors.greenPressed
+                              : AppColors.inkMuted,
                         ),
                       ),
                     ),
@@ -1402,7 +1400,8 @@ class _DailyCard extends StatelessWidget {
           const SizedBox(height: 4),
           const Text(
             '하루 쉬어도 연속 기록(불꽃)을 지켜 줘요',
-            style: TextStyle(fontSize: 11.5, color: AppColors.inkMuted),
+            style:
+                TextStyle(fontSize: AppFont.caption, color: AppColors.inkMuted),
           ),
         ],
       ),
@@ -1423,7 +1422,7 @@ class _MissionRow extends StatelessWidget {
 
     return Row(
       children: [
-        Text(mission.emoji, style: const TextStyle(fontSize: 20)),
+        Text(mission.emoji, style: const TextStyle(fontSize: AppFont.heading)),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -1432,7 +1431,7 @@ class _MissionRow extends StatelessWidget {
               Text(
                 mission.title,
                 style: const TextStyle(
-                  fontSize: 14,
+                  fontSize: AppFont.small,
                   fontWeight: FontWeight.bold,
                 ),
               ),
@@ -1442,8 +1441,8 @@ class _MissionRow extends StatelessWidget {
                 child: LinearProgressIndicator(
                   value: progress / mission.target,
                   minHeight: 7,
-                  backgroundColor: const Color(0xFFEBE3D2),
-                  color: done ? AppColors.green : const Color(0xFFFF9600),
+                  backgroundColor: AppColors.line,
+                  color: done ? AppColors.correct : AppColors.amber,
                 ),
               ),
             ],
@@ -1453,7 +1452,7 @@ class _MissionRow extends StatelessWidget {
         Text(
           done ? '✅' : '$progress/${mission.target} · 🪙${mission.reward}',
           style: TextStyle(
-            fontSize: 13,
+            fontSize: AppFont.small,
             fontWeight: FontWeight.bold,
             color: done ? AppColors.greenPressed : AppColors.inkSoft,
           ),
@@ -1496,12 +1495,12 @@ class _FoldCard extends StatelessWidget {
       onTap: onTap,
       child: Row(
         children: [
-          const Text('✅', style: TextStyle(fontSize: 18)),
+          const Text('✅', style: TextStyle(fontSize: AppFont.title)),
           const SizedBox(width: 8),
           Text(
             expanded ? '이전 단계 접기' : '이전 단계 $count개',
             style: const TextStyle(
-              fontSize: 14.5,
+              fontSize: AppFont.small,
               fontWeight: FontWeight.bold,
               color: AppColors.inkSoft,
             ),
@@ -1513,7 +1512,8 @@ class _FoldCard extends StatelessWidget {
                 : stars > 0
                     ? '⭐ $stars'
                     : rangeLabel,
-            style: const TextStyle(fontSize: 12.5, color: AppColors.inkMuted),
+            style: const TextStyle(
+                fontSize: AppFont.caption, color: AppColors.inkMuted),
           ),
           const SizedBox(width: 2),
           Icon(
@@ -1544,13 +1544,13 @@ class _SectionTitle extends StatelessWidget {
       padding: const EdgeInsets.only(left: 6, right: 6, bottom: 10),
       child: Row(
         children: [
-          Text(text, style: displayStyle(fontSize: 17)),
+          Text(text, style: displayStyle(fontSize: AppFont.title)),
           const Spacer(),
           if (trailing != null)
             Text(
               trailing!,
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: AppFont.body,
                 fontWeight: FontWeight.bold,
                 color: AppColors.ink,
               ),
@@ -1578,9 +1578,9 @@ class _ReviewStrip extends StatelessWidget {
       onTap: onTap,
       child: Row(
         children: [
-          const Text('🩹', style: TextStyle(fontSize: 22)),
+          const Text('🩹', style: TextStyle(fontSize: AppFont.display)),
           const SizedBox(width: 8),
-          Text('맞춤 복습', style: displayStyle(fontSize: 16)),
+          Text('맞춤 복습', style: displayStyle(fontSize: AppFont.body)),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -1588,7 +1588,8 @@ class _ReviewStrip extends StatelessWidget {
               '${review.label} · 조금 어려웠죠? 한 판 더!',
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, color: AppColors.inkSoft),
+              style: const TextStyle(
+                  fontSize: AppFont.caption, color: AppColors.inkSoft),
             ),
           ),
           const Icon(Icons.play_arrow_rounded, color: AppColors.green),
@@ -1725,7 +1726,8 @@ class _HomeTile extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(horizontal: 6),
                         child: FittedBox(
                           fit: BoxFit.scaleDown,
-                          child: Text(title, style: displayStyle(fontSize: 15)),
+                          child: Text(title,
+                              style: displayStyle(fontSize: AppFont.body)),
                         ),
                       ),
                     ],
@@ -1736,7 +1738,7 @@ class _HomeTile extends StatelessWidget {
                 const Positioned(
                   top: 6,
                   right: 8,
-                  child: Text('✅', style: TextStyle(fontSize: 18)),
+                  child: Text('✅', style: TextStyle(fontSize: AppFont.title)),
                 )
               else if (badge != null)
                 Positioned(
@@ -1752,7 +1754,7 @@ class _HomeTile extends StatelessWidget {
                     child: Text(
                       badge!,
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: AppFont.caption,
                         fontWeight: FontWeight.bold,
                         color: AppColors.ink,
                       ),
@@ -1828,7 +1830,7 @@ class _CategoryCard extends StatelessWidget {
                       Text(
                         title,
                         style: const TextStyle(
-                          fontSize: 18,
+                          fontSize: AppFont.title,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -1851,7 +1853,7 @@ class _CategoryCard extends StatelessWidget {
                           child: const Text(
                             '👍 추천',
                             style: TextStyle(
-                              fontSize: 12,
+                              fontSize: AppFont.caption,
                               fontWeight: FontWeight.bold,
                               color: AppColors.ink,
                             ),
@@ -1941,13 +1943,14 @@ class _QuickStartButton extends StatelessWidget {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text('바로 시작',
-                        style: displayStyle(fontSize: 24, color: Colors.white)),
+                        style: displayStyle(
+                            fontSize: AppFont.display, color: Colors.white)),
                     Text(
                       next.title,
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
-                        fontSize: 14,
+                        fontSize: AppFont.small,
                         fontWeight: FontWeight.bold,
                         color: Colors.white.withValues(alpha: 0.9),
                       ),

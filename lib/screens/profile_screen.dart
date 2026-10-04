@@ -112,7 +112,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ),
           TextButton(
             onPressed: () => Navigator.of(context).pop(true),
-            child: const Text('지우기', style: TextStyle(color: Colors.red)),
+            child:
+                const Text('지우기', style: TextStyle(color: AppColors.wrongInk)),
           ),
         ],
       ),
@@ -145,8 +146,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       const Center(
                         child: Text(
                           '내 얼굴을 고르면 내 진도로 이어져요!',
-                          style:
-                              TextStyle(fontSize: 14, color: AppColors.inkSoft),
+                          style: TextStyle(
+                              fontSize: AppFont.small,
+                              color: AppColors.inkSoft),
                         ),
                       ),
                       const SizedBox(height: 14),
@@ -168,7 +170,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               width: 64,
                               height: 64,
                               decoration: const BoxDecoration(
-                                color: Color(0xFFF0F7EC),
+                                color: AppColors.cream,
                                 shape: BoxShape.circle,
                               ),
                               child: Center(
@@ -181,7 +183,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               child: Text(
                                 profile.name,
                                 style: const TextStyle(
-                                  fontSize: 20,
+                                  fontSize: AppFont.heading,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
@@ -216,8 +218,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ],
                     if (_profiles.length < Profiles.maxProfiles)
                       BouncyButton(
-                        color: const Color(0xFFF0F7EC),
-                        shadowColor: const Color(0xFFC9E3BF),
+                        color: Colors.white,
+                        shadowColor: AppColors.outline,
+                        border: Border.all(color: AppColors.outline, width: 2),
                         borderRadius: 22,
                         padding: const EdgeInsets.all(16),
                         onTap: _addProfile,
@@ -233,7 +236,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             Text(
                               '새 프로필 만들기',
                               style: TextStyle(
-                                fontSize: 18,
+                                fontSize: AppFont.title,
                                 fontWeight: FontWeight.bold,
                                 color: AppColors.greenPressed,
                               ),
@@ -245,8 +248,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     const Text(
                       '프로필은 4명까지 만들 수 있어요',
                       textAlign: TextAlign.center,
-                      style:
-                          TextStyle(fontSize: 12.5, color: AppColors.inkMuted),
+                      style: TextStyle(
+                          fontSize: AppFont.caption, color: AppColors.inkMuted),
                     ),
                   ],
                 ),
@@ -338,7 +341,8 @@ class _ProfileDialogState extends State<_ProfileDialog> {
       onTap: () => setState(() => _ageIndex = value),
       child: Text(
         label,
-        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
+        style: const TextStyle(
+            fontSize: AppFont.small, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -356,7 +360,8 @@ class _ProfileDialogState extends State<_ProfileDialog> {
             Text(
               widget.editing != null ? '프로필 고치기' : '새 프로필 만들기',
               textAlign: TextAlign.center,
-              style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+              style: const TextStyle(
+                  fontSize: AppFont.heading, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 14),
             Wrap(
@@ -391,7 +396,7 @@ class _ProfileDialogState extends State<_ProfileDialog> {
               '몇 살이에요? (딱 맞는 단계를 추천해 드려요)',
               textAlign: TextAlign.center,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppFont.small,
                 fontWeight: FontWeight.bold,
                 color: AppColors.inkSoft,
               ),
@@ -416,7 +421,7 @@ class _ProfileDialogState extends State<_ProfileDialog> {
                 widget.editing != null ? '저장하기' : '만들기',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 18,
+                  fontSize: AppFont.title,
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
                 ),

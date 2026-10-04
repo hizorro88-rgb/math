@@ -106,7 +106,7 @@ class _QuizScreenState extends State<QuizScreen> {
 
   bool get _answered => _selectedChoice != null;
   bool get _isCorrect => _selectedChoice == _question.answer;
-  Color get _themeColor => widget.level?.unit.color ?? AppColors.green;
+  Color get _themeColor => widget.level?.unit.color ?? AppColors.practice;
 
   @override
   void initState() {
@@ -381,7 +381,7 @@ class _QuizScreenState extends State<QuizScreen> {
             _question.expression,
             textAlign: TextAlign.center,
             style: const TextStyle(
-              fontSize: 24,
+              fontSize: AppFont.display,
               fontWeight: FontWeight.bold,
               height: 1.4,
             ),
@@ -455,9 +455,9 @@ class _QuizScreenState extends State<QuizScreen> {
           child: Text(
             '$digit',
             style: TextStyle(
-              fontSize: 24,
+              fontSize: AppFont.display,
               fontWeight: FontWeight.bold,
-              color: _answered ? AppColors.inkMuted : Colors.black87,
+              color: _answered ? AppColors.inkMuted : AppColors.ink,
             ),
           ),
         );
@@ -620,7 +620,7 @@ class _VerticalProblem extends StatelessWidget {
           height: 3,
           margin: const EdgeInsets.symmetric(vertical: 6),
           decoration: BoxDecoration(
-            color: Colors.black87,
+            color: AppColors.ink,
             borderRadius: BorderRadius.circular(2),
           ),
         ),
@@ -712,7 +712,7 @@ class _EmojiHint extends StatelessWidget {
               Text(question.emoji, style: style),
             const Padding(
               padding: EdgeInsets.symmetric(horizontal: 6),
-              child: Text('➕', style: TextStyle(fontSize: 20)),
+              child: Text('➕', style: TextStyle(fontSize: AppFont.heading)),
             ),
             for (var i = 0; i < question.right; i++)
               Text(question.emoji, style: style),
@@ -746,7 +746,7 @@ class _EmojiHint extends StatelessWidget {
             for (var row = 0; row < question.right; row++)
               Text(
                 question.emoji * question.left,
-                style: const TextStyle(fontSize: 22, height: 1.2),
+                style: const TextStyle(fontSize: AppFont.display, height: 1.2),
               ),
           ],
         );
@@ -768,7 +768,7 @@ class _EmojiHint extends StatelessWidget {
                 ),
                 child: Text(
                   question.emoji * question.right,
-                  style: const TextStyle(fontSize: 20),
+                  style: const TextStyle(fontSize: AppFont.heading),
                 ),
               ),
           ],
@@ -835,10 +835,10 @@ class _PiePainter extends CustomPainter {
     final rect = Rect.fromCircle(center: center, radius: radius);
     final sweep = 2 * math.pi / slices;
 
-    final fillPaint = Paint()..color = const Color(0xFFFFA726);
-    final emptyPaint = Paint()..color = const Color(0xFFFFF3E0);
+    final fillPaint = Paint()..color = AppColors.figureFill;
+    final emptyPaint = Paint()..color = Colors.white;
     final linePaint = Paint()
-      ..color = const Color(0xFFE65100)
+      ..color = AppColors.figureLine
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2.5;
 
@@ -889,13 +889,13 @@ class _ClockPainter extends CustomPainter {
     canvas.drawCircle(
       center,
       radius,
-      Paint()..color = const Color(0xFFFFF6D8),
+      Paint()..color = Colors.white,
     );
     canvas.drawCircle(
       center,
       radius,
       Paint()
-        ..color = const Color(0xFF8B6F1F)
+        ..color = AppColors.brown
         ..style = PaintingStyle.stroke
         ..strokeWidth = 5,
     );
@@ -909,9 +909,9 @@ class _ClockPainter extends CustomPainter {
         text: TextSpan(
           text: '$n',
           style: const TextStyle(
-            fontSize: 15,
+            fontSize: AppFont.body,
             fontWeight: FontWeight.bold,
-            color: Colors.black87,
+            color: AppColors.ink,
           ),
         ),
         textDirection: TextDirection.ltr,
@@ -927,7 +927,7 @@ class _ClockPainter extends CustomPainter {
       center +
           Offset(math.cos(minuteAngle), math.sin(minuteAngle)) * (radius - 26),
       Paint()
-        ..color = const Color(0xFF1CB0F6)
+        ..color = AppColors.inkSoft
         ..strokeWidth = 5
         ..strokeCap = StrokeCap.round,
     );
@@ -937,11 +937,11 @@ class _ClockPainter extends CustomPainter {
       center,
       center + Offset(math.cos(hourAngle), math.sin(hourAngle)) * (radius - 46),
       Paint()
-        ..color = const Color(0xFFEA2B2B)
+        ..color = AppColors.ink
         ..strokeWidth = 7
         ..strokeCap = StrokeCap.round,
     );
-    canvas.drawCircle(center, 6, Paint()..color = Colors.black87);
+    canvas.drawCircle(center, 6, Paint()..color = AppColors.ink);
   }
 
   @override

@@ -85,7 +85,8 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
             children: [
               const Text(
                 '어떤 스티커를 붙일까요?',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    fontSize: AppFont.title, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 12),
               Flexible(
@@ -102,7 +103,7 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
                           onTap: () => Navigator.of(context).pop(sticker.emoji),
                           child: Container(
                             decoration: BoxDecoration(
-                              color: Colors.grey.shade50,
+                              color: AppColors.cream,
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(color: AppColors.line),
                             ),
@@ -287,15 +288,17 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
               Text(
                 title,
                 textAlign: TextAlign.center,
-                style:
-                    const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    fontSize: AppFont.display, fontWeight: FontWeight.bold),
               ),
               const SizedBox(height: 8),
               Text(
                 message,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                    fontSize: 15, color: AppColors.inkSoft, height: 1.5),
+                    fontSize: AppFont.body,
+                    color: AppColors.inkSoft,
+                    height: 1.5),
               ),
               const SizedBox(height: 20),
               BouncyButton(
@@ -306,7 +309,7 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
                   '신난다!',
                   textAlign: TextAlign.center,
                   style: TextStyle(
-                    fontSize: 20,
+                    fontSize: AppFont.heading,
                     fontWeight: FontWeight.bold,
                     color: Colors.white,
                   ),
@@ -354,14 +357,15 @@ class _StickerBookScreenState extends State<StickerBookScreen> {
                             : '모은 스티커 $owned / $total'
                                 '${_albums > 0 ? ' · 완성한 앨범 🏆 $_albums권' : ''}',
                         style: const TextStyle(
-                            fontSize: 17, fontWeight: FontWeight.bold),
+                            fontSize: AppFont.title,
+                            fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         _tickets > 0 ? '? 칸을 눌러 붙여요!' : '▶ 한 판 통과하면 1장!',
                         textAlign: TextAlign.center,
                         style: const TextStyle(
-                            fontSize: 13,
+                            fontSize: AppFont.small,
                             height: 1.5,
                             color: AppColors.inkSoft),
                       ),
@@ -435,25 +439,19 @@ class _PageCard extends StatelessWidget {
           color: done ? page.color : AppColors.line,
           width: 2.5,
         ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            offset: const Offset(0, 4),
-            blurRadius: 10,
-          ),
-        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(page.emoji, style: const TextStyle(fontSize: 24)),
+              Text(page.emoji,
+                  style: const TextStyle(fontSize: AppFont.display)),
               const SizedBox(width: 8),
               Text(
                 page.title,
-                style:
-                    const TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    fontSize: AppFont.title, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               done
@@ -467,7 +465,7 @@ class _PageCard extends StatelessWidget {
                       child: const Text(
                         '완성! 🎉',
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: AppFont.small,
                           fontWeight: FontWeight.bold,
                           color: Colors.white,
                         ),
@@ -476,7 +474,7 @@ class _PageCard extends StatelessWidget {
                   : Text(
                       '${collected.length}/${page.stickers.length}',
                       style: const TextStyle(
-                          fontSize: 14,
+                          fontSize: AppFont.small,
                           fontWeight: FontWeight.bold,
                           color: AppColors.inkSoft),
                     ),
@@ -530,13 +528,13 @@ class _StickerSlot extends StatelessWidget {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 250),
         decoration: BoxDecoration(
-          color: owned ? color.withValues(alpha: 0.15) : Colors.grey.shade50,
+          color: owned ? color.withValues(alpha: 0.15) : AppColors.cream,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: owned
                 ? color
                 : highlight
-                    ? const Color(0xFFFFC107)
+                    ? AppColors.amber
                     : AppColors.outline,
             width: owned || highlight ? 2 : 1.5,
           ),
@@ -553,7 +551,7 @@ class _StickerSlot extends StatelessWidget {
             Text(
               sticker.name,
               style: TextStyle(
-                fontSize: 13,
+                fontSize: AppFont.small,
                 fontWeight: FontWeight.bold,
                 color: owned ? AppColors.ink : AppColors.inkMuted,
               ),
@@ -604,24 +602,19 @@ class _CanvasCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            offset: const Offset(0, 4),
-            blurRadius: 10,
-          ),
-        ],
+        border: Border.all(color: AppColors.outline, width: 2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const Text('🖼️', style: TextStyle(fontSize: 24)),
+              const Text('🖼️', style: TextStyle(fontSize: AppFont.display)),
               const SizedBox(width: 8),
               const Text(
                 '내 꾸미기 판',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    fontSize: AppFont.title, fontWeight: FontWeight.bold),
               ),
               const Spacer(),
               // 지우개 모드
@@ -643,7 +636,7 @@ class _CanvasCard extends StatelessWidget {
                   child: Text(
                     erasing ? '✋ 떼어내는 중' : '✋ 떼어내기',
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: AppFont.small,
                       fontWeight: FontWeight.bold,
                       color: placed.isEmpty
                           ? AppColors.inkMuted
@@ -669,7 +662,7 @@ class _CanvasCard extends StatelessWidget {
                   child: Text(
                     '🗑️ 모두 지우기',
                     style: TextStyle(
-                      fontSize: 12.5,
+                      fontSize: AppFont.caption,
                       fontWeight: FontWeight.bold,
                       color: placed.isEmpty
                           ? AppColors.inkMuted
@@ -706,7 +699,10 @@ class _CanvasCard extends StatelessWidget {
                             gradient: LinearGradient(
                               begin: Alignment.topCenter,
                               end: Alignment.bottomCenter,
-                              colors: [Color(0xFFBBE3FF), Color(0xFFE3F4FF)],
+                              colors: [
+                                SceneColors.skyTop,
+                                SceneColors.skyBottom
+                              ],
                             ),
                           ),
                         ),
@@ -715,7 +711,7 @@ class _CanvasCard extends StatelessWidget {
                           right: 0,
                           bottom: 0,
                           height: height * 0.22,
-                          child: Container(color: const Color(0xFFA5D96C)),
+                          child: Container(color: SceneColors.grass),
                         ),
                         const Positioned(
                           right: 12,
@@ -730,7 +726,8 @@ class _CanvasCard extends StatelessWidget {
                           top: 14,
                           child: Opacity(
                             opacity: 0.6,
-                            child: Text('⛅', style: TextStyle(fontSize: 24)),
+                            child: Text('⛅',
+                                style: TextStyle(fontSize: AppFont.display)),
                           ),
                         ),
                         // 붙인 스티커들 (끌어서 옮길 수 있다)
@@ -764,11 +761,11 @@ class _CanvasCard extends StatelessWidget {
                                       ? '아래에서 스티커를 고르고\n원하는 곳을 톡! 눌러 붙여요'
                                       : '원하는 곳을 톡! 눌러 붙여요',
                               textAlign: TextAlign.center,
-                              style: TextStyle(
-                                fontSize: 14,
+                              style: const TextStyle(
+                                fontSize: AppFont.small,
                                 height: 1.5,
                                 fontWeight: FontWeight.bold,
-                                color: Colors.blueGrey.shade400,
+                                color: AppColors.inkSoft,
                               ),
                             ),
                           ),
@@ -786,7 +783,8 @@ class _CanvasCard extends StatelessWidget {
               hasTickets
                   ? '위 칭찬판·스티커북에 스티커를 붙이면\n여기서도 꾸밀 수 있어요!'
                   : '칭찬판이나 스티커북에 붙인 스티커가 생기면\n여기를 마음껏 꾸밀 수 있어요!',
-              style: const TextStyle(fontSize: 13, color: AppColors.inkSoft),
+              style: const TextStyle(
+                  fontSize: AppFont.small, color: AppColors.inkSoft),
             )
           else
             SizedBox(
@@ -806,13 +804,11 @@ class _CanvasCard extends StatelessWidget {
                       width: 52,
                       decoration: BoxDecoration(
                         color: selected
-                            ? const Color(0xFFFFF3C4)
-                            : Colors.grey.shade50,
+                            ? AppColors.rewardSurface
+                            : AppColors.cream,
                         borderRadius: BorderRadius.circular(14),
                         border: Border.all(
-                          color: selected
-                              ? const Color(0xFFFFC107)
-                              : AppColors.outline,
+                          color: selected ? AppColors.amber : AppColors.outline,
                           width: selected ? 2.5 : 1.5,
                         ),
                       ),
@@ -865,11 +861,12 @@ class _RewardBoardCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Text('🏆', style: TextStyle(fontSize: 24)),
+              const Text('🏆', style: TextStyle(fontSize: AppFont.display)),
               const SizedBox(width: 8),
               const Text(
                 '칭찬 스티커판',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.bold),
+                style: TextStyle(
+                    fontSize: AppFont.title, fontWeight: FontWeight.bold),
               ),
               const SizedBox(width: 8),
               Expanded(
@@ -877,7 +874,7 @@ class _RewardBoardCard extends StatelessWidget {
                   '${boards + 1}번째 판 · $filled/${RewardBoardStore.slots}',
                   overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: AppFont.small,
                       fontWeight: FontWeight.bold,
                       color: AppColors.inkSoft),
                 ),
@@ -888,7 +885,7 @@ class _RewardBoardCard extends StatelessWidget {
           Text(
             promise != null ? '다 채우면 🎁 $promise!' : '다 채우면 🎁 선물!',
             style: const TextStyle(
-                fontSize: 13.5,
+                fontSize: AppFont.small,
                 fontWeight: FontWeight.bold,
                 color: AppColors.brown),
           ),
@@ -928,12 +925,13 @@ class _RewardBoardCard extends StatelessWidget {
                             )
                           // 마지막 칸은 🎁 — 끝에 선물이 있다는 걸 그림으로.
                           : i == RewardBoardStore.slots - 1
-                              ? const Text('🎁', style: TextStyle(fontSize: 24))
+                              ? const Text('🎁',
+                                  style: TextStyle(fontSize: AppFont.display))
                               // 빈 칸은 "다음엔 뭐가 올까?" — 다음 칸만 앰버.
                               : Text(
                                   '?',
                                   style: displayStyle(
-                                    fontSize: 20,
+                                    fontSize: AppFont.heading,
                                     color: i == nextSlot
                                         ? AppColors.amber
                                         : AppColors.line,
@@ -967,7 +965,7 @@ Future<bool> editRewardPromise(BuildContext context) async {
         children: [
           const Text(
             '아이가 스티커 20개를 다 모으면 주기로 한\n약속을 적어 주세요. (비우면 약속 없음)',
-            style: TextStyle(fontSize: 13.5, height: 1.4),
+            style: TextStyle(fontSize: AppFont.small, height: 1.4),
           ),
           const SizedBox(height: 12),
           TextField(

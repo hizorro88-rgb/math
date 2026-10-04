@@ -112,7 +112,7 @@ class _HomePetCardState extends State<HomePetCard> {
                         ? '${pet.species!.name}가 목말라요! 💧\n물 주기를 눌러 봐!'
                         : widget.greeting,
                     style: const TextStyle(
-                      fontSize: 15,
+                      fontSize: AppFont.body,
                       fontWeight: FontWeight.bold,
                       color: AppColors.ink,
                       height: 1.3,
@@ -145,7 +145,8 @@ class _HomePetCardState extends State<HomePetCard> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text('함께 공부할 친구가 기다려요', style: displayStyle(fontSize: 15)),
+              Text('함께 공부할 친구가 기다려요',
+                  style: displayStyle(fontSize: AppFont.body)),
               const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
@@ -159,7 +160,7 @@ class _HomePetCardState extends State<HomePetCard> {
                     '친구 만나러 가기',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 15,
+                      fontSize: AppFont.body,
                       fontWeight: FontWeight.bold,
                       color: Colors.white,
                     ),
@@ -185,7 +186,7 @@ class _HomePetCardState extends State<HomePetCard> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(pet.species?.name ?? '내 친구',
-                      style: displayStyle(fontSize: 17)),
+                      style: displayStyle(fontSize: AppFont.title)),
                   const SizedBox(height: 8),
                   PetGauge(meal: true, value: pet.fullness, height: 10),
                   const SizedBox(height: 6),
@@ -263,7 +264,7 @@ class _HomePetCardState extends State<HomePetCard> {
         gradient: const LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFFFF3DC), Color(0xFFF3DFBE)],
+          colors: [SceneColors.wallTop, SceneColors.wallBottom],
         ),
       ),
       child: LayoutBuilder(builder: (context, box) {
@@ -276,7 +277,7 @@ class _HomePetCardState extends State<HomePetCard> {
               left: 0,
               right: 0,
               bottom: 14,
-              child: Container(height: 2, color: const Color(0xFFE0C9A6)),
+              child: Container(height: 2, color: SceneColors.floor),
             ),
             AnimatedPositioned(
               duration: const Duration(milliseconds: 2200),

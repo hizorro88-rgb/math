@@ -53,7 +53,7 @@ class _BadgeScreenState extends State<BadgeScreen> {
                   '지금까지 배지 $earnedCount개 / ${allBadges.length}개를 모았어요!',
                   textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: AppFont.body,
                     fontWeight: FontWeight.bold,
                     color: AppColors.ink,
                   ),
@@ -114,7 +114,7 @@ class _BadgeCard extends StatelessWidget {
                 ? Text(badge.emoji, style: const TextStyle(fontSize: 38))
                 : ColorFiltered(
                     colorFilter: const ColorFilter.mode(
-                        Color(0xFFD8CFBE), BlendMode.srcIn),
+                        AppColors.silhouette, BlendMode.srcIn),
                     child:
                         Text(badge.emoji, style: const TextStyle(fontSize: 38)),
                   ),
@@ -124,7 +124,7 @@ class _BadgeCard extends StatelessWidget {
               child: Text(
                 badge.title,
                 style: displayStyle(
-                  fontSize: 15,
+                  fontSize: AppFont.body,
                   color: earned ? AppColors.ink : AppColors.inkMuted,
                 ),
               ),
@@ -164,7 +164,8 @@ class _BeltCard extends StatelessWidget {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('지금 나는 ${rank.title}!', style: displayStyle(fontSize: 18)),
+                Text('지금 나는 ${rank.title}!',
+                    style: displayStyle(fontSize: AppFont.title)),
                 const SizedBox(height: 8),
                 Row(
                   children: [

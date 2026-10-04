@@ -81,7 +81,7 @@ class LevelBubble extends StatelessWidget {
               Text(
                 '$number',
                 style: displayStyle(
-                  fontSize: _isCurrent ? 24 : 18,
+                  fontSize: _isCurrent ? AppFont.display : AppFont.title,
                   color: _cleared ? Colors.white : color,
                 ),
               ),
@@ -108,7 +108,8 @@ class LevelBubble extends StatelessWidget {
             ),
             child: Text(
               '여기부터!',
-              style: displayStyle(fontSize: 12, color: Colors.white),
+              style:
+                  displayStyle(fontSize: AppFont.caption, color: Colors.white),
             ),
           ),
         ],
@@ -123,7 +124,8 @@ class LevelBubble extends StatelessWidget {
           const SizedBox(height: 3),
           Text(
             '⭐' * stars + '☆' * (3 - stars),
-            style: const TextStyle(fontSize: 11, color: AppColors.inkMuted),
+            style: const TextStyle(
+                fontSize: AppFont.caption, color: AppColors.inkMuted),
           ),
         ],
       );
@@ -190,8 +192,8 @@ class _LockedBubbleState extends State<_LockedBubble>
                   Text(
                     '${widget.number}',
                     style: displayStyle(
-                      fontSize: 15,
-                      color: const Color(0xFF9E9382),
+                      fontSize: AppFont.body,
+                      color: AppColors.inkMuted,
                     ),
                   ),
                 ],
@@ -209,7 +211,7 @@ class _DashedCirclePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = const Color(0xFFD8CFBE)
+      ..color = AppColors.silhouette
       ..style = PaintingStyle.stroke
       ..strokeWidth = 2;
     final fill = Paint()..color = AppColors.lockedNode.withValues(alpha: 0.5);

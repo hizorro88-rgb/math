@@ -87,7 +87,8 @@ class PreschoolMathApp extends StatelessWidget {
           foregroundColor: Colors.white,
           // 하위 화면 앱바 규칙: 가운데 정렬, Jua 20 — 화면에서 style을 덧씌우지 않는다
           centerTitle: true,
-          titleTextStyle: displayStyle(fontSize: 20, color: Colors.white),
+          titleTextStyle:
+              displayStyle(fontSize: AppFont.heading, color: Colors.white),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
@@ -95,7 +96,7 @@ class PreschoolMathApp extends StatelessWidget {
               borderRadius: BorderRadius.circular(20),
             ),
             textStyle: const TextStyle(
-              fontSize: 24,
+              fontSize: AppFont.display,
               fontWeight: FontWeight.bold,
             ),
           ),

@@ -100,7 +100,8 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
       appBar: AppBar(
         centerTitle: true,
         title: Text(state?.species?.name ?? '내 친구',
-            style: displayStyle(fontSize: 20, color: Colors.white)),
+            style:
+                displayStyle(fontSize: AppFont.heading, color: Colors.white)),
       ),
       body: state == null || state.species == null
           ? const Center(child: CircularProgressIndicator())
@@ -125,7 +126,7 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
         gradient: LinearGradient(
           begin: Alignment.topCenter,
           end: Alignment.bottomCenter,
-          colors: [Color(0xFFFFF3DC), Color(0xFFF6E3C5)],
+          colors: [SceneColors.wallTop, SceneColors.wallBottom],
         ),
       ),
       // 친구의 가로 위치를 방 너비에서 계산해야 해서 LayoutBuilder가 Stack을 감싼다
@@ -140,7 +141,7 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
               left: 0,
               right: 0,
               bottom: 40,
-              child: Container(height: 3, color: const Color(0xFFE0C9A6)),
+              child: Container(height: 3, color: SceneColors.floor),
             ),
             // 창문 (방처럼 보이게 하는 최소한의 장식)
             Positioned(
@@ -150,9 +151,9 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
                 width: 62,
                 height: 52,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFCDE8FF),
+                  color: SceneColors.window,
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: const Color(0xFFE0C9A6), width: 3),
+                  border: Border.all(color: SceneColors.floor, width: 3),
                 ),
               ),
             ),
@@ -191,7 +192,7 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
             children: [
               Text(
                 petStageNames[state.stage - 1],
-                style: displayStyle(fontSize: 20),
+                style: displayStyle(fontSize: AppFont.heading),
               ),
               const SizedBox(width: 10),
               Container(
@@ -203,7 +204,7 @@ class _PetRoomScreenState extends State<PetRoomScreen> {
                 ),
                 child: Text('🪙 ${state.coins}',
                     style: const TextStyle(
-                        fontSize: 15, fontWeight: FontWeight.bold)),
+                        fontSize: AppFont.body, fontWeight: FontWeight.bold)),
               ),
             ],
           ),

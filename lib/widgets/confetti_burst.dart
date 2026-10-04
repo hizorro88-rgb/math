@@ -33,13 +33,7 @@ class _ConfettiPainter extends CustomPainter {
   final double t;
   final int pieces;
 
-  static const _colors = [
-    AppColors.green,
-    AppColors.amber,
-    AppColors.coral,
-    Color(0xFF4D96FF),
-    Color(0xFFFF6B9D),
-  ];
+  static const _colors = AppColors.confetti;
 
   @override
   void paint(Canvas canvas, Size size) {
