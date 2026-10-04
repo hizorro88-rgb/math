@@ -3,20 +3,16 @@ import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../models/daily.dart';
 import '../models/english_curriculum.dart';
 import '../models/english_question.dart';
-import '../models/premium.dart';
 import '../models/progress.dart';
 import '../models/stats.dart';
-import '../models/stickers.dart';
 import '../models/wrong_notes.dart';
-import '../services/cloud_sync.dart';
 import '../services/sounds.dart';
 import '../widgets/listen_guard.dart';
 import '../widgets/quiz_exit_dialog.dart';
 import '../widgets/quiz_parts.dart';
-import 'result_screen.dart';
+import 'round_finish.dart';
 
 /// 영어 퀴즈 화면: 수학 퀴즈와 같은 흐름(진행 바·콤보·재출제·피드백 판)으로
 /// 낱말/글자/그림 보기를 고른다. 듣기 문제는 TTS가 문제를 읽어 준다.
@@ -200,75 +196,36 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
     if (_currentIndex + 1 >= _entries.length) {
       _finishing = true;
       final level = widget.level;
-      final stars = starsForScore(_correctCount, _baseCount);
-      final earned = _roundPoints + completionBonus(stars);
-      final chestCoins =
-          _random.nextDouble() < (stars >= 3 ? 0.35 : (stars >= 1 ? 0.15 : 0))
-              ? (2 + _random.nextInt(9)) * 5
-              : 0;
-      if (stars >= 1) Sounds.complete();
-      if (level != null) {
-        await EnglishProgressStore.saveStars(level.number, stars);
-      }
-      await ProgressStore.addPoints(earned + chestCoins);
-      final rewards = await DailyStore.recordRound(
+      await finishRound(
+        context,
+        subject: RoundSubject.english,
+        dots: _dots.dots,
         correctCount: _correctCount,
-        stars: stars,
-        english: true,
-      );
-      await StatsStore.recordRoundDay();
-      CloudSync.scheduleUpload(); // 로그인돼 있으면 잠시 뒤 클라우드에 저장
-      // 통과하면 스티커북에 붙일 스티커 1장을 준다.
-      if (stars >= 1) await StickerStore.addTickets(1);
-      var nextLevel = (level != null &&
-              stars >= 1 &&
-              level.number < EnglishCurriculum.totalLevels)
-          ? EnglishCurriculum.levelAt(level.number + 1)
-          : null;
-      // 다음 단계가 이용권으로 잠긴 카테고리면 버튼을 숨긴다
-      // (홈에서 부모 확인 → 이용권 안내를 거치게 한다).
-      if (nextLevel != null &&
-          !PremiumStore.isCategoryFree(nextLevel.unit.category.index) &&
-          !await PremiumStore.hasPass()) {
-        nextLevel = null;
-      }
-      // 클로저 안에서 널 아님이 유지되게 final로 다시 담는다.
-      final next = nextLevel;
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => ResultScreen(
-            dots: _dots.dots,
-            correctCount: _correctCount,
-            totalCount: _baseCount,
-            earnedPoints: earned,
-            chestCoins: chestCoins,
-            stickerEarned: stars >= 1,
-            completedMissions: rewards.missions,
-            milestoneDays: rewards.milestoneDays,
-            milestoneCoins: rewards.milestoneCoins,
-            headerText: level != null
-                ? '${level.unit.emoji} ${level.unit.title} · '
-                    '${level.number - level.unit.firstLevelNumber + 1}단계'
-                : null,
-            showUnlockHint: level != null && stars < 1,
-            nextLabel: next != null ? '다음 단계' : null,
-            nextBuilder: next != null
-                ? () => EnglishQuizScreen(
-                      type: next.unit.type,
-                      stage: next.stage,
-                      level: next,
-                    )
-                : null,
-            retryBuilder: () => EnglishQuizScreen(
-              type: widget.type,
-              stage: widget.stage,
-              level: level,
-            ),
-            // 어디서 왔든 홈으로 가는 버튼이라 표현을 하나로 통일한다.
-            homeLabel: '처음으로',
-          ),
-        ),
+        totalCount: _baseCount,
+        roundPoints: _roundPoints,
+        random: _random,
+        saveStars: level == null
+            ? null
+            : (stars) => EnglishProgressStore.saveStars(level.number, stars),
+        next: (stars) {
+          if (level == null ||
+              stars < 1 ||
+              level.number >= EnglishCurriculum.totalLevels) {
+            return null;
+          }
+          final n = EnglishCurriculum.levelAt(level.number + 1);
+          return NextStage(
+            categoryIndex: n.unit.category.index,
+            builder: () =>
+                EnglishQuizScreen(type: n.unit.type, stage: n.stage, level: n),
+          );
+        },
+        headerText: level == null
+            ? null
+            : stageHeader(level.unit.emoji, level.unit.title,
+                level.number - level.unit.firstLevelNumber + 1),
+        retryBuilder: () => EnglishQuizScreen(
+            type: widget.type, stage: widget.stage, level: level),
       );
       return;
     }

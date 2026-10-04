@@ -34,8 +34,7 @@ void main() {
     test('날짜가 다르면 다른 구성도 나온다 (로테이션)', () {
       final seen = <String>{};
       for (var i = 0; i < 30; i++) {
-        final missions =
-            DailyStore.missionsFor(day1.add(Duration(days: i)));
+        final missions = DailyStore.missionsFor(day1.add(Duration(days: i)));
         seen.add(missions.map((m) => m.id).join(','));
       }
       expect(seen.length, greaterThan(1));

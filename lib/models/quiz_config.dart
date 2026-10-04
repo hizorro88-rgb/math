@@ -14,7 +14,7 @@ enum QuizMode {
   division('나눗셈', '➗'),
 
   /// 세로셈 덧셈: 일의 자리·십의 자리를 이해하며 자리마다 답을 채운다
-  verticalAdd('세로 덧셈', '🧮'),
+  verticalAdd('세로 덧셈', '📐'),
 
   /// 세로셈 뺄셈
   verticalSub('세로 뺄셈', '📝'),

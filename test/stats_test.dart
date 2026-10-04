@@ -82,8 +82,7 @@ void main() {
           correct: true);
       await StatsStore.recordKoreanAnswer(KrQuizType.pictureToWord,
           correct: true);
-      await StatsStore.recordKoreanAnswer(KrQuizType.fillBlank,
-          correct: false);
+      await StatsStore.recordKoreanAnswer(KrQuizType.fillBlank, correct: false);
 
       final stats = await StatsStore.load();
       expect(stats.krCorrect[KrQuizType.pictureToWord.index], 2);

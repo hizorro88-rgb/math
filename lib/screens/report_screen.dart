@@ -605,8 +605,6 @@ class _AdviceCard extends StatelessWidget {
   }
 }
 
-
-
 /// 이번 주 할 일 — 보호자가 리포트를 열자마자 "그래서 뭘 하면 되나"를 본다.
 /// 잘한 것 하나(칭찬해 주기) + 연습할 것 하나(▶ 바로 한 판). 5문제 이상 푼 유형만.
 class _WeeklyTodoCard extends StatelessWidget {
@@ -625,9 +623,8 @@ class _WeeklyTodoCard extends StatelessWidget {
         );
       }
       final mode = s.mathMode!;
-      final max = mode == QuizMode.multiplication || mode == QuizMode.division
-          ? 9
-          : 10;
+      final max =
+          mode == QuizMode.multiplication || mode == QuizMode.division ? 9 : 10;
       return QuizScreen(config: QuizConfig(mode: mode, maxNumber: max));
     }));
   }
@@ -667,9 +664,10 @@ class _WeeklyTodoCard extends StatelessWidget {
                   style: TextStyle(fontSize: 14, color: AppColors.inkSoft),
                 ),
               if (good != null)
-                _line('👍 잘해요',
+                _line(
+                    '👍 잘해요',
                     '${good.subject} ${good.emoji} ${good.label} ${good.accuracy}%'
-                    ' — 칭찬해 주세요'),
+                        ' — 칭찬해 주세요'),
               if (weak != null) ...[
                 const SizedBox(height: 8),
                 _line('💪 연습해요',
@@ -701,8 +699,8 @@ class _WeeklyTodoCard extends StatelessWidget {
           SizedBox(
             width: 84,
             child: Text(head,
-                style: const TextStyle(
-                    fontSize: 15, fontWeight: FontWeight.bold)),
+                style:
+                    const TextStyle(fontSize: 15, fontWeight: FontWeight.bold)),
           ),
           Expanded(
             child: Text(body,

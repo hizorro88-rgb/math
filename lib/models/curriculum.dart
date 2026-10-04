@@ -287,7 +287,7 @@ class Curriculum {
               endMax: 20),
           Unit(
               title: '세로 덧셈 첫걸음',
-              emoji: '🧮',
+              emoji: '📐',
               mode: QuizMode.verticalAdd,
               startMax: 20,
               endMax: 50),
@@ -325,7 +325,7 @@ class Curriculum {
               endMax: 50),
           Unit(
               title: '받아올림 세로 덧셈',
-              emoji: '🧮',
+              emoji: '📐',
               mode: QuizMode.verticalAdd,
               startMax: 50,
               endMax: 99),

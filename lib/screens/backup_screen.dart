@@ -25,6 +25,20 @@ class _BackupScreenState extends State<BackupScreen> {
   final _restoreController = TextEditingController();
   bool _restoring = false;
 
+  /// 되돌릴 수 있는 '복원 직전 기록' (마지막 복원이 있었으면)
+  BackupInfo? _undo;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUndo();
+  }
+
+  Future<void> _loadUndo() async {
+    final undo = await BackupService.undoInfo();
+    if (mounted) setState(() => _undo = undo);
+  }
+
   @override
   void dispose() {
     _restoreController.dispose();
@@ -65,16 +79,25 @@ class _BackupScreenState extends State<BackupScreen> {
       _snack('백업 코드를 읽을 수 없어요. 코드 전체가 빠짐없이 붙었는지 확인해 주세요');
       return;
     }
-    final date =
-        '${info.savedAt.year}년 ${info.savedAt.month}월 ${info.savedAt.day}일';
+    final now = await BackupService.currentInfo();
+    if (!mounted) return;
     final ok = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
         title: const Text('이 백업으로 되돌릴까요?'),
-        content: Text(
-          '📅 $date 백업\n⭐ 통과한 단계 ${info.clearedLevels}개 · 🪙 코인 ${info.coins}\n\n'
-          '지금 기기의 기록은 모두 백업 내용으로 바뀌어요.',
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _compare(now: now, backup: info),
+            const SizedBox(height: 12),
+            const Text(
+              '지금 기기의 기록은 모두 백업 내용으로 바뀌어요.\n'
+              '바뀌기 직전 기록은 자동으로 보관돼서, 이 화면에서 되돌릴 수 있어요.',
+              style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
+            ),
+          ],
         ),
         actions: [
           TextButton(
@@ -90,8 +113,44 @@ class _BackupScreenState extends State<BackupScreen> {
     );
     if (ok != true || !mounted) return;
 
+    await _apply(() => BackupService.restore(code),
+        fail: '복원에 실패했어요. 코드를 다시 확인해 주세요');
+  }
+
+  /// 복원 직전 기록으로 되돌린다 (부모 화면 안이라 확인 한 번)
+  Future<void> _undoRestore() async {
+    final undo = _undo;
+    if (undo == null) return;
+    final now = await BackupService.currentInfo();
+    if (!mounted) return;
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(22)),
+        title: const Text('복원하기 전으로 돌아갈까요?'),
+        content: _compare(now: now, backup: undo, backupLabel: '복원 전'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('취소'),
+          ),
+          FilledButton(
+            key: const ValueKey('undo-ok'),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('되돌리기'),
+          ),
+        ],
+      ),
+    );
+    if (ok != true || !mounted) return;
+    await _apply(BackupService.undoRestore, fail: '되돌리지 못했어요');
+  }
+
+  /// 저장소를 바꾸고, 메모리에 남은 설정을 다시 읽은 뒤 홈부터 다시 연다.
+  Future<void> _apply(Future<bool> Function() action,
+      {required String fail}) async {
     setState(() => _restoring = true);
-    final done = await BackupService.restore(code);
+    final done = await action();
     if (done) {
       // 메모리에 남아 있는 프로필·소리 설정을 복원된 값으로 다시 읽는다.
       await Profiles.init();
@@ -104,13 +163,59 @@ class _BackupScreenState extends State<BackupScreen> {
     if (!mounted) return;
     setState(() => _restoring = false);
     if (!done) {
-      _snack('복원에 실패했어요. 코드를 다시 확인해 주세요');
+      _snack(fail);
       return;
     }
     // 복원된 기록으로 처음부터 다시 연다.
     Navigator.of(context).pushAndRemoveUntil(
       MaterialPageRoute(builder: (_) => const LevelMapScreen()),
       (route) => false,
+    );
+  }
+
+  /// 지금 기록 vs 백업 — 무엇이 바뀌는지 숫자로 나란히
+  Widget _compare({
+    required BackupInfo now,
+    required BackupInfo backup,
+    String backupLabel = '백업',
+  }) {
+    String date(DateTime d) => '${d.year}.${d.month}.${d.day}';
+    final rows = [
+      ('📅 날짜', '오늘', date(backup.savedAt)),
+      ('🧒 프로필', '${now.profiles}명', '${backup.profiles}명'),
+      ('⭐ 통과 단계', '${now.clearedLevels}', '${backup.clearedLevels}'),
+      ('🪙 코인', '${now.coins}', '${backup.coins}'),
+    ];
+    Widget cell(String text, {bool bold = false}) => Padding(
+          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 4),
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              fontWeight: bold ? FontWeight.bold : FontWeight.normal,
+            ),
+          ),
+        );
+    return Table(
+      key: const ValueKey('backup-compare'),
+      columnWidths: const {0: FlexColumnWidth(1.3)},
+      border: const TableBorder(
+        horizontalInside: BorderSide(color: AppColors.line, width: 1.5),
+      ),
+      children: [
+        TableRow(children: [
+          cell(''),
+          cell('지금', bold: true),
+          cell(backupLabel, bold: true),
+        ]),
+        for (final r in rows)
+          TableRow(children: [
+            cell(r.$1, bold: true),
+            cell(r.$2),
+            cell(r.$3),
+          ]),
+      ],
     );
   }
 
@@ -126,8 +231,9 @@ class _BackupScreenState extends State<BackupScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: AppColors.rewardSurface,
-              borderRadius: BorderRadius.circular(20),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(color: AppColors.outline, width: 2),
             ),
             child: const Text(
               '기록은 이 폰에 저장돼요 (클라우드에 로그인하면 계정에도 저장돼요). '
@@ -144,7 +250,7 @@ class _BackupScreenState extends State<BackupScreen> {
               children: [
                 const Text(
                   '모든 프로필의 진도·별·코인·꾸미기가 코드 하나에 담겨요.',
-                  style: TextStyle(fontSize: 13, color: Colors.black54),
+                  style: TextStyle(fontSize: 13, color: AppColors.inkSoft),
                 ),
                 const SizedBox(height: 12),
                 BouncyButton(
@@ -180,7 +286,7 @@ class _BackupScreenState extends State<BackupScreen> {
                   const SizedBox(height: 6),
                   const Text(
                     '복사되었어요. 코드가 길어도 전체를 한 번에 붙여넣으면 돼요.',
-                    style: TextStyle(fontSize: 12, color: Colors.black54),
+                    style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
                   ),
                 ],
               ],
@@ -225,28 +331,65 @@ class _BackupScreenState extends State<BackupScreen> {
                     ),
                     const SizedBox(width: 10),
                     Expanded(
-                      child: BouncyButton(
-                        color: _restoreController.text.trim().isEmpty
-                            ? AppColors.inkMuted
-                            : AppColors.green,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        onTap: _restoring ? () {} : _restore,
-                        child: Text(
-                          _restoring ? '복원 중…' : '✅ 복원하기',
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 15,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
+                      child: Builder(builder: (context) {
+                        // 붙여 넣기 전에는 누를 수 없다 (눌러도 할 일이 없으니)
+                        final enabled = !_restoring &&
+                            _restoreController.text.trim().isNotEmpty;
+                        return BouncyButton(
+                          key: const ValueKey('backup-restore'),
+                          color:
+                              enabled ? AppColors.green : AppColors.lockedNode,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          onTap: enabled ? _restore : null,
+                          child: Text(
+                            _restoring ? '복원 중…' : '✅ 복원하기',
+                            textAlign: TextAlign.center,
+                            style: TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                              color: enabled ? Colors.white : AppColors.inkSoft,
+                            ),
                           ),
-                        ),
-                      ),
+                        );
+                      }),
                     ),
                   ],
                 ),
               ],
             ),
           ),
+          if (_undo != null) ...[
+            const SizedBox(height: 14),
+            _card(
+              title: '↩️ 복원 되돌리기',
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    '마지막으로 복원하기 직전 기록이 보관돼 있어요 '
+                    '(⭐ ${_undo!.clearedLevels} · 🪙 ${_undo!.coins}).',
+                    style:
+                        const TextStyle(fontSize: 13, color: AppColors.inkSoft),
+                  ),
+                  const SizedBox(height: 10),
+                  BouncyButton(
+                    key: const ValueKey('backup-undo'),
+                    color: Colors.white,
+                    shadowColor: AppColors.outline,
+                    border: Border.all(color: AppColors.outline, width: 2),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    onTap: _restoring ? null : _undoRestore,
+                    child: const Text(
+                      '복원하기 전으로 되돌리기',
+                      textAlign: TextAlign.center,
+                      style:
+                          TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -258,13 +401,7 @@ class _BackupScreenState extends State<BackupScreen> {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(22),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            offset: const Offset(0, 4),
-            blurRadius: 10,
-          ),
-        ],
+        border: Border.all(color: AppColors.outline, width: 2),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

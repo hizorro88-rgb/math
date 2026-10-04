@@ -42,15 +42,15 @@ void main() {
       // 둘째 프로필 스코프 키에 기록을 남긴다.
       final prefs = await SharedPreferences.getInstance();
       await prefs.setInt(Profiles.scoped('total_points_v1'), 500);
-      expect(prefs.getKeys().any((k) => k.startsWith('p${second.id}_')),
-          isTrue);
+      expect(
+          prefs.getKeys().any((k) => k.startsWith('p${second.id}_')), isTrue);
 
       await Profiles.remove(second.id);
 
       final profiles = await Profiles.load();
       expect(profiles.map((p) => p.id), isNot(contains(second.id)));
-      expect(prefs.getKeys().any((k) => k.startsWith('p${second.id}_')),
-          isFalse);
+      expect(
+          prefs.getKeys().any((k) => k.startsWith('p${second.id}_')), isFalse);
       // 지운 프로필을 쓰고 있었다면 기본 프로필로 돌아온다.
       expect(Profiles.activeId, 1);
     });

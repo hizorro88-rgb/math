@@ -89,7 +89,7 @@ final List<LearnBadge> allBadges = [
   ),
   LearnBadge(
     id: 'math_tree',
-    emoji: '🧮',
+    emoji: '🌳',
     title: '수학 나무',
     desc: '수학 문제 300개 풀기',
     earnedBy: (d) => d.mathAnswered >= 300,

@@ -226,8 +226,7 @@ void main() {
     expect(await ProgressStore.loadCoins(), RewardBoardStore.fallbackCoins);
   });
 
-  testWidgets('칭찬판: 빈 숫자 칸을 눌러 스티커를 골라 붙이고, 다 채우면 완성 팝업이 뜬다',
-      (tester) async {
+  testWidgets('칭찬판: 빈 숫자 칸을 눌러 스티커를 골라 붙이고, 다 채우면 완성 팝업이 뜬다', (tester) async {
     SharedPreferences.setMockInitialValues({
       'sticker_tickets_v1': 1,
       'reward_board_v1': [for (var i = 0; i < 19; i++) '$i:⭐'],

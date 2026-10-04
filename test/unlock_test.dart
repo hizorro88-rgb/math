@@ -25,12 +25,13 @@ void main() {
   test('전체 열기 전에는 별 없이 뒷 단계가 잠겨 있다', () {
     final stars = List.filled(Curriculum.totalLevels, 0);
     expect(ProgressStore.isUnlocked(stars, 2), isFalse);
-    expect(KoreanProgressStore.isUnlocked(
-        List.filled(KoreanCurriculum.totalLevels, 0), 2), isFalse);
+    expect(
+        KoreanProgressStore.isUnlocked(
+            List.filled(KoreanCurriculum.totalLevels, 0), 2),
+        isFalse);
   });
 
-  test('전체 열기를 켜면 모든 과목의 모든 단계가 열리고 이용권도 인정된다',
-      () async {
+  test('전체 열기를 켜면 모든 과목의 모든 단계가 열리고 이용권도 인정된다', () async {
     await PremiumStore.setAllUnlocked(true);
 
     final mathStars = List.filled(Curriculum.totalLevels, 0);

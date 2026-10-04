@@ -10,8 +10,7 @@ void main() {
       t.record(1, correct: false, retry: false); // 1번이 뒤(목록 3번)에 다시 온다
       t.record(2, correct: true, retry: false);
       expect(t.dots.length, 3);
-      expect(t.dots,
-          [QuizDot.correct, QuizDot.missed, QuizDot.correct]);
+      expect(t.dots, [QuizDot.correct, QuizDot.missed, QuizDot.correct]);
       // 다시 나온 문제(목록 3번)는 원래 1번 점을 가리킨다.
       expect(t.dotFor(3), 1);
       t.record(3, correct: true, retry: true);
@@ -37,8 +36,7 @@ void main() {
     tearDown(() => Speech.debugOnSpeak = null);
 
     test('처음 나온 외국어 문제는 한국어 과제부터 읽는다', () {
-      QuizVoice.question(
-          task: '짝이 되는 소문자를 찾아요', speech: 'A', lang: 'en-US');
+      QuizVoice.question(task: '짝이 되는 소문자를 찾아요', speech: 'A', lang: 'en-US');
       expect(spoken.first, '짝이 되는 소문자를 찾아요');
     });
 

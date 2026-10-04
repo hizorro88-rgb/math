@@ -67,10 +67,8 @@ void main() {
 
     test('조건이 오르는 순서대로 정렬되어 있다', () {
       for (var i = 1; i < petStageRules.length; i++) {
-        expect(petStageRules[i].stars,
-            greaterThan(petStageRules[i - 1].stars));
-        expect(petStageRules[i].meals,
-            greaterThan(petStageRules[i - 1].meals));
+        expect(petStageRules[i].stars, greaterThan(petStageRules[i - 1].stars));
+        expect(petStageRules[i].meals, greaterThan(petStageRules[i - 1].meals));
       }
     });
 
@@ -254,7 +252,8 @@ void main() {
 
   test('친구는 종마다 동물 하나로 자라고, 아이 얼굴·쿼카와 겹치지 않는다', () {
     for (final s in petSpeciesList) {
-      expect(s.stages.toSet(), hasLength(1), reason: '${s.id}: 단계마다 다른 동물이면 "바뀌었다"로 보인다');
+      expect(s.stages.toSet(), hasLength(1),
+          reason: '${s.id}: 단계마다 다른 동물이면 "바뀌었다"로 보인다');
       expect(profileAvatars, isNot(contains(s.stages.first)), reason: s.id);
     }
     final animals = {for (final s in petSpeciesList) s.stages.first};

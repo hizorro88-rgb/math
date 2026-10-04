@@ -33,6 +33,9 @@ class LevelBubble extends StatelessWidget {
   final Color color;
   final VoidCallback onTap;
 
+  /// 같은 스크롤 안의 "지금 할 원"이 보이게 굴린다 (잠긴 것을 눌렀을 때)
+  static void revealCurrent(BuildContext from) => _CurrentAnchor.reveal(from);
+
   bool get _cleared => stars >= 1;
   bool get _isCurrent => current ?? (unlocked && !_cleared);
 
@@ -90,7 +93,8 @@ class LevelBubble extends StatelessWidget {
 
     // 지금 도전할 단계는 숨 쉬듯 커졌다 작아지고, "여기부터!"를 달아준다.
     if (_isCurrent) {
-      return Column(
+      return _CurrentAnchor(
+          child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           Pulse(child: bubble),
@@ -108,7 +112,7 @@ class LevelBubble extends StatelessWidget {
             ),
           ),
         ],
-      );
+      ));
     }
     // 통과한 원: 별은 원 밖 아래에 읽을 수 있는 크기로
     if (_cleared) {
@@ -154,6 +158,7 @@ class _LockedBubbleState extends State<_LockedBubble>
 
   void _tap() {
     _shake.forward(from: 0);
+    _CurrentAnchor.reveal(context);
     showKidNotice(context, emoji: '👆', text: '반짝이는 동그라미부터 해요!');
   }
 
@@ -276,4 +281,51 @@ class LevelGrid extends StatelessWidget {
       },
     );
   }
+}
+
+/// "지금 할 원"의 자리 표시. 잠긴 원을 누르면 같은 화면(같은 스크롤) 안의
+/// 지금 원이 보이도록 굴려 준다 — 말로 "저기"라고 하는 대신 직접 보여 준다.
+class _CurrentAnchor extends StatefulWidget {
+  const _CurrentAnchor({required this.child});
+
+  final Widget child;
+
+  static final _mounted = <_CurrentAnchorState>[];
+
+  /// [from]과 같은 스크롤 안의 지금 원으로 굴린다 (없으면 아무 일 없음).
+  static void reveal(BuildContext from) {
+    final scrollable = Scrollable.maybeOf(from);
+    if (scrollable == null) return;
+    for (final anchor in _mounted.reversed) {
+      if (!anchor.mounted) continue;
+      if (Scrollable.maybeOf(anchor.context) != scrollable) continue;
+      Scrollable.ensureVisible(
+        anchor.context,
+        alignment: 0.35,
+        duration: const Duration(milliseconds: 450),
+        curve: Curves.easeInOut,
+      );
+      return;
+    }
+  }
+
+  @override
+  State<_CurrentAnchor> createState() => _CurrentAnchorState();
+}
+
+class _CurrentAnchorState extends State<_CurrentAnchor> {
+  @override
+  void initState() {
+    super.initState();
+    _CurrentAnchor._mounted.add(this);
+  }
+
+  @override
+  void dispose() {
+    _CurrentAnchor._mounted.remove(this);
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) => widget.child;
 }

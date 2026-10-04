@@ -44,8 +44,7 @@ void main() {
       'level_stars_v4': ['3', '1', '0'],
       'lang_ja_stars_v1': ['2', '0'],
     });
-    final code =
-        await BackupService.export(now: DateTime(2026, 9, 2, 10, 30));
+    final code = await BackupService.export(now: DateTime(2026, 9, 2, 10, 30));
     final info = BackupService.peek(code);
     expect(info, isNotNull);
     expect(info!.savedAt, DateTime(2026, 9, 2, 10, 30));
@@ -176,5 +175,60 @@ void main() {
     expect(prefs.getInt('coins_v1'), 77);
     // 홈(학습 지도)으로 돌아갔다.
     expect(find.byType(BackupScreen), findsNothing);
+  });
+
+  test('복원 직전 기록이 자동 보관되고 한 번 되돌릴 수 있다', () async {
+    SharedPreferences.setMockInitialValues({
+      'coins_v1': 99,
+      'profiles_v1': ['1|🐣|가', '2|🦊|나'],
+    });
+    final code = await BackupService.export();
+    expect(BackupService.peek(code)!.profiles, 2);
+
+    SharedPreferences.setMockInitialValues({'coins_v1': 5});
+    expect(await BackupService.undoInfo(), isNull);
+    expect(await BackupService.restore(code), isTrue);
+
+    final prefs = await SharedPreferences.getInstance();
+    expect(prefs.getInt('coins_v1'), 99);
+    final undo = await BackupService.undoInfo();
+    expect(undo, isNotNull);
+    expect(undo!.coins, 5);
+    expect(undo.profiles, 1);
+    // 보관본은 백업 코드에 다시 담기지 않는다.
+    final again = await BackupService.exportData();
+    expect(again.containsKey(BackupService.undoKey), isFalse);
+
+    expect(await BackupService.undoRestore(), isTrue);
+    expect(prefs.getInt('coins_v1'), 5);
+    expect(await BackupService.undoInfo(), isNull);
+    expect(await BackupService.undoRestore(), isFalse);
+  });
+
+  testWidgets('붙여 넣기 전에는 복원 버튼이 눌리지 않는다', (tester) async {
+    SharedPreferences.setMockInitialValues({});
+    await tester.pumpWidget(const MaterialApp(home: BackupScreen()));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('✅ 복원하기'));
+    await tester.pumpAndSettle();
+    expect(find.text('이 백업으로 되돌릴까요?'), findsNothing);
+    expect(find.textContaining('읽을 수 없어요'), findsNothing);
+  });
+
+  testWidgets('복원 확인 창에 지금 기록과 백업이 나란히 나온다', (tester) async {
+    SharedPreferences.setMockInitialValues({'coins_v1': 77});
+    final code = await BackupService.export();
+    SharedPreferences.setMockInitialValues({'coins_v1': 3});
+    await tester.pumpWidget(const MaterialApp(home: BackupScreen()));
+    await tester.enterText(find.byType(TextField), code);
+    await tester.pump();
+    await tester.tap(find.text('✅ 복원하기'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const ValueKey('backup-compare')), findsOneWidget);
+    expect(find.text('지금'), findsOneWidget);
+    expect(find.text('77'), findsOneWidget);
+    expect(find.text('3'), findsOneWidget);
   });
 }

@@ -620,7 +620,7 @@ class _ResultScreenState extends State<ResultScreen>
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             if (_hasNext)
-              quiet(widget.nextLabel!, Icons.arrow_forward_rounded,
+              quiet(widget.nextLabel!, Icons.play_arrow_rounded,
                   () => _replace(widget.nextBuilder!)),
             quiet('다시 하기', Icons.refresh_rounded,
                 () => _replace(widget.retryBuilder)),
@@ -630,7 +630,7 @@ class _ResultScreenState extends State<ResultScreen>
     } else if (_hasNext) {
       // 통과: 주인공은 '다음 단계' 하나. 다시 하기는 조용한 보조.
       children = [
-        primary(widget.nextLabel!, Icons.arrow_forward_rounded,
+        primary(widget.nextLabel!, Icons.play_arrow_rounded,
             () => _replace(widget.nextBuilder!)),
         const SizedBox(height: 6),
         quiet('다시 하기', Icons.refresh_rounded,

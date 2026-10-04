@@ -1002,7 +1002,7 @@ class QuizFeedbackPanel extends StatelessWidget {
                   Icon(
                     isLast
                         ? Icons.emoji_events_rounded
-                        : Icons.arrow_forward_rounded,
+                        : Icons.play_arrow_rounded,
                     size: 28,
                     color: Colors.white,
                   ),
@@ -1124,7 +1124,8 @@ class _QuizScaffoldState extends State<QuizScaffold> {
             ),
             if (widget.sparkle)
               Positioned.fill(
-                child: IgnorePointer(child: SparkleBurst(key: widget.sparkleKey)),
+                child:
+                    IgnorePointer(child: SparkleBurst(key: widget.sparkleKey)),
               ),
           ],
         ),

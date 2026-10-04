@@ -107,7 +107,7 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
     // 푸는 동안은 다른 퀴즈와 같은 몰입 화면(✕ · 점 · 문제 · 보기 · 판)
     if (_loaded && _round.isNotEmpty && !_finished) return _quiz();
     return Scaffold(
-      appBar: AppBar(title: const Text('📒 오답 노트')),
+      appBar: AppBar(title: const Text('오답 노트')),
       body: !_loaded
           ? const Center(child: CircularProgressIndicator())
           : _round.isEmpty

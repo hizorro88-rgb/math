@@ -14,7 +14,6 @@ import 'package:preschool_math/services/speech.dart';
 import 'package:preschool_math/services/voice_input.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-
 /// 부모 게이트: 한글로 쓴 세 자리 수를 읽고 키패드로 입력해 통과한다.
 Future<void> passParentGate(WidgetTester tester) async {
   final hangul =
@@ -67,7 +66,14 @@ void main() {
     expect(find.text('쿼카 학교'), findsOneWidget);
     expect(find.text('자유 연습'), findsOneWidget);
     // 놀이판 6칸 (오늘 줄 + 모으기 줄)
-    for (final tile in ['오늘의 미션', '주간 보스전', '오답 노트', '꾸미기 가게', '스티커북', '배지 도감']) {
+    for (final tile in [
+      '오늘의 미션',
+      '주간 보스전',
+      '오답 노트',
+      '꾸미기 가게',
+      '스티커북',
+      '배지 도감'
+    ]) {
       expect(find.bySemanticsLabel(tile), findsOneWidget, reason: tile);
     }
 
@@ -289,8 +295,7 @@ void main() {
     expect(find.text('계속하기'), findsOneWidget);
   });
 
-  testWidgets('한글 탭으로 바꾸면 한글 카테고리가 보이고, 낱말→그림 퀴즈를 풀 수 있다',
-      (tester) async {
+  testWidgets('한글 탭으로 바꾸면 한글 카테고리가 보이고, 낱말→그림 퀴즈를 풀 수 있다', (tester) async {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 
@@ -308,12 +313,11 @@ void main() {
 
     // 카드에 크게 보이는 낱말(fontSize 40)을 읽고 짝이 되는 그림을 누른다.
     final wordText = tester
-        .widgetList<Text>(find.byWidgetPredicate(
-            (w) => w is Text && w.style?.fontSize == 40))
+        .widgetList<Text>(
+            find.byWidgetPredicate((w) => w is Text && w.style?.fontSize == 40))
         .first
         .data!;
-    final answerEmoji =
-        krWords2.firstWhere((w) => w.word == wordText).emoji;
+    final answerEmoji = krWords2.firstWhere((w) => w.word == wordText).emoji;
     await tester.tap(find.text(answerEmoji));
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -510,8 +514,7 @@ void main() {
     expect(find.bySemanticsLabel(RegExp('· 3단계')), findsOneWidget);
   });
 
-  testWidgets('이용권이 없으면 고른 나이가 잠겨 있어도 바로 시작은 열린 곳으로 간다',
-      (tester) async {
+  testWidgets('이용권이 없으면 고른 나이가 잠겨 있어도 바로 시작은 열린 곳으로 간다', (tester) async {
     SharedPreferences.setMockInitialValues({'age_category_v1': 3});
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
@@ -617,12 +620,11 @@ void main() {
 
     // 카드에 크게 보이는 영어 낱말로 정답 그림을 찾아 누른다.
     final wordText = tester
-        .widgetList<Text>(find.byWidgetPredicate(
-            (w) => w is Text && w.style?.fontSize == 40))
+        .widgetList<Text>(
+            find.byWidgetPredicate((w) => w is Text && w.style?.fontSize == 40))
         .first
         .data!;
-    final answerEmoji =
-        enAllWords.firstWhere((w) => w.shown == wordText).emoji;
+    final answerEmoji = enAllWords.firstWhere((w) => w.shown == wordText).emoji;
     await tester.tap(find.text(answerEmoji));
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -645,12 +647,11 @@ void main() {
 
     // 카드에 보이는 히라가나 낱말로 정답 그림을 찾아 누른다.
     final wordText = tester
-        .widgetList<Text>(find.byWidgetPredicate(
-            (w) => w is Text && w.style?.fontSize == 40))
+        .widgetList<Text>(
+            find.byWidgetPredicate((w) => w is Text && w.style?.fontSize == 40))
         .first
         .data!;
-    final answerEmoji =
-        jaWords.firstWhere((w) => w.word == wordText).emoji;
+    final answerEmoji = jaWords.firstWhere((w) => w.word == wordText).emoji;
     await tester.tap(find.text(answerEmoji));
     await tester.pump(const Duration(milliseconds: 300));
 
@@ -754,8 +755,7 @@ void main() {
     expect(find.text('숫자에 맞는 한자는?'), findsOneWidget);
   });
 
-  testWidgets('이용권이 없으면 두 번째 카테고리는 부모 확인 → 이용권 안내로 간다',
-      (tester) async {
+  testWidgets('이용권이 없으면 두 번째 카테고리는 부모 확인 → 이용권 안내로 간다', (tester) async {
     await tester.pumpWidget(const PreschoolMathApp());
     await tester.pumpAndSettle();
 

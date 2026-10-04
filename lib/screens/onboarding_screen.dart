@@ -8,6 +8,7 @@ import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../theme.dart';
 import '../widgets/bouncy_button.dart';
+import '../widgets/selectable_tile.dart';
 import 'level_map_screen.dart';
 import 'pet_intro_screen.dart';
 
@@ -172,28 +173,12 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   runSpacing: 10,
                   children: [
                     for (final avatar in profileAvatars)
-                      GestureDetector(
+                      SelectableChip(
+                        circle: true,
+                        selected: _emoji == avatar,
                         onTap: () => setState(() => _emoji = avatar),
-                        child: Container(
-                          width: 64,
-                          height: 64,
-                          decoration: BoxDecoration(
-                            color: _emoji == avatar
-                                ? AppColors.selectedFill
-                                : Colors.white,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: _emoji == avatar
-                                  ? AppColors.green
-                                  : AppColors.outline,
-                              width: 3,
-                            ),
-                          ),
-                          child: Center(
-                            child: Text(avatar,
-                                style: const TextStyle(fontSize: 30)),
-                          ),
-                        ),
+                        child:
+                            Text(avatar, style: const TextStyle(fontSize: 30)),
                       ),
                   ],
                 ),
@@ -204,29 +189,14 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
                   runSpacing: 10,
                   children: [
                     for (var i = 0; i < Curriculum.categories.length; i++)
-                      GestureDetector(
+                      SelectableChip(
+                        selected: _ageIndex == i,
                         onTap: () => setState(() => _ageIndex = i),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                              horizontal: 16, vertical: 12),
-                          decoration: BoxDecoration(
-                            color: _ageIndex == i
-                                ? AppColors.selectedFill
-                                : Colors.white,
-                            borderRadius: BorderRadius.circular(18),
-                            border: Border.all(
-                              color: _ageIndex == i
-                                  ? AppColors.green
-                                  : AppColors.outline,
-                              width: 3,
-                            ),
-                          ),
-                          child: Text(
-                            '${Curriculum.categories[i].emoji} '
-                            '${Curriculum.categories[i].title}',
-                            style: const TextStyle(
-                                fontSize: 17, fontWeight: FontWeight.bold),
-                          ),
+                        child: Text(
+                          '${Curriculum.categories[i].emoji} '
+                          '${Curriculum.categories[i].title}',
+                          style: const TextStyle(
+                              fontSize: 17, fontWeight: FontWeight.bold),
                         ),
                       ),
                   ],

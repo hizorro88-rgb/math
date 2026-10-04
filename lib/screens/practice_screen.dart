@@ -6,6 +6,7 @@ import '../models/english_question.dart';
 import '../models/korean_question.dart';
 import '../models/language_packs.dart';
 import '../models/quiz_config.dart';
+import '../services/speech.dart';
 import '../theme.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/selectable_tile.dart';
@@ -330,7 +331,11 @@ class _ChoiceCard extends StatelessWidget {
         emoji: emoji,
         label: label,
         selected: selected,
-        onTap: onTap,
+        onTap: () {
+          // 글을 못 읽어도 무엇을 골랐는지 들리게 (이미 고른 칸은 조용히)
+          if (!selected) Speech.speak(label.replaceAll('\n', ' '));
+          onTap();
+        },
         sub: sub,
       );
 }

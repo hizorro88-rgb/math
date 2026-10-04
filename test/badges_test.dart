@@ -30,11 +30,9 @@ LearningStats _stats(
       clockWrong: 0,
       bandCorrect: const [0, 0, 0, 0],
       bandWrong: const [0, 0, 0, 0],
-      krCorrect:
-          krCorrect ?? List.filled(KrQuizType.values.length, 0),
+      krCorrect: krCorrect ?? List.filled(KrQuizType.values.length, 0),
       krWrong: List.filled(KrQuizType.values.length, 0),
-      enCorrect:
-          enCorrect ?? List.filled(EnQuizType.values.length, 0),
+      enCorrect: enCorrect ?? List.filled(EnQuizType.values.length, 0),
       enWrong: List.filled(EnQuizType.values.length, 0),
       langCorrect: const {},
       langWrong: const {},
@@ -77,18 +75,23 @@ void main() {
     test('문제 풀이·별·점수 배지', () {
       expect(_badge('first_step').earnedBy(_data(stats: _stats(addCorrect: 1))),
           isTrue);
-      expect(_badge('math_sprout').earnedBy(_data(stats: _stats(addCorrect: 50))),
+      expect(
+          _badge('math_sprout').earnedBy(_data(stats: _stats(addCorrect: 50))),
           isTrue);
       expect(
         _badge('kr_first').earnedBy(_data(
-            stats: _stats(
-                krCorrect: [1, ...List.filled(KrQuizType.values.length - 1, 0)]))),
+            stats: _stats(krCorrect: [
+          1,
+          ...List.filled(KrQuizType.values.length - 1, 0)
+        ]))),
         isTrue,
       );
       expect(
         _badge('en_first').earnedBy(_data(
-            stats: _stats(
-                enCorrect: [1, ...List.filled(EnQuizType.values.length - 1, 0)]))),
+            stats: _stats(enCorrect: [
+          1,
+          ...List.filled(EnQuizType.values.length - 1, 0)
+        ]))),
         isTrue,
       );
       final stars = List.filled(Curriculum.totalLevels, 0);
@@ -109,12 +112,12 @@ void main() {
           stars[level.number - 1] = 1;
         }
       }
-      expect(_badge('category_master').earnedBy(_data(mathStars: stars)),
-          isTrue);
+      expect(
+          _badge('category_master').earnedBy(_data(mathStars: stars)), isTrue);
       // 하나라도 빠지면 아직
       stars[firstCategory.firstLevelNumber - 1] = 0;
-      expect(_badge('category_master').earnedBy(_data(mathStars: stars)),
-          isFalse);
+      expect(
+          _badge('category_master').earnedBy(_data(mathStars: stars)), isFalse);
     });
 
     test('실제 기록에서 배지 데이터를 불러온다 (마일스톤 포함)', () async {

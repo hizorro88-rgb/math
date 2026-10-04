@@ -321,8 +321,7 @@ void main() {
           );
           for (final q in questions) {
             expect(q.op, QuestionOp.shape);
-            final targetCount =
-                q.shapeItems.where((s) => s == q.emoji).length;
+            final targetCount = q.shapeItems.where((s) => s == q.emoji).length;
             expect(q.answer, targetCount);
             expect(q.answer, greaterThanOrEqualTo(1));
             expect(q.answer, lessThanOrEqualTo(maxNumber < 6 ? maxNumber : 6));
@@ -433,8 +432,7 @@ void main() {
       expect(Curriculum.levelAt(mulUnit.firstLevelNumber).config.minNumber, 8);
 
       // 덧셈 유닛: 답 하한이 최대값의 절반 이상
-      final addUnit =
-          Curriculum.units.firstWhere((u) => u.title == '두 자리 덧셈');
+      final addUnit = Curriculum.units.firstWhere((u) => u.title == '두 자리 덧셈');
       final config = Curriculum.levelAt(addUnit.firstLevelNumber).config;
       expect(config.minNumber, greaterThanOrEqualTo(config.maxNumber ~/ 2));
     });
@@ -469,8 +467,8 @@ void main() {
             }
             if (q.variant == 2) {
               // 덧셈: a/d + b/d 문장에서 답을 다시 계산해 확인
-              final match =
-                  RegExp(r'^(\d+)/(\d+) \+ (\d+)/\d+ = \?$').firstMatch(q.prompt);
+              final match = RegExp(r'^(\d+)/(\d+) \+ (\d+)/\d+ = \?$')
+                  .firstMatch(q.prompt);
               expect(match, isNotNull, reason: q.prompt);
               expect(
                 int.parse(match!.group(1)!) + int.parse(match.group(3)!),
@@ -527,8 +525,8 @@ void main() {
           expect(q.answerSpeech, '$d분의 $n');
           switch (q.variant) {
             case 3: // 같은 분모 뺄셈: 문장에서 답을 다시 계산해 확인
-              final match =
-                  RegExp(r'^(\d+)/(\d+) - (\d+)/\d+ = \?$').firstMatch(q.prompt);
+              final match = RegExp(r'^(\d+)/(\d+) - (\d+)/\d+ = \?$')
+                  .firstMatch(q.prompt);
               expect(match, isNotNull, reason: q.prompt);
               expect(
                 int.parse(match!.group(1)!) - int.parse(match.group(3)!),

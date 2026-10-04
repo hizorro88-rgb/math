@@ -67,20 +67,19 @@ class _PassScreenState extends State<PassScreen> {
   Future<void> _buy() async {
     final started = await Purchases.buy();
     if (!mounted) return;
-    if (!started) {
-      _snack('아직 스토어와 연결되지 않았어요. 출시 빌드(스토어 설치)에서 결제할 수 있어요.');
-    }
+    if (!started) _snack('스토어에 연결하지 못했어요. 잠시 뒤에 다시 해 주세요.');
   }
 
   Future<void> _restore() async {
     final ok = await Purchases.restore();
     if (!mounted) return;
-    if (!ok) _snack('아직 스토어와 연결되지 않았어요.');
+    if (!ok) _snack('스토어에 연결하지 못했어요. 잠시 뒤에 다시 해 주세요.');
   }
 
   @override
   Widget build(BuildContext context) {
     final price = Purchases.product?.price;
+    final store = Purchases.available;
 
     return Scaffold(
       appBar: AppBar(
@@ -91,53 +90,55 @@ class _PassScreenState extends State<PassScreen> {
           : ListView(
               padding: const EdgeInsets.all(20),
               children: [
+                // 정보 카드(테두리): 무엇을·얼마에 — 가격이 맨 위에 보인다
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
                   decoration: BoxDecoration(
-                    gradient: const LinearGradient(
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                      colors: [Color(0xFFFFF6D8), Color(0xFFFFE9B8)],
-                    ),
-                    borderRadius: BorderRadius.circular(24),
-                    border:
-                        Border.all(color: const Color(0xFFFFD34D), width: 3),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(22),
+                    border: Border.all(color: AppColors.outline, width: 2),
                   ),
                   child: Column(
                     children: [
-                      const QuokkaFace(size: 76),
+                      const QuokkaFace(size: 64),
                       const SizedBox(height: 8),
                       const Text(
                         '한 번 결제로\n온 가족이 함께 배워요',
                         textAlign: TextAlign.center,
                         style: TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.bold),
+                            fontSize: 20, fontWeight: FontWeight.bold),
                       ),
-                      const SizedBox(height: 6),
+                      const SizedBox(height: 10),
                       Text(
+                        price ?? (store ? '가격 불러오는 중…' : '가격은 스토어 버전에서 보여요'),
+                        key: const ValueKey('pass-price'),
+                        textAlign: TextAlign.center,
+                        style: price != null
+                            ? displayStyle(fontSize: 30)
+                            : const TextStyle(
+                                fontSize: 14,
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.inkSoft),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
                         '월 구독 없음 · 광고 없음 · 1회 결제',
-                        style: TextStyle(
-                            fontSize: 14, color: Colors.brown.shade400),
+                        style:
+                            TextStyle(fontSize: 13, color: AppColors.inkSoft),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                _benefit('🗺️', '전 과목 모든 단계 열기',
-                    '총 1140단계 — 수학\u00A0430 · 한글\u00A0120 · 영어\u00A080 · 일본어\u00A090 · 중국어\u00A070 · 한자\u00A050 · 영어회화\u00A0300'),
-                _benefit('🧒', '프로필 4명', '아이마다 프로필을 만들어 각자의 진도로 배워요'),
-                _benefit('🏠', '가족 기기 공유',
-                    'Google Play 가족 라이브러리 / Apple 가족 공유를 켜면\n한 번 결제로 가족의 다른 폰·태블릿에서도 쓸 수 있어요'),
-                _benefit(
-                    '📦', '재설치·기기 변경 시 복원', '같은 스토어 계정이면 [구매 복원]으로 다시 켤 수 있어요'),
+                const SizedBox(height: 14),
+                _compareTable(),
                 const SizedBox(height: 20),
                 if (_hasPass)
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       color: AppColors.selectedFill,
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: AppColors.green, width: 2),
+                      borderRadius: BorderRadius.circular(22),
+                      border: Border.all(color: AppColors.correct, width: 2),
                     ),
                     child: const Text(
                       '✅ 가족 이용권 사용 중이에요!',
@@ -150,96 +151,125 @@ class _PassScreenState extends State<PassScreen> {
                     ),
                   )
                 else ...[
+                  // 스토어와 연결되지 않으면(웹·개발 빌드) 누를 수 없는 버튼으로 둔다 —
+                  // 눌렀는데 안 된다는 말이 뜨는 것보다 처음부터 꺼져 보이는 게 정직하다.
                   BouncyButton(
-                    // 스토어 미연결(웹·개발 빌드)에서는 회색으로 상태를 보여준다.
-                    color: Purchases.available
-                        ? AppColors.green
-                        : const Color(0xFFBFB9AC),
+                    key: const ValueKey('pass-buy'),
+                    color: store ? AppColors.green : AppColors.lockedNode,
                     padding: const EdgeInsets.symmetric(vertical: 18),
-                    onTap: _buy,
+                    onTap: store ? _buy : null,
                     child: Text(
-                      !Purchases.available
+                      !store
                           ? '스토어 버전에서 구매할 수 있어요'
                           : price == null
                               ? '이용권 구매하기'
                               : '이용권 구매하기 · $price',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 20,
+                      style: TextStyle(
+                        fontSize: store ? 20 : 16,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: store ? Colors.white : AppColors.inkSoft,
                       ),
                     ),
                   ),
                   const SizedBox(height: 10),
                   BouncyButton(
+                    key: const ValueKey('pass-restore'),
                     color: Colors.white,
                     shadowColor: AppColors.outline,
                     border: Border.all(color: AppColors.outline, width: 2),
                     padding: const EdgeInsets.symmetric(vertical: 14),
-                    onTap: _restore,
-                    child: const Text(
+                    onTap: store ? _restore : null,
+                    child: Text(
                       '구매 복원',
                       textAlign: TextAlign.center,
                       style: TextStyle(
                         fontSize: 16,
                         fontWeight: FontWeight.bold,
-                        color: AppColors.inkSoft,
+                        color: store ? AppColors.inkSoft : AppColors.inkMuted,
                       ),
                     ),
                   ),
-                  if (!Purchases.available) ...[
-                    const SizedBox(height: 12),
-                    const Text(
-                      '결제는 스토어(구글 플레이/앱스토어)에서 설치한\n출시 버전에서 할 수 있어요.',
-                      textAlign: TextAlign.center,
-                      style: TextStyle(fontSize: 12, color: AppColors.inkSoft),
-                    ),
-                  ],
                 ],
+                const SizedBox(height: 16),
+                const Text(
+                  '🏠 Google Play 가족 라이브러리 / Apple 가족 공유를 켜면 '
+                  '가족의 다른 폰·태블릿에서도 같은 결제로 쓸 수 있어요.\n'
+                  '📦 앱을 다시 깔거나 기기를 바꿔도 같은 스토어 계정이면 '
+                  '[구매 복원]으로 다시 켤 수 있어요.',
+                  style: TextStyle(
+                      fontSize: 12.5, color: AppColors.inkSoft, height: 1.5),
+                ),
                 const SizedBox(height: 8),
               ],
             ),
     );
   }
 
-  Widget _benefit(String emoji, String title, String desc) {
+  /// 무료 vs 이용권 두 줄 비교 — 무엇이 달라지는지 한눈에
+  Widget _compareTable() {
+    const rows = [
+      ('🗺️ 단계', '과목마다\n첫 묶음', '전체\n1140단계'),
+      ('🧒 프로필', '1명', '4명'),
+      ('🏠 가족 기기', '—', '함께 쓰기'),
+      ('📺 광고', '없음', '없음'),
+    ];
+    Widget cell(String text, {bool head = false, bool pass = false}) =>
+        Container(
+          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+          alignment: Alignment.center,
+          child: Text(
+            text,
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: head ? 15 : 14,
+              height: 1.25,
+              fontWeight: head || pass ? FontWeight.bold : FontWeight.normal,
+              color: pass ? AppColors.greenPressed : AppColors.ink,
+            ),
+          ),
+        );
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 10),
-      padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            offset: const Offset(0, 3),
-            blurRadius: 8,
-          ),
-        ],
+        borderRadius: BorderRadius.circular(22),
+        border: Border.all(color: AppColors.outline, width: 2),
       ),
-      child: Row(
+      clipBehavior: Clip.antiAlias,
+      child: Table(
+        key: const ValueKey('pass-compare'),
+        columnWidths: const {
+          0: FlexColumnWidth(1.25),
+          1: FlexColumnWidth(1),
+          2: FlexColumnWidth(1.1),
+        },
+        border: const TableBorder(
+          horizontalInside: BorderSide(color: AppColors.line, width: 1.5),
+        ),
+        defaultVerticalAlignment: TableCellVerticalAlignment.middle,
         children: [
-          Text(emoji, style: const TextStyle(fontSize: 26)),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          TableRow(
+            children: [
+              cell(''),
+              cell('무료', head: true),
+              Container(
+                color: AppColors.selectedFill,
+                child: cell('이용권', head: true, pass: true),
+              ),
+            ],
+          ),
+          for (final r in rows)
+            TableRow(
               children: [
-                Text(
-                  title,
-                  style: const TextStyle(
-                      fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  desc,
-                  style:
-                      const TextStyle(fontSize: 12.5, color: AppColors.inkSoft),
+                cell(r.$1, head: true),
+                cell(r.$2),
+                Container(
+                  color: AppColors.selectedFill,
+                  child: cell(r.$3, pass: true),
                 ),
               ],
             ),
-          ),
         ],
       ),
     );

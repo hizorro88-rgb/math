@@ -48,7 +48,7 @@ class _LanguageCategoryScreenState extends State<LanguageCategoryScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('${widget.pack.emoji} ${category.title}'),
+        title: Text(category.title),
       ),
       body: FutureBuilder<List<int>>(
         future: _starsFuture,

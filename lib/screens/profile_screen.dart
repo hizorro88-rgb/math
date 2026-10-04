@@ -8,6 +8,7 @@ import '../theme.dart';
 import '../widgets/bouncy_button.dart';
 import '../widgets/parent_gate.dart';
 import '../widgets/quokka_avatar.dart';
+import '../widgets/selectable_tile.dart';
 import 'level_map_screen.dart';
 import 'onboarding_screen.dart';
 import 'pass_screen.dart';
@@ -126,10 +127,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
     return Scaffold(
       appBar: AppBar(
         automaticallyImplyLeading: !widget.asLauncher,
-        title: const Text(
-          '누가 배울까요?',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
+        title: const Text('누가 배울까요?'),
       ),
       body: !_loaded
           ? const Center(child: CircularProgressIndicator())
@@ -161,7 +159,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         padding: const EdgeInsets.all(14),
                         border: !widget.asLauncher &&
                                 profile.id == Profiles.activeId
-                            ? Border.all(color: AppColors.green, width: 3)
+                            ? Border.all(color: AppColors.correct, width: 3)
                             : null,
                         onTap: () => _select(profile),
                         child: Row(
@@ -190,22 +188,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                             if (!widget.asLauncher &&
                                 profile.id == Profiles.activeId)
-                              Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 10,
-                                  vertical: 4,
-                                ),
-                                decoration: BoxDecoration(
-                                  color: AppColors.green,
-                                  borderRadius: BorderRadius.circular(999),
-                                ),
-                                child: const Text(
-                                  '사용 중',
-                                  style: TextStyle(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.bold,
-                                    color: Colors.white,
-                                  ),
+                              // 고른 칸 = ✓ 하나 (SelectableTile과 같은 모양)
+                              Semantics(
+                                label: '사용 중',
+                                child: const CircleAvatar(
+                                  radius: 13,
+                                  backgroundColor: AppColors.correct,
+                                  child: Icon(Icons.check_rounded,
+                                      size: 17, color: Colors.white),
                                 ),
                               ),
                             IconButton(
@@ -343,23 +333,12 @@ class _ProfileDialogState extends State<_ProfileDialog> {
   }
 
   Widget _ageChip(String label, int? value) {
-    final selected = _ageIndex == value;
-    return GestureDetector(
+    return SelectableChip(
+      selected: _ageIndex == value,
       onTap: () => setState(() => _ageIndex = value),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.selectedFill : Colors.white,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected ? AppColors.green : AppColors.outline,
-            width: 2,
-          ),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
-        ),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -386,28 +365,12 @@ class _ProfileDialogState extends State<_ProfileDialog> {
               runSpacing: 8,
               children: [
                 for (final avatar in profileAvatars)
-                  GestureDetector(
+                  SelectableChip(
+                    circle: true,
+                    size: 52,
+                    selected: avatar == _emoji,
                     onTap: () => setState(() => _emoji = avatar),
-                    child: Container(
-                      width: 52,
-                      height: 52,
-                      decoration: BoxDecoration(
-                        color: avatar == _emoji
-                            ? AppColors.selectedFill
-                            : AppColors.cream,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: avatar == _emoji
-                              ? AppColors.green
-                              : AppColors.outline,
-                          width: 2,
-                        ),
-                      ),
-                      child: Center(
-                        child:
-                            Text(avatar, style: const TextStyle(fontSize: 26)),
-                      ),
-                    ),
+                    child: Text(avatar, style: const TextStyle(fontSize: 26)),
                   ),
               ],
             ),

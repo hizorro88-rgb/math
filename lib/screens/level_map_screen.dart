@@ -662,6 +662,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       if (!ok || !mounted) return;
     }
     _setSubject(picked);
+    // 글을 못 읽어도 무엇을 골랐는지 들리게
+    if (!_subjects[picked].$3) Speech.speak(_subjects[picked].$2);
   }
 
   /// 수학 카테고리 카드 목록. 아이 나이(추천 카테고리)보다 앞의 단계는

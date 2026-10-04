@@ -128,11 +128,9 @@ void main() {
       expect(stars[0], 3);
 
       // 이제 7살 '시계 읽기' 10단계만큼 뒤로 밀렸다.
-      final unit =
-          Curriculum.units.firstWhere((u) => u.title == '덧뺄셈 마스터');
+      final unit = Curriculum.units.firstWhere((u) => u.title == '덧뺄셈 마스터');
       expect(stars[unit.firstLevelNumber - 1], 2);
-      final clock =
-          Curriculum.units.firstWhere((u) => u.title == '시계 읽기');
+      final clock = Curriculum.units.firstWhere((u) => u.title == '시계 읽기');
       expect(clock.category.title, '7살');
     });
 
@@ -148,8 +146,7 @@ void main() {
       expect(stars[0], 3);
 
       // '덧뺄셈 마스터'는 이제 '시계 보기' 뒤로 밀려났다.
-      final unit =
-          Curriculum.units.firstWhere((u) => u.title == '덧뺄셈 마스터');
+      final unit = Curriculum.units.firstWhere((u) => u.title == '덧뺄셈 마스터');
       expect(unit.firstLevelNumber, isNot(201));
       expect(stars[unit.firstLevelNumber - 1], 2);
     });
@@ -166,8 +163,7 @@ void main() {
       expect(stars[0], 3); // 첫 단계는 그대로
 
       // '덧셈 첫걸음'은 이제 '큰 수 찾기' 뒤로 밀려났다.
-      final unit =
-          Curriculum.units.firstWhere((u) => u.title == '덧셈 첫걸음');
+      final unit = Curriculum.units.firstWhere((u) => u.title == '덧셈 첫걸음');
       expect(stars[unit.firstLevelNumber - 1], 2);
       // 옛 위치(31단계 자리)에는 별이 남아 있지 않아야 한다.
       expect(unit.firstLevelNumber, isNot(31));

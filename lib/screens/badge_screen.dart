@@ -175,7 +175,8 @@ class _BeltCard extends StatelessWidget {
                           value: progress.clamp(0.0, 1.0),
                           minHeight: 12,
                           backgroundColor: AppColors.line,
-                          color: next?.color ?? rank.color,
+                          color: AppColors
+                              .amber, // 차오르는 막대 = 보상 색 (띠 색은 양 끝 그림이 보여 준다)
                         ),
                       ),
                     ),

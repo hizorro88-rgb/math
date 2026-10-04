@@ -90,3 +90,77 @@ class SelectableTile extends StatelessWidget {
     );
   }
 }
+
+/// 작은 고르는 칸 (얼굴 동그라미·나이 칩처럼 한 줄에 여럿 놓이는 것).
+/// [SelectableTile]과 같은 모양 규칙: 라임 바탕 + 초록 테두리 + ✓.
+class SelectableChip extends StatelessWidget {
+  const SelectableChip({
+    super.key,
+    required this.child,
+    required this.selected,
+    required this.onTap,
+    this.circle = false,
+    this.size,
+    this.semanticLabel,
+  });
+
+  final Widget child;
+  final bool selected;
+  final VoidCallback onTap;
+
+  /// 얼굴처럼 동그란 칸
+  final bool circle;
+
+  /// 동그란 칸의 지름
+  final double? size;
+
+  final String? semanticLabel;
+
+  @override
+  Widget build(BuildContext context) {
+    final box = AnimatedContainer(
+      duration: const Duration(milliseconds: 150),
+      width: circle ? size ?? 64 : null,
+      height: circle ? size ?? 64 : null,
+      padding: circle
+          ? null
+          : const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      alignment: circle ? Alignment.center : null,
+      decoration: BoxDecoration(
+        color: selected ? AppColors.selectedFill : Colors.white,
+        shape: circle ? BoxShape.circle : BoxShape.rectangle,
+        borderRadius: circle ? null : BorderRadius.circular(14),
+        border: Border.all(
+          color: selected ? AppColors.correct : AppColors.outline,
+          width: selected ? 3 : 2,
+        ),
+      ),
+      child: child,
+    );
+    return Semantics(
+      button: true,
+      selected: selected,
+      label: semanticLabel,
+      child: PressBounce(
+        onTap: onTap,
+        child: Stack(
+          clipBehavior: Clip.none,
+          children: [
+            box,
+            if (selected)
+              const Positioned(
+                top: -6,
+                right: -6,
+                child: CircleAvatar(
+                  radius: 11,
+                  backgroundColor: AppColors.correct,
+                  child:
+                      Icon(Icons.check_rounded, size: 15, color: Colors.white),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}

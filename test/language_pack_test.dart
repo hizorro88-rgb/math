@@ -21,8 +21,8 @@ void main() {
         hasLength(languagePacks.length),
       );
       for (final pack in languagePacks) {
-        expect(pack.totalLevels,
-            pack.units.length * LanguagePack.levelsPerUnit);
+        expect(
+            pack.totalLevels, pack.units.length * LanguagePack.levelsPerUnit);
         for (var i = 0; i < pack.totalLevels; i++) {
           expect(pack.levels[i].number, i + 1);
           expect(pack.levelAt(i + 1).number, i + 1);
@@ -210,7 +210,8 @@ void main() {
         final q = hanjaPack.generateOne!(4, 0, random); // 구절 완성 (앞 단계)
         expect(q.display, contains('□'));
         // 가린 글자를 채우면 천자문 구절이 된다.
-        final filled = q.display.replaceAll(' ', '').replaceFirst('□', q.answer);
+        final filled =
+            q.display.replaceAll(' ', '').replaceFirst('□', q.answer);
         expect(
           hanjaPhrases.map((p) => p.map((c) => c.char).join()),
           contains(filled),

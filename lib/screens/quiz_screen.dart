@@ -5,15 +5,11 @@ import 'package:flutter/services.dart';
 
 import '../models/boss.dart';
 import '../models/curriculum.dart';
-import '../models/daily.dart';
-import '../models/premium.dart';
 import '../models/progress.dart';
 import '../models/question.dart';
 import '../models/quiz_config.dart';
 import '../models/stats.dart';
-import '../models/stickers.dart';
 import '../models/wrong_notes.dart';
-import '../services/cloud_sync.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../theme.dart';
@@ -21,7 +17,7 @@ import '../widgets/bouncy_button.dart';
 import '../widgets/listen_guard.dart';
 import '../widgets/quiz_exit_dialog.dart';
 import '../widgets/quiz_parts.dart';
-import 'result_screen.dart';
+import 'round_finish.dart';
 
 /// 퀴즈 화면: 문제를 하나씩 풀고, 듀오링고처럼 아래에서 정답 여부를 알려준다.
 /// 정답은 +10점, 3연속 정답부터 🔥 콤보 보너스 +5점.
@@ -268,80 +264,38 @@ class _QuizScreenState extends State<QuizScreen> {
     if (_currentIndex + 1 >= _entries.length) {
       _finishing = true;
       final level = widget.level;
-      final stars = starsForScore(_correctCount, _baseCount);
-      // 보스전을 통과하면 큰 보너스가 붙고, 이번 주는 잠긴다.
-      // 이미 이번 주에 클리어했으면 (결과 화면의 '다시 하기' 등) 보상을 또 주지 않는다.
-      final bossCleared =
-          widget.bossMode && stars >= 1 && !await BossStore.isClearedThisWeek();
-      final earned = _roundPoints +
-          completionBonus(stars) +
-          (bossCleared ? BossStore.reward : 0);
-      // 통과하면 가끔 보물상자가 나온다 (3별이면 확률 업, 보너스 10~50코인)
-      final chestCoins =
-          _random.nextDouble() < (stars >= 3 ? 0.35 : (stars >= 1 ? 0.15 : 0))
-              ? (2 + _random.nextInt(9)) * 5
-              : 0;
-      if (bossCleared) await BossStore.markCleared();
-      if (stars >= 1) Sounds.complete();
-      if (level != null) {
-        // 결과 화면으로 넘어가기 전에 기록을 저장한다.
-        await ProgressStore.saveStars(level.number, stars);
-      }
-      await ProgressStore.addPoints(earned + chestCoins);
-      // 데일리 미션·출석 기록 (새로 달성한 미션은 결과 화면에서 축하)
-      final rewards = await DailyStore.recordRound(
+      await finishRound(
+        context,
+        subject: RoundSubject.math,
+        dots: _dots.dots,
         correctCount: _correctCount,
-        stars: stars,
-      );
-      // 리포트용 주간 활동 기록
-      await StatsStore.recordRoundDay();
-      CloudSync.scheduleUpload(); // 로그인돼 있으면 잠시 뒤 클라우드에 저장
-      // 통과하면 스티커북에 붙일 스티커 1장을 준다.
-      if (stars >= 1) await StickerStore.addTickets(1);
-      var nextLevel =
-          (level != null && stars >= 1 && level.number < Curriculum.totalLevels)
-              ? Curriculum.levelAt(level.number + 1)
-              : null;
-      // 다음 단계가 이용권으로 잠긴 카테고리면 버튼을 숨긴다
-      // (홈에서 부모 확인 → 이용권 안내를 거치게 한다).
-      if (nextLevel != null &&
-          !PremiumStore.isCategoryFree(nextLevel.unit.category.index) &&
-          !await PremiumStore.hasPass()) {
-        nextLevel = null;
-      }
-      // 클로저 안에서 널 아님이 유지되게 final로 다시 담는다.
-      final next = nextLevel;
-      if (!mounted) return;
-      Navigator.of(context).pushReplacement(
-        MaterialPageRoute(
-          builder: (_) => ResultScreen(
-            dots: _dots.dots,
-            correctCount: _correctCount,
-            totalCount: _baseCount,
-            earnedPoints: earned,
-            chestCoins: chestCoins,
-            stickerEarned: stars >= 1,
-            bossCleared: bossCleared,
-            completedMissions: rewards.missions,
-            milestoneDays: rewards.milestoneDays,
-            milestoneCoins: rewards.milestoneCoins,
-            headerText: widget.bossMode
-                ? '👑 주간 보스전'
-                : level != null
-                    ? '${level.unit.emoji} ${level.unit.title} · '
-                        '${level.number - level.unit.firstLevelNumber + 1}단계'
-                    : null,
-            showUnlockHint: level != null && stars < 1,
-            nextLabel: next != null ? '다음 단계' : null,
-            nextBuilder: next != null
-                ? () => QuizScreen(config: next.config, level: next)
-                : null,
-            retryBuilder: () => QuizScreen(
-                config: widget.config, level: level, bossMode: widget.bossMode),
-            // 어디서 왔든 홈으로 가는 버튼이라 표현을 하나로 통일한다.
-            homeLabel: '처음으로',
-          ),
-        ),
+        totalCount: _baseCount,
+        roundPoints: _roundPoints,
+        random: _random,
+        bossMode: widget.bossMode,
+        saveStars: level == null
+            ? null
+            : (stars) => ProgressStore.saveStars(level.number, stars),
+        next: (stars) {
+          if (level == null ||
+              stars < 1 ||
+              level.number >= Curriculum.totalLevels) {
+            return null;
+          }
+          final n = Curriculum.levelAt(level.number + 1);
+          return NextStage(
+            categoryIndex: n.unit.category.index,
+            builder: () => QuizScreen(config: n.config, level: n),
+          );
+        },
+        headerText: widget.bossMode
+            ? '👑 주간 보스전'
+            : level == null
+                ? null
+                : stageHeader(level.unit.emoji, level.unit.title,
+                    level.number - level.unit.firstLevelNumber + 1),
+        retryBuilder: () => QuizScreen(
+            config: widget.config, level: level, bossMode: widget.bossMode),
       );
       return;
     }

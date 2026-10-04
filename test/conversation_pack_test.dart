@@ -96,8 +96,8 @@ void main() {
       final random = Random(3);
       final pool = convUnitExpressions[0];
       final target = pool.first;
-      final q = convGenerateLevel(0, 0, random)
-          .firstWhere((q) => q.typeIndex == 0);
+      final q =
+          convGenerateLevel(0, 0, random).firstWhere((q) => q.typeIndex == 0);
       final matched = pool.firstWhere((e) => e.en == q.display);
       expect(q.answer, matched.ko);
       expect(q.speech, matched.en);

@@ -7,6 +7,7 @@ import '../models/premium.dart';
 import '../theme.dart';
 import '../models/profile.dart';
 import '../services/cloud_sync.dart';
+import '../services/purchases.dart';
 import '../services/reminders.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
@@ -16,6 +17,7 @@ import 'level_map_screen.dart';
 import 'onboarding_screen.dart';
 import 'pass_screen.dart';
 import 'report_screen.dart';
+import 'sticker_book_screen.dart';
 
 /// 설정: 효과음·말소리(문제 읽어주기)·말 빠르기, 진도 백업 바로가기.
 class SettingsScreen extends StatefulWidget {
@@ -328,6 +330,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _cloudSignOut() async {
+    // 로그아웃하면 다른 기기와 진도가 끊긴다 — 어른만
+    final ok = await _gate();
+    if (!ok || !mounted) return;
     final leave = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -597,6 +602,30 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 onTap: _openAgeSheet,
               ),
               const Divider(height: 1),
+              ListTile(
+                key: const ValueKey('settings-promise'),
+                leading: const SizedBox(
+                    width: 34,
+                    child: Center(
+                        child: Text('🎁', style: TextStyle(fontSize: 26)))),
+                title: const Text(
+                  '칭찬판 선물 약속',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+                subtitle: const Text('스티커 20칸을 다 채우면 줄 선물'),
+                trailing: const Icon(Icons.chevron_right),
+                onTap: () async {
+                  final ok = await _gate();
+                  if (!ok || !context.mounted) return;
+                  final saved = await editRewardPromise(context);
+                  if (saved && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(content: Text('선물 약속을 저장했어요.')),
+                    );
+                  }
+                },
+              ),
+              const Divider(height: 1),
               SwitchListTile(
                 value: _reminderOn,
                 onChanged: _syncing ? null : (value) => _toggleReminder(value),
@@ -626,20 +655,24 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 trailing: const Icon(Icons.chevron_right),
                 onTap: _openBackup,
               ),
-              const Divider(height: 1),
-              ListTile(
-                leading: Text(PremiumStore.allUnlocked ? '🔓' : '🔑',
-                    style: const TextStyle(fontSize: 26)),
-                title: const Text(
-                  '코드로 전체 열기',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              // 스토어에서 받은 출시 빌드(상품이 보이는 빌드)에서는 숨긴다 —
+              // 가족 배포용 코드라 결제 화면 옆에 둘 이유가 없다.
+              if (Purchases.product == null || PremiumStore.allUnlocked) ...[
+                const Divider(height: 1),
+                ListTile(
+                  leading: Text(PremiumStore.allUnlocked ? '🔓' : '🔑',
+                      style: const TextStyle(fontSize: 26)),
+                  title: const Text(
+                    '코드로 전체 열기',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  subtitle: Text(PremiumStore.allUnlocked
+                      ? '모든 단계와 과목이 열려 있어요'
+                      : '선물받은 코드가 있다면 여기에 입력해요'),
+                  trailing: const Icon(Icons.chevron_right),
+                  onTap: _toggleAllUnlock,
                 ),
-                subtitle: Text(PremiumStore.allUnlocked
-                    ? '모든 단계와 과목이 열려 있어요'
-                    : '선물받은 코드가 있다면 여기에 입력해요'),
-                trailing: const Icon(Icons.chevron_right),
-                onTap: _toggleAllUnlock,
-              ),
+              ],
             ],
           ),
           if (CloudSync.available) ...[

@@ -9,12 +9,16 @@ class BackupInfo {
     required this.keyCount,
     required this.clearedLevels,
     required this.coins,
+    this.profiles = 1,
   });
 
   final DateTime savedAt;
   final int keyCount;
   final int clearedLevels;
   final int coins;
+
+  /// 담긴 프로필(아이) 수
+  final int profiles;
 }
 
 /// 서버 없이 진도를 지키는 로컬 백업.
@@ -28,8 +32,13 @@ class BackupService {
   static const _excludedKeys = {
     'family_pass_v1',
     'all_unlock_v1',
-    'cloud_sync_at_v1'
+    'cloud_sync_at_v1',
+    undoKey,
   };
+
+  /// 복원 직전에 자동으로 떠 둔 기록 (백업 코드). [undoRestore]로 되돌린다.
+  /// 백업·클라우드에는 넣지 않는다 (코드 안에 코드가 겹겹이 쌓이지 않게).
+  static const undoKey = 'backup_undo_v1';
 
   /// 지금 쓰는 별 목록 키들 (미리보기의 '통과한 단계' 계산용).
   /// 마이그레이션이 남겨 둔 옛 버전 키를 이중으로 세지 않도록 이름을 못 박는다.
@@ -92,11 +101,20 @@ class BackupService {
     final saved = DateTime.tryParse(map['saved'] as String? ?? '');
     if (saved == null) return null;
     final data = map['data'] as Map<String, dynamic>? ?? {};
+    return _summarize(data, saved);
+  }
 
+  /// 지금 이 기기 기록의 요약 (복원 확인 창에서 백업과 나란히 보여 준다)
+  static Future<BackupInfo> currentInfo({DateTime? now}) async =>
+      _summarize(await exportData(), now ?? DateTime.now());
+
+  static BackupInfo _summarize(Map<String, dynamic> data, DateTime saved) {
     var cleared = 0;
     var coins = 0;
+    var profiles = 1;
     for (final entry in data.entries) {
-      final value = entry.value as Map<String, dynamic>;
+      final value = entry.value;
+      if (value is! Map<String, dynamic>) continue;
       if (_isCurrentStarsKey(entry.key) && value['t'] == 'l') {
         for (final s in (value['v'] as List)) {
           if ((int.tryParse('$s') ?? 0) >= 1) cleared++;
@@ -105,22 +123,52 @@ class BackupService {
       if (entry.key.endsWith('coins_v1') && value['t'] == 'i') {
         coins += value['v'] as int;
       }
+      if (entry.key == 'profiles_v1' && value['t'] == 'l') {
+        final count = (value['v'] as List).length;
+        if (count > 0) profiles = count;
+      }
     }
     return BackupInfo(
       savedAt: saved,
       keyCount: data.length,
       clearedLevels: cleared,
       coins: coins,
+      profiles: profiles,
     );
   }
 
   /// 백업 코드로 저장소를 통째로 되돌린다. 성공하면 true.
   /// 지금 기록은 모두 백업 내용으로 바뀐다 (이용권 상태는 이 기기 것을 유지).
-  static Future<bool> restore(String code) async {
+  ///
+  /// [keepUndo]면 바꾸기 직전 기록을 [undoKey]에 떠 두어 [undoRestore]로
+  /// 한 번 되돌릴 수 있다 (잘못된 코드를 붙여 넣어도 지금 기록을 잃지 않게).
+  static Future<bool> restore(String code, {bool keepUndo = true}) async {
     final map = _decode(code);
     if (map == null) return false;
     final data = map['data'] as Map<String, dynamic>? ?? {};
-    return restoreData(data);
+    final snapshot = keepUndo ? await export() : null;
+    final done = await restoreData(data);
+    if (done && snapshot != null) {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(undoKey, snapshot);
+    }
+    return done;
+  }
+
+  /// 되돌릴 수 있는 복원 직전 기록이 있으면 그 요약
+  static Future<BackupInfo?> undoInfo() async {
+    final prefs = await SharedPreferences.getInstance();
+    final code = prefs.getString(undoKey);
+    return code == null ? null : peek(code);
+  }
+
+  /// 마지막 복원을 취소하고 복원 직전 기록으로 돌아간다. 성공하면 true.
+  static Future<bool> undoRestore() async {
+    final prefs = await SharedPreferences.getInstance();
+    final code = prefs.getString(undoKey);
+    if (code == null) return false;
+    // 되돌린 뒤에는 되돌리기가 남지 않는다 (restoreData가 저장소를 비운다).
+    return restore(code, keepUndo: false);
   }
 
   /// {키: {t, v}} 데이터로 저장소를 되돌린다 (백업 코드·클라우드 공용).

@@ -44,8 +44,8 @@ void main() {
     test('알파벳 소리·대소문자 짝·순서가 규칙에 맞는다', () {
       final generator = EnglishQuestionGenerator(random: Random(5));
       for (final stage in [0, 9]) {
-        for (final q in generator.generate(EnQuizType.listenLetter,
-            stage: stage)) {
+        for (final q
+            in generator.generate(EnQuizType.listenLetter, stage: stage)) {
           expect(q.display, '🔊');
           expect(enAlphabet, contains(q.answer));
           expect(q.choices, contains(q.answer));

@@ -134,8 +134,7 @@ void main() {
         final questions =
             generator.generate(KrQuizType.listenConsonant, stage: stage);
         for (final q in questions) {
-          final pair =
-              krConsonantNames.firstWhere((c) => c.letter == q.answer);
+          final pair = krConsonantNames.firstWhere((c) => c.letter == q.answer);
           expect(q.speech, pair.name);
           expect(q.choices, contains(q.answer));
           for (final choice in q.choices) {

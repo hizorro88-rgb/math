@@ -89,7 +89,10 @@
   - 단계 지도: lib/widgets/stage_parts.dart (StageUnitCard)
   - 친구: lib/widgets/pet_parts.dart / 아이 알림: lib/widgets/kid_notice.dart
     (showKidNotice = 그림+짧은 말+음성, showKidConfirm = 큰 초록은 '그대로')
-  - 고르는 칸: lib/widgets/selectable_tile.dart (라임+초록 테두리+✓ 하나)
+  - 고르는 칸: lib/widgets/selectable_tile.dart (라임+초록 테두리+✓ 하나) —
+    큰 칸 SelectableTile, 얼굴·나이처럼 작은 칸 SelectableChip
+  - 판 마무리(별·코인·미션·스티커·결과 화면): lib/screens/round_finish.dart의
+    finishRound 하나 — 퀴즈 화면마다 따로 쓰지 말 것
 - 색의 뜻은 고정(theme.dart): 초록=앞으로·선택·정답, 코랄=오답(테두리만),
   앰버=별·코인·보상, 파랑(AppColors.listen)=소리 듣기 버튼만.
   단원·보기 색에 빨강·초록 금지. Colors.grey·하드코딩 색 대신 토큰.
@@ -97,6 +100,8 @@
   ▶=한 판, 📋=미션, 🔥=연속 출석, 🪙=코인, 칭호는 띠(동물 금지 — 얼굴·친구와 겹침).
 - 아이 화면에 SnackBar 금지 → showKidNotice. 부모 화면(설정·리포트·이용권·
   백업)만 SnackBar·글 설명 허용. 어른 과정·되돌릴 수 없는 일은 부모 확인.
+- 아이 화면에 어른용 글·버튼을 두지 않는다 (칭찬판 선물 약속은 설정 부모 메뉴).
+  아이가 고르는 칸(연습 유형·과목)은 누르면 이름을 읽어 준다.
 - 펄스(깜빡임)는 화면에 하나 — "다음에 할 일"에만(홈 ▶, 지도 첫 미완료 원).
 - 소리의 뜻(services/sounds.dart): correct·combo=정답만, wrong=오답만,
   pop=누름·입기·붙이기·쓰다듬기, buy=코인 씀, complete=축하.
@@ -109,6 +114,9 @@
 - 1차(2026-09, 10회): 출시 준비도 84 → 96.1, 마스코트 쿼카 교체.
 - 2차(2026-10, 10회, v1.33~v1.41): 회차별 기획자 점검 → 구현. 기록·보고서는
   스크래치패드 ux/CYCLE_LOG.md·ux/reports/c01~c10 (세션 한정).
+- 남은 코드 작업(v1.43): 이용권 비교표·스토어 없으면 버튼 끔, 백업 복원 전
+  비교·자동 보관본 되돌리기(backup_undo_v1, 백업에는 안 담김), 스티커북 정리,
+  잠긴 원 누르면 지금 원으로 스크롤, 로그아웃 부모 확인, 출시 빌드에서 코드 열기 숨김.
 - 남은 것은 코드가 아니라 에셋·검증: 친구 도트 그림(PetSprite 교체),
   효과음 세트 정식 제작, 스토어 출시 파이프라인(IAP 실연결·개인정보 정책),
   실사용 관찰 테스트(5~9세 3~5명).

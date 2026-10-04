@@ -85,8 +85,11 @@ class StageUnitCard extends StatelessWidget {
         button: true,
         label: '$title (아직 잠김)',
         child: GestureDetector(
-          onTap: () => showKidNotice(context,
-              emoji: '👆', text: '앞 묶음부터 해요! 반짝이는 동그라미를 찾아봐'),
+          onTap: () {
+            LevelBubble.revealCurrent(context);
+            showKidNotice(context,
+                emoji: '👆', text: '앞 묶음부터 해요! 반짝이는 동그라미를 찾아봐');
+          },
           child: Opacity(
             opacity: 0.6,
             child: Container(
