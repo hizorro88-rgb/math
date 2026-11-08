@@ -62,7 +62,10 @@ enum EnQuizType {
   missingLetter('빠진 글자 찾기', '빠진 글자', '🔍'),
 
   /// 자주 쓰는 낱말(사이트 워드)을 듣고 찾는다 (the·is·see)
-  sightWord('자주 쓰는 낱말', '사이트 워드', '👀');
+  sightWord('자주 쓰는 낱말', '사이트 워드', '👀'),
+
+  /// 그림(낱말)과 낱말(뜻)을 짝지어 4쌍을 맞춘다
+  matchPairs('짝 맞추기', '짝 맞추기', '🃏');
 
   const EnQuizType(this.label, this.shortLabel, this.emoji);
 
@@ -89,6 +92,7 @@ class EnglishQuestion {
     this.tiles = const [],
     this.revealSpeech = '',
     this.revealLang = 'en-US',
+    this.pairs = const [],
     required this.dedupKey,
   });
 
@@ -123,6 +127,9 @@ class EnglishQuestion {
 
   /// [revealSpeech]를 읽을 언어 (뜻 문제는 한국어 뜻을 읽는다)
   final String revealLang;
+
+  /// 짝 맞추기의 (왼쪽, 오른쪽) 짝들. 비어 있지 않으면 짝 맞추기 판으로 푼다.
+  final List<(String, String)> pairs;
 
   /// 소리 없이 스스로 읽는(떠올리는) 문제인지 — 처음엔 읽어 주지 않고
   /// 답한 뒤에 [revealSpeech]로 들려준다 (혼자 읽기, 그림 보고 영어 떠올리기)
@@ -185,6 +192,27 @@ class EnglishQuestionGenerator {
       case EnQuizType.missingLetter:
       case EnQuizType.sightWord:
         return _vocab(type, stage);
+      case EnQuizType.matchPairs:
+        // 앞 단계는 그림 ↔ 영어, 뒤 단계는 영어 ↔ 뜻
+        final picked = _pickVocab(_vocabPool(stage));
+        final meaning = stage >= 5;
+        return EnglishQuestion(
+          type: type,
+          instruction: meaning ? '영어와 뜻을 짝지어요' : '그림과 낱말을 짝지어요',
+          display: '', // 판이 곧 문제 — 카드에는 과제만
+          choices: const ['짝 완성'],
+          answer: '짝 완성',
+          answerText: [
+            for (final v in picked)
+              meaning ? '${v.shown}=${v.ko}' : '${v.emoji} ${v.shown}'
+          ].join('  '),
+          speech: '',
+          pairs: [
+            for (final v in picked)
+              meaning ? (v.shown, v.ko) : (v.emoji, v.shown)
+          ],
+          dedupKey: 'mp4:${picked.map((v) => v.word).join(',')}',
+        );
 
       case EnQuizType.wordToPicture:
         final pool = stage >= 5 ? enAllWords : enWordsShort;

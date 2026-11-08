@@ -8,6 +8,7 @@ import '../models/progress.dart';
 import '../models/stats.dart';
 import '../models/wrong_notes.dart';
 import '../services/sounds.dart';
+import '../services/speech.dart';
 import '../services/voice_input.dart';
 import '../theme.dart';
 import '../widgets/bouncy_button.dart';
@@ -208,7 +209,9 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
           _entries.add(_LangEntry(_question, isRetry: true));
           // 보기 고르기 문제는 오답 노트에 담아 나중에 다시 푼다.
           // (말하기·타일 조립은 보기가 없어서 오답 노트로 못 낸다)
-          if (_question.tiles.isEmpty && !_isSpeakingQuestion) {
+          if (_question.tiles.isEmpty &&
+              _question.pairs.isEmpty &&
+              !_isSpeakingQuestion) {
             WrongNoteStore.add(WrongNote.fromLang(widget.pack, _question));
           }
         }
@@ -221,6 +224,11 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
           say: _question.tiles.isNotEmpty ? choice : null,
           lang: widget.pack.ttsLang);
     } else {
+      if (_question.pairs.isNotEmpty) {
+        // 판은 다 맞췄다 — 틀림 소리 대신 격려만
+        Speech.speak('다 맞췄어요! 다음엔 한 번에 해 봐요');
+        return;
+      }
       Sounds.wrong();
       // 틀렸을 때 진동은 맞혔을 때보다 약하게 — 꾸짖는 느낌을 주지 않는다
       HapticFeedback.selectionClick().ignore();
@@ -335,9 +343,21 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
               ),
         answers: _isSpeakingQuestion
             ? _buildSpeakingPanel()
-            : _question.tiles.isNotEmpty
-                ? _buildTiles()
-                : _buildChoices(),
+            : _question.pairs.isNotEmpty
+                ? QuizMatchBoard(
+                    key: ValueKey('match-$_currentIndex'),
+                    pairs: _question.pairs,
+                    // 한글(훈음) 칸은 읽어 준다
+                    onTapItem: (text, _) {
+                      if (RegExp(r'[가-힣]').hasMatch(text)) Speech.speak(text);
+                    },
+                    // 한 번까지는 봐준다 (그림만 보고 소리를 들어 보려다 생긴 실수)
+                    onDone: (mistakes) =>
+                        _selectChoice(mistakes <= 1 ? _question.answer : '다시'),
+                  )
+                : _question.tiles.isNotEmpty
+                    ? _buildTiles()
+                    : _buildChoices(),
         feedback: _answered ? _buildFeedbackPanel() : null,
         sparkle: _answered && _isCorrect && _combo >= 5,
         sparkleKey: ValueKey('sparkle$_currentIndex'),
@@ -701,6 +721,8 @@ class _LanguageQuizScreenState extends State<LanguageQuizScreen> {
   Widget _buildFeedbackPanel() {
     return QuizFeedbackPanel(
       correct: _isCorrect,
+      // 짝 맞추기는 답이 판에 다 보인다 — '정답은 …' 대신 격려
+      wrongMessage: _question.pairs.isNotEmpty ? '다 맞췄어요! 다음엔 한 번에 💪' : null,
       answerText: _question.answerText,
       gained: _lastGained,
       fire: !_isRetryQuestion && _combo >= 3,

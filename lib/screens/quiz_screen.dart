@@ -251,7 +251,10 @@ class _QuizScreenState extends State<QuizScreen> {
       Sounds.correct(_combo);
       HapticFeedback.lightImpact().ignore();
       // 맞힌 문제는 바로 다음 판으로 넘어가지만, 다시 푼 문제는 콤보가 없다.
-      QuizVoice.correct(_isRetryQuestion ? 0 : _combo);
+      QuizVoice.correct(_isRetryQuestion ? 0 : _combo,
+          say: _question.op == QuestionOp.judge && _question.answer == 0
+              ? _question.answerSpeech
+              : null);
     } else {
       Sounds.wrong();
       // 틀렸을 때 진동은 맞혔을 때보다 약하게 — 꾸짖는 느낌을 주지 않는다
@@ -510,7 +513,8 @@ class _QuizScreenState extends State<QuizScreen> {
           QuizChoiceButton(
             label: _question.labelFor(_question.choices[i]),
             state: _choiceState(_question.choices[i]),
-            fillIndex: i,
+            // 맞아요/틀려요는 같은 색 — 한쪽만 코랄에 가까우면 '틀림'처럼 보인다
+            fillIndex: _question.op == QuestionOp.judge ? 2 : i,
             fontSize: 36,
             onTap: () => _selectChoice(_question.choices[i]),
           ),
@@ -529,8 +533,13 @@ class _QuizScreenState extends State<QuizScreen> {
   Widget _buildFeedbackPanel() {
     return QuizFeedbackPanel(
       correct: _isCorrect,
-      correctMessage: _correctPanels[_currentIndex % _correctPanels.length],
-      answerText: _question.answerLabel,
+      correctMessage: _question.op == QuestionOp.judge && _question.answer == 0
+          // 틀린 식을 잘 찾았으면 바른 식을 함께 보여 준다
+          ? '맞아요! ${_question.judgeTruth}'
+          : _correctPanels[_currentIndex % _correctPanels.length],
+      answerText: _question.op == QuestionOp.judge
+          ? _question.judgeTruth
+          : _question.answerLabel,
       gained: _lastGained,
       fire: !_isRetryQuestion && _combo >= 3,
       isLast: _currentIndex + 1 >= _entries.length,
@@ -901,6 +910,7 @@ class _EmojiHint extends StatelessWidget {
       case QuestionOp.timeCalc:
       case QuestionOp.remainder:
       case QuestionOp.convert:
+      case QuestionOp.judge:
         return const SizedBox.shrink();
     }
   }

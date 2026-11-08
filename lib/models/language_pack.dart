@@ -21,6 +21,7 @@ class LangQuestion {
     this.tiles = const [],
     this.tileSlots = 0,
     this.tileJoin = '',
+    this.pairs = const [],
     required this.dedupKey,
   });
 
@@ -45,6 +46,9 @@ class LangQuestion {
 
   /// 타일을 이어 붙일 때 쓰는 글자 (영어 문장은 공백)
   final String tileJoin;
+
+  /// 짝 맞추기의 (왼쪽, 오른쪽) 짝들. 비어 있지 않으면 짝 맞추기 판으로 푼다.
+  final List<(String, String)> pairs;
 
   final String dedupKey;
 

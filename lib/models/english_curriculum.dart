@@ -170,6 +170,7 @@ class EnglishCurriculum {
               emoji: '👕',
               type: EnQuizType.themeWord,
               theme: 'clothes,vehicle'),
+          EnUnit(title: '짝 맞추기', emoji: '🃏', type: EnQuizType.matchPairs),
           EnUnit(title: '뜻 고르기', emoji: '🤔', type: EnQuizType.meaningPick),
           EnUnit(title: '영어로 고르기', emoji: '🔤', type: EnQuizType.englishPick),
           EnUnit(

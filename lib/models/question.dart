@@ -40,6 +40,10 @@ enum QuestionOp {
 
   /// 단위 바꾸기 (1 m 20 cm = □ cm)
   convert,
+
+  /// 맞을까 틀릴까 (3 + 4 = 8?) — 정답 1=맞아요 0=아니에요.
+  /// sequence = [왼쪽 수, 오른쪽 수, 보여 준 답, 연산(0 덧셈·1 뺄셈·2 곱셈)]
+  judge,
 }
 
 /// 모양 세기에 쓰는 도형과 이름
@@ -173,6 +177,7 @@ class Question {
       QuestionOp.sides => left,
       QuestionOp.graph => left,
       QuestionOp.convert => left,
+      QuestionOp.judge => left,
     };
   }
 
@@ -187,6 +192,7 @@ class Question {
             : '${value ~/ 60}시 ${value % 60}분',
         QuestionOp.money => '$value원',
         QuestionOp.convert => '$value $emoji',
+        QuestionOp.judge => value == 1 ? '👍 맞아요' : '👎 틀려요',
         QuestionOp.length => '$value cm',
         QuestionOp.timeCalc => variant == 1
             ? '$value분'
@@ -201,8 +207,28 @@ class Question {
   /// 정답을 읽어 줄 때 쓰는 말 (분수는 "5분의 3"처럼 읽는다)
   String get answerSpeech => switch (op) {
         QuestionOp.fraction => '${answer % 100}분의 ${answer ~/ 100}',
+        // 맞을까 틀릴까는 '맞아요/아니에요'가 아니라 바른 식을 들려준다
+        QuestionOp.judge => '${sequence[0]} ${const [
+            '더하기',
+            '빼기',
+            '곱하기'
+          ][sequence[3]]} ${sequence[1]}${numJosa(sequence[1], '은', '는')} $judgeResult',
         _ => answerLabel,
       };
+
+  /// 맞을까 틀릴까: 바른 계산 결과
+  int get judgeResult => switch (sequence[3]) {
+        0 => sequence[0] + sequence[1],
+        1 => sequence[0] - sequence[1],
+        _ => sequence[0] * sequence[1],
+      };
+
+  /// 맞을까 틀릴까: 바른 식 ('4 - 1 = 3') — 정답 판에 보여 준다
+  String get judgeTruth => '${sequence[0]} ${const [
+        '+',
+        '-',
+        '×'
+      ][sequence[3]]} ${sequence[1]} = $judgeResult';
 
   String get expression {
     if (prompt.isNotEmpty) return prompt;
@@ -226,6 +252,11 @@ class Question {
       QuestionOp.pattern => '${sequence.join(', ')}, ?',
       QuestionOp.clock => '시계는 몇 시일까요?',
       QuestionOp.shape => '$emoji 몇 개일까요?',
+      QuestionOp.judge => '${sequence[0]} ${const [
+          '+',
+          '-',
+          '×'
+        ][sequence[3]]} ${sequence[1]} = ${sequence[2]}',
       // 심화 유형은 항상 prompt가 있어 위에서 먼저 반환된다 (완전성 유지용).
       QuestionOp.fraction ||
       QuestionOp.decimal ||
@@ -266,6 +297,11 @@ class Question {
       QuestionOp.div => '$left 나누기 $right${numJosa(right, '은', '는')}?',
       QuestionOp.compare => right == 1 ? '가장 큰 수를 찾아보세요' : '가장 작은 수를 찾아보세요',
       QuestionOp.pattern => '${sequence.join(', ')}, 다음 수는?',
+      QuestionOp.judge => '${sequence[0]} ${const [
+          '더하기',
+          '빼기',
+          '곱하기'
+        ][sequence[3]]} ${sequence[1]}${numJosa(sequence[1], '은', '는')} ${sequence[2]}, 맞을까요?',
       QuestionOp.clock => '시계가 가리키는 시각은 몇 시일까요?',
       QuestionOp.shape => switch (variant % 3) {
           1 =>
@@ -298,6 +334,7 @@ class Question {
         QuestionOp.compare =>
           'compare:$right:${([...choices]..sort()).join(',')}',
         QuestionOp.pattern => 'pattern:${sequence.join(',')}',
+        QuestionOp.judge => 'judge:${sequence.join(',')}',
         QuestionOp.fraction ||
         QuestionOp.decimal ||
         QuestionOp.timeCalc ||
@@ -989,6 +1026,9 @@ class QuestionGenerator {
           emoji: item.emoji,
         );
 
+      case QuizMode.judge:
+        return _judge(max, index, min: config.minNumber);
+
       case QuizMode.money:
         return _money(max, index);
 
@@ -1089,6 +1129,47 @@ class QuestionGenerator {
       prompt: '모두 얼마일까요?',
       promptSpeech: '돈을 모두 세면 얼마일까요?',
       choices: _moneyChoices(total),
+      emoji: '',
+    );
+  }
+
+  /// 맞을까 틀릴까: 20까지는 덧셈·뺄셈, 그 위는 곱셈구구 식을 보여 주고
+  /// 맞는지 고른다. 틀린 식은 1~2 차이(덧뺄셈)나 한 단 차이(곱셈)로 그럴듯하게.
+  Question _judge(int max, int index, {int min = 1}) {
+    int a;
+    int b;
+    int op;
+    int result;
+    if (max > 20) {
+      final top = (max ~/ 9).clamp(2, 9);
+      a = 2 + _random.nextInt(top - 1);
+      b = 1 + _random.nextInt(9);
+      op = 2;
+      result = a * b;
+    } else {
+      final base = _addSub(QuizMode.mixed, max, min: min);
+      a = base.left;
+      b = base.right;
+      op = base.op == QuestionOp.add ? 0 : 1;
+      result = base.answer;
+    }
+    final truth = _random.nextBool();
+    var shown = result;
+    if (!truth) {
+      final deltas = op == 2 ? [a, -a, 1, -1] : [1, -1, 2, -2];
+      final ok = [
+        for (final d in deltas)
+          if (result + d >= 0) result + d
+      ];
+      shown = ok[_random.nextInt(ok.length)];
+    }
+    return Question(
+      op: QuestionOp.judge,
+      left: truth ? 1 : 0,
+      right: 0,
+      variant: index,
+      sequence: [a, b, shown, op],
+      choices: [1, 0],
       emoji: '',
     );
   }

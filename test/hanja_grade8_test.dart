@@ -21,11 +21,16 @@ void main() {
 
   test('8급 문제·한자어 문제: 보기 4개가 다르고 정답이 들어 있다', () {
     final random = Random(3);
-    for (final type in [5, 6, 7, 8, 9]) {
+    for (final type in [5, 6, 7, 8, 9, 10]) {
       for (var stage = 0; stage < 10; stage++) {
         for (var i = 0; i < 20; i++) {
           final q = hanjaPack.generateOne!(type, stage, random);
           expect(q.typeIndex, type);
+          if (type == 10) {
+            expect(q.pairs, hasLength(4));
+            expect({for (final p in q.pairs) p.$2}, hasLength(4));
+            continue;
+          }
           expect(q.choices.toSet(), hasLength(4), reason: '${q.choices}');
           expect(q.choices, contains(q.answer));
         }

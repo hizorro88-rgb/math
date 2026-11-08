@@ -77,7 +77,10 @@ enum QuizMode {
   picGraph('그래프 읽기', '📊'),
 
   /// 단위 바꾸기 (m·cm·mm·kg·g·L·mL)
-  unitConvert('단위 바꾸기', '🔁');
+  unitConvert('단위 바꾸기', '🔁'),
+
+  /// 맞을까 틀릴까: 식이 맞는지 판단한다 (기준값 20까지 덧뺄셈, 그 위 곱셈)
+  judge('맞을까 틀릴까', '👍');
 
   const QuizMode(this.label, this.emoji);
 

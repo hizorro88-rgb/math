@@ -68,7 +68,9 @@ void main() {
         for (final q in questions) {
           expect(q.answer, greaterThanOrEqualTo(0));
           expect(q.choices, contains(q.answer));
-          expect(q.choices.toSet(), hasLength(4));
+          // 맞을까 틀릴까는 보기가 둘(맞아요·아니에요)
+          expect(
+              q.choices.toSet(), hasLength(q.op == QuestionOp.judge ? 2 : 4));
         }
       }
     });

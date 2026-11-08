@@ -216,6 +216,8 @@ class StatsStore {
   /// 수학 문제 하나의 첫 시도 결과를 기록한다. (재출제 풀이는 세지 않음)
   static Future<void> recordAnswer(Question question,
       {required bool correct}) async {
+    // 맞을까 틀릴까는 둘 중 하나라 정답률 통계를 흐린다 — 기록하지 않는다
+    if (question.op == QuestionOp.judge) return;
     final prefs = await SharedPreferences.getInstance();
 
     final typeKey = Profiles.scoped(switch (question.op) {
@@ -237,6 +239,8 @@ class StatsStore {
       QuestionOp.fraction => correct ? _fractionCorrectKey : _fractionWrongKey,
       QuestionOp.decimal => correct ? _decimalCorrectKey : _decimalWrongKey,
       QuestionOp.timeCalc => correct ? _timeCorrectKey : _timeWrongKey,
+      // 맞을까 틀릴까는 둘 중 하나라 찍어도 반은 맞는다 — 위에서 따로 거른다
+      QuestionOp.judge => correct ? _patternCorrectKey : _patternWrongKey,
       QuestionOp.money ||
       QuestionOp.length ||
       QuestionOp.sides ||

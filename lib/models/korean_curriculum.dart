@@ -146,6 +146,7 @@ class KoreanCurriculum {
         color: UnitColors.mustard,
         units: [
           KrUnit(title: '다른 것 찾기', emoji: '🤔', type: KrQuizType.oddOneOut),
+          KrUnit(title: '짝 맞추기', emoji: '🃏', type: KrQuizType.matchPairs),
           KrUnit(title: '흉내말 찾기', emoji: '🗯️', type: KrQuizType.mimetic),
           KrUnit(title: '반대말 찾기', emoji: '🔄', type: KrQuizType.opposite),
           KrUnit(title: '어울리는 말 잇기', emoji: '🔗', type: KrQuizType.verbMatch),

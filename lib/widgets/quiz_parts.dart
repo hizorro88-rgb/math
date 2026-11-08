@@ -1,7 +1,9 @@
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 
+import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../theme.dart';
 import 'auto_next_bar.dart';
@@ -867,6 +869,7 @@ class QuizFeedbackPanel extends StatelessWidget {
     required this.onNext,
     required this.autoNextKey,
     this.correctMessage = '정답이에요! 🎉',
+    this.wrongMessage,
     this.gained = 0,
     this.fire = false,
     this.autoNext = true,
@@ -878,6 +881,9 @@ class QuizFeedbackPanel extends StatelessWidget {
   final VoidCallback onNext;
   final Key autoNextKey;
   final String correctMessage;
+
+  /// 틀렸을 때 '정답은 …' 대신 보여 줄 말 (짝 맞추기처럼 답이 이미 보이는 문제)
+  final String? wrongMessage;
 
   /// 이번 문제로 얻은 코인
   final int gained;
@@ -922,9 +928,9 @@ class QuizFeedbackPanel extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Expanded(
-                  child: correct
+                  child: correct || wrongMessage != null
                       ? Text(
-                          correctMessage,
+                          correct ? correctMessage : wrongMessage!,
                           style: TextStyle(
                             fontSize: AppFont.display,
                             fontWeight: FontWeight.bold,
@@ -1133,6 +1139,219 @@ class _QuizScaffoldState extends State<QuizScaffold> {
           ],
         ),
       ),
+    );
+  }
+}
+
+// ───────────────────────── 짝 맞추기 ─────────────────────────
+
+/// 짝 맞추기 판: 왼쪽(그림·글자)과 오른쪽(낱말·뜻)을 하나씩 눌러 짝을 짓는다.
+/// 한 문제가 짝 4개 — 다 맞추면 [onDone]에 틀린 횟수를 넘긴다
+/// (화면은 한 번까지는 봐준다 — 그림만 보고 소리를 들어 보려다 생긴 실수).
+/// (왼쪽을 먼저 누르든 오른쪽을 먼저 누르든 된다)
+class QuizMatchBoard extends StatefulWidget {
+  const QuizMatchBoard({
+    super.key,
+    required this.pairs,
+    required this.onDone,
+    this.onMatch,
+    this.onTapItem,
+    this.leftLarge = false,
+  });
+
+  /// (왼쪽, 오른쪽) 짝들 — 화면에서는 오른쪽 순서를 섞어 보여 준다
+  final List<(String, String)> pairs;
+
+  /// 다 맞췄을 때. [mistakes]는 잘못 짝지은 횟수.
+  final void Function(int mistakes) onDone;
+
+  /// 짝 하나를 맞췄을 때 (그 짝의 낱말을 읽어 주기용)
+  final void Function((String, String) pair)? onMatch;
+
+  /// 칸을 눌렀을 때 (읽어 주기용) — (글자, 왼쪽인지)
+  final void Function(String text, bool left)? onTapItem;
+
+  /// 왼쪽이 그림(이모지)이면 크게
+  final bool leftLarge;
+
+  @override
+  State<QuizMatchBoard> createState() => _QuizMatchBoardState();
+}
+
+class _QuizMatchBoardState extends State<QuizMatchBoard> {
+  late List<int> _rightOrder;
+  final _matched = <int>{}; // 짝 지은 왼쪽 번호
+  int? _left;
+  int? _right;
+  int? _wrongLeft;
+  int? _wrongRight;
+  int _mistakes = 0;
+  int _flash = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _shuffle();
+  }
+
+  @override
+  void didUpdateWidget(QuizMatchBoard old) {
+    super.didUpdateWidget(old);
+    if (old.pairs != widget.pairs) {
+      _matched.clear();
+      _left = _right = _wrongLeft = _wrongRight = null;
+      _mistakes = 0;
+      _shuffle();
+    }
+  }
+
+  void _shuffle() {
+    _rightOrder = [for (var i = 0; i < widget.pairs.length; i++) i];
+    // 같은 줄에 정답이 오지 않게 한 칸씩 돌린다 (그냥 가로로 누르면 안 되게)
+    _rightOrder.shuffle(math.Random());
+    for (var i = 0; i < _rightOrder.length; i++) {
+      if (_rightOrder[i] == i) {
+        final j = (i + 1) % _rightOrder.length;
+        final t = _rightOrder[i];
+        _rightOrder[i] = _rightOrder[j];
+        _rightOrder[j] = t;
+      }
+    }
+  }
+
+  void _tap({int? left, int? right}) {
+    if (left != null) {
+      if (_matched.contains(left)) return;
+      widget.onTapItem?.call(widget.pairs[left].$1, true);
+      setState(() => _left = left);
+    }
+    if (right != null) {
+      if (_matched.contains(right)) return;
+      widget.onTapItem?.call(widget.pairs[right].$2, false);
+      setState(() => _right = right);
+    }
+    final l = _left, r = _right;
+    if (l == null || r == null) {
+      Sounds.pop();
+      return;
+    }
+    if (l == r) {
+      Sounds.pop();
+      setState(() {
+        _matched.add(l);
+        _left = _right = null;
+      });
+      widget.onMatch?.call(widget.pairs[l]);
+      if (_matched.length == widget.pairs.length) {
+        widget.onDone(_mistakes);
+      }
+    } else {
+      _mistakes++;
+      HapticFeedback.selectionClick().ignore();
+      setState(() {
+        _wrongLeft = l;
+        _wrongRight = r;
+        _left = _right = null;
+      });
+      final token = ++_flash;
+      Future.delayed(const Duration(milliseconds: 450), () {
+        // 그 사이 새로 틀렸으면 새 깜빡임을 지우지 않는다
+        if (mounted && token == _flash) {
+          setState(() => _wrongLeft = _wrongRight = null);
+        }
+      });
+    }
+  }
+
+  Widget _tile(String text,
+      {required bool selected,
+      required bool matched,
+      required bool wrong,
+      required bool large,
+      required VoidCallback onTap}) {
+    // 고른 칸 = 라임+초록(앱 전체의 '선택' 모양), 짝 지은 칸 = 흐려지고 ✓
+    final (fill, border) = wrong
+        ? (AppColors.wrongSurface, AppColors.wrong)
+        : selected
+            ? (AppColors.selectedFill, AppColors.correct)
+            : matched
+                ? (Colors.white, AppColors.correct)
+                : (Colors.white, AppColors.outline);
+    return Semantics(
+      button: true,
+      selected: selected,
+      enabled: !matched,
+      label: matched ? '$text, 짝 완료' : text,
+      child: PressBounce(
+        onTap: matched ? null : onTap,
+        child: Opacity(
+          opacity: matched ? 0.55 : 1,
+          child: AnimatedContainer(
+            duration: const Duration(milliseconds: 150),
+            height: 60,
+            alignment: Alignment.center,
+            padding: const EdgeInsets.symmetric(horizontal: 6),
+            decoration: BoxDecoration(
+              color: fill,
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(
+                  color: border, width: selected || matched || wrong ? 3 : 2),
+            ),
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                text,
+                style: TextStyle(
+                  fontSize: large ? 32 : AppFont.heading,
+                  fontWeight: FontWeight.bold,
+                  color: matched ? AppColors.greenPressed : AppColors.ink,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final n = widget.pairs.length;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          child: Column(
+            children: [
+              for (var i = 0; i < n; i++) ...[
+                if (i > 0) const SizedBox(height: 10),
+                _tile(widget.pairs[i].$1,
+                    selected: _left == i,
+                    matched: _matched.contains(i),
+                    wrong: _wrongLeft == i,
+                    large: widget.leftLarge,
+                    onTap: () => _tap(left: i)),
+              ],
+            ],
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            children: [
+              for (var k = 0; k < n; k++) ...[
+                if (k > 0) const SizedBox(height: 10),
+                _tile(widget.pairs[_rightOrder[k]].$2,
+                    selected: _right == _rightOrder[k],
+                    matched: _matched.contains(_rightOrder[k]),
+                    wrong: _wrongRight == _rightOrder[k],
+                    large: false,
+                    onTap: () => _tap(right: _rightOrder[k])),
+              ],
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

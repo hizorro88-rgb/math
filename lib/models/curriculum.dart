@@ -235,6 +235,12 @@ class Curriculum {
               startMax: 4,
               endMax: 5),
           Unit(
+              title: '맞을까 틀릴까',
+              emoji: '👍',
+              mode: QuizMode.judge,
+              startMax: 5,
+              endMax: 10),
+          Unit(
               title: '듣고 풀기',
               emoji: '👂',
               mode: QuizMode.listen,
@@ -467,6 +473,12 @@ class Curriculum {
               mode: QuizMode.multiplication,
               startMax: 8,
               endMax: 9),
+          Unit(
+              title: '구구단 맞을까',
+              emoji: '👍',
+              mode: QuizMode.judge,
+              startMax: 30,
+              endMax: 81),
           Unit(
               title: '곱셈 이야기',
               emoji: '🍱',

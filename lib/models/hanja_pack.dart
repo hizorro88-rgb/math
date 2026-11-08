@@ -154,6 +154,7 @@ final LanguagePack hanjaPack = LanguagePack(
     LangUnitType('8급 한자 찾기', '8급 한자', '🔍', textDisplay: true), // 7
     LangUnitType('8급 그림 찾기', '8급 그림', '🖼️'), // 8
     LangUnitType('한자어 읽기', '한자어', '🈶', textDisplay: true), // 9
+    LangUnitType('한자 짝 맞추기', '짝 맞추기', '🃏', textDisplay: true), // 10
   ],
   categories: [
     LangCategory(
@@ -166,6 +167,7 @@ final LanguagePack hanjaPack = LanguagePack(
         LangUnit(title: '8급 그림 찾기', emoji: '🖼️', typeIndex: 8),
         LangUnit(title: '8급 뜻 찾기', emoji: '📖', typeIndex: 6),
         LangUnit(title: '8급 한자 찾기', emoji: '🔍', typeIndex: 7),
+        LangUnit(title: '한자 짝 맞추기', emoji: '🃏', typeIndex: 10),
         LangUnit(title: '한자어 읽기', emoji: '🈶', typeIndex: 9),
       ],
     ),
@@ -278,6 +280,28 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
       answerText: '${target.$1} = ${target.$2}',
       speech: target.$2,
       dedupKey: 'hw:${target.$1}',
+    );
+  }
+  if (typeIndex == 10) {
+    // 한자 ↔ 훈음 4쌍 (훈음이 같은 글자는 함께 내지 않는다)
+    final pool = [..._pool8(stage)]..shuffle(random);
+    final picked = <HanjaChar>[];
+    for (final c in pool) {
+      if (picked.length == 4) break;
+      if (picked.every((p) => p.reading != c.reading && p.hun != c.hun)) {
+        picked.add(c);
+      }
+    }
+    return LangQuestion(
+      typeIndex: 10,
+      instruction: '한자와 뜻을 짝지어요',
+      display: '', // 판이 곧 문제 — 카드에는 과제만
+      choices: const ['짝 완성'],
+      answer: '짝 완성',
+      answerText: [for (final c in picked) '${c.char} ${c.reading}'].join('  '),
+      speech: '',
+      pairs: [for (final c in picked) (c.char, c.reading)],
+      dedupKey: 'hm:${picked.map((c) => c.char).join()}',
     );
   }
   return _generateFrom(typeIndex, _pool(stage), stage, random);

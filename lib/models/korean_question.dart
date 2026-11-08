@@ -68,7 +68,10 @@ enum KrQuizType {
   honorific('높임말 찾기', '높임말', '🙇'),
 
   /// 수를 세는 말을 찾는다 (강아지 한 □ → 마리)
-  counterWord('세는 말 찾기', '세는 말', '🔢');
+  counterWord('세는 말 찾기', '세는 말', '🔢'),
+
+  /// 그림과 낱말(낱말과 반대말)을 짝지어 4쌍을 맞춘다
+  matchPairs('짝 맞추기', '짝 맞추기', '🃏');
 
   const KrQuizType(this.label, this.shortLabel, this.emoji);
 
@@ -92,10 +95,14 @@ class KoreanQuestion {
     this.subDisplay = '',
     this.emojiChoices = false,
     this.tiles = const [],
+    this.pairs = const [],
     required this.dedupKey,
   });
 
   final KrQuizType type;
+
+  /// 짝 맞추기의 (왼쪽, 오른쪽) 짝들. 비어 있지 않으면 짝 맞추기 판으로 푼다.
+  final List<(String, String)> pairs;
 
   /// 문제 카드 위의 안내 문구 (예: "그림에 맞는 낱말은?")
   final String instruction;
@@ -169,6 +176,31 @@ class KoreanQuestionGenerator {
       case KrQuizType.honorific:
       case KrQuizType.counterWord:
         return _extra(type, stage);
+      case KrQuizType.matchPairs:
+        // 앞 단계는 그림 ↔ 낱말, 뒤 단계는 낱말 ↔ 반대말
+        final opposite = stage >= 5;
+        final List<(String, String)> pairs;
+        if (opposite) {
+          final picked = _pick(krOpposites, 4);
+          pairs = [for (final p in picked) (p.$1, p.$2)];
+        } else {
+          final picked = _pickWords(krWords2);
+          pairs = [for (final w in picked) (w.emoji, w.word)];
+        }
+        return KoreanQuestion(
+          type: type,
+          instruction: opposite ? '반대말끼리 짝지어요' : '그림과 낱말을 짝지어요',
+          display: '', // 판이 곧 문제 — 카드에는 과제만
+          choices: const ['짝 완성'],
+          answer: '짝 완성',
+          answerText: [
+            for (final p in pairs)
+              opposite ? '${p.$1}↔${p.$2}' : '${p.$1} ${p.$2}'
+          ].join('  '),
+          speech: '',
+          pairs: pairs,
+          dedupKey: 'kmp:${pairs.map((p) => p.$2).join(',')}',
+        );
       case KrQuizType.pictureToWord:
         // 단계가 오를수록 낱말 풀이 넓어진다.
         return _pictureToWord(

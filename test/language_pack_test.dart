@@ -57,6 +57,10 @@ void main() {
                 expect(remaining.remove(piece), isTrue,
                     reason: '${pack.id}: $piece가 타일에 부족 (${q.answer})');
               }
+            } else if (q.pairs.isNotEmpty) {
+              // 짝 맞추기: 짝 4개, 처음엔 과제만 읽는다
+              expect(q.pairs, hasLength(4), reason: pack.id);
+              continue;
             } else {
               expect(q.choices, hasLength(4), reason: pack.id);
               expect(q.choices.toSet(), hasLength(4), reason: pack.id);

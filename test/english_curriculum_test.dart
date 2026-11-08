@@ -47,8 +47,9 @@ void main() {
               expect(remaining.remove(ch), isTrue);
             }
           } else {
-            expect(q.choices, hasLength(4));
-            expect(q.choices.toSet(), hasLength(4));
+            if (q.pairs.isEmpty) expect(q.choices, hasLength(4));
+            // 짝 맞추기는 보기 대신 짝 4개로 푼다
+            if (q.pairs.isEmpty) expect(q.choices.toSet(), hasLength(4));
             expect(q.choices, contains(q.answer));
           }
         }
