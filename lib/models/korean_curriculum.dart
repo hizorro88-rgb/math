@@ -118,6 +118,10 @@ class KoreanCurriculum {
               title: '자음 소리 찾기', emoji: '🎼', type: KrQuizType.listenConsonant),
           KrUnit(title: '가나다 순서', emoji: '🐾', type: KrQuizType.syllableOrder),
           KrUnit(title: '첫소리 찾기', emoji: '🎯', type: KrQuizType.firstConsonant),
+          KrUnit(
+              title: '센소리 구별하기', emoji: '💥', type: KrQuizType.doubleConsonant),
+          KrUnit(
+              title: '어려운 모음 찾기', emoji: '🌀', type: KrQuizType.complexVowel),
         ],
       ),
       KrCategory(
@@ -129,8 +133,24 @@ class KoreanCurriculum {
           KrUnit(title: '글자 만들기', emoji: '🧱', type: KrQuizType.combine),
           KrUnit(title: '빈칸 채우기', emoji: '🧩', type: KrQuizType.fillBlank),
           KrUnit(title: '낱말 만들기', emoji: '🏗️', type: KrQuizType.wordBuild),
+          KrUnit(
+              title: '받침 글자 만들기', emoji: '🧲', type: KrQuizType.batchimCombine),
           KrUnit(title: '받침 낱말', emoji: '💪', type: KrQuizType.batchim),
           KrUnit(title: '긴 낱말 도전', emoji: '🚀', type: KrQuizType.longWord),
+        ],
+      ),
+      KrCategory(
+        title: '말 놀이',
+        emoji: '💬',
+        desc: '낱말의 뜻과 쓰임을 익혀 문장을 만들어요',
+        color: UnitColors.mustard,
+        units: [
+          KrUnit(title: '다른 것 찾기', emoji: '🤔', type: KrQuizType.oddOneOut),
+          KrUnit(title: '흉내말 찾기', emoji: '🗯️', type: KrQuizType.mimetic),
+          KrUnit(title: '반대말 찾기', emoji: '🔄', type: KrQuizType.opposite),
+          KrUnit(title: '어울리는 말 잇기', emoji: '🔗', type: KrQuizType.verbMatch),
+          KrUnit(title: '세는 말 찾기', emoji: '🔢', type: KrQuizType.counterWord),
+          KrUnit(title: '높임말 찾기', emoji: '🙇', type: KrQuizType.honorific),
         ],
       ),
     ];

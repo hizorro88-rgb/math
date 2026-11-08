@@ -13,11 +13,10 @@ void main() {
   });
 
   group('KoreanCurriculum', () {
-    test('3개 카테고리, 묶음마다 10단계로 이어진다', () {
-      expect(KoreanCurriculum.categories, hasLength(3));
+    test('4개 카테고리, 묶음마다 10단계로 이어진다', () {
       expect(
         KoreanCurriculum.categories.map((c) => c.title).toList(),
-        ['한글 첫걸음', '소리와 글자', '낱말 완성'],
+        ['한글 첫걸음', '소리와 글자', '낱말 완성', '말 놀이'],
       );
       expect(
         KoreanCurriculum.totalLevels,

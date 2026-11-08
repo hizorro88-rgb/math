@@ -87,9 +87,13 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
 
   /// 소리 찾기 유형은 소리가 있어야 풀 수 있으니 먼저 확인한다.
   Future<void> _start() async {
-    final needsListening = widget.type == KrQuizType.listenVowel ||
-        widget.type == KrQuizType.listenSyllable ||
-        widget.type == KrQuizType.listenConsonant;
+    final needsListening = const {
+      KrQuizType.listenVowel,
+      KrQuizType.listenSyllable,
+      KrQuizType.listenConsonant,
+      KrQuizType.doubleConsonant,
+      KrQuizType.complexVowel,
+    }.contains(widget.type);
     if (needsListening) {
       final ready = await ensureListenReady(context);
       if (!ready) {
@@ -277,10 +281,8 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
 
   Widget _buildQuestionCard() {
     // 그림·🔊는 큼직하게, 낱말·글자 배열은 그보다 작게
-    final displayIsText = switch (_question.type) {
-      KrQuizType.wordToPicture || KrQuizType.syllableOrder => true,
-      _ => false,
-    };
+    // 글자(한글·영문)가 든 표시는 글자 크기, 그림만 있으면 그림 크기
+    final displayIsText = RegExp(r'[A-Za-z가-힣ㄱ-ㅣ]').hasMatch(_question.display);
     // 듣기 문제는 문제 자체가 커다란 듣기 버튼
     final listenDisplay = _question.display == '🔊';
     return QuizCard(
@@ -312,12 +314,16 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
             ),
           if (_question.subDisplay.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(
-              _question.subDisplay,
-              style: const TextStyle(
-                fontSize: 34,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 4,
+            // 긴 문장(텔레비전을 □)도 한 줄에
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                _question.subDisplay,
+                style: const TextStyle(
+                  fontSize: 34,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 4,
+                ),
               ),
             ),
           ],
@@ -376,7 +382,12 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
             label: _question.choices[i],
             state: _choiceState(_question.choices[i]),
             fillIndex: i,
-            fontSize: _question.emojiChoices ? 44 : 30,
+            // 그림+낱말 보기(🍎 사과)나 긴 낱말은 한 단계 작게
+            fontSize: _question.emojiChoices
+                ? 44
+                : _question.choices.any((c) => c.characters.length > 4)
+                    ? AppFont.display
+                    : 30,
             onTap: () => _selectChoice(_question.choices[i]),
           ),
       ],

@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'korean_data.dart';
+import 'korean_extra.dart';
 
 /// 한글 퀴즈의 문제 유형
 enum KrQuizType {
@@ -40,7 +41,34 @@ enum KrQuizType {
   wordBuild('낱말 만들기', '낱말 조립', '🏗️'),
 
   /// 받침이 있는 낱말 읽기 도전
-  batchim('받침 낱말', '받침', '💪');
+  batchim('받침 낱말', '받침', '💪'),
+
+  /// 예사소리·된소리·거센소리를 듣고 구별한다 (가·까·카)
+  doubleConsonant('센소리 구별하기', '가까카', '💥'),
+
+  /// 이중모음 소리를 듣고 글자를 찾는다 (와 → ㅘ)
+  complexVowel('어려운 모음 찾기', '어려운 모음', '🌀'),
+
+  /// 받침까지 합쳐 글자를 만든다 (ㄱ + ㅏ + ㅁ = 감)
+  batchimCombine('받침 글자 만들기', '받침 조합', '🧲'),
+
+  /// 반대말을 찾는다 (크다 ↔ 작다)
+  opposite('반대말 찾기', '반대말', '🔄'),
+
+  /// 그림에 어울리는 흉내말을 찾는다 (🐶 → 멍멍)
+  mimetic('흉내말 찾기', '흉내말', '🗯️'),
+
+  /// 어울리는 말을 이어 문장을 완성한다 (사과를 → 먹어요)
+  verbMatch('어울리는 말 잇기', '문장 잇기', '🔗'),
+
+  /// 같은 무리가 아닌 것을 찾는다 (사과·포도·바나나·자동차)
+  oddOneOut('다른 것 찾기', '분류', '🤔'),
+
+  /// 어른께 쓰는 높임말을 찾는다 (밥 → 진지)
+  honorific('높임말 찾기', '높임말', '🙇'),
+
+  /// 수를 세는 말을 찾는다 (강아지 한 □ → 마리)
+  counterWord('세는 말 찾기', '세는 말', '🔢');
 
   const KrQuizType(this.label, this.shortLabel, this.emoji);
 
@@ -131,6 +159,16 @@ class KoreanQuestionGenerator {
 
   KoreanQuestion _generateOne(KrQuizType type, int stage) {
     switch (type) {
+      case KrQuizType.doubleConsonant:
+      case KrQuizType.complexVowel:
+      case KrQuizType.batchimCombine:
+      case KrQuizType.opposite:
+      case KrQuizType.mimetic:
+      case KrQuizType.verbMatch:
+      case KrQuizType.oddOneOut:
+      case KrQuizType.honorific:
+      case KrQuizType.counterWord:
+        return _extra(type, stage);
       case KrQuizType.pictureToWord:
         // 단계가 오를수록 낱말 풀이 넓어진다.
         return _pictureToWord(
@@ -381,6 +419,249 @@ class KoreanQuestionGenerator {
           w,
     ]..shuffle(_random);
     return [target, ...others.take(3)];
+  }
+
+  KoreanQuestion _extra(KrQuizType type, int stage) {
+    switch (type) {
+      case KrQuizType.doubleConsonant:
+        // 앞 단계는 ㅏ 모음만, 뒤 단계는 ㅗ·ㅜ·ㅣ도
+        final vowels = stage < 5 ? ['ㅏ'] : ['ㅏ', 'ㅗ', 'ㅜ', 'ㅣ'];
+        final triple =
+            krConsonantTriples[_random.nextInt(krConsonantTriples.length)];
+        final vowel = vowels[_random.nextInt(vowels.length)];
+        final answerCho = triple[_random.nextInt(triple.length)];
+        final answer = krCompose(answerCho, vowel);
+        // 같은 무리 셋 + 다른 무리 하나 (예사·된·거센 소리를 듣고 가르는 게 핵심)
+        final others = [
+          for (final t in krConsonantTriples)
+            if (t != triple) t[0]
+        ]..shuffle(_random);
+        final choices = [
+          for (final c in triple) krCompose(c, vowel),
+          // 같은 무리(가·까·카 / 사·싸)가 3개가 안 되면 다른 무리 소리로 채운다
+          for (final c in others.take(4 - triple.length)) krCompose(c, vowel),
+        ];
+        return KoreanQuestion(
+          type: type,
+          instruction: _rot(const ['어떤 소리일까요?', '잘 듣고 글자를 찾아요']),
+          display: '🔊',
+          choices: _shuffled(choices),
+          answer: answer,
+          answerText: answer,
+          speech: answer,
+          dedupKey: 'dc:$answer',
+        );
+
+      case KrQuizType.complexVowel:
+        final pool = stage < 5
+            ? krComplexVowels
+                .where((v) => const {'ㅐ', 'ㅘ', 'ㅝ', 'ㅟ', 'ㅢ'}
+                    .contains(v.letter)) // ㅚ·ㅙ·ㅞ는 뒤 단계
+                .toList()
+            : krComplexVowels;
+        final target = pool[_random.nextInt(pool.length)];
+        // 소리가 같은 모음(ㅐ·ㅔ)은 함께 내지 않는다 — 들어서는 가를 수 없다
+        final usedGroups = {target.group};
+        final wrong = <String>[];
+        for (final v in [...krComplexVowels]..shuffle(_random)) {
+          if (wrong.length == 3) break;
+          if (usedGroups.add(v.group)) wrong.add(v.letter);
+        }
+        return KoreanQuestion(
+          type: type,
+          instruction: _rot(const ['무슨 모음 소리일까요?', '소리를 듣고 모음을 찾아요']),
+          display: '🔊',
+          choices: _shuffled([target.letter, ...wrong]),
+          answer: target.letter,
+          answerText: '${target.letter} (${target.sound})',
+          speech: target.sound,
+          dedupKey: 'cv:${target.letter}',
+        );
+
+      case KrQuizType.batchimCombine:
+        final batchims =
+            stage < 5 ? krEasyBatchim : [...krEasyBatchim, ...krMoreBatchim];
+        final vowels =
+            stage < 5 ? ['ㅏ', 'ㅗ', 'ㅜ', 'ㅣ'] : ['ㅏ', 'ㅓ', 'ㅗ', 'ㅜ', 'ㅡ', 'ㅣ'];
+        final cho =
+            krBasicConsonants[_random.nextInt(krBasicConsonants.length)];
+        final jung = vowels[_random.nextInt(vowels.length)];
+        final jong = batchims[_random.nextInt(batchims.length)];
+        final answer = krCompose(cho, jung, jong);
+        // 오답: 받침만 다른 글자, 받침 없는 글자 — 받침 소리에 귀 기울이게
+        final candidates = <String>{
+          krCompose(cho, jung),
+          for (final b in [...krEasyBatchim, ...krMoreBatchim])
+            if (b != jong) krCompose(cho, jung, b),
+          for (final v in vowels)
+            if (v != jung) krCompose(cho, v, jong),
+        }..remove(answer);
+        final wrong = _pick(candidates.toList(), 3);
+        return KoreanQuestion(
+          type: type,
+          instruction: '글자를 합치면 무엇이 될까요?',
+          display: '$cho + $jung + $jong = ?',
+          choices: _shuffled([answer, ...wrong]),
+          answer: answer,
+          answerText: answer,
+          // 정답 글자를 먼저 읽으면 답을 알려 주는 셈 — 자모 이름으로 읽는다
+          speech:
+              '${_jamoName(cho)}, ${_vowelSound(jung)}, 받침 ${_jamoName(jong)}을 합치면?',
+          dedupKey: 'bc:$answer',
+        );
+
+      case KrQuizType.opposite:
+        final oppPool = _grow(krOpposites, stage);
+        final pair = oppPool[_random.nextInt(oppPool.length)];
+        final flip = _random.nextBool();
+        final shown = flip ? pair.$2 : pair.$1;
+        final answer = flip ? pair.$1 : pair.$2;
+        final wrong = <String>[];
+        for (final p in [...krOpposites]..shuffle(_random)) {
+          if (wrong.length == 3) break;
+          if (p == pair) continue;
+          // 품사가 비슷한 말끼리(…다 / 이름씨) 보기를 맞춘다
+          final w = _random.nextBool() ? p.$1 : p.$2;
+          if (w.endsWith('다') == answer.endsWith('다')) wrong.add(w);
+        }
+        return KoreanQuestion(
+          type: type,
+          instruction: _rot(const ['반대말은 무엇일까요?', '뜻이 반대인 말을 찾아요']),
+          display: shown,
+          subDisplay: pair.$3,
+          choices: _shuffled([answer, ...wrong]),
+          answer: answer,
+          answerText: '$shown의 반대말은 $answer',
+          speech: '$shown의 반대말은?',
+          dedupKey: 'op:$shown',
+        );
+
+      case KrQuizType.mimetic:
+        final mimPool = _grow(krMimetics, stage);
+        final target = mimPool[_random.nextInt(mimPool.length)];
+        // 소리 흉내말끼리, 움직임 흉내말끼리만 보기로 낸다
+        final same = [
+          for (final m in krMimetics)
+            if (m.$4 == target.$4 && m.$2 != target.$2) m.$2
+        ]..shuffle(_random);
+        final ask = target.$4
+            ? '어떤 소리를 낼까요?'
+            : target.$3 == '별'
+                ? '어떻게 빛날까요?'
+                : target.$3 == '비'
+                    ? '어떻게 내릴까요?'
+                    : '어떻게 움직일까요?';
+        return KoreanQuestion(
+          type: type,
+          instruction: target.$4 ? '어울리는 소리 흉내말은?' : '어울리는 모양 흉내말은?',
+          display: target.$1,
+          choices: _shuffled([target.$2, ...same.take(3)]),
+          answer: target.$2,
+          answerText: '${target.$3}: ${target.$2}',
+          speech: '${target.$3}${_josaKr(target.$3, '은', '는')} $ask',
+          dedupKey: 'mm:${target.$2}',
+        );
+
+      case KrQuizType.verbMatch:
+        final verbPool = _grow(krVerbPairs, stage);
+        final target = verbPool[_random.nextInt(verbPool.length)];
+        // 그 대상에 함께 어울리는 동사(사과를 씻어요)는 오답에서 뺀다
+        final wrongVerbs = [
+          for (final v in krVerbPairs)
+            if (v.$3 != target.$3 && !target.$4.contains(v.$3)) v.$3
+        ]..shuffle(_random);
+        return KoreanQuestion(
+          type: type,
+          instruction: _rot(const ['어울리는 말을 골라요', '문장을 완성해요']),
+          display: target.$1,
+          subDisplay: '${target.$2} □',
+          choices: _shuffled([target.$3, ...wrongVerbs.take(3)]),
+          answer: target.$3,
+          answerText: '${target.$2} ${target.$3}',
+          speech: '${target.$2} 어떻게 할까요?',
+          dedupKey: 'vm:${target.$2}',
+        );
+
+      case KrQuizType.honorific:
+        final honorPool = _grow(krHonorifics, stage);
+        final target = honorPool[_random.nextInt(honorPool.length)];
+        // 오답도 높임말 — 낱말끼리(밥·집)·'…다'끼리 모양을 맞춘다
+        final wrongHonor = [
+          for (final h in krHonorifics)
+            if (h != target && h.$1.endsWith('다') == target.$1.endsWith('다'))
+              h.$2
+        ]..shuffle(_random);
+        return KoreanQuestion(
+          type: type,
+          instruction: _rot(const ['할머니께는 뭐라고 할까요?', '어른께 쓰는 높임말은?']),
+          display: target.$1,
+          subDisplay: '👵',
+          choices: _shuffled([target.$2, ...wrongHonor.take(3)]),
+          answer: target.$2,
+          answerText: '${target.$1}의 높임말은 ${target.$2}',
+          speech: '${target.$1}${_josaKr(target.$1, '을', '를')} 어른께는 뭐라고 할까요?',
+          dedupKey: 'hn:${target.$1}',
+        );
+
+      case KrQuizType.counterWord:
+        final counterPool = _grow(krCounters, stage);
+        final target = counterPool[_random.nextInt(counterPool.length)];
+        final wrongCounters = [
+          for (final c in krCounters)
+            if (c.$3 != target.$3) c.$3
+        ]..shuffle(_random);
+        return KoreanQuestion(
+          type: type,
+          instruction: _rot(const ['알맞은 세는 말은?', '어떻게 셀까요?']),
+          display: target.$1,
+          subDisplay: '${target.$2} 한 □',
+          choices: _shuffled([target.$3, ...wrongCounters.take(3)]),
+          answer: target.$3,
+          answerText: '${target.$2} 한 ${target.$3}',
+          speech: '${target.$2} 하나를 어떻게 셀까요?',
+          dedupKey: 'cw:${target.$2}',
+        );
+
+      case _:
+        // oddOneOut: 앞 단계는 확실히 다른 무리끼리(과일·채소는 함께 안 냄)
+        final names = krCategories.keys.toList()..shuffle(_random);
+        final main = names.first;
+        final close = {'과일': '채소', '채소': '과일'};
+        final odd =
+            names.skip(1).firstWhere((n) => stage >= 5 || close[main] != n);
+        final three = _pick(krCategories[main]!, 3);
+        final oddItem = _pick(krCategories[odd]!, 1).first;
+        String label((String, String) x) => '${x.$1} ${x.$2}';
+        return KoreanQuestion(
+          type: type,
+          instruction: _rot(const ['하나만 다른 것은?', '같은 무리가 아닌 것을 찾아요']),
+          display: '🤔',
+          choices: _shuffled([label(oddItem), for (final x in three) label(x)]),
+          answer: label(oddItem),
+          answerText: '${oddItem.$2} (나머지는 $main)',
+          speech: '하나만 다른 것은 무엇일까요?',
+          dedupKey: 'oo:${oddItem.$2}',
+        );
+    }
+  }
+
+  /// 단계가 오를수록 뒤쪽 말까지 넓힌다 (0단계는 앞 8개)
+  List<T> _grow<T>(List<T> list, int stage) =>
+      list.take((8 + stage * 2).clamp(4, list.length)).toList();
+
+  /// 자음 이름 (ㄱ → 기역)
+  static String _jamoName(String c) =>
+      krConsonantNames.firstWhere((x) => x.letter == c).name;
+
+  /// 모음 소리 (ㅏ → 아)
+  static String _vowelSound(String v) =>
+      krVowels.firstWhere((x) => x.letter == v).sound;
+
+  /// 받침에 맞는 조사 (사과는 / 거북이는)
+  static String _josaKr(String word, String withBatchim, String without) {
+    final code = word.codeUnitAt(word.length - 1);
+    if (code < 0xAC00 || code > 0xD7A3) return without;
+    return (code - 0xAC00) % 28 != 0 ? withBatchim : without;
   }
 
   List<String> _shuffled(List<String> items) => [...items]..shuffle(_random);
