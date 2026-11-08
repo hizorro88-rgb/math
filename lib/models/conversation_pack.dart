@@ -8,13 +8,13 @@ library;
 
 import 'dart:math';
 
-import 'package:flutter/material.dart';
 
 import 'conversation_data.dart';
 import 'conversation_data_t1.dart';
 import 'conversation_data_t2.dart';
 import 'conversation_data_t3.dart';
 import 'language_pack.dart';
+import '../theme.dart';
 
 /// 주제 30개의 표현 묶음 (각 100개)
 final List<List<ConvExpr>> convUnitExpressions = [
@@ -290,21 +290,21 @@ final conversationPack = LanguagePack(
       title: '기초 회화 1000',
       emoji: '🔰',
       desc: '여행·일상에서 바로 쓰는 필수 표현 1000개',
-      color: const Color(0xFF4D96FF),
+      color: UnitColors.orange,
       units: [for (var i = 0; i < 10; i++) _convUnit(i)],
     ),
     LangCategory(
       title: '실전 회화 2000',
       emoji: '🚀',
       desc: '공항·직장·병원까지 상황별 표현 1000개 더',
-      color: const Color(0xFF7C5CE0),
+      color: UnitColors.grape,
       units: [for (var i = 10; i < 20; i++) _convUnit(i)],
     ),
     LangCategory(
       title: '유창한 회화 3000',
       emoji: '🏆',
       desc: '관용표현·리액션까지, 원어민처럼 말하는 마지막 1000개',
-      color: const Color(0xFF2FB8A6),
+      color: UnitColors.teal,
       units: [for (var i = 20; i < 30; i++) _convUnit(i)],
     ),
   ],

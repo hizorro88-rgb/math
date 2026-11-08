@@ -109,7 +109,8 @@
 - 글자 크기는 theme.dart의 AppFont 6단계만(12 caption·14 small·16 body·
   18 title·20 heading·24 display). 26 이상 숫자는 그림(이모지)·문제 숫자 전용.
   색은 AppColors·SceneColors 토큰만 — 화면·위젯에 Color(0x…)·Colors.grey 등 금지
-  (모델의 단원·띠·스티커 색 같은 데이터 색은 예외).
+  (모델의 띠·스티커·친구 종 색 같은 데이터 색은 예외). 단원(묶음) 색은
+  theme.dart의 UnitColors 팔레트에서만 — 파랑(듣기)·초록·빨강 계열이 없다.
   test/design_tokens_test.dart가 둘 다 막는다.
 - 앱바는 테마(가운데·Jua 20) — 화면에서 style 덧씌우지 말 것.
   정보 카드=테두리, 누르는 카드=3D 그림자, 반경 22/14/999.

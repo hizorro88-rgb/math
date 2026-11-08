@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'korean_question.dart';
 import 'premium.dart';
 import 'profile.dart';
+import '../theme.dart';
 
 /// 한글 과목의 카테고리. 수학과 마찬가지로 첫 단계는 항상 열려 있다.
 class KrCategory {
@@ -93,7 +94,7 @@ class KoreanCurriculum {
         title: '한글 첫걸음',
         emoji: '🍼',
         desc: '그림과 소리로 낱말과 친해져요',
-        color: const Color(0xFF1CB0F6),
+        color: UnitColors.teal,
         units: [
           KrUnit(
               title: '낱말 보고 그림 찾기',
@@ -110,7 +111,7 @@ class KoreanCurriculum {
         title: '소리와 글자',
         emoji: '🔤',
         desc: '소리를 잘 듣고 글자를 찾아요',
-        color: const Color(0xFFFF9600),
+        color: UnitColors.orange,
         units: [
           KrUnit(
               title: '글자 소리 찾기', emoji: '👂', type: KrQuizType.listenSyllable),
@@ -124,7 +125,7 @@ class KoreanCurriculum {
         title: '낱말 완성',
         emoji: '✏️',
         desc: '글자를 만들고 채워서 낱말을 완성해요',
-        color: const Color(0xFFA560E8),
+        color: UnitColors.purple,
         units: [
           KrUnit(title: '글자 만들기', emoji: '🧱', type: KrQuizType.combine),
           KrUnit(title: '빈칸 채우기', emoji: '🧩', type: KrQuizType.fillBlank),

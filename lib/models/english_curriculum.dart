@@ -4,6 +4,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'english_question.dart';
 import 'premium.dart';
 import 'profile.dart';
+import '../theme.dart';
 
 /// 영어 과목의 카테고리. 첫 단계는 항상 열려 있다.
 class EnCategory {
@@ -90,7 +91,7 @@ class EnglishCurriculum {
         title: '알파벳 첫걸음',
         emoji: '🅰️',
         desc: '소리로 알파벳과 친해져요',
-        color: const Color(0xFFD65DB1),
+        color: UnitColors.pink,
         units: [
           EnUnit(
               title: '알파벳 소리 찾기', emoji: '👂', type: EnQuizType.listenLetter),
@@ -102,7 +103,7 @@ class EnglishCurriculum {
         title: '영어 낱말',
         emoji: '🍎',
         desc: '듣고 보며 영어 낱말을 익혀요',
-        color: const Color(0xFF1CB0F6),
+        color: UnitColors.orange,
         units: [
           EnUnit(
               title: '낱말 듣고 그림 찾기',
@@ -119,7 +120,7 @@ class EnglishCurriculum {
         title: '스펠링 도전',
         emoji: '✏️',
         desc: '글자를 이어서 낱말을 완성해요',
-        color: const Color(0xFF2FB8A6),
+        color: UnitColors.teal,
         units: [
           EnUnit(title: '낱말 만들기', emoji: '🏗️', type: EnQuizType.wordBuild),
           EnUnit(title: '긴 낱말 도전', emoji: '🚀', type: EnQuizType.longWord),

@@ -104,15 +104,15 @@ class AppColors {
     Color(0xFFFF6B9D),
   ];
 
-  /// 퀴즈 보기 4색 (파스텔). 정답 초록과 헷갈리지 않게 초록 대신 라벤더.
+  /// 퀴즈 보기 4색 (파스텔). 정답 초록·듣기 파랑과 헷갈리지 않게 분홍·살구·라벤더·노랑.
   static const choiceFills = [
-    Color(0xFFE3F2FF),
+    Color(0xFFFDE7F3),
     Color(0xFFFFEDE3),
     Color(0xFFF1E9FF),
     Color(0xFFFFF4D6),
   ];
   static const choiceBorders = [
-    Color(0xFF9CCBEF),
+    Color(0xFFE9A3CB),
     Color(0xFFF0BC9C),
     Color(0xFFC9B3F0),
     Color(0xFFE8CF8B),
@@ -144,6 +144,25 @@ class AppFont {
   static const display = 24.0;
 }
 
+/// 묶음(단원) 색 — 지도 카드·단계 원·퀴즈 테마에 쓰는 데이터 색.
+/// 뜻이 정해진 색과 겹치지 않게 고른 팔레트에서만 고른다:
+/// 파랑 계열(듣기 버튼)·초록(정답·앞으로)·빨강(오답)은 없다.
+/// (test/design_tokens_test.dart가 단원 색의 색상 범위를 검사한다)
+class UnitColors {
+  UnitColors._();
+
+  static const pink = Color(0xFFD65DB1);
+  static const rose = Color(0xFFE5739B);
+  static const orange = Color(0xFFFF9600);
+  static const mustard = Color(0xFFE0A100);
+  static const caramel = Color(0xFFB5803A);
+  static const brown = Color(0xFF8A5A2B);
+  static const teal = Color(0xFF2FB8A6);
+  static const purple = Color(0xFFA560E8);
+  static const violet = Color(0xFF7E57C2);
+  static const grape = Color(0xFF8E5CD9);
+}
+
 /// 장면(친구 방·꾸미기 판) 배경색 — 화면마다 따로 고르지 않게 여기서만
 class SceneColors {
   SceneColors._();
@@ -158,7 +177,7 @@ class SceneColors {
 }
 
 /// 설정 화면에 보여줄 앱 버전 (pubspec version과 함께 올린다)
-const appVersionLabel = '1.44.0';
+const appVersionLabel = '1.45.0';
 
 /// 제목·버튼·숫자용 라운드 서체 (본문은 NotoSansKR)
 const kDisplayFont = 'Jua';

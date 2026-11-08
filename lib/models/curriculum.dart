@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'quiz_config.dart';
+import '../theme.dart';
 
 /// 연령/학년 카테고리. 카테고리마다 첫 단계는 항상 열려 있어서
 /// 아이 나이에 맞는 곳에서 바로 시작할 수 있다.
@@ -130,7 +131,7 @@ class Curriculum {
         title: '4살',
         emoji: '🍼',
         desc: '5까지 수 세기',
-        color: const Color(0xFFD65DB1),
+        color: UnitColors.pink,
         units: [
           Unit(
               title: '수 세기 첫걸음',
@@ -156,7 +157,7 @@ class Curriculum {
         title: '5살',
         emoji: '🧸',
         desc: '10까지 세기 · 더하기 시작',
-        color: const Color(0xFF1CB0F6),
+        color: UnitColors.teal,
         units: [
           Unit(
               title: '10까지 세기',
@@ -182,7 +183,7 @@ class Curriculum {
         title: '6살',
         emoji: '🎨',
         desc: '5까지 덧셈·뺄셈 · 20까지 세기',
-        color: const Color(0xFFFF9600),
+        color: UnitColors.orange,
         units: [
           Unit(
               title: '뺄셈 첫걸음',
@@ -214,7 +215,7 @@ class Curriculum {
         title: '7살',
         emoji: '🎒',
         desc: '10까지 덧셈·뺄셈 · 시계 읽기 (학교 갈 준비!)',
-        color: const Color(0xFF5B6CF0),
+        color: UnitColors.purple,
         units: [
           Unit(
               title: '덧셈 도전',
@@ -253,7 +254,7 @@ class Curriculum {
         title: '초등 1학년',
         emoji: '📕',
         desc: '받아올림·받아내림 · 세로셈 · 시계 보기',
-        color: const Color(0xFFA560E8),
+        color: UnitColors.caramel,
         units: [
           Unit(
               title: '큰 수 덧셈',
@@ -315,7 +316,7 @@ class Curriculum {
         title: '초등 2학년',
         emoji: '📗',
         desc: '두 자리 덧셈·뺄셈 · 곱셈구구(2~9단)',
-        color: const Color(0xFF2FB8A6),
+        color: UnitColors.rose,
         units: [
           Unit(
               title: '두 자리 덧셈',
@@ -377,7 +378,7 @@ class Curriculum {
         title: '초등 3학년',
         emoji: '📘',
         desc: '나눗셈 · 큰 수 곱셈 · 세 자리 덧셈·뺄셈',
-        color: const Color(0xFFE0A100),
+        color: UnitColors.mustard,
         units: [
           Unit(
               title: '나눗셈 첫걸음',
@@ -416,7 +417,7 @@ class Curriculum {
         title: '초3·4 심화',
         emoji: '📙',
         desc: '분수 · 소수 · 시간 계산',
-        color: const Color(0xFF7E57C2),
+        color: UnitColors.violet,
         units: [
           Unit(
               title: '분수 첫걸음',

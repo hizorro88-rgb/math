@@ -1,8 +1,8 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
 
 import 'language_pack.dart';
+import '../theme.dart';
 
 /// 숫자 한자 1~10
 const List<String> zhNumbers = [
@@ -104,7 +104,7 @@ final LanguagePack chinesePack = LanguagePack(
       title: '중국어 소리',
       emoji: '🐼',
       desc: '소리를 듣고 그림·숫자를 찾아요',
-      color: const Color(0xFF5B6CF0),
+      color: UnitColors.pink,
       units: [
         LangUnit(title: '낱말 소리 찾기', emoji: '👂', typeIndex: 0),
         LangUnit(title: '숫자 소리 찾기', emoji: '👂', typeIndex: 1),
@@ -114,7 +114,7 @@ final LanguagePack chinesePack = LanguagePack(
       title: '한자 낱말',
       emoji: '🀄',
       desc: '한자와 그림을 짝지어요',
-      color: const Color(0xFFE0A100),
+      color: UnitColors.mustard,
       units: [
         LangUnit(title: '한자 보고 그림 찾기', emoji: '🔍', typeIndex: 2),
         LangUnit(title: '그림 보고 한자 찾기', emoji: '🖼️', typeIndex: 3),
@@ -124,7 +124,7 @@ final LanguagePack chinesePack = LanguagePack(
       title: '숫자 한자',
       emoji: '🔢',
       desc: '一부터 十까지 숫자 한자를 익혀요',
-      color: const Color(0xFF2FB8A6),
+      color: UnitColors.teal,
       units: [
         LangUnit(title: '숫자 한자 찾기', emoji: '🔢', typeIndex: 4),
       ],
@@ -133,7 +133,7 @@ final LanguagePack chinesePack = LanguagePack(
       title: '한자 박사',
       emoji: '📜',
       desc: '소리로 한자를 읽고, 우리말 뜻을 이어요',
-      color: const Color(0xFF8A5A2B),
+      color: UnitColors.brown,
       units: [
         LangUnit(title: '듣고 한자 찾기', emoji: '🎧', typeIndex: 5),
         LangUnit(title: '한자 뜻 찾기', emoji: '📜', typeIndex: 6),

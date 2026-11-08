@@ -1,8 +1,8 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
 
 import 'language_pack.dart';
+import '../theme.dart';
 
 /// 천자문 한 글자: 한자·훈(뜻)·음(소리)·그림 힌트(없으면 빈 문자열).
 class HanjaChar {
@@ -78,7 +78,7 @@ final LanguagePack hanjaPack = LanguagePack(
       title: '천자문 첫걸음',
       emoji: '⛅',
       desc: '하늘 천, 땅 지 — 훈음으로 한자를 만나요',
-      color: const Color(0xFF7E57C2),
+      color: UnitColors.violet,
       units: [
         LangUnit(title: '한자 소리 찾기', emoji: '👂', typeIndex: 0),
         LangUnit(title: '한자 보고 뜻 찾기', emoji: '🔍', typeIndex: 1),
@@ -88,7 +88,7 @@ final LanguagePack hanjaPack = LanguagePack(
       title: '천자문 익히기',
       emoji: '🍂',
       desc: '뜻과 그림으로 한자를 찾아요',
-      color: const Color(0xFFE0A100),
+      color: UnitColors.mustard,
       units: [
         LangUnit(title: '뜻 보고 한자 찾기', emoji: '🔍', typeIndex: 2),
         LangUnit(title: '그림 보고 한자 찾기', emoji: '🖼️', typeIndex: 3),
@@ -98,7 +98,7 @@ final LanguagePack hanjaPack = LanguagePack(
       title: '천자문 박사',
       emoji: '📜',
       desc: '天地玄黃 — 네 글자 구절을 완성해요',
-      color: const Color(0xFF2FB8A6),
+      color: UnitColors.teal,
       units: [
         LangUnit(title: '구절 완성', emoji: '📜', typeIndex: 4),
       ],

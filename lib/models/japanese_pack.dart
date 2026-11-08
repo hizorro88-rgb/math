@@ -1,8 +1,8 @@
 import 'dart:math';
 
-import 'package:flutter/material.dart';
 
 import 'language_pack.dart';
+import '../theme.dart';
 
 /// 히라가나 오십음 (기본 46자, あ~ん)
 const List<String> jaKana = [
@@ -116,7 +116,7 @@ final LanguagePack japanesePack = LanguagePack(
       title: 'かな 첫걸음',
       emoji: '🌸',
       desc: '소리로 히라가나와 친해져요',
-      color: const Color(0xFFD65DB1),
+      color: UnitColors.pink,
       units: [
         LangUnit(title: 'かな 소리 찾기', emoji: '👂', typeIndex: 0),
         LangUnit(title: 'あいうえお 순서', emoji: '🐾', typeIndex: 1),
@@ -126,7 +126,7 @@ final LanguagePack japanesePack = LanguagePack(
       title: '일본어 낱말',
       emoji: '🍙',
       desc: '듣고 보며 낱말을 익혀요',
-      color: const Color(0xFF7C5CE0),
+      color: UnitColors.grape,
       units: [
         LangUnit(title: '낱말 듣고 그림 찾기', emoji: '🔍', typeIndex: 2),
         LangUnit(title: '그림 보고 낱말 찾기', emoji: '🖼️', typeIndex: 3),
@@ -137,7 +137,7 @@ final LanguagePack japanesePack = LanguagePack(
       title: '낱말 완성',
       emoji: '✏️',
       desc: '글자를 이어서 낱말을 만들어요',
-      color: const Color(0xFF2FB8A6),
+      color: UnitColors.teal,
       units: [
         LangUnit(title: '낱말 만들기', emoji: '🏗️', typeIndex: 5),
       ],
@@ -146,7 +146,7 @@ final LanguagePack japanesePack = LanguagePack(
       title: 'カタカナ 도전',
       emoji: '🗼',
       desc: '가타카나 소리·짝·낱말을 익혀요',
-      color: const Color(0xFFFF9600),
+      color: UnitColors.orange,
       units: [
         LangUnit(title: 'カナ 소리 찾기', emoji: '🎧', typeIndex: 6),
         LangUnit(title: '히라가나·가타카나 짝', emoji: '🀄', typeIndex: 7),
