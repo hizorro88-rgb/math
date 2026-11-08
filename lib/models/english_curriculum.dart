@@ -143,7 +143,7 @@ class EnglishCurriculum {
         title: '단어 퀴즈',
         emoji: '💬',
         desc: '주제별 낱말과 뜻을 익혀요',
-        color: UnitColors.mustard,
+        color: UnitColors.plum,
         units: [
           EnUnit(
               title: '색깔과 숫자',

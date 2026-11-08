@@ -269,7 +269,7 @@ class QuizTopBar extends StatelessWidget {
   /// 연속 정답 수 (3부터 🔥가 보인다)
   final int combo;
 
-  /// 점 앞에 붙는 그림 하나 (보스전 👑 등)
+  /// 점 앞에 붙는 그림 하나 (보스전 👾 등)
   final String? leading;
 
   /// 화면 읽기용 이름 (예: "수 세기 첫걸음 · 1단계")

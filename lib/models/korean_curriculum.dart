@@ -143,7 +143,7 @@ class KoreanCurriculum {
         title: '말 놀이',
         emoji: '💬',
         desc: '낱말의 뜻과 쓰임을 익혀 문장을 만들어요',
-        color: UnitColors.mustard,
+        color: UnitColors.plum,
         units: [
           KrUnit(title: '다른 것 찾기', emoji: '🤔', type: KrQuizType.oddOneOut),
           KrUnit(title: '짝 맞추기', emoji: '🃏', type: KrQuizType.matchPairs),

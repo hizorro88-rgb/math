@@ -274,17 +274,23 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
+      // 내용만큼만 올라오게 (빈 흰 판이 화면을 다 덮지 않게)
       builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
-          child: _DailyCard(
-            daily: daily,
-            coins: data.coins,
-            onBuyFreeze: () {
-              Navigator.of(context).pop();
-              _buyFreeze();
-            },
-          ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 16),
+              child: _DailyCard(
+                daily: daily,
+                coins: data.coins,
+                onBuyFreeze: () {
+                  Navigator.of(context).pop();
+                  _buyFreeze();
+                },
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -411,7 +417,7 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
 
   Future<void> _openBoss(bool cleared, int? age) async {
     if (cleared) {
-      showKidNotice(context, emoji: '👑', text: '이번 주 보스는 이겼어요! 다음 주에 또 만나요');
+      showKidNotice(context, emoji: '👾', text: '이번 주 보스는 이겼어요! 다음 주에 또 만나요');
       return;
     }
     await Navigator.of(context).push(
@@ -926,9 +932,30 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                       onStickers: _openStickerBook,
                       onBadges: _openBadges,
                     ),
+                    const SizedBox(height: 10),
+                    // 자유 연습: 단계와 상관없는 놀이 — 놀이판 바로 아래 (목록 끝이면 안 보였다)
+                    BouncyButton(
+                      color: Colors.white,
+                      shadowColor: AppColors.outline,
+                      borderRadius: 22,
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 14, vertical: 12),
+                      onTap: _openPractice,
+                      child: Row(
+                        children: [
+                          const Text('🎠', style: TextStyle(fontSize: 30)),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Text('자유 연습',
+                                style: displayStyle(fontSize: AppFont.title)),
+                          ),
+                          const Icon(Icons.chevron_right_rounded,
+                              color: AppColors.inkMuted),
+                        ],
+                      ),
+                    ),
                     const SizedBox(height: 22),
                     // ── 2. 배우기 (과목은 상단 헤더의 과목 칩으로 바꾼다) ──
-                    // ── 1. 배우기 (과목은 상단 헤더의 이모지 버튼으로 바꾼다) ──
                     _SectionTitle('📚 배우기', trailing: '⭐ $totalStars'),
                     // 고른 과목의 카테고리를 골라 들어간다.
                     if (_subject == 1)
@@ -991,28 +1018,6 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                       ]
                     else
                       ..._mathCategoryCards(data),
-                    const SizedBox(height: 4),
-                    // 자유 연습: 단계와 상관없는 놀이라 배우기 목록 끝에
-                    BouncyButton(
-                      color: Colors.white,
-                      shadowColor: AppColors.outline,
-                      borderRadius: 22,
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 14, vertical: 12),
-                      onTap: _openPractice,
-                      child: Row(
-                        children: [
-                          const Text('🎠', style: TextStyle(fontSize: 30)),
-                          const SizedBox(width: 10),
-                          Expanded(
-                            child: Text('자유 연습',
-                                style: displayStyle(fontSize: AppFont.title)),
-                          ),
-                          const Icon(Icons.chevron_right_rounded,
-                              color: AppColors.inkMuted),
-                        ],
-                      ),
-                    ),
                   ],
                 ),
               ),
@@ -1355,7 +1360,7 @@ class _DailyCard extends StatelessWidget {
                   onTap: () => showKidNotice(context,
                       emoji: '🛡️', text: '지킴이가 있으면 하루 쉬어도 불꽃이 안 꺼져요'),
                   child: Text(
-                    '🛡️ 스트릭 지킴이 ×${daily.freezes}',
+                    '🛡️ 불꽃 지킴이 ×${daily.freezes}',
                     style: const TextStyle(
                       fontSize: AppFont.small,
                       fontWeight: FontWeight.bold,
@@ -1424,7 +1429,42 @@ class _MissionRow extends StatelessWidget {
 
     return Row(
       children: [
-        Text(mission.emoji, style: const TextStyle(fontSize: AppFont.heading)),
+        // 그림 하나 + 몇 개인지 작은 숫자 딱지 (▶▶▶·✓20 같은 글자 기호 대신)
+        SizedBox(
+          width: 36,
+          height: 32,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Center(
+                child: mission.emoji == '▶'
+                    ? const Icon(Icons.play_circle_fill_rounded,
+                        color: AppColors.green, size: 28)
+                    : Text(mission.emoji,
+                        style: const TextStyle(fontSize: AppFont.heading)),
+              ),
+              if (mission.target > 1)
+                Positioned(
+                  right: -4,
+                  bottom: -2,
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(999),
+                      border: Border.all(color: AppColors.outline),
+                    ),
+                    child: Text('${mission.target}',
+                        style: const TextStyle(
+                            fontSize: AppFont.caption,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.ink)),
+                  ),
+                ),
+            ],
+          ),
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -1651,7 +1691,8 @@ class _PlayBoard extends StatelessWidget {
             onTap: onMissions,
           ),
           _HomeTile(
-            emoji: '👑',
+            // 👾 = 보스 (👑는 가게 왕관과 겹쳐서 바꿨다)
+            emoji: '👾',
             title: '주간 보스전',
             done: bossCleared,
             onTap: onBoss,
@@ -1660,7 +1701,8 @@ class _PlayBoard extends StatelessWidget {
             emoji: '📒',
             title: '오답 노트',
             badge: wrongCount > 0 ? '$wrongCount' : null,
-            done: wrongCount == 0,
+            // 고칠 문제가 없으면 납작한 칸 (✅ 도장은 '오늘 할 일 끝'에만)
+            empty: wrongCount == 0,
             onTap: onWrongNotes,
           ),
         ]),
@@ -1688,12 +1730,16 @@ class _HomeTile extends StatelessWidget {
     required this.onTap,
     this.badge,
     this.done = false,
+    this.empty = false,
   });
 
   final String emoji;
   final String title;
   final VoidCallback onTap;
   final String? badge;
+
+  /// 지금은 비어 있는 칸 (누를 수는 있지만 납작하고 흐리게 — 눌러 달라고 보이지 않게)
+  final bool empty;
 
   /// 오늘 할 건 다 한 칸 (✅ 도장 + 살짝 흐리게)
   final bool done;
@@ -1706,8 +1752,9 @@ class _HomeTile extends StatelessWidget {
       onTap: onTap,
       excludeSemantics: true,
       child: BouncyButton(
-        color: Colors.white,
-        shadowColor: AppColors.outline,
+        color: empty ? AppColors.cream : Colors.white,
+        shadowColor: empty ? AppColors.cream : AppColors.outline,
+        border: empty ? Border.all(color: AppColors.outline, width: 2) : null,
         borderRadius: 22,
         padding: EdgeInsets.zero,
         onTap: onTap,
@@ -1718,7 +1765,7 @@ class _HomeTile extends StatelessWidget {
             children: [
               Center(
                 child: Opacity(
-                  opacity: done ? 0.55 : 1,
+                  opacity: done || empty ? 0.55 : 1,
                   child: Column(
                     mainAxisSize: MainAxisSize.min,
                     children: [

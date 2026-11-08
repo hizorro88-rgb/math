@@ -185,7 +185,7 @@ final LanguagePack hanjaPack = LanguagePack(
       title: '천자문 익히기',
       emoji: '🍂',
       desc: '뜻과 그림으로 한자를 찾아요',
-      color: UnitColors.mustard,
+      color: UnitColors.plum,
       units: [
         LangUnit(title: '뜻 보고 한자 찾기', emoji: '🔍', typeIndex: 2),
         LangUnit(title: '그림 보고 한자 찾기', emoji: '🖼️', typeIndex: 3),

@@ -57,7 +57,7 @@ class AppColors {
   static const listen = Color(0xFF2B9BE0);
 
   /// 친구 물 막대 (밥 막대는 amber)
-  static const petWater = Color(0xFF4DA8FF);
+  static const petWater = Color(0xFF26C6B5); // 듣기 파랑과 겹치지 않게 청록
 
   /// 별·코인·보상 바탕
   static const rewardSurface = Color(0xFFFFF4D6);
@@ -154,7 +154,7 @@ class UnitColors {
   static const pink = Color(0xFFD65DB1);
   static const rose = Color(0xFFE5739B);
   static const orange = Color(0xFFFF9600);
-  static const mustard = Color(0xFFE0A100);
+  static const plum = Color(0xFFA2457F); // 머스터드는 앰버(보상)와 헷갈려 뺐다
   static const caramel = Color(0xFFB5803A);
   static const brown = Color(0xFF8A5A2B);
   static const teal = Color(0xFF2FB8A6);
@@ -177,7 +177,7 @@ class SceneColors {
 }
 
 /// 설정 화면에 보여줄 앱 버전 (pubspec version과 함께 올린다)
-const appVersionLabel = '1.53.0';
+const appVersionLabel = '1.54.0';
 
 /// 제목·버튼·숫자용 라운드 서체 (본문은 NotoSansKR)
 const kDisplayFont = 'Jua';

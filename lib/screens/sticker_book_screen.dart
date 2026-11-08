@@ -607,16 +607,22 @@ class _CanvasCard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
+          const Row(
             children: [
-              const Text('🖼️', style: TextStyle(fontSize: AppFont.display)),
-              const SizedBox(width: 8),
-              const Text(
+              Text('🖼️', style: TextStyle(fontSize: AppFont.display)),
+              SizedBox(width: 8),
+              Text(
                 '내 꾸미기 판',
                 style: TextStyle(
                     fontSize: AppFont.title, fontWeight: FontWeight.bold),
               ),
-              const Spacer(),
+            ],
+          ),
+          // 버튼 둘은 제목 아래 줄에 (한 줄이면 좁은 폰에서 카드 밖으로 밀려난다)
+          const SizedBox(height: 8),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
               // 지우개 모드
               GestureDetector(
                 onTap: placed.isEmpty ? null : onToggleErase,

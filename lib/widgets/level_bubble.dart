@@ -44,6 +44,9 @@ class LevelBubble extends StatelessWidget {
     if (!unlocked) return _LockedBubble(number: number);
 
     final size = _isCurrent ? 66.0 : 56.0;
+    // 열렸지만 '지금 할 원'이 아닌 것은 흐린 얇은 테두리 — 굵은 테두리는 지금 할 원만
+    final waiting = !_cleared && !_isCurrent;
+    final ring = waiting ? color.withValues(alpha: 0.45) : color;
     final bubble = Semantics(
       button: true,
       label: '$number단계',
@@ -64,7 +67,7 @@ class LevelBubble extends StatelessWidget {
                 : null,
             color: _cleared ? null : Colors.white,
             shape: BoxShape.circle,
-            border: Border.all(color: color, width: 3),
+            border: Border.all(color: ring, width: waiting ? 2 : 3),
             boxShadow: [
               BoxShadow(
                 color: _cleared
@@ -82,7 +85,11 @@ class LevelBubble extends StatelessWidget {
                 '$number',
                 style: displayStyle(
                   fontSize: _isCurrent ? AppFont.display : AppFont.title,
-                  color: _cleared ? Colors.white : color,
+                  color: _cleared
+                      ? Colors.white
+                      : waiting
+                          ? color.withValues(alpha: 0.6)
+                          : color,
                 ),
               ),
             ],
@@ -204,6 +211,19 @@ class _LockedBubbleState extends State<_LockedBubble>
       ),
     );
   }
+}
+
+/// 진행 잠금 표시 (점선 동그라미) — 잠긴 묶음 머리에도 같은 모양을 쓴다
+class DashedCircle extends StatelessWidget {
+  const DashedCircle({super.key, this.size = 22});
+
+  final double size;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+      width: size,
+      height: size,
+      child: CustomPaint(painter: _DashedCirclePainter()));
 }
 
 /// 잠긴 단계의 점선 원

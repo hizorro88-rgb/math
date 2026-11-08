@@ -138,7 +138,7 @@ class _UnitSection extends StatelessWidget {
         pack.levels.where((l) => l.unit.index == unit.index).toList();
     return StageUnitCard(
       highlight: highlight,
-      // 🎴 카드: 지금 할 단계(없으면 마지막 단계)의 판으로 카드를 만든다
+      // 📇 카드: 지금 할 단계(없으면 마지막 단계)의 판으로 카드를 만든다
       onLearn: langCardPool(pack, unit.typeIndex).isEmpty
           ? null
           : () {

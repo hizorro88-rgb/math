@@ -20,7 +20,7 @@ import 'wrong_notes_screen.dart';
 ///
 /// 글을 못 읽어도 알 수 있게 차례로 하나씩 보여 주고(누르면 건너뜀), 한 문장으로 읽어 준다.
 /// ① 진행 점이 차오르며 별이 뜬다 → ② 칭찬 한 줄 → ③ 🪙 이번 판에 늘어난 전부
-/// → ④ 보상 칩 한 줄(🎁👑📋🔥🎟️) → ⑤ 친구가 깡충 → ⑥ 주인공 버튼 하나
+/// → ④ 보상 칩 한 줄(🎁👾📋🔥🎟️) → ⑤ 친구가 깡충 → ⑥ 주인공 버튼 하나
 ///
 /// 아이가 보는 재화는 ⭐(배움)·🪙(쓰기)·🎟️(모으기) 셋. 나머지 보상은 칩 그림으로만.
 class ResultScreen extends StatefulWidget {
@@ -462,7 +462,7 @@ class _ResultScreenState extends State<ResultScreen>
   Widget _buildChips() {
     final chips = <(String, String, VoidCallback?)>[
       if (widget.chestCoins > 0) ('🎁', '+${widget.chestCoins}', null),
-      if (widget.bossCleared) ('👑', '+100', null),
+      if (widget.bossCleared) ('👾', '+100', null),
       if (widget.completedMissions.isNotEmpty)
         ('📋', '✓${widget.completedMissions.length}', null),
       if (widget.milestoneDays > 0) ('🔥', '${widget.milestoneDays}', null),

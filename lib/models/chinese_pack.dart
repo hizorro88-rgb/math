@@ -113,7 +113,7 @@ final LanguagePack chinesePack = LanguagePack(
       title: '한자 낱말',
       emoji: '🀄',
       desc: '한자와 그림을 짝지어요',
-      color: UnitColors.mustard,
+      color: UnitColors.plum,
       units: [
         LangUnit(title: '한자 보고 그림 찾기', emoji: '🔍', typeIndex: 2),
         LangUnit(title: '그림 보고 한자 찾기', emoji: '🖼️', typeIndex: 3),

@@ -225,7 +225,10 @@ class _PracticeScreenState extends State<PracticeScreen> {
                           modes,
                           (m) => _ChoiceCard(
                             emoji: m.emoji,
-                            label: m.label,
+                            // 긴 이름은 어절에서 줄을 바꾼다 (이야기 덧셈·뺄셈이 뺄/셈으로 끊기지 않게)
+                            label: m.label.length > 7
+                                ? m.label.replaceFirst(' ', '\n')
+                                : m.label,
                             selected: _mode == m,
                             onTap: () => setState(() => _mode = m),
                           ),

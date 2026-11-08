@@ -105,7 +105,7 @@ class _UnitSection extends StatelessWidget {
         .toList();
     return StageUnitCard(
       highlight: highlight,
-      // 🎴 카드: 지금 할 단계(없으면 마지막 단계)의 판으로 카드를 만든다
+      // 📇 카드: 지금 할 단계(없으면 마지막 단계)의 판으로 카드를 만든다
       onLearn: koreanCardPool(unit.type).isEmpty
           ? null
           : () {

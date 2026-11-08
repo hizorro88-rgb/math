@@ -80,26 +80,26 @@ class StageUnitCard extends StatelessWidget {
         Expanded(
             child: Text(title, style: displayStyle(fontSize: AppFont.title))),
         if (onLearn != null && !_locked)
-          // 🎴 카드 = 배우기 카드 (문제 전에 그림·소리로 먼저 만나기).
-          // 글을 못 읽는 아이도 알아보게 그림 + 짧은 글.
+          // 📇 카드 = 배우기 카드 (문제 전에 그림·소리로 먼저 만나기).
+          // 글을 못 읽는 아이도 알아보게 그림 + 짧은 글. 누르는 것이라 3D 버튼.
           Semantics(
             button: true,
             label: '$title 배우기 카드',
             excludeSemantics: true,
             onTap: onLearn,
-            child: PressBounce(
-              onTap: onLearn,
-              child: Container(
-                padding: const EdgeInsets.fromLTRB(8, 4, 12, 4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(999),
-                  border: Border.all(color: AppColors.outline, width: 2),
-                ),
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(minHeight: 48),
+              child: BouncyButton(
+                color: Colors.white,
+                shadowColor: AppColors.outline,
+                border: Border.all(color: AppColors.outline, width: 2),
+                borderRadius: 999,
+                padding: const EdgeInsets.fromLTRB(10, 8, 14, 8),
+                onTap: onLearn,
                 child: const Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Text('🎴', style: TextStyle(fontSize: AppFont.heading)),
+                    Text('📇', style: TextStyle(fontSize: AppFont.heading)),
                     SizedBox(width: 4),
                     Text('카드',
                         style: TextStyle(
@@ -113,8 +113,7 @@ class StageUnitCard extends StatelessWidget {
           ),
         if (_locked)
           // 🔒(자물쇠)는 '어른이 여는 것'에만 — 진행 잠금은 빈 점선 동그라미
-          const Icon(Icons.radio_button_unchecked_rounded,
-              color: AppColors.inkMuted, size: 22),
+          const DashedCircle(),
       ],
     );
 

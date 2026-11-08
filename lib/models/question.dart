@@ -434,7 +434,8 @@ class QuestionGenerator {
           left: count,
           right: 0,
           variant: index, // 문항마다 지시문이 조금씩 달라진다
-          choices: _buildChoices(count, max),
+          // 그림이 하나라도 있으니 0은 보기에 넣지 않는다
+          choices: _buildChoices(count, max, lower: 1),
           emoji: _emoji,
         );
 
@@ -1578,12 +1579,12 @@ class QuestionGenerator {
 
   /// 정답 주변의 그럴듯한 오답 3개를 섞어 보기 4개를 만든다.
   /// 보기는 0 이상 [upper]+2 이하에서 고른다.
-  List<int> _buildChoices(int answer, int upper) {
+  List<int> _buildChoices(int answer, int upper, {int lower = 0}) {
     final choices = <int>{answer};
     var spread = 1;
     while (choices.length < 4) {
       final candidate = answer + (_random.nextBool() ? spread : -spread);
-      if (candidate >= 0 && candidate <= upper + 2) {
+      if (candidate >= lower && candidate <= upper + 2) {
         choices.add(candidate);
       }
       // 가까운 수부터 시도하고, 안 되면 범위를 넓힌다.

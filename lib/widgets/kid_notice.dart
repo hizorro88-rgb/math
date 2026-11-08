@@ -232,10 +232,8 @@ Future<bool> showKidConfirm(
               onTap: () => Navigator.of(context).pop(false),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
+                // ▶는 글 뒤에 — 계속하기 ▶·시작하기 ▶와 같은 자리
                 children: [
-                  const Icon(Icons.play_arrow_rounded,
-                      color: Colors.white, size: 28),
-                  const SizedBox(width: 4),
                   Text(
                     keepLabel,
                     style: const TextStyle(
@@ -244,6 +242,9 @@ Future<bool> showKidConfirm(
                       color: Colors.white,
                     ),
                   ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.play_arrow_rounded,
+                      color: Colors.white, size: 28),
                 ],
               ),
             ),

@@ -85,7 +85,7 @@ void main() {
       'pink': UnitColors.pink,
       'rose': UnitColors.rose,
       'orange': UnitColors.orange,
-      'mustard': UnitColors.mustard,
+      'plum': UnitColors.plum,
       'caramel': UnitColors.caramel,
       'brown': UnitColors.brown,
       'teal': UnitColors.teal,

@@ -124,9 +124,9 @@ final List<LearnBadge> allBadges = [
   ),
   LearnBadge(
     id: 'category_master',
-    emoji: '🎓',
-    title: '카테고리 정복',
-    desc: '한 카테고리의 모든 단계 통과하기',
+    emoji: '🗺️',
+    title: '지도 끝까지',
+    desc: '한 지도(나이·묶음)의 모든 단계 통과하기',
     earnedBy: (d) => d.anyCategoryCleared,
   ),
   LearnBadge(

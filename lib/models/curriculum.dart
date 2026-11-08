@@ -491,7 +491,7 @@ class Curriculum {
         title: '초등 3학년',
         emoji: '📘',
         desc: '나눗셈 · 큰 수 곱셈 · 세 자리 덧셈·뺄셈',
-        color: UnitColors.mustard,
+        color: UnitColors.plum,
         units: [
           Unit(
               title: '나눗셈 첫걸음',

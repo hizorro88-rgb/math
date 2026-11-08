@@ -536,7 +536,7 @@ void main() {
 
     await scrollAndTap(tester, find.text('주간 보스전'));
 
-    expect(find.text('👑'), findsOneWidget);
+    expect(find.text('👾'), findsOneWidget);
     // 문제 진행 바와 점수 표시가 있는 퀴즈 화면이다.
     expect(find.text('🪙 +0'), findsOneWidget);
 
@@ -727,7 +727,7 @@ void main() {
 
     await tester.tap(find.bySemanticsLabel('오늘의 미션'));
     await tester.pumpAndSettle();
-    expect(find.text('▶▶▶'), findsOneWidget); // 미션은 그림으로 ('퀴즈 3판')
+    expect(find.text('퀴즈 3판 풀기'), findsOneWidget); // 첫 미션은 늘 '퀴즈 3판'
   });
 
   testWidgets('어른이 영어회화를 공부해도 아이 친구 별은 늘지 않는다', (tester) async {

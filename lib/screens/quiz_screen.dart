@@ -305,7 +305,7 @@ class _QuizScreenState extends State<QuizScreen> {
           );
         },
         headerText: widget.bossMode
-            ? '👑 주간 보스전'
+            ? '👾 주간 보스전'
             : level == null
                 ? null
                 : stageHeader(level.unit.emoji, level.unit.title,
@@ -344,7 +344,7 @@ class _QuizScreenState extends State<QuizScreen> {
         coins: _roundPoints,
         combo: _combo,
         color: _themeColor,
-        leading: widget.bossMode ? '👑' : null,
+        leading: widget.bossMode ? '👾' : null,
         label: level != null
             ? '${level.unit.title} · '
                 '${level.number - level.unit.firstLevelNumber + 1}단계'
@@ -727,14 +727,20 @@ class _EmojiHint extends StatelessWidget {
 
     switch (question.op) {
       // 수 세기: 그림을 전부 또렷하게 보여주고 세게 한다.
+      // 적을수록 크게 — 하나만 있어도 또렷이 보이게 (4살 첫 판)
       case QuestionOp.counting:
+        final size = question.left <= 3
+            ? 60.0
+            : question.left <= 6
+                ? 46.0
+                : 34.0;
         return Wrap(
           alignment: WrapAlignment.center,
           spacing: 4,
           runSpacing: 6,
           children: [
             for (var i = 0; i < question.left; i++)
-              Text(question.emoji, style: const TextStyle(fontSize: 34)),
+              Text(question.emoji, style: TextStyle(fontSize: size)),
           ],
         );
 
