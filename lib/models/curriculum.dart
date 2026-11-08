@@ -38,11 +38,15 @@ class Unit {
     required this.mode,
     required this.startMax,
     required this.endMax,
+    this.regroup = false,
   });
 
   final String title;
   final String emoji;
   final QuizMode mode;
+
+  /// 받아올림·받아내림이 꼭 생기는 문제만 (받아올림 단원)
+  final bool regroup;
 
   /// 묶음 안에서 난이도 기준값이 startMax에서 endMax까지 점점 커진다.
   /// (덧뺄셈·수 세기: 최대 수 / 곱셈: 몇 단까지 / 나눗셈: 나누는 수 최대)
@@ -83,15 +87,23 @@ class Level {
   /// (8~9단 묶음에서 2단이 나오지 않게), 나머지 연산은 답이 최대값의
   /// 절반 근처 아래로 내려가지 않게 한다.
   int get minNumber {
-    if (unit.mode == QuizMode.multiplication ||
-        unit.mode == QuizMode.division) {
+    if (const {
+      QuizMode.multiplication,
+      QuizMode.division,
+      QuizMode.divRemainder,
+      QuizMode.storyMul,
+      QuizMode.storyDiv,
+    }.contains(unit.mode)) {
       return unit.startMax;
     }
     return maxNumber <= 6 ? 1 : (maxNumber * 0.55).ceil();
   }
 
-  QuizConfig get config =>
-      QuizConfig(mode: unit.mode, maxNumber: maxNumber, minNumber: minNumber);
+  QuizConfig get config => QuizConfig(
+      mode: unit.mode,
+      maxNumber: maxNumber,
+      minNumber: minNumber,
+      regroup: unit.regroup);
 }
 
 /// 나이·학년별 교육과정에 맞춘 커리큘럼.
@@ -124,6 +136,31 @@ class Curriculum {
 
   /// 단계 번호로 단계를 찾는다.
   static Level levelAt(int number) => levels[number - 1];
+
+  /// 나이 묶음마다 그 묶음에서 처음 배우는 문제 유형 (연습 화면 무리 나누기용).
+  /// 커리큘럼에 없는 유형은 마지막 묶음 뒤에 따로 붙는다.
+  static List<(AgeCategory?, List<QuizMode>)> get modesByCategory {
+    final seen = <QuizMode>{};
+    final groups = <(AgeCategory?, List<QuizMode>)>[
+      for (final c in categories)
+        (
+          c,
+          [
+            for (final u in c.units)
+              if (seen.add(u.mode)) u.mode
+          ]
+        ),
+    ];
+    final rest = [
+      for (final m in QuizMode.values)
+        if (!seen.contains(m)) m
+    ];
+    return [
+      for (final g in groups)
+        if (g.$2.isNotEmpty) g,
+      if (rest.isNotEmpty) (null, rest),
+    ];
+  }
 
   static List<AgeCategory> _build() {
     final categories = [
@@ -248,6 +285,12 @@ class Curriculum {
               mode: QuizMode.clock,
               startMax: 12,
               endMax: 24),
+          Unit(
+              title: '이야기 문제',
+              emoji: '📚',
+              mode: QuizMode.storyAddSub,
+              startMax: 5,
+              endMax: 10),
         ],
       ),
       AgeCategory(
@@ -275,17 +318,25 @@ class Curriculum {
               startMax: 10,
               endMax: 10),
           Unit(
+              title: '몇십 몇',
+              emoji: '🧱',
+              mode: QuizMode.placeValue,
+              startMax: 20,
+              endMax: 99),
+          Unit(
               title: '받아올림 덧셈',
               emoji: '➕',
               mode: QuizMode.addition,
               startMax: 16,
-              endMax: 20),
+              endMax: 20,
+              regroup: true),
           Unit(
               title: '받아내림 뺄셈',
               emoji: '➖',
               mode: QuizMode.subtraction,
               startMax: 16,
-              endMax: 20),
+              endMax: 20,
+              regroup: true),
           Unit(
               title: '세로 덧셈 첫걸음',
               emoji: '📐',
@@ -310,6 +361,12 @@ class Curriculum {
               mode: QuizMode.mixed,
               startMax: 16,
               endMax: 20),
+          Unit(
+              title: '이야기 문제 도전',
+              emoji: '📚',
+              mode: QuizMode.storyAddSub,
+              startMax: 11,
+              endMax: 20),
         ],
       ),
       AgeCategory(
@@ -318,6 +375,12 @@ class Curriculum {
         desc: '두 자리 덧셈·뺄셈 · 곱셈구구(2~9단)',
         color: UnitColors.rose,
         units: [
+          Unit(
+              title: '세 자리 수',
+              emoji: '🧱',
+              mode: QuizMode.placeValue,
+              startMax: 150,
+              endMax: 999),
           Unit(
               title: '두 자리 덧셈',
               emoji: '➕',
@@ -329,13 +392,15 @@ class Curriculum {
               emoji: '📐',
               mode: QuizMode.verticalAdd,
               startMax: 50,
-              endMax: 99),
+              endMax: 99,
+              regroup: true),
           Unit(
               title: '받아내림 세로 뺄셈',
               emoji: '📝',
               mode: QuizMode.verticalSub,
               startMax: 50,
-              endMax: 99),
+              endMax: 99,
+              regroup: true),
           Unit(
               title: '두 자리 뺄셈',
               emoji: '➖',
@@ -372,6 +437,12 @@ class Curriculum {
               mode: QuizMode.multiplication,
               startMax: 8,
               endMax: 9),
+          Unit(
+              title: '곱셈 이야기',
+              emoji: '🍱',
+              mode: QuizMode.storyMul,
+              startMax: 4,
+              endMax: 9),
         ],
       ),
       AgeCategory(
@@ -391,6 +462,18 @@ class Curriculum {
               emoji: '➗',
               mode: QuizMode.division,
               startMax: 6,
+              endMax: 9),
+          Unit(
+              title: '나머지가 있는 나눗셈',
+              emoji: '🍰',
+              mode: QuizMode.divRemainder,
+              startMax: 3,
+              endMax: 9),
+          Unit(
+              title: '나눗셈 이야기',
+              emoji: '🧺',
+              mode: QuizMode.storyDiv,
+              startMax: 2,
               endMax: 9),
           Unit(
               title: '큰 수 곱셈',

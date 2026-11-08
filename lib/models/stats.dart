@@ -217,7 +217,11 @@ class StatsStore {
       QuestionOp.sub => correct ? _subCorrectKey : _subWrongKey,
       QuestionOp.mul => correct ? _mulCorrectKey : _mulWrongKey,
       QuestionOp.div => correct ? _divCorrectKey : _divWrongKey,
-      QuestionOp.compare => correct ? _compareCorrectKey : _compareWrongKey,
+      // 자릿값은 수 감각(큰 수 찾기)과, 나머지 나눗셈은 나눗셈과 함께 집계한다.
+      QuestionOp.compare ||
+      QuestionOp.place =>
+        correct ? _compareCorrectKey : _compareWrongKey,
+      QuestionOp.remainder => correct ? _divCorrectKey : _divWrongKey,
       QuestionOp.pattern => correct ? _patternCorrectKey : _patternWrongKey,
       QuestionOp.clock => correct ? _clockCorrectKey : _clockWrongKey,
       QuestionOp.fraction => correct ? _fractionCorrectKey : _fractionWrongKey,

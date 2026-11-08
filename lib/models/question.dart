@@ -16,6 +16,12 @@ enum QuestionOp {
   fraction,
   decimal,
   timeCalc,
+
+  /// 자릿값 (정답은 left, 모형 그림은 sequence = [백, 십, 일])
+  place,
+
+  /// 나머지가 있는 나눗셈 (정답은 left — 나머지 또는 몫)
+  remainder,
 }
 
 /// 모양 세기에 쓰는 도형과 이름
@@ -26,6 +32,21 @@ const List<({String emoji, String name})> shapeKinds = [
   (emoji: '⭐', name: '별'),
   (emoji: '💛', name: '하트'),
 ];
+
+/// 수 뒤에 붙는 조사 (3은 / 2는) — 수를 한자어로 읽을 때의 끝소리로 고른다.
+/// 일의 자리가 0이면 십·백·천처럼 받침으로 끝난다.
+String numJosa(int n, String withBatchim, String without) =>
+    const {0, 1, 3, 6, 7, 8}.contains(n.abs() % 10) ? withBatchim : without;
+
+/// 자릿값을 글로: '100이 2개, 10이 3개, 1이 5개인 수는?' (0개인 자리는 뺀다)
+String placeValueText(List<int> hto) {
+  final parts = [
+    if (hto[0] > 0) '100이 ${hto[0]}개',
+    if (hto[1] > 0) '10이 ${hto[1]}개',
+    if (hto[2] > 0) '1이 ${hto[2]}개',
+  ];
+  return '${parts.join(', ')}인 수는?';
+}
 
 /// 사칙연산·수 세기·비교·규칙 찾기 한 문제
 class Question {
@@ -127,6 +148,8 @@ class Question {
       QuestionOp.fraction => left,
       QuestionOp.decimal => left,
       QuestionOp.timeCalc => left,
+      QuestionOp.place => left,
+      QuestionOp.remainder => left,
     };
   }
 
@@ -179,7 +202,9 @@ class Question {
       // 심화 유형은 항상 prompt가 있어 위에서 먼저 반환된다 (완전성 유지용).
       QuestionOp.fraction ||
       QuestionOp.decimal ||
-      QuestionOp.timeCalc =>
+      QuestionOp.timeCalc ||
+      QuestionOp.place ||
+      QuestionOp.remainder =>
         prompt,
     };
   }
@@ -193,20 +218,20 @@ class Question {
       final total = op == QuestionOp.add ? left + right : left - right;
       if (op == QuestionOp.add) {
         return blankSide == 1
-            ? '몇 더하기 $right이면 $total일까요?'
+            ? '몇 더하기 $right${numJosa(right, '이면', '면')} $total일까요?'
             : '$left 더하기 몇이면 $total일까요?';
       }
       return blankSide == 1
-          ? '몇 빼기 $right이면 $total일까요?'
+          ? '몇 빼기 $right${numJosa(right, '이면', '면')} $total일까요?'
           : '$left 빼기 몇이면 $total일까요?';
     }
     return switch (op) {
       QuestionOp.counting =>
         _countingSpeeches[variant % _countingSpeeches.length],
-      QuestionOp.add => '$left 더하기 $right는?',
-      QuestionOp.sub => '$left 빼기 $right는?',
-      QuestionOp.mul => '$left 곱하기 $right는?',
-      QuestionOp.div => '$left 나누기 $right는?',
+      QuestionOp.add => '$left 더하기 $right${numJosa(right, '은', '는')}?',
+      QuestionOp.sub => '$left 빼기 $right${numJosa(right, '은', '는')}?',
+      QuestionOp.mul => '$left 곱하기 $right${numJosa(right, '은', '는')}?',
+      QuestionOp.div => '$left 나누기 $right${numJosa(right, '은', '는')}?',
       QuestionOp.compare => right == 1 ? '가장 큰 수를 찾아보세요' : '가장 작은 수를 찾아보세요',
       QuestionOp.pattern => '${sequence.join(', ')}, 다음 수는?',
       QuestionOp.clock => '시계가 가리키는 시각은 몇 시일까요?',
@@ -221,7 +246,9 @@ class Question {
       // 심화 유형은 항상 prompt가 있어 위에서 먼저 반환된다 (완전성 유지용).
       QuestionOp.fraction ||
       QuestionOp.decimal ||
-      QuestionOp.timeCalc =>
+      QuestionOp.timeCalc ||
+      QuestionOp.place ||
+      QuestionOp.remainder =>
         prompt,
     };
   }
@@ -236,7 +263,9 @@ class Question {
         QuestionOp.pattern => 'pattern:${sequence.join(',')}',
         QuestionOp.fraction ||
         QuestionOp.decimal ||
-        QuestionOp.timeCalc =>
+        QuestionOp.timeCalc ||
+        QuestionOp.place ||
+        QuestionOp.remainder =>
           '${op.name}:$variant:$prompt:$left',
         _ => '${op.name}:$left:$right:$blankSide',
       };
@@ -287,6 +316,7 @@ class QuestionGenerator {
         maxNumber: easedMax,
         minNumber: config.minNumber.clamp(1, easedMax),
         questionCount: config.questionCount,
+        regroup: config.regroup,
       );
     }
 
@@ -362,8 +392,15 @@ class QuestionGenerator {
       case QuizMode.verticalAdd:
         final m = max < 20 ? 20 : max;
         final sumMin = config.minNumber < 11 ? 11 : config.minNumber;
-        final sum = sumMin + _random.nextInt(m - sumMin + 1); // sumMin..m
-        final left = 10 + _random.nextInt(sum - 10); // 10..sum-1
+        var sum = sumMin + _random.nextInt(m - sumMin + 1); // sumMin..m
+        var left = 10 + _random.nextInt(sum - 10); // 10..sum-1
+        // 받아올림 세로 덧셈: 일의 자리 합이 10을 넘을 때까지 다시 뽑는다
+        for (var t = 0;
+            config.regroup && !_regroups(true, left, sum - left) && t < 200;
+            t++) {
+          sum = sumMin + _random.nextInt(m - sumMin + 1);
+          left = 10 + _random.nextInt(sum - 10);
+        }
         return Question(
           op: QuestionOp.add,
           vertical: true,
@@ -377,8 +414,15 @@ class QuestionGenerator {
       case QuizMode.verticalSub:
         final m = max < 20 ? 20 : max;
         final leftMin = config.minNumber < 11 ? 11 : config.minNumber;
-        final left = leftMin + _random.nextInt(m - leftMin + 1); // leftMin..m
-        final right = 1 + _random.nextInt(left); // 1..left
+        var left = leftMin + _random.nextInt(m - leftMin + 1); // leftMin..m
+        var right = 1 + _random.nextInt(left); // 1..left
+        // 받아내림 세로 뺄셈: 일의 자리에서 빌려 와야 하는 문제만
+        for (var t = 0;
+            config.regroup && !_regroups(false, left, right) && t < 200;
+            t++) {
+          left = leftMin + _random.nextInt(m - leftMin + 1);
+          right = 1 + _random.nextInt(left);
+        }
         return Question(
           op: QuestionOp.sub,
           vertical: true,
@@ -820,14 +864,309 @@ class QuestionGenerator {
       case QuizMode.addition:
       case QuizMode.subtraction:
       case QuizMode.mixed:
-        return _addSub(config.mode, max, min: config.minNumber);
+        return _addSub(config.mode, max,
+            min: config.minNumber, regroup: config.regroup);
+
+      case QuizMode.placeValue:
+        return _placeValue(max, config.minNumber, index);
+
+      case QuizMode.divRemainder:
+        final divisorMax = max.clamp(2, 9);
+        final divisorMin = config.minNumber.clamp(2, divisorMax);
+        final divisor =
+            divisorMin + _random.nextInt(divisorMax - divisorMin + 1);
+        final quotient = 1 + _random.nextInt(9);
+        final rest = 1 + _random.nextInt(divisor - 1); // 1..divisor-1
+        final total = divisor * quotient + rest;
+        // 앞 단계는 나머지만, 뒤 단계는 몫을 묻기도 한다
+        final askQuotient = max >= 6 && _random.nextInt(3) == 0;
+        final answer = askQuotient ? quotient : rest;
+        return Question(
+          op: QuestionOp.remainder,
+          left: answer,
+          right: divisor,
+          variant: askQuotient ? 1 : 0,
+          prompt: askQuotient
+              ? '$total ÷ $divisor = □ … $rest'
+              : '$total ÷ $divisor = $quotient … □',
+          promptSpeech: askQuotient
+              ? '$total 나누기 $divisor, 나머지가 $rest일 때 몫은 얼마일까요?'
+              : '$total 나누기 $divisor, 몫이 $quotient일 때 나머지는 얼마일까요?',
+          choices: askQuotient
+              ? _buildChoices(quotient, quotient + 2)
+              : _buildRemainderChoices(rest, divisor),
+          emoji: _emoji,
+        );
+
+      case QuizMode.storyAddSub:
+        return _storyAddSub(max, config.minNumber, index);
+
+      case QuizMode.storyMul:
+        final lowTable = config.minNumber.clamp(2, max.clamp(2, 9));
+        final table =
+            lowTable + _random.nextInt(max.clamp(2, 9) - lowTable + 1);
+        final times = 2 + _random.nextInt(8); // 2..9
+        final item = _storyItem();
+        final form = index % 2;
+        return Question(
+          op: QuestionOp.mul,
+          left: table,
+          right: times,
+          variant: form,
+          prompt: form == 0
+              ? '${item.box} $times개에 ${item.emoji} ${item.name}${_josa(item.name, '이', '가')}\n$table개씩 들어 있어요.\n모두 몇 개일까요?'
+              : '${item.emoji} ${item.name}${_josa(item.name, '을', '를')} $table개씩\n${_nativeNums[times]} 줄 놓았어요.\n모두 몇 개일까요?',
+          promptSpeech: form == 0
+              ? '${item.box} $times개에 ${item.name}${_josa(item.name, '이', '가')} $table개씩 들어 있어요. ${item.name}${_josa(item.name, '은', '는')} 모두 몇 개일까요?'
+              : '${item.name}${_josa(item.name, '을', '를')} $table개씩 ${_nativeNums[times]} 줄 놓았어요. 모두 몇 개일까요?',
+          choices: _buildChoices(table * times, table * times + 2),
+          emoji: item.emoji,
+        );
+
+      case QuizMode.storyDiv:
+        final divisorMax = max.clamp(2, 9);
+        final divisorMin = config.minNumber.clamp(2, divisorMax);
+        final divisor =
+            divisorMin + _random.nextInt(divisorMax - divisorMin + 1);
+        final quotient = 2 + _random.nextInt(8); // 2..9
+        final total = divisor * quotient;
+        final item = _storyItem();
+        final share = index % 2 == 0; // 똑같이 나누기 ↔ 몇 개씩 묶기
+        return Question(
+          op: QuestionOp.div,
+          left: total,
+          right: divisor,
+          variant: share ? 0 : 1,
+          prompt: share
+              ? '${item.emoji} ${item.name} $total개를\n친구 $divisor명이 똑같이 나누어 가지면\n한 명이 몇 개씩 가질까요?'
+              : '${item.emoji} ${item.name} $total개를\n한 ${item.box}에 $divisor개씩 담으면\n${item.box}${_josa(item.box, '이', '가')} 몇 개 필요할까요?',
+          promptSpeech: share
+              ? '${item.name} $total개를 친구 $divisor명이 똑같이 나누어 가지면 한 명이 몇 개씩 가질까요?'
+              : '${item.name} $total개를 한 ${item.box}에 $divisor개씩 담으면 ${item.box}${_josa(item.box, '이', '가')} 몇 개 필요할까요?',
+          choices: _buildChoices(quotient, quotient + 2),
+          emoji: item.emoji,
+        );
     }
+  }
+
+  /// 이야기 문제에 나오는 물건 (그림·이름·담는 그릇)
+  /// 모두 '개'로 세는 물건만 (물고기는 마리, 연필은 자루라 뺐다)
+  static const _storyItems = [
+    (emoji: '🍎', name: '사과', box: '바구니'),
+    (emoji: '🍊', name: '귤', box: '바구니'),
+    (emoji: '🍪', name: '쿠키', box: '접시'),
+    (emoji: '🍬', name: '사탕', box: '봉지'),
+    (emoji: '🍙', name: '주먹밥', box: '도시락'),
+    (emoji: '🍩', name: '도넛', box: '상자'),
+    (emoji: '🥚', name: '달걀', box: '상자'),
+    (emoji: '🍓', name: '딸기', box: '접시'),
+  ];
+
+  /// 고유어 수 (두 줄, 세 줄 — '2줄'은 이 줄로 읽힌다)
+  static const _nativeNums = [
+    '',
+    '한',
+    '두',
+    '세',
+    '네',
+    '다섯',
+    '여섯',
+    '일곱',
+    '여덟',
+    '아홉'
+  ];
+
+  ({String emoji, String name, String box}) _storyItem() =>
+      _storyItems[_random.nextInt(_storyItems.length)];
+
+  /// 받침에 맞는 조사 (사과가 / 연필이)
+  static String _josa(String word, String withBatchim, String without) {
+    final code = word.codeUnitAt(word.length - 1);
+    if (code < 0xAC00 || code > 0xD7A3) return without;
+    return (code - 0xAC00) % 28 != 0 ? withBatchim : without;
+  }
+
+  static const _storyNames = ['하늘', '바다', '민준', '서연', '지우', '도윤'];
+
+  /// 이야기 덧셈·뺄셈: 더 받기·모두·먹고 남기·더 많기
+  Question _storyAddSub(int max, int min, int index) {
+    final item = _storyItem();
+    final name = _storyNames[_random.nextInt(_storyNames.length)];
+    final who = '$name${_josa(name, '이는', '는')}';
+    final n = item.name;
+    final e = item.emoji;
+    final low = min.clamp(2, max);
+    final total = low + _random.nextInt(max - low + 1);
+    // 판마다 순서가 달라야 '3번은 빼기'처럼 순서로 외우지 않는다
+    final form = _random.nextInt(4);
+    switch (form) {
+      case 0: // 더 받기
+        final a = 1 + _random.nextInt(total - 1);
+        final b = total - a;
+        return Question(
+          op: QuestionOp.add,
+          left: a,
+          right: b,
+          variant: form,
+          prompt: '$who $e $a개를 가지고 있어요.\n$b개를 더 받았어요.\n모두 몇 개일까요?',
+          promptSpeech:
+              '$who $n${_josa(n, '을', '를')} $a개 가지고 있어요. $b개를 더 받았어요. 모두 몇 개일까요?',
+          choices: _buildChoices(total, max),
+          emoji: e,
+        );
+      case 1: // 둘을 모으기
+        final a = 1 + _random.nextInt(total - 1);
+        final b = total - a;
+        return Question(
+          op: QuestionOp.add,
+          left: a,
+          right: b,
+          variant: form,
+          prompt: '$e 바구니 하나에 $a개,\n다른 바구니에 $b개 있어요.\n모두 몇 개일까요?',
+          promptSpeech:
+              '$n${_josa(n, '이', '가')} 바구니 하나에 $a개, 다른 바구니에 $b개 있어요. 모두 몇 개일까요?',
+          choices: _buildChoices(total, max),
+          emoji: e,
+        );
+      case 2: // 먹고(주고) 남기
+        final b = 1 + _random.nextInt(total - 1);
+        return Question(
+          op: QuestionOp.sub,
+          left: total,
+          right: b,
+          variant: form,
+          prompt: '$e $total개가 있었어요.\n친구에게 $b개를 주었어요.\n남은 것은 몇 개일까요?',
+          promptSpeech:
+              '$n${_josa(n, '이', '가')} $total개 있었어요. 친구에게 $b개를 주었어요. 남은 것은 몇 개일까요?',
+          choices: _buildChoices(total - b, max),
+          emoji: e,
+        );
+      default: // 몇 개 더 많을까 (비교)
+        final b = 1 + _random.nextInt(total - 1);
+        final others = [..._storyNames]
+          ..remove(name)
+          ..shuffle(_random);
+        final other = others.first;
+        return Question(
+          op: QuestionOp.sub,
+          left: total,
+          right: b,
+          variant: form,
+          prompt:
+              '$who $e $total개, $other${_josa(other, '이는', '는')} $b개 있어요.\n$name${_josa(name, '이가', '가')} 몇 개 더 많을까요?',
+          promptSpeech:
+              '$who $n $total개, $other${_josa(other, '이는', '는')} $b개 있어요. $name${_josa(name, '이가', '가')} 몇 개 더 많을까요?',
+          choices: _buildChoices(total - b, max),
+          emoji: e,
+        );
+    }
+  }
+
+  /// 자릿값: 모형 보고 수 쓰기 · 10이 몇 개 1이 몇 개 · 자리 숫자 찾기
+  Question _placeValue(int max, int min, int index) {
+    // 세 자리 묶음은 처음부터 세 자리 수만 (min이 55처럼 두 자리로 내려가지 않게)
+    final low = max >= 100 ? min.clamp(100, max) : min.clamp(10, max);
+    final n = low + _random.nextInt(max - low + 1);
+    final h = n ~/ 100;
+    final t = (n ~/ 10) % 10;
+    final o = n % 10;
+    final threeDigit = n >= 100;
+    final form = index % 3;
+    // 헷갈리기 쉬운 보기: 자리를 바꾼 수, 10 차이, 1 차이
+    List<int> numberChoices() {
+      final set = <int>{n};
+      final swapped = threeDigit ? h * 100 + o * 10 + t : o * 10 + t;
+      for (final c in [
+        swapped,
+        n + 10,
+        n - 10,
+        n + 1,
+        n - 1,
+        n + 100,
+        n - 100
+      ]) {
+        if (set.length == 4) break;
+        if (c > 0 && c != n && c < 1000) set.add(c);
+      }
+      return set.toList()..shuffle(_random);
+    }
+
+    switch (form) {
+      case 0: // 모형 보고 수
+        return Question(
+          op: QuestionOp.place,
+          left: n,
+          right: 0,
+          variant: 0,
+          sequence: [h, t, o],
+          prompt: '모두 얼마일까요?',
+          promptSpeech: threeDigit
+              ? '백 모형, 십 모형, 일 모형을 세어 보세요. 모두 얼마일까요?'
+              : '십 모형과 일 모형을 세어 보세요. 모두 얼마일까요?',
+          choices: numberChoices(),
+          emoji: '',
+        );
+      case 1: // 10이 몇 개, 1이 몇 개
+        // 화면은 '10이 3개', 읽기는 교과서 말투로 — '10이'는 '십이(12)'로 들린다
+        final spoken = [
+          if (h > 0) '백 모형 $h개',
+          if (t > 0) threeDigit ? '십 모형 $t개' : '10개씩 묶음 $t개',
+          if (o > 0) threeDigit ? '일 모형 $o개' : '낱개 $o개',
+        ];
+        return Question(
+          op: QuestionOp.place,
+          left: n,
+          right: 0,
+          variant: 1,
+          prompt: placeValueText([h, t, o]).replaceFirst(', 1이', ',\n1이'),
+          promptSpeech: '${spoken.join(', ')}${o > 0 ? '는' : '은'} 얼마일까요?',
+          choices: numberChoices(),
+          emoji: '',
+        );
+      default: // 자리 숫자 찾기
+        final places = [
+          if (threeDigit) ('백', h),
+          ('십', t),
+          ('일', o),
+        ];
+        final pick = places[_random.nextInt(places.length)];
+        final digits = <int>{pick.$2, h, t, o}..removeWhere((d) => d < 0);
+        while (digits.length < 4) {
+          digits.add(_random.nextInt(10));
+        }
+        return Question(
+          op: QuestionOp.place,
+          left: pick.$2,
+          right: n,
+          variant: 2,
+          prompt: '$n에서\n${pick.$1}의 자리 숫자는?',
+          promptSpeech: '$n에서 ${pick.$1}의 자리 숫자는 무엇일까요?',
+          choices: digits.take(4).toList()..shuffle(_random),
+          emoji: '',
+        );
+    }
+  }
+
+  /// 나머지 보기: 나머지는 나누는 수보다 작다 — 0~divisor-1에서 고른다
+  List<int> _buildRemainderChoices(int rest, int divisor) {
+    final set = <int>{rest};
+    final pool = [for (var i = 0; i < divisor; i++) i]..shuffle(_random);
+    for (final c in pool) {
+      if (set.length == 4) break;
+      set.add(c);
+    }
+    var extra = divisor;
+    while (set.length < 4) {
+      set.add(extra++);
+    }
+    return set.toList()..shuffle(_random);
   }
 
   /// 덧셈/뺄셈/섞어서 문제 하나를 만든다.
   /// [min]은 난이도 하한: 덧셈의 합과 뺄셈의 처음 수가 이 값 아래로
   /// 내려가지 않아 뒤 단계에서 갑자기 쉬운 문제가 나오지 않는다.
-  Question _addSub(QuizMode mode, int max, {int min = 1}) {
+  Question _addSub(QuizMode mode, int max,
+      {int min = 1, bool regroup = false}) {
     final isAddition = switch (mode) {
       QuizMode.addition => true,
       QuizMode.subtraction => false,
@@ -837,16 +1176,20 @@ class QuestionGenerator {
     final low = min.clamp(2, max);
     int left;
     int right;
-    if (isAddition) {
-      // 합이 low..max 범위에 들어오게 한다.
-      final sum = low + _random.nextInt(max - low + 1);
-      left = 1 + _random.nextInt(sum - 1); // 1..sum-1
-      right = sum - left;
-    } else {
-      // 처음 수를 low..max에서 뽑고, 답이 0 이상이 되게 뺀다.
-      left = low + _random.nextInt(max - low + 1);
-      right = 1 + _random.nextInt(left); // 1..left
-    }
+    var tries = 0;
+    do {
+      if (isAddition) {
+        // 합이 low..max 범위에 들어오게 한다.
+        final sum = low + _random.nextInt(max - low + 1);
+        left = 1 + _random.nextInt(sum - 1); // 1..sum-1
+        right = sum - left;
+      } else {
+        // 처음 수를 low..max에서 뽑고, 답이 0 이상이 되게 뺀다.
+        left = low + _random.nextInt(max - low + 1);
+        right = 1 + _random.nextInt(left); // 1..left
+      }
+      // 받아올림 단원은 일의 자리끼리 10을 넘는(빌려 오는) 문제만
+    } while (regroup && !_regroups(isAddition, left, right) && ++tries < 200);
 
     final answer = isAddition ? left + right : left - right;
     return Question(
@@ -857,6 +1200,10 @@ class QuestionGenerator {
       emoji: _emoji,
     );
   }
+
+  /// 일의 자리에서 받아올림(덧셈)·받아내림(뺄셈)이 생기는지
+  static bool _regroups(bool add, int left, int right) =>
+      add ? left % 10 + right % 10 >= 10 : left % 10 < right % 10 && left >= 10;
 
   /// 정답 주변의 그럴듯한 오답 3개를 섞어 보기 4개를 만든다.
   /// 보기는 0 이상 [upper]+2 이하에서 고른다.

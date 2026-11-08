@@ -305,7 +305,7 @@ class _AccuracyCard extends StatelessWidget {
       ('🔢 수 세기', stats.countCorrect, stats.countWrong),
       ('✖️ 곱셈', stats.mulCorrect, stats.mulWrong),
       ('➗ 나눗셈', stats.divCorrect, stats.divWrong),
-      ('⚖️ 큰 수', stats.compareCorrect, stats.compareWrong),
+      ('⚖️ 수 감각', stats.compareCorrect, stats.compareWrong),
       ('🧩 규칙', stats.patternCorrect, stats.patternWrong),
       ('🕒 시계', stats.clockCorrect, stats.clockWrong),
       ('🍕 분수', stats.fractionCorrect, stats.fractionWrong),

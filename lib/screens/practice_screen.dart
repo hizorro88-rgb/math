@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../models/curriculum.dart';
 import '../models/english_curriculum.dart';
 import '../models/english_question.dart';
 import '../models/korean_curriculum.dart';
@@ -90,8 +91,17 @@ class _PracticeScreenState extends State<PracticeScreen> {
 
     // 구구단·수 세기·심화 유형은 각자의 범위에 맞게 난이도 상한을 걸어 준다.
     var maxNumber = _difficulty.maxNumber;
-    if (_mode == QuizMode.multiplication || _mode == QuizMode.division) {
-      maxNumber = math.min(maxNumber, 9);
+    if (const {
+      QuizMode.multiplication,
+      QuizMode.division,
+      QuizMode.divRemainder,
+      QuizMode.storyMul,
+      QuizMode.storyDiv,
+    }.contains(_mode)) {
+      maxNumber = math.max(math.min(maxNumber, 9), 3);
+    } else if (_mode == QuizMode.placeValue) {
+      // 자릿값은 두 자리부터: 쉬움·보통은 두 자리, 최고 도전은 세 자리
+      maxNumber = maxNumber >= 100 ? 999 : 99;
     } else if (_mode == QuizMode.counting) {
       maxNumber = math.min(maxNumber, 20);
     } else if (_mode == QuizMode.fraction) {
@@ -195,15 +205,22 @@ class _PracticeScreenState extends State<PracticeScreen> {
                         },
                       )
                     else
-                      ..._buildGrid(
-                        QuizMode.values,
-                        (m) => _ChoiceCard(
-                          emoji: m.emoji,
-                          label: m.label,
-                          selected: _mode == m,
-                          onTap: () => setState(() => _mode = m),
+                      // 수학은 그 유형을 처음 배우는 나이 묶음별로 나눠 보여 준다
+                      for (final (cat, modes)
+                          in Curriculum.modesByCategory) ...[
+                        _GroupLabel(cat == null
+                            ? '✨ 더 해 보기'
+                            : '${cat.emoji} ${cat.title}'),
+                        ..._buildGrid(
+                          modes,
+                          (m) => _ChoiceCard(
+                            emoji: m.emoji,
+                            label: m.label,
+                            selected: _mode == m,
+                            onTap: () => setState(() => _mode = m),
+                          ),
                         ),
-                      ),
+                      ],
                     const SizedBox(height: 24),
                     const _SectionLabel('얼마나 어려울까요?'),
                     const SizedBox(height: 8),

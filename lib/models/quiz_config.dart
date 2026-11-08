@@ -47,7 +47,22 @@ enum QuizMode {
   decimal('소수', '📏'),
 
   /// 시간 계산: 몇 시간 뒤 시각, 시간↔분 환산 (초3)
-  timeCalc('시간 계산', '⏱️');
+  timeCalc('시간 계산', '⏱️'),
+
+  /// 자릿값: 십 모형·일 모형으로 수 만들기, 자리 숫자 찾기 (세 자리까지)
+  placeValue('자릿값', '🧱'),
+
+  /// 나머지가 있는 나눗셈: 17 ÷ 5 = 3 … □
+  divRemainder('나머지 나눗셈', '🍰'),
+
+  /// 이야기 문제(덧셈·뺄셈): 그림과 문장으로 상황을 읽고 식을 세운다
+  storyAddSub('이야기 덧셈·뺄셈', '📚'),
+
+  /// 이야기 문제(곱셈): 한 접시에 3개씩 4접시
+  storyMul('이야기 곱셈', '🍱'),
+
+  /// 이야기 문제(나눗셈): 똑같이 나누기·묶기
+  storyDiv('이야기 나눗셈', '🧺');
 
   const QuizMode(this.label, this.emoji);
 
@@ -77,6 +92,7 @@ class QuizConfig {
     required this.maxNumber,
     this.minNumber = 1,
     this.questionCount = 10,
+    this.regroup = false,
   });
 
   final QuizMode mode;
@@ -89,4 +105,7 @@ class QuizConfig {
   /// (예: 두 자리 덧셈 단계의 1+2)가 나오는 것을 막는다.
   final int minNumber;
   final int questionCount;
+
+  /// 받아올림·받아내림이 꼭 생기는 문제만 낸다 (7+8, 16-9처럼)
+  final bool regroup;
 }

@@ -259,6 +259,9 @@ class LangProgressStore {
     if (PremiumStore.allUnlocked) return true;
     final level = pack.levelAt(levelNumber);
     if (levelNumber == level.unit.category.firstLevelNumber) return true;
+    // 이미 별을 받은 단계는 언제나 열려 있다 — 앞에 새 묶음이 들어와도
+    // 깨 둔 단계가 다시 잠기지 않게.
+    if (stars[levelNumber - 1] >= 1) return true;
     return stars[levelNumber - 2] >= 1;
   }
 }

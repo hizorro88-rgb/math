@@ -220,7 +220,11 @@ class _QuizScreenState extends State<QuizScreen> {
               subject: 'math',
               subjectEmoji: '🧮',
               subjectName: '수학',
-              instruction: _question.expression.replaceAll('\n', ' '),
+              // 모형 그림 문제는 그림 없이도 풀 수 있게 글로 바꿔 담는다
+              instruction:
+                  _question.op == QuestionOp.place && _question.variant == 0
+                      ? placeValueText(_question.sequence)
+                      : _question.expression.replaceAll('\n', ' '),
               display: '',
               choices: [
                 for (final c in _question.choices) _question.labelFor(c),
@@ -374,14 +378,16 @@ class _QuizScreenState extends State<QuizScreen> {
         themeColor: _themeColor,
       );
     } else if (_question.prompt.isNotEmpty) {
-      // 문장 문제(분수·소수·시간)는 여러 줄 그대로 보여준다.
+      // 문장 문제(분수·소수·시간·이야기)는 여러 줄 그대로 보여준다.
+      // 어절 중간에서 끊기지 않게(있어/요) 하고, 긴 이야기는 한 단계 작게.
+      final long = _question.expression.length > 30;
       body = Column(
         children: [
           Text(
-            _question.expression,
+            keepAll(_question.expression),
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: AppFont.display,
+            style: TextStyle(
+              fontSize: long ? AppFont.heading : AppFont.display,
               fontWeight: FontWeight.bold,
               height: 1.4,
             ),
@@ -661,6 +667,20 @@ class _EmojiHint extends StatelessWidget {
       return const SizedBox.shrink();
     }
 
+    // 이야기 문제: 그림은 10개까지의 '더 받기·모으기·주기'에만.
+    // 비교(몇 개 더 많을까)·곱셈·나눗셈 이야기는 그림이 상황과 달라 헷갈린다.
+    final story = question.prompt.isNotEmpty &&
+        const {QuestionOp.add, QuestionOp.sub, QuestionOp.mul, QuestionOp.div}
+            .contains(question.op);
+    if (story &&
+        (question.op == QuestionOp.mul ||
+            question.op == QuestionOp.div ||
+            question.variant == 3 ||
+            question.left > 10 ||
+            question.left + question.right > 10)) {
+      return const SizedBox.shrink();
+    }
+
     // 빈칸 덧셈: 전체를 보여주되 가려진 쪽을 흐리게 — 세면 답이 보인다.
     if (question.blankSide != 0) {
       if (question.op != QuestionOp.add ||
@@ -813,11 +833,100 @@ class _EmojiHint extends StatelessWidget {
           ),
         );
 
-      // 소수·시간 계산은 문장이 곧 문제라 그림 힌트가 없다.
+      // 자릿값: 모형 보고 수 쓰기 문제에만 백·십·일 모형을 그린다.
+      case QuestionOp.place:
+        if (question.variant != 0) return const SizedBox.shrink();
+        return _PlaceBlocks(
+          hundreds: question.sequence[0],
+          tens: question.sequence[1],
+          ones: question.sequence[2],
+        );
+
+      // 소수·시간 계산·나머지 나눗셈은 문장이 곧 문제라 그림 힌트가 없다.
       case QuestionOp.decimal:
       case QuestionOp.timeCalc:
+      case QuestionOp.remainder:
         return const SizedBox.shrink();
     }
+  }
+}
+
+/// 자릿값 모형: 백 = 큰 네모판, 십 = 긴 막대(작은 칸 10개), 일 = 작은 네모.
+/// 색은 그림 문제 색(라벤더) 한 가지 — 자리마다 색을 바꾸면 색이 뜻처럼 보인다.
+class _PlaceBlocks extends StatelessWidget {
+  const _PlaceBlocks({
+    required this.hundreds,
+    required this.tens,
+    required this.ones,
+  });
+
+  final int hundreds;
+  final int tens;
+  final int ones;
+
+  static const _cell = 9.0;
+
+  Widget _square(double size) => Container(
+        width: size,
+        height: size,
+        decoration: BoxDecoration(
+          color: AppColors.figureFill,
+          border: Border.all(color: AppColors.figureLine, width: 1),
+          borderRadius: BorderRadius.circular(2),
+        ),
+      );
+
+  Widget _rod() => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [for (var i = 0; i < 10; i++) _square(_cell)],
+      );
+
+  Widget _flat() => Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var r = 0; r < 10; r++)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [for (var c = 0; c < 10; c++) _square(_cell * 0.6)],
+            ),
+        ],
+      );
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      label: '백 모형 $hundreds개, 십 모형 $tens개, 일 모형 $ones개',
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.end,
+        spacing: 10,
+        runSpacing: 8,
+        children: [
+          for (var i = 0; i < hundreds; i++) _flat(),
+          if (tens > 0)
+            Row(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                for (var i = 0; i < tens; i++)
+                  Padding(
+                    padding: const EdgeInsets.only(right: 3),
+                    child: _rod(),
+                  ),
+              ],
+            ),
+          if (ones > 0)
+            SizedBox(
+              width: _cell * 3 + 8,
+              child: Wrap(
+                spacing: 3,
+                runSpacing: 3,
+                children: [for (var i = 0; i < ones; i++) _square(_cell)],
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
