@@ -17,6 +17,15 @@ const List<String> jaKana = [
   'わ', 'を', 'ん',
 ];
 
+/// 탁음·반탁음 (점 두 개 ゛ / 동그라미 ゜). 짝이 되는 맑은 소리와 함께.
+const List<(String, String)> jaDakuon = [
+  ('が', 'か'), ('ぎ', 'き'), ('ぐ', 'く'), ('げ', 'け'), ('ご', 'こ'), //
+  ('ざ', 'さ'), ('じ', 'し'), ('ず', 'す'), ('ぜ', 'せ'), ('ぞ', 'そ'), //
+  ('だ', 'た'), ('で', 'て'), ('ど', 'と'), //
+  ('ば', 'は'), ('び', 'ひ'), ('ぶ', 'ふ'), ('べ', 'へ'), ('ぼ', 'ほ'), //
+  ('ぱ', 'は'), ('ぴ', 'ひ'), ('ぷ', 'ふ'), ('ぺ', 'へ'), ('ぽ', 'ほ'),
+];
+
 /// 가타카나 오십음 (히라가나와 같은 순서, 짝 맞추기용)
 const List<String> jaKatakana = [
   'ア', 'イ', 'ウ', 'エ', 'オ', //
@@ -109,6 +118,7 @@ final LanguagePack japanesePack = LanguagePack(
     LangUnitType('カナ 소리 찾기', 'カナ 소리', '🎧', listening: true), // 6
     LangUnitType('히라가나·가타카나 짝', 'かな 짝', '🀄', textDisplay: true), // 7
     LangUnitType('가타카나 낱말', 'カナ 낱말', '🍦'), // 8
+    LangUnitType('てんてん 소리 찾기', '탁음', '🎶', listening: true), // 9
   ],
   categories: [
     LangCategory(
@@ -119,6 +129,7 @@ final LanguagePack japanesePack = LanguagePack(
       units: [
         LangUnit(title: 'かな 소리 찾기', emoji: '👂', typeIndex: 0),
         LangUnit(title: 'あいうえお 순서', emoji: '🐾', typeIndex: 1),
+        LangUnit(title: 'てんてん 소리 찾기', emoji: '🎶', typeIndex: 9),
       ],
     ),
     LangCategory(
@@ -170,6 +181,41 @@ final LanguagePack japanesePack = LanguagePack(
 
 LangQuestion _generate(int typeIndex, int stage, Random random) {
   switch (typeIndex) {
+    // てんてん 소리 찾기: が를 듣고 か·が·ぱ 사이에서 고른다.
+    // 앞 단계는 탁음(゛)만, 뒤 단계는 반탁음(゜ ぱぴぷぺぽ)까지.
+    case 9:
+      final pool = stage >= 5 ? jaDakuon : jaDakuon.sublist(0, 18);
+      final target = pool[random.nextInt(pool.length)];
+      // 맑은 소리 짝(か)을 꼭 넣는다 — 점 두 개가 소리를 바꾼다는 게 핵심
+      final set = <String>{target.$1, target.$2};
+      // 같은 줄(が·ぎ·ぐ…)이나 같은 맑은 소리의 짝(ば·ぱ)을 먼저 — 헷갈리는 것끼리
+      final row = [
+        for (final d in pool)
+          if (d.$2 == target.$2 ||
+              d.$1.codeUnitAt(0) ~/ 10 == target.$1.codeUnitAt(0) ~/ 10)
+            d.$1
+      ]..shuffle(random);
+      for (final c in [
+        ...row,
+        for (final d in [...pool]..shuffle(random)) d.$1
+      ]) {
+        if (set.length == 4) break;
+        set.add(c);
+      }
+      return LangQuestion(
+        typeIndex: 9,
+        instruction: '무슨 글자일까요?',
+        display: '🔊',
+        choices: set.toList()..shuffle(random),
+        answer: target.$1,
+        // ぱぴぷぺぽ는 점(゛)이 아니라 동그라미(゜)
+        answerText: jaDakuon.indexOf(target) >= 18
+            ? '${target.$1} (${target.$2}에 동그라미)'
+            : '${target.$1} (${target.$2}에 점)',
+        speech: target.$1,
+        dedupKey: 'dk:${target.$1}',
+      );
+
     // かな 소리 찾기: 앞 단계는 あ~そ, 뒤 단계는 오십음 전체
     case 0:
       final pool = stage >= 5 ? jaKana : jaKana.sublist(0, 15);

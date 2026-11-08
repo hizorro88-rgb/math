@@ -52,6 +52,83 @@ const List<HanjaChar> hanjaChars = [
   HanjaChar('陽', '볕', '양', '🌞'),
 ];
 
+/// 한자능력검정 8급 50자 (대표 훈음). 앞쪽은 숫자·자연, 뒤로 갈수록 사람·학교·나라.
+/// 앞 단계(stage 0~4)는 앞 25자, 뒤 단계는 50자 전부.
+/// 그림은 하나로만 읽히는 것만 — 東🌅·西🌇(둘 다 해), 先🥇(금메달 → 金)처럼
+/// 다른 글자로도 읽히는 그림은 뺐다. 父·母는 아이와 함께 있는 그림으로 사람(人)과 가른다.
+const List<HanjaChar> hanjaGrade8 = [
+  HanjaChar('一', '한', '일', '1️⃣'),
+  HanjaChar('二', '두', '이', '2️⃣'),
+  HanjaChar('三', '석', '삼', '3️⃣'),
+  HanjaChar('四', '넉', '사', '4️⃣'),
+  HanjaChar('五', '다섯', '오', '5️⃣'),
+  HanjaChar('六', '여섯', '륙', '6️⃣'),
+  HanjaChar('七', '일곱', '칠', '7️⃣'),
+  HanjaChar('八', '여덟', '팔', '8️⃣'),
+  HanjaChar('九', '아홉', '구', '9️⃣'),
+  HanjaChar('十', '열', '십', '🔟'),
+  HanjaChar('日', '날', '일', '☀️'),
+  HanjaChar('月', '달', '월', '🌙'),
+  HanjaChar('火', '불', '화', '🔥'),
+  HanjaChar('水', '물', '수', '💧'),
+  HanjaChar('木', '나무', '목', '🌳'),
+  HanjaChar('金', '쇠', '금', '⛏️'),
+  HanjaChar('土', '흙', '토'),
+  HanjaChar('山', '메', '산', '⛰️'),
+  HanjaChar('人', '사람', '인', '🧍'),
+  HanjaChar('大', '큰', '대'),
+  HanjaChar('小', '작을', '소'),
+  HanjaChar('中', '가운데', '중', '🎯'),
+  HanjaChar('父', '아비', '부', '👨‍👧'),
+  HanjaChar('母', '어미', '모', '👩‍👧'),
+  HanjaChar('女', '계집', '녀'),
+  // 여기부터 뒤 단계
+  HanjaChar('兄', '형', '형'),
+  HanjaChar('弟', '아우', '제'),
+  HanjaChar('王', '임금', '왕', '🤴'),
+  HanjaChar('門', '문', '문', '🚪'),
+  HanjaChar('學', '배울', '학', '📚'),
+  HanjaChar('校', '학교', '교', '🏫'),
+  HanjaChar('敎', '가르칠', '교'),
+  HanjaChar('先', '먼저', '선'),
+  HanjaChar('生', '날', '생', '🌱'),
+  HanjaChar('東', '동녘', '동'),
+  HanjaChar('西', '서녘', '서'),
+  HanjaChar('南', '남녘', '남'),
+  HanjaChar('北', '북녘', '북'),
+  HanjaChar('國', '나라', '국'),
+  HanjaChar('韓', '한국', '한', '🇰🇷'),
+  HanjaChar('軍', '군사', '군', '🪖'),
+  HanjaChar('民', '백성', '민'),
+  HanjaChar('萬', '일만', '만'),
+  HanjaChar('年', '해', '년'),
+  HanjaChar('長', '긴', '장', '📏'),
+  HanjaChar('寸', '마디', '촌'),
+  HanjaChar('外', '바깥', '외'),
+  HanjaChar('室', '집', '실', '🛋️'),
+  HanjaChar('白', '흰', '백', '⚪'),
+  HanjaChar('靑', '푸를', '청'),
+];
+
+/// 앞 단계에서 쓰는 8급 글자 수
+const hanjaGrade8EasyCount = 25;
+
+/// 8급 글자로만 된 두 글자 한자어와 읽기 (두음법칙·예외 읽기(六月=유월) 없는 것만)
+const List<(String, String)> hanjaWords8 = [
+  // 앞 단계 글자(숫자·자연·사람)로만 된 낱말
+  ('水中', '수중'), ('山中', '산중'), ('大小', '대소'), ('母女', '모녀'),
+  ('父女', '부녀'), ('三月', '삼월'), ('五月', '오월'), ('八月', '팔월'),
+  ('一月', '일월'), ('火山', '화산'), ('山水', '산수'), ('人生', '인생'),
+  // 뒤 단계 글자까지
+  ('父母', '부모'), ('兄弟', '형제'), ('學校', '학교'), ('先生', '선생'),
+  ('生日', '생일'), ('國王', '국왕'), ('大門', '대문'), ('南北', '남북'),
+  ('東西', '동서'), ('校門', '교문'), ('外國', '외국'), ('韓國', '한국'),
+  ('中國', '중국'), ('王國', '왕국'), ('軍人', '군인'), ('三寸', '삼촌'),
+  ('四寸', '사촌'), ('校長', '교장'), ('生水', '생수'), ('大國', '대국'),
+  ('學生', '학생'), ('大學', '대학'), ('敎室', '교실'), ('國民', '국민'),
+  ('靑年', '청년'),
+];
+
 /// 네 글자씩 끊은 천자문 구절 (구절 완성 문제용)
 List<List<HanjaChar>> get hanjaPhrases => [
       for (var i = 0; i + 4 <= hanjaChars.length; i += 4)
@@ -71,8 +148,27 @@ final LanguagePack hanjaPack = LanguagePack(
     LangUnitType('뜻 보고 한자 찾기', '뜻→한자', '🔍', textDisplay: true), // 2
     LangUnitType('그림 보고 한자 찾기', '그림→한자', '🖼️'), // 3
     LangUnitType('구절 완성', '구절 완성', '📜', textDisplay: true), // 4
+    // 아래는 8급 (통계가 순서로 저장돼 뒤에 붙인다)
+    LangUnitType('8급 소리 찾기', '8급 소리', '👂', listening: true), // 5
+    LangUnitType('8급 뜻 찾기', '8급 뜻', '📖', textDisplay: true), // 6
+    LangUnitType('8급 한자 찾기', '8급 한자', '🔍', textDisplay: true), // 7
+    LangUnitType('8급 그림 찾기', '8급 그림', '🖼️'), // 8
+    LangUnitType('한자어 읽기', '한자어', '🈶', textDisplay: true), // 9
   ],
   categories: [
+    LangCategory(
+      title: '8급 한자',
+      emoji: '🈷️',
+      desc: '一 二 三, 日 月 火 — 급수 시험 8급 50자를 익혀요',
+      color: UnitColors.rose,
+      units: [
+        LangUnit(title: '8급 소리 찾기', emoji: '👂', typeIndex: 5),
+        LangUnit(title: '8급 그림 찾기', emoji: '🖼️', typeIndex: 8),
+        LangUnit(title: '8급 뜻 찾기', emoji: '📖', typeIndex: 6),
+        LangUnit(title: '8급 한자 찾기', emoji: '🔍', typeIndex: 7),
+        LangUnit(title: '한자어 읽기', emoji: '🈶', typeIndex: 9),
+      ],
+    ),
     LangCategory(
       title: '천자문 첫걸음',
       emoji: '⛅',
@@ -128,11 +224,71 @@ List<HanjaChar> _pick(List<HanjaChar> pool, Random random) {
   return [target, ...others.take(3)];
 }
 
+/// 8급: 앞 단계는 숫자·자연 25자, 뒤 단계는 50자
+List<HanjaChar> _pool8(int stage) =>
+    stage >= 5 ? hanjaGrade8 : hanjaGrade8.sublist(0, hanjaGrade8EasyCount);
+
 LangQuestion _generate(int typeIndex, int stage, Random random) {
+  // 8급 유형(5~8)은 천자문 유형(0~3)과 같은 모양, 글자 범위만 다르다
+  if (typeIndex >= 5 && typeIndex <= 8) {
+    final q = _generateFrom(typeIndex - 5, _pool8(stage), stage, random);
+    return LangQuestion(
+      typeIndex: typeIndex,
+      instruction: q.instruction,
+      display: q.display,
+      subDisplay: q.subDisplay,
+      choices: q.choices,
+      answer: q.answer,
+      answerText: q.answerText,
+      speech: q.speech,
+      dedupKey: 'g8:${q.dedupKey}',
+    );
+  }
+  if (typeIndex == 9) {
+    // 한자어 읽기: 父母 → 부모 (앞 단계는 앞 25자로만 된 낱말)
+    final easy = {
+      for (final c in hanjaGrade8.take(hanjaGrade8EasyCount)) c.char
+    };
+    final pool = stage >= 5
+        ? hanjaWords8
+        : [
+            for (final w in hanjaWords8)
+              if (w.$1.split('').every(easy.contains)) w
+          ];
+    final words = [...(pool.length >= 4 ? pool : hanjaWords8)]..shuffle(random);
+    final target = words.first;
+    // 읽기가 같은 낱말(日月·一月 = 일월)은 함께 내지 않는다
+    final readings = <String>{target.$2};
+    final wrong = <String>[];
+    for (final w in words.skip(1)) {
+      if (wrong.length == 3) break;
+      if (readings.add(w.$2)) wrong.add(w.$2);
+    }
+    final meanings = [
+      for (final ch in target.$1.split(''))
+        hanjaGrade8.firstWhere((c) => c.char == ch).hun
+    ];
+    return LangQuestion(
+      typeIndex: 9,
+      instruction: '이 낱말은 어떻게 읽을까요?',
+      display: target.$1,
+      subDisplay: stage < 5 ? '(${meanings.join(' + ')})' : '',
+      choices: [target.$2, ...wrong]..shuffle(random),
+      answer: target.$2,
+      answerText: '${target.$1} = ${target.$2}',
+      speech: target.$2,
+      dedupKey: 'hw:${target.$1}',
+    );
+  }
+  return _generateFrom(typeIndex, _pool(stage), stage, random);
+}
+
+LangQuestion _generateFrom(
+    int typeIndex, List<HanjaChar> charPool, int stage, Random random) {
   switch (typeIndex) {
     // 소리를 듣고 한자를 찾는다 ("하늘 천" → 天)
     case 0:
-      final picked = _pick(_pool(stage), random);
+      final picked = _pick(charPool, random);
       final target = picked.first;
       return LangQuestion(
         typeIndex: 0,
@@ -147,7 +303,7 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
 
     // 한자를 보고 훈음을 찾는다 (天 → 하늘 천)
     case 1:
-      final picked = _pick(_pool(stage), random);
+      final picked = _pick(charPool, random);
       final target = picked.first;
       return LangQuestion(
         typeIndex: 1,
@@ -164,7 +320,7 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
 
     // 훈음을 보고 한자를 찾는다 (하늘 천 → 天)
     case 2:
-      final picked = _pick(_pool(stage), random);
+      final picked = _pick(charPool, random);
       final target = picked.first;
       return LangQuestion(
         typeIndex: 2,
@@ -180,7 +336,7 @@ LangQuestion _generate(int typeIndex, int stage, Random random) {
     // 그림을 보고 한자를 찾는다 (그림 있는 글자만)
     case 3:
       final pool = [
-        for (final c in _pool(stage))
+        for (final c in charPool)
           if (c.emoji.isNotEmpty) c,
       ];
       final picked = _pick(pool, random);
