@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'korean_question.dart';
 import 'premium.dart';
-import 'profile.dart';
+import 'unit_stars.dart';
 import '../theme.dart';
 
 /// 한글 과목의 카테고리. 수학과 마찬가지로 첫 단계는 항상 열려 있다.
@@ -156,11 +155,25 @@ class KoreanCurriculum {
 class KoreanProgressStore {
   KoreanProgressStore._();
 
-  // v3: 새 묶음이 커리큘럼 중간에 들어갈 때마다 단계 번호가 바뀌어 키를 올린다.
-  // 옛 기록(v1·v2)은 묶음 제목 기준으로 새 번호에 옮겨 담는다.
-  static const _starsKey = 'kr_level_stars_v3';
-  static const _starsKeyV2 = 'kr_level_stars_v2';
-  static const _starsKeyV1 = 'kr_level_stars_v1';
+  // 별은 묶음 제목 기준으로 저장한다 (UnitStarStore). 옛 순서 기록(v1~v3)은
+  // 처음 열 때 한 번 옮겨 담는다.
+  static final _stars = UnitStarStore(
+    key: 'kr_unit_stars_v1',
+    titles: () => [for (final u in KoreanCurriculum.units) u.title],
+    perUnit: KoreanCurriculum.levelsPerUnit,
+    legacy: const [
+      LegacyStarLayout('kr_level_stars_v3', _v3UnitTitles),
+      LegacyStarLayout('kr_level_stars_v2', _v2UnitTitles),
+      LegacyStarLayout('kr_level_stars_v1', _v1UnitTitles),
+    ],
+  );
+
+  /// v3 시절(12묶음) 순서 — 묶음 제목 기준 저장으로 바꾸기 직전
+  static const _v3UnitTitles = [
+    '낱말 보고 그림 찾기', '그림 보고 낱말 찾기', '모음 소리 찾기', //
+    '글자 소리 찾기', '자음 소리 찾기', '가나다 순서', '첫소리 찾기', //
+    '글자 만들기', '빈칸 채우기', '낱말 만들기', '받침 낱말', '긴 낱말 도전',
+  ];
 
   /// v1 시절(8묶음) 순서
   static const _v1UnitTitles = [
@@ -176,56 +189,11 @@ class KoreanProgressStore {
     '글자 만들기', '빈칸 채우기', '긴 낱말 도전',
   ];
 
-  static Future<List<int>> load() async {
-    final prefs = await SharedPreferences.getInstance();
-    var saved = prefs.getStringList(Profiles.scoped(_starsKey));
-    if (saved == null) {
-      final v2 = prefs.getStringList(Profiles.scoped(_starsKeyV2));
-      final v1 = prefs.getStringList(Profiles.scoped(_starsKeyV1));
-      saved = v2 != null
-          ? _migrateByTitles(v2, _v2UnitTitles)
-          : _migrateByTitles(v1, _v1UnitTitles);
-      if (saved != null) {
-        await prefs.setStringList(Profiles.scoped(_starsKey), saved);
-      }
-    }
-    final list = saved ?? const <String>[];
-    return List.generate(
-      KoreanCurriculum.totalLevels,
-      (i) => i < list.length ? int.tryParse(list[i]) ?? 0 : 0,
-    );
-  }
-
-  /// 옛 별 기록을 묶음 제목으로 맞춰 새 단계 번호에 옮겨 담는다.
-  static List<String>? _migrateByTitles(
-      List<String>? old, List<String> oldTitles) {
-    if (old == null) return null;
-    final stars = List.filled(KoreanCurriculum.totalLevels, '0');
-    for (var u = 0; u < oldTitles.length; u++) {
-      final matches =
-          KoreanCurriculum.units.where((x) => x.title == oldTitles[u]);
-      if (matches.isEmpty) continue;
-      final unit = matches.first;
-      for (var i = 0; i < KoreanCurriculum.levelsPerUnit; i++) {
-        final oldIndex = u * KoreanCurriculum.levelsPerUnit + i;
-        if (oldIndex < old.length) {
-          stars[unit.firstLevelNumber - 1 + i] = old[oldIndex];
-        }
-      }
-    }
-    return stars;
-  }
+  static Future<List<int>> load() => _stars.load();
 
   /// 더 좋은 기록일 때만 별을 저장한다.
-  static Future<void> saveStars(int levelNumber, int stars) async {
-    final current = await load();
-    final index = levelNumber - 1;
-    if (stars <= current[index]) return;
-    current[index] = stars;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(
-        Profiles.scoped(_starsKey), current.map((s) => '$s').toList());
-  }
+  static Future<void> saveStars(int levelNumber, int stars) =>
+      _stars.save(levelNumber, stars);
 
   /// 별 1개 이상이면 통과. 카테고리 첫 단계는 항상 열려 있고,
   /// 그 뒤로는 같은 카테고리 안에서 앞 단계를 통과해야 열린다.

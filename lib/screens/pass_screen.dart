@@ -1,10 +1,21 @@
 import 'package:flutter/material.dart';
 import '../widgets/quokka_avatar.dart';
 
+import '../models/curriculum.dart';
+import '../models/english_curriculum.dart';
+import '../models/korean_curriculum.dart';
+import '../models/language_packs.dart';
 import '../models/premium.dart';
 import '../services/purchases.dart';
 import '../widgets/bouncy_button.dart';
 import '../theme.dart';
+
+/// 앱 전체 단계 수 (묶음을 넣고 빼면 저절로 맞춰진다)
+int get totalStageCount =>
+    Curriculum.totalLevels +
+    KoreanCurriculum.totalLevels +
+    EnglishCurriculum.totalLevels +
+    languagePacks.fold(0, (sum, p) => sum + p.totalLevels);
 
 /// 가족 이용권 화면 (부모 게이트 뒤에서 열림).
 /// 한 번 결제하면 이 기기의 모든 단계·프로필 4명이 열리고,
@@ -211,8 +222,8 @@ class _PassScreenState extends State<PassScreen> {
 
   /// 무료 vs 이용권 두 줄 비교 — 무엇이 달라지는지 한눈에
   Widget _compareTable() {
-    const rows = [
-      ('🗺️ 단계', '과목마다\n첫 묶음', '전체\n1140단계'),
+    final rows = [
+      ('🗺️ 단계', '과목마다\n첫 묶음', '전체\n$totalStageCount단계'),
       ('🧒 프로필', '1명', '4명'),
       ('🏠 가족 기기', '—', '함께 쓰기'),
       ('📺 광고', '없음', '없음'),

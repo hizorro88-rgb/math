@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../models/unit_stars.dart';
+
 /// 백업 코드 정보 (복원 전 미리보기용)
 class BackupInfo {
   const BackupInfo({
@@ -40,20 +42,44 @@ class BackupService {
   /// 백업·클라우드에는 넣지 않는다 (코드 안에 코드가 겹겹이 쌓이지 않게).
   static const undoKey = 'backup_undo_v1';
 
-  /// 지금 쓰는 별 목록 키들 (미리보기의 '통과한 단계' 계산용).
-  /// 마이그레이션이 남겨 둔 옛 버전 키를 이중으로 세지 않도록 이름을 못 박는다.
-  static const _currentStarsKeys = [
-    'level_stars_v4',
-    'kr_level_stars_v3',
-    'en_level_stars_v1',
-  ];
+  /// 묶음 제목 기준 별 저장 키(…_unit_stars_v1)와, 그 키가 생기기 전의
+  /// 옛 순서 저장 키. 미리보기의 '통과한 단계'는 새 키가 있으면 새 키만 센다
+  /// (처음 열 때 옮겨 담고도 옛 키를 남겨 두므로 이중으로 세지 않게).
+  /// 새 키 → 옛 키들 (최근 것부터). 옛 키끼리도 가장 최근 것 하나만 센다.
+  static const _legacyKeys = {
+    'math_unit_stars_v1': [
+      'level_stars_v5',
+      'level_stars_v4',
+      'level_stars_v3',
+      'level_stars_v2',
+    ],
+    'kr_unit_stars_v1': [
+      'kr_level_stars_v3',
+      'kr_level_stars_v2',
+      'kr_level_stars_v1',
+    ],
+    'en_unit_stars_v1': ['en_level_stars_v1'],
+  };
 
-  static bool _isCurrentStarsKey(String key) {
-    // 프로필 접두사(p2_ 등)를 떼고 비교한다.
-    final core = key.replaceFirst(RegExp(r'^p\d+_'), '');
-    if (_currentStarsKeys.contains(core)) return true;
-    // 언어 팩: lang_<id>_stars_v1
-    return core.startsWith('lang_') && core.endsWith('_stars_v1');
+  static final _profilePrefix = RegExp(r'^p\d+_');
+
+  /// 미리보기에서 이 키의 별을 셀지. 새 키는 언제나, 옛 키는 같은 프로필에
+  /// 새 키도 더 최근 옛 키도 없을 때만 센다.
+  static bool _countsStars(String key, Map<String, dynamic> data) {
+    final prefix = _profilePrefix.firstMatch(key)?.group(0) ?? '';
+    final core = key.substring(prefix.length);
+    if (core.endsWith('_unit_stars_v1')) return true;
+    for (final e in _legacyKeys.entries) {
+      final i = e.value.indexOf(core);
+      if (i < 0) continue;
+      if (data.containsKey('$prefix${e.key}')) return false;
+      return !e.value.take(i).any((k) => data.containsKey('$prefix$k'));
+    }
+    if (core.startsWith('lang_') && core.endsWith('_stars_v1')) {
+      final unitKey = core.replaceFirst('_stars_v1', '_unit_stars_v1');
+      return !data.containsKey('$prefix$unitKey');
+    }
+    return false;
   }
 
   /// 저장소 전체를 {키: {t, v}} 꼴로 만든다 (백업 코드·클라우드 동기화 공용).
@@ -115,9 +141,14 @@ class BackupService {
     for (final entry in data.entries) {
       final value = entry.value;
       if (value is! Map<String, dynamic>) continue;
-      if (_isCurrentStarsKey(entry.key) && value['t'] == 'l') {
-        for (final s in (value['v'] as List)) {
-          if ((int.tryParse('$s') ?? 0) >= 1) cleared++;
+      if (value['t'] == 'l' && _countsStars(entry.key, data)) {
+        final rows = [for (final s in (value['v'] as List)) '$s'];
+        if (entry.key.endsWith('_unit_stars_v1')) {
+          for (final row in UnitStarStore.decode(rows).values) {
+            cleared += row.where((s) => s >= 1).length;
+          }
+        } else {
+          cleared += rows.where((s) => (int.tryParse(s) ?? 0) >= 1).length;
         }
       }
       if (entry.key.endsWith('coins_v1') && value['t'] == 'i') {

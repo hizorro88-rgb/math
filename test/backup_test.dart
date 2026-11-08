@@ -124,7 +124,8 @@ void main() {
     });
     final code = await BackupService.export();
     final info = BackupService.peek(code)!;
-    expect(info.clearedLevels, 3); // 수학 2 + 일본어(프로필2) 1
+    // 수학 2(v3은 v4에 밀려 안 셈) + 한글 1(옛 키도 이사 대상) + 일본어(프로필2) 1
+    expect(info.clearedLevels, 4);
   });
 
   testWidgets('백업 화면에서 코드를 만들면 화면에 나타난다', (tester) async {
@@ -230,5 +231,14 @@ void main() {
     expect(find.text('지금'), findsOneWidget);
     expect(find.text('77'), findsOneWidget);
     expect(find.text('3'), findsOneWidget);
+  });
+
+  test('묶음 제목 기준 별 기록이 있으면 옛 순서 기록은 세지 않는다', () async {
+    SharedPreferences.setMockInitialValues({
+      'math_unit_stars_v1': ['수 세기 첫걸음=3,2,0', '5까지 세기=1'],
+      'level_stars_v5': ['3', '2', '0', '0', '0', '0', '0', '0', '0', '0', '1'],
+    });
+    final code = await BackupService.export();
+    expect(BackupService.peek(code)!.clearedLevels, 3);
   });
 }

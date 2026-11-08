@@ -1,6 +1,5 @@
 import 'dart:math';
 
-
 import 'language_pack.dart';
 import '../theme.dart';
 
@@ -153,6 +152,18 @@ final LanguagePack japanesePack = LanguagePack(
         LangUnit(title: '가타카나 낱말', emoji: '🍦', typeIndex: 8),
       ],
     ),
+  ],
+  // 별을 단계 번호 순서로 저장하던 시절의 묶음 순서 (기록 이사용 — 고치지 말 것)
+  v1UnitTitles: const [
+    'かな 소리 찾기',
+    'あいうえお 순서',
+    '낱말 듣고 그림 찾기',
+    '그림 보고 낱말 찾기',
+    '첫 글자 찾기',
+    '낱말 만들기',
+    'カナ 소리 찾기',
+    '히라가나·가타카나 짝',
+    '가타카나 낱말'
   ],
   generateOne: _generate,
 );

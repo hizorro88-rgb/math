@@ -1,6 +1,5 @@
 import 'dart:math';
 
-
 import 'language_pack.dart';
 import '../theme.dart';
 
@@ -103,6 +102,14 @@ final LanguagePack hanjaPack = LanguagePack(
         LangUnit(title: '구절 완성', emoji: '📜', typeIndex: 4),
       ],
     ),
+  ],
+  // 별을 단계 번호 순서로 저장하던 시절의 묶음 순서 (기록 이사용 — 고치지 말 것)
+  v1UnitTitles: const [
+    '한자 소리 찾기',
+    '한자 보고 뜻 찾기',
+    '뜻 보고 한자 찾기',
+    '그림 보고 한자 찾기',
+    '구절 완성'
   ],
   generateOne: _generate,
 );

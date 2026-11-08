@@ -1,10 +1,9 @@
 import 'dart:math';
 
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
 import 'premium.dart';
-import 'profile.dart';
+import 'unit_stars.dart';
 
 /// 언어 과목(일본어·중국어…) 한 문제.
 /// 발음은 [speech]를 팩의 TTS 언어로 읽는다.
@@ -141,6 +140,7 @@ class LanguagePack {
     this.generateOne,
     this.generateLevel,
     this.forAdults = false,
+    List<String>? v1UnitTitles,
   }) : assert(generateOne != null || generateLevel != null,
             '문제를 만드는 방법이 최소 하나는 있어야 한다') {
     var unitIndex = 0;
@@ -155,6 +155,9 @@ class LanguagePack {
       }
     }
     units = [for (final c in categories) ...c.units];
+    // 옛 저장 방식(단계 번호 순서) 시절의 묶음 순서. 안 주면 지금 순서 그대로
+    // (묶음이 바뀐 적 없는 팩).
+    this.v1UnitTitles = v1UnitTitles ?? [for (final u in units) u.title];
     levels = [
       for (final unit in units)
         for (var i = 0; i < levelsPerUnit; i++)
@@ -196,6 +199,9 @@ class LanguagePack {
   late final List<LangUnit> units;
   late final List<LangLevel> levels;
 
+  /// 별을 단계 번호 순서로 저장하던 시절(lang_<id>_stars_v1)의 묶음 제목 순서
+  late final List<String> v1UnitTitles;
+
   int get totalLevels => levels.length;
 
   LangLevel levelAt(int number) => levels[number - 1];
@@ -228,28 +234,25 @@ class LanguagePack {
 class LangProgressStore {
   LangProgressStore._();
 
-  static String _key(LanguagePack pack) => 'lang_${pack.id}_stars_v1';
+  // 별은 묶음 제목 기준으로 저장한다 (UnitStarStore). 팩마다 키가 따로다.
+  static final _stores = <String, UnitStarStore>{};
 
-  static Future<List<int>> load(LanguagePack pack) async {
-    final prefs = await SharedPreferences.getInstance();
-    final saved = prefs.getStringList(Profiles.scoped(_key(pack))) ?? const [];
-    return List.generate(
-      pack.totalLevels,
-      (i) => i < saved.length ? int.tryParse(saved[i]) ?? 0 : 0,
-    );
-  }
+  static UnitStarStore _store(LanguagePack pack) =>
+      _stores[pack.id] ??= UnitStarStore(
+        key: 'lang_${pack.id}_unit_stars_v1',
+        titles: () => [for (final u in pack.units) u.title],
+        perUnit: LanguagePack.levelsPerUnit,
+        legacy: [
+          LegacyStarLayout('lang_${pack.id}_stars_v1', pack.v1UnitTitles)
+        ],
+      );
+
+  static Future<List<int>> load(LanguagePack pack) => _store(pack).load();
 
   /// 더 좋은 기록일 때만 별을 저장한다.
   static Future<void> saveStars(
-      LanguagePack pack, int levelNumber, int stars) async {
-    final current = await load(pack);
-    final index = levelNumber - 1;
-    if (stars <= current[index]) return;
-    current[index] = stars;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(
-        Profiles.scoped(_key(pack)), current.map((s) => '$s').toList());
-  }
+          LanguagePack pack, int levelNumber, int stars) =>
+      _store(pack).save(levelNumber, stars);
 
   /// 별 1개 이상이면 통과. 카테고리 첫 단계는 항상 열려 있다.
   static bool isUnlocked(LanguagePack pack, List<int> stars, int levelNumber) {

@@ -461,7 +461,7 @@ class _EnglishCard extends StatelessWidget {
       title: '🔤 영어 정답률',
       child: Column(
         children: [
-          for (final type in EnQuizType.values) ...[
+          for (final type in EnglishCurriculum.typesInOrder) ...[
             _AccuracyRow(
               label: '${type.emoji} ${type.shortLabel}',
               correct: stats.enCorrect[type.index],

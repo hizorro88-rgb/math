@@ -13,11 +13,10 @@ void main() {
   });
 
   group('EnglishCurriculum', () {
-    test('3개 카테고리, 묶음마다 10단계로 이어진다', () {
-      expect(EnglishCurriculum.categories, hasLength(3));
+    test('알파벳 → 파닉스 → 낱말 → 스펠링, 묶음마다 10단계로 이어진다', () {
       expect(
         EnglishCurriculum.categories.map((c) => c.title).toList(),
-        ['알파벳 첫걸음', '영어 낱말', '스펠링 도전'],
+        ['알파벳 첫걸음', '파닉스', '영어 낱말', '스펠링 도전'],
       );
       expect(
         EnglishCurriculum.totalLevels,

@@ -2,6 +2,7 @@ import 'package:flutter/painting.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'profile.dart';
+import 'unit_stars.dart';
 
 import 'curriculum.dart';
 import 'premium.dart';
@@ -64,40 +65,39 @@ Rank? nextRankFor(int points) {
 class ProgressStore {
   ProgressStore._();
 
-  // v5: 새 묶음이 커리큘럼 중간에 들어갈 때마다 단계 번호가 바뀌어 키를 올린다.
-  // 옛 기록(v2~v4)은 묶음 제목 기준으로 새 번호에 옮겨 담는다.
-  static const _starsKey = 'level_stars_v5';
-  static const _starsKeyV4 = 'level_stars_v4';
-  static const _starsKeyV3 = 'level_stars_v3';
-  static const _starsKeyV2 = 'level_stars_v2';
+  // 별은 묶음 제목 기준으로 저장한다 (UnitStarStore) — 묶음을 어디에 넣어도
+  // 기록이 제자리를 지킨다. 옛 순서 기록(v2~v5)은 처음 열 때 한 번 옮겨 담는다.
+  static final _stars = UnitStarStore(
+    key: 'math_unit_stars_v1',
+    titles: () => [for (final u in Curriculum.units) u.title],
+    perUnit: Curriculum.levelsPerUnit,
+    legacy: const [
+      LegacyStarLayout('level_stars_v5', _v5UnitTitles),
+      LegacyStarLayout('level_stars_v4', _v4UnitTitles),
+      LegacyStarLayout('level_stars_v3', _v3UnitTitles),
+      LegacyStarLayout('level_stars_v2', _v2UnitTitles),
+    ],
+  );
 
   static const _pointsKey = 'total_points_v1';
   static const _coinsKey = 'coins_v1';
 
   /// 전체 단계의 별 개수 목록 (인덱스 0 = 1단계)
-  static Future<List<int>> load() async {
-    final prefs = await SharedPreferences.getInstance();
-    var saved = prefs.getStringList(Profiles.scoped(_starsKey));
-    if (saved == null) {
-      // 가장 최근 버전의 옛 기록부터 이사한다.
-      final v4 = prefs.getStringList(Profiles.scoped(_starsKeyV4));
-      final v3 = prefs.getStringList(Profiles.scoped(_starsKeyV3));
-      final v2 = prefs.getStringList(Profiles.scoped(_starsKeyV2));
-      saved = v4 != null
-          ? _migrateByTitles(v4, _v4UnitTitles)
-          : v3 != null
-              ? _migrateByTitles(v3, _v3UnitTitles)
-              : _migrateByTitles(v2, _v2UnitTitles);
-      if (saved != null) {
-        await prefs.setStringList(Profiles.scoped(_starsKey), saved);
-      }
-    }
-    final list = saved ?? const <String>[];
-    return List.generate(
-      Curriculum.totalLevels,
-      (i) => i < list.length ? int.tryParse(list[i]) ?? 0 : 0,
-    );
-  }
+  static Future<List<int>> load() => _stars.load();
+
+  /// v5 시절(43묶음) 순서 — 묶음 제목 기준 저장으로 바꾸기 직전
+  static const _v5UnitTitles = [
+    '수 세기 첫걸음', '5까지 세기', '모양 세기', // 4살
+    '10까지 세기', '큰 수 찾기', '덧셈 첫걸음', // 5살
+    '뺄셈 첫걸음', '섞어서 연습', '듣고 풀기', '20까지 세기', // 6살
+    '덧셈 도전', '뺄셈 도전', '섞어서 도전', '빈칸 채우기', '시계 읽기', // 7살
+    '큰 수 덧셈', '큰 수 뺄셈', '10 만들기', '받아올림 덧셈', '받아내림 뺄셈',
+    '세로 덧셈 첫걸음', '세로 뺄셈 첫걸음', '시계 보기', '덧뺄셈 마스터', // 초1
+    '두 자리 덧셈', '받아올림 세로 덧셈', '받아내림 세로 뺄셈', '두 자리 뺄셈', '규칙 찾기',
+    '곱셈 첫걸음 (2~3단)', '곱셈 쑥쑥 (4~5단)', '곱셈 점프 (6~7단)', '곱셈 완성 (8~9단)', // 초2
+    '나눗셈 첫걸음', '나눗셈 도전', '큰 수 곱셈', '세 자리 덧뺄셈', '수학 왕 되기', // 초3
+    '분수 첫걸음', '분수 도전', '소수 첫걸음', '소수 도전', '시간 계산', // 초3·4 심화
+  ];
 
   /// v2 시절(30묶음) 순서
   static const _v2UnitTitles = [
@@ -139,35 +139,9 @@ class ProgressStore {
     '분수 첫걸음', '분수 도전', '소수 첫걸음', '소수 도전', '시간 계산', // 초3·4 심화
   ];
 
-  /// 옛 별 기록을 묶음 제목으로 맞춰 새 단계 번호에 옮겨 담는다.
-  static List<String>? _migrateByTitles(
-      List<String>? old, List<String> oldTitles) {
-    if (old == null) return null;
-    final stars = List.filled(Curriculum.totalLevels, '0');
-    for (var u = 0; u < oldTitles.length; u++) {
-      final matches = Curriculum.units.where((x) => x.title == oldTitles[u]);
-      if (matches.isEmpty) continue;
-      final unit = matches.first;
-      for (var i = 0; i < Curriculum.levelsPerUnit; i++) {
-        final oldIndex = u * Curriculum.levelsPerUnit + i;
-        if (oldIndex < old.length) {
-          stars[unit.firstLevelNumber - 1 + i] = old[oldIndex];
-        }
-      }
-    }
-    return stars;
-  }
-
   /// 더 좋은 기록일 때만 별을 저장한다.
-  static Future<void> saveStars(int levelNumber, int stars) async {
-    final current = await load();
-    final index = levelNumber - 1;
-    if (stars <= current[index]) return;
-    current[index] = stars;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setStringList(
-        Profiles.scoped(_starsKey), current.map((s) => '$s').toList());
-  }
+  static Future<void> saveStars(int levelNumber, int stars) =>
+      _stars.save(levelNumber, stars);
 
   /// 지금까지 모은 누적 점수
   static Future<int> loadPoints() async {

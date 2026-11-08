@@ -8,7 +8,6 @@ library;
 
 import 'dart:math';
 
-
 import 'conversation_data.dart';
 import 'conversation_data_t1.dart';
 import 'conversation_data_t2.dart';

@@ -1834,11 +1834,7 @@ class _CategoryCard extends StatelessWidget {
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (locked) ...[
-                        const SizedBox(width: 6),
-                        const Icon(Icons.lock_rounded,
-                            size: 16, color: AppColors.inkMuted),
-                      ],
+                      // 자물쇠는 오른쪽 끝 하나만 (제목 옆에 또 두면 두 번 읽힌다)
                       if (recommended) ...[
                         const SizedBox(width: 6),
                         Container(

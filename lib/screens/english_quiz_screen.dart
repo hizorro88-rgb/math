@@ -9,6 +9,7 @@ import '../models/progress.dart';
 import '../models/stats.dart';
 import '../models/wrong_notes.dart';
 import '../services/sounds.dart';
+import '../services/speech.dart';
 import '../theme.dart';
 import '../widgets/listen_guard.dart';
 import '../widgets/quiz_exit_dialog.dart';
@@ -173,13 +174,21 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
       Sounds.correct(_combo);
       HapticFeedback.lightImpact().ignore();
       QuizVoice.correct(_isRetryQuestion ? 0 : _combo,
-          say: _question.tiles.isNotEmpty ? choice : null,
+          say: _question.tiles.isNotEmpty
+              ? choice
+              : _question.revealSpeech.isNotEmpty
+                  ? _question.revealSpeech
+                  : null,
           lang: _question.speechLang);
     } else {
       Sounds.wrong();
       // 틀렸을 때 진동은 맞혔을 때보다 약하게 — 꾸짖는 느낌을 주지 않는다
       HapticFeedback.selectionClick().ignore();
-      QuizVoice.wrong(_question.answerText, lang: _question.speechLang);
+      QuizVoice.wrong(
+          _question.revealSpeech.isNotEmpty
+              ? _question.revealSpeech
+              : _question.answerText,
+          lang: _question.speechLang);
     }
   }
 
@@ -281,7 +290,9 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
     final displayIsText = switch (_question.type) {
       EnQuizType.wordToPicture ||
       EnQuizType.alphabetOrder ||
-      EnQuizType.caseMatch =>
+      EnQuizType.caseMatch ||
+      EnQuizType.letterSound ||
+      EnQuizType.decode =>
         true,
       _ => false,
     };
@@ -290,7 +301,13 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
     return QuizCard(
       color: _themeColor,
       instruction: _question.instruction,
-      onSpeak: listenDisplay ? null : () => _speakQuestion(force: true),
+      // 혼자 읽는 문제는 답하기 전엔 듣기 버튼이 없다 (읽고 나서 확인용으로 들린다)
+      onSpeak: listenDisplay || (_question.readAlone && !_answered)
+          ? null
+          : _question.readAlone
+              ? () => Speech.speak(_question.revealSpeech,
+                  lang: _question.speechLang, force: true)
+              : () => _speakQuestion(force: true),
       badge: _isRetryQuestion
           ? const QuizBadge.retry()
           : _isBonusQuestion
@@ -380,7 +397,11 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
             label: _question.choices[i],
             state: _choiceState(_question.choices[i]),
             fillIndex: i,
-            fontSize: _question.emojiChoices ? 44 : 30,
+            fontSize: _question.emojiChoices
+                ? 44
+                : _question.choices.any((c) => c.length > 5)
+                    ? AppFont.display
+                    : 30,
             onTap: () => _selectChoice(_question.choices[i]),
           ),
       ],

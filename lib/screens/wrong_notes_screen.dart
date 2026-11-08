@@ -61,7 +61,8 @@ class _WrongNotesScreenState extends State<WrongNotesScreen> {
 
   void _speakQuestion({bool force = false}) {
     final note = _note;
-    if (note.speech.isEmpty) return;
+    // 혼자 읽기 문제는 소리가 비어 있다 — 처음엔 과제만 읽고, 🔊는 할 일이 없다
+    if (note.speech.isEmpty && force) return;
     QuizVoice.question(
       task: note.instruction,
       speech: note.speech,

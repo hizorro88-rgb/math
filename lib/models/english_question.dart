@@ -1,6 +1,8 @@
 import 'dart:math';
 
 import 'english_data.dart';
+import 'english_phonics.dart';
+import 'english_vocab.dart';
 
 /// 영어 퀴즈의 문제 유형
 enum EnQuizType {
@@ -26,7 +28,41 @@ enum EnQuizType {
   wordBuild('낱말 만들기', '낱말 조립', '🏗️'),
 
   /// 긴 낱말 읽기 도전
-  longWord('긴 낱말 도전', '긴 낱말', '🚀');
+  longWord('긴 낱말 도전', '긴 낱말', '🚀'),
+
+  // ── 파닉스 (여기부터 뒤에 붙인다 — 통계가 enum 순서로 저장된다) ──
+
+  /// 글자를 보고 그 소리로 시작하는 그림을 찾는다 (B → 🐻)
+  letterSound('글자 소리로 시작해요', '첫소리', '🔠'),
+
+  /// 그림 낱말의 가운데 짧은 모음을 찾는다 (🐱 C _ T → A)
+  shortVowel('가운데 소리 찾기', '가운데 모음', '🎈'),
+
+  /// 소리 없이 낱말을 읽고 그림을 찾는다 (PIG → 🐷) — 스스로 읽기
+  decode('읽고 그림 찾기', '혼자 읽기', '📖'),
+
+  /// 끝소리가 같은 낱말을 찾는다 (CAT → HAT)
+  rhyme('끝소리 짝 찾기', '라임', '🎵'),
+
+  /// 두 글자가 내는 첫소리를 찾는다 (🐑 _ _ EEP → SH)
+  cluster('두 글자 소리', 'sh·ch·tr', '👯'),
+
+  // ── 단어 퀴즈 ──
+
+  /// 주제 낱말(색깔·숫자·몸…) — 듣고 그림 / 그림 보고 낱말 / 낱말 뜻을 섞어 낸다
+  themeWord('주제 낱말', '주제', '🎨'),
+
+  /// 영어 낱말을 보고(듣고) 한국어 뜻을 고른다 (APPLE → 사과)
+  meaningPick('뜻 고르기', '뜻', '💬'),
+
+  /// 한국어 뜻을 듣고 영어 낱말을 고른다 (사과 → APPLE)
+  englishPick('영어로 고르기', '영어로', '🇬🇧'),
+
+  /// 빠진 글자를 채운다 (🍎 AP_LE → P)
+  missingLetter('빠진 글자 찾기', '빠진 글자', '🔍'),
+
+  /// 자주 쓰는 낱말(사이트 워드)을 듣고 찾는다 (the·is·see)
+  sightWord('자주 쓰는 낱말', '사이트 워드', '👀');
 
   const EnQuizType(this.label, this.shortLabel, this.emoji);
 
@@ -51,6 +87,8 @@ class EnglishQuestion {
     this.subDisplay = '',
     this.emojiChoices = false,
     this.tiles = const [],
+    this.revealSpeech = '',
+    this.revealLang = 'en-US',
     required this.dedupKey,
   });
 
@@ -80,6 +118,15 @@ class EnglishQuestion {
   /// 낱말 만들기용 글자 타일. 비어 있지 않으면 타일 조립 UI로 푼다.
   final List<String> tiles;
 
+  /// 답을 고른 뒤 읽어 줄 말 (영어). 파닉스에서 글자와 낱말을 이어 들려준다.
+  final String revealSpeech;
+
+  /// [revealSpeech]를 읽을 언어 (뜻 문제는 한국어 뜻을 읽는다)
+  final String revealLang;
+
+  /// 소리 없이 스스로 읽는 문제인지 — 처음엔 읽어 주지 않는다
+  bool get readAlone => type == EnQuizType.decode;
+
   final String dedupKey;
 }
 
@@ -92,11 +139,15 @@ class EnglishQuestionGenerator {
   /// 문항마다 지시문을 조금씩 바꾸기 위한 순번 (generate가 문항 번호로 설정)
   int _seq = 0;
 
+  /// 주제 낱말 묶음의 주제 (null이면 모든 주제)
+  String? _theme;
+
   /// [0]은 기존 문구(테스트 고정점), 나머지는 회전.
   String _rot(List<String> pool) => pool[_seq % pool.length];
 
   List<EnglishQuestion> generate(EnQuizType type,
-      {int stage = 0, int count = 10}) {
+      {int stage = 0, int count = 10, String? theme}) {
+    _theme = theme;
     final questions = <EnglishQuestion>[];
     String? previousKey;
     for (var i = 0; i < count; i++) {
@@ -113,6 +164,19 @@ class EnglishQuestionGenerator {
 
   EnglishQuestion _generateOne(EnQuizType type, int stage) {
     switch (type) {
+      case EnQuizType.letterSound:
+      case EnQuizType.shortVowel:
+      case EnQuizType.decode:
+      case EnQuizType.rhyme:
+      case EnQuizType.cluster:
+        return _phonics(type, stage);
+      case EnQuizType.themeWord:
+      case EnQuizType.meaningPick:
+      case EnQuizType.englishPick:
+      case EnQuizType.missingLetter:
+      case EnQuizType.sightWord:
+        return _vocab(type, stage);
+
       case EnQuizType.wordToPicture:
         final pool = stage >= 5 ? enAllWords : enWordsShort;
         final picked = _pickWords(pool);
@@ -242,6 +306,335 @@ class EnglishQuestionGenerator {
           dedupKey: 'wb:${word.word}',
         );
     }
+  }
+
+  EnglishQuestion _phonics(EnQuizType type, int stage) {
+    switch (type) {
+      case EnQuizType.letterSound:
+        final letters = phonicsLetterWords.keys
+            .take(
+                stage >= 5 ? phonicsLetterWords.length : phonicsEasyLetterCount)
+            .toList();
+        final letter = letters[_random.nextInt(letters.length)];
+        final starts = phonicsLetterWords[letter]!;
+        final target = starts[_random.nextInt(starts.length)];
+        // 오답은 소리가 다른 글자의 그림에서 (C 문제에 🔑 key가 나오면 둘 다 맞다)
+        final others = [
+          for (final e in phonicsLetterWords.entries)
+            if (phonicsSoundGroup(e.key) != phonicsSoundGroup(letter))
+              ...e.value
+        ]..shuffle(_random);
+        final usedEmoji = {target.emoji};
+        final wrong = <EnWord>[];
+        for (final w in others) {
+          if (wrong.length == 3) break;
+          if (usedEmoji.add(w.emoji)) wrong.add(w);
+        }
+        final picked = [target, ...wrong];
+        return EnglishQuestion(
+          type: type,
+          instruction: _rot([
+            "'$letter' 소리로 시작하는 그림은?",
+            "'$letter'로 시작하는 낱말을 찾아요",
+          ]),
+          display: '$letter ${letter.toLowerCase()}',
+          choices: _shuffled([for (final w in picked) w.emoji]),
+          answer: target.emoji,
+          answerText: target.shown,
+          speech: letter,
+          revealSpeech: '$letter. ${target.word}',
+          emojiChoices: true,
+          dedupKey: 'ls:$letter',
+        );
+
+      case EnQuizType.shortVowel:
+        final word = phonicsCvc[_random.nextInt(phonicsCvc.length)];
+        final letters = word.shown.split('');
+        final vi = letters.indexWhere(phonicsVowels.contains);
+        final vowel = letters[vi];
+        final blanked = [
+          for (var i = 0; i < letters.length; i++) i == vi ? '_' : letters[i]
+        ].join(' ');
+        final wrong = [
+          for (final v in phonicsVowels)
+            if (v != vowel) v
+        ]..shuffle(_random);
+        return EnglishQuestion(
+          type: type,
+          instruction: _rot(const ['가운데 들어갈 소리는?', '빈칸에 알맞은 글자는?']),
+          display: word.emoji,
+          subDisplay: blanked,
+          choices: _shuffled([vowel, ...wrong.take(3)]),
+          answer: vowel,
+          answerText: word.shown,
+          speech: word.word,
+          revealSpeech: word.word,
+          dedupKey: 'sv:${word.word}',
+        );
+
+      case EnQuizType.decode:
+        // 앞 단계는 세 글자 낱말, 뒤 단계는 라임 모둠의 긴 낱말까지
+        final pool = stage >= 5
+            ? [
+                ...phonicsCvc,
+                for (final f in phonicsRhymes.values) ...f,
+              ]
+            : phonicsCvc;
+        final picked = _pickWords(_uniqueEmoji(pool));
+        final target = picked.first;
+        return EnglishQuestion(
+          type: type,
+          instruction: _rot(const ['소리 내어 읽고 그림을 찾아요', '혼자 읽어 볼까요?']),
+          display: target.shown,
+          choices: _shuffled([for (final w in picked) w.emoji]),
+          answer: target.emoji,
+          answerText: target.shown,
+          speech: '',
+          revealSpeech: target.word,
+          emojiChoices: true,
+          dedupKey: 'dc:${target.word}',
+        );
+
+      case EnQuizType.rhyme:
+        final families = phonicsRhymes.entries
+            .take(stage >= 5 ? phonicsRhymes.length : phonicsEasyRhymeCount)
+            .toList();
+        final family = families[_random.nextInt(families.length)];
+        final pair = [...family.value]..shuffle(_random);
+        final target = pair[0];
+        final answer = pair[1];
+        // 모음이 같은 모둠(-et·-ed, -in·-ing)은 거의 같게 들려서 오답으로 안 낸다
+        final others = [
+          for (final f in families)
+            if (f.key[1] != family.key[1]) ...f.value
+        ]..shuffle(_random);
+        final usedEmoji = {target.emoji, answer.emoji};
+        final wrong = <EnWord>[];
+        for (final w in others) {
+          if (wrong.length == 3) break;
+          if (usedEmoji.add(w.emoji)) wrong.add(w);
+        }
+        String label(EnWord w) => '${w.emoji} ${w.shown}';
+        return EnglishQuestion(
+          type: type,
+          instruction: _rot(const ['끝소리가 같은 낱말은?', '소리가 닮은 낱말을 찾아요']),
+          display: target.emoji,
+          subDisplay: target.shown,
+          choices: _shuffled([label(answer), for (final w in wrong) label(w)]),
+          answer: label(answer),
+          answerText: '${target.shown} · ${answer.shown}',
+          speech: target.word,
+          revealSpeech: '${target.word}, ${answer.word}',
+          dedupKey: 'rh:${target.word}',
+        );
+
+      case _:
+        // cluster: 앞 단계는 sh·ch·th·wh, 뒤 단계는 fr·tr 같은 자음 짝까지
+        final pool = stage >= 5
+            ? [...phonicsDigraphs, ...phonicsBlends]
+            : phonicsDigraphs;
+        final target = pool[_random.nextInt(pool.length)];
+        final sounds = {for (final c in pool) c.sound}.toList()
+          ..remove(target.sound)
+          ..shuffle(_random);
+        return EnglishQuestion(
+          type: type,
+          instruction: _rot(const ['처음 두 글자는 무엇일까요?', '빈칸에 들어갈 두 글자는?']),
+          display: target.emoji,
+          subDisplay: target.blanked,
+          choices: _shuffled([target.sound, ...sounds.take(3)]),
+          answer: target.sound,
+          answerText: target.word.toUpperCase(),
+          speech: target.word,
+          revealSpeech: target.word,
+          dedupKey: 'cl:${target.word}',
+        );
+    }
+  }
+
+  EnglishQuestion _vocab(EnQuizType type, int stage) {
+    switch (type) {
+      case EnQuizType.themeWord:
+        final themes = _theme?.split(',');
+        final pool = [
+          for (final v in enVocab)
+            if (themes?.contains(v.theme) ?? true) v
+        ];
+        // 문항마다 모양을 바꾼다: 듣고 그림 → 그림 보고 낱말 → 낱말 뜻
+        final form = stage < 3 ? _seq % 2 : _seq % 3;
+        return switch (form) {
+          0 => _vocabListen(type, pool),
+          1 => _vocabPicture(type, pool),
+          _ => _vocabMeaning(type, pool),
+        };
+
+      case EnQuizType.meaningPick:
+        return _vocabMeaning(type, _vocabPool(stage));
+
+      case EnQuizType.englishPick:
+        final picked = _pickVocab(_vocabPool(stage));
+        final target = picked.first;
+        return EnglishQuestion(
+          type: type,
+          instruction: _rot(const ['영어로 무엇일까요?', '알맞은 영어 낱말을 골라요']),
+          display: target.ko,
+          subDisplay: stage < 5 ? target.emoji : '',
+          choices: _shuffled([for (final v in picked) v.shown]),
+          answer: target.shown,
+          answerText: '${target.ko} = ${target.shown}',
+          speech: target.ko,
+          speechLang: 'ko-KR',
+          revealSpeech: target.word,
+          dedupKey: 'ep:${target.word}',
+        );
+
+      case EnQuizType.missingLetter:
+        final pool = [
+          for (final v in _vocabPool(stage))
+            if (v.word.length >= (stage < 5 ? 3 : 5) &&
+                v.word.length <= (stage < 5 ? 5 : 10) &&
+                v.theme != 'number')
+              v
+        ];
+        final target = pool[_random.nextInt(pool.length)];
+        final letters = target.shown.split('');
+        final at = _random.nextInt(letters.length);
+        final answer = letters[at];
+        final blanked = [
+          for (var i = 0; i < letters.length; i++) i == at ? '_' : letters[i]
+        ].join(' ');
+        final wrong = [
+          for (final c in enAlphabet)
+            if (c != answer) c
+        ]..shuffle(_random);
+        return EnglishQuestion(
+          type: type,
+          instruction: _rot(const ['빠진 글자는 무엇일까요?', '빈칸에 들어갈 글자는?']),
+          display: target.emoji,
+          subDisplay: blanked,
+          choices: _shuffled([answer, ...wrong.take(3)]),
+          answer: answer,
+          answerText: target.shown,
+          speech: target.word,
+          revealSpeech: target.word,
+          dedupKey: 'ml:${target.word}',
+        );
+
+      case _:
+        // sightWord: 소리를 듣고 모양이 비슷한 낱말 중에서 고른다
+        final pool = stage < 5
+            ? enSightWords.take(enSightEasyCount).toList()
+            : enSightWords;
+        final target = pool[_random.nextInt(pool.length)];
+        // 첫 글자나 길이가 비슷한 낱말을 오답으로 (헷갈리는 모양끼리 구별하기)
+        final similar = [
+          for (final w in enSightWords)
+            if (w != target &&
+                (w[0].toLowerCase() == target[0].toLowerCase() ||
+                    w.length == target.length))
+              w
+        ]..shuffle(_random);
+        final rest = [
+          for (final w in enSightWords)
+            if (w != target && !similar.contains(w)) w
+        ]..shuffle(_random);
+        final wrong = [...similar, ...rest].take(3).toList();
+        return EnglishQuestion(
+          type: type,
+          instruction: _rot(const ['들리는 낱말을 찾아요', '어떤 낱말일까요?']),
+          display: '🔊',
+          choices: _shuffled([target, ...wrong]),
+          answer: target,
+          answerText: target,
+          speech: target,
+          dedupKey: 'sw:$target',
+        );
+    }
+  }
+
+  /// 단어 퀴즈 범위: 앞 단계는 그림이 쉬운 주제, 뒤 단계는 전부
+  List<EnVocab> _vocabPool(int stage) => stage < 5
+      ? [
+          for (final v in enVocab)
+            if (const {'animal', 'food', 'thing', 'vehicle', 'color', 'body'}
+                .contains(v.theme))
+              v
+        ]
+      : enVocab;
+
+  /// 낱말 4개 (첫 번째가 정답). 뜻·그림이 겹치는 낱말은 같이 안 나온다.
+  List<EnVocab> _pickVocab(List<EnVocab> pool) {
+    final target = pool[_random.nextInt(pool.length)];
+    final kos = {target.ko};
+    final emojis = {target.emoji};
+    final others = [...pool]..shuffle(_random);
+    final picked = [target];
+    for (final v in others) {
+      if (picked.length == 4) break;
+      if (v.word == target.word) continue;
+      if (kos.add(v.ko) && emojis.add(v.emoji)) picked.add(v);
+    }
+    return picked;
+  }
+
+  EnglishQuestion _vocabListen(EnQuizType type, List<EnVocab> pool) {
+    final picked = _pickVocab(pool);
+    final target = picked.first;
+    return EnglishQuestion(
+      type: type,
+      instruction: _rot(const ['잘 듣고 알맞은 그림을 찾아요', '소리를 듣고 그림을 골라요']),
+      display: '🔊',
+      choices: _shuffled([for (final v in picked) v.emoji]),
+      answer: target.emoji,
+      answerText: '${target.shown} (${target.ko})',
+      speech: target.word,
+      revealSpeech: target.word,
+      emojiChoices: true,
+      dedupKey: 'tw:${target.word}',
+    );
+  }
+
+  EnglishQuestion _vocabPicture(EnQuizType type, List<EnVocab> pool) {
+    final picked = _pickVocab(pool);
+    final target = picked.first;
+    return EnglishQuestion(
+      type: type,
+      instruction: _rot(const ['그림에 맞는 낱말은?', '이 그림, 영어로 뭘까?']),
+      display: target.emoji,
+      choices: _shuffled([for (final v in picked) v.shown]),
+      answer: target.shown,
+      answerText: '${target.shown} (${target.ko})',
+      speech: target.word,
+      revealSpeech: target.word,
+      dedupKey: 'tw:${target.word}',
+    );
+  }
+
+  EnglishQuestion _vocabMeaning(EnQuizType type, List<EnVocab> pool) {
+    final picked = _pickVocab(pool);
+    final target = picked.first;
+    return EnglishQuestion(
+      type: type,
+      instruction: _rot(const ['무슨 뜻일까요?', '알맞은 뜻을 골라요']),
+      display: target.shown,
+      choices: _shuffled([for (final v in picked) v.ko]),
+      answer: target.ko,
+      answerText: '${target.shown} = ${target.ko}',
+      speech: target.word,
+      revealSpeech: target.ko,
+      revealLang: 'ko-KR',
+      dedupKey: 'mp:${target.word}',
+    );
+  }
+
+  /// 같은 그림이 두 번 나오지 않게 (보기 그림이 겹치면 고를 수 없다)
+  List<EnWord> _uniqueEmoji(List<EnWord> pool) {
+    final seen = <String>{};
+    final words = <String>{};
+    return [
+      for (final w in pool)
+        if (words.add(w.word) && seen.add(w.emoji)) w
+    ];
   }
 
   EnglishQuestion _pictureToWord(List<EnWord> pool, EnQuizType type) {

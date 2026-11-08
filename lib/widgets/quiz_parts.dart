@@ -86,7 +86,7 @@ class QuizVoice {
     bool force = false,
   }) {
     if (force) {
-      Speech.speak(speech, lang: lang, force: true);
+      if (speech.isNotEmpty) Speech.speak(speech, lang: lang, force: true);
       return;
     }
     // 문장으로 된 음성(…일까요? / …보세요)은 그 자체가 과제라 겹쳐 읽지 않는다.
@@ -96,7 +96,8 @@ class QuizVoice {
       if (retry) ('아까 그 문제예요!', 'ko-KR'),
       if (bonus) ('보너스 문제! 맞히면 코인 두 배!', 'ko-KR'),
       if (!selfContained) (task, 'ko-KR'),
-      (speech, lang),
+      // 혼자 읽는 문제는 소리가 비어 있다 — 과제만 읽는다
+      if (speech.isNotEmpty) (speech, lang),
     ]);
   }
 }

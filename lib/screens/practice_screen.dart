@@ -2,6 +2,7 @@ import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 
+import '../models/english_curriculum.dart';
 import '../models/english_question.dart';
 import '../models/korean_question.dart';
 import '../models/language_packs.dart';
@@ -149,7 +150,7 @@ class _PracticeScreenState extends State<PracticeScreen> {
                       )
                     else if (_subject == 2)
                       ..._buildGrid(
-                        EnQuizType.values,
+                        EnglishCurriculum.typesInOrder,
                         (t) => _ChoiceCard(
                           emoji: t.emoji,
                           label: t.label,

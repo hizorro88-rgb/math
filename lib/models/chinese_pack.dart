@@ -1,6 +1,5 @@
 import 'dart:math';
 
-
 import 'language_pack.dart';
 import '../theme.dart';
 
@@ -139,6 +138,16 @@ final LanguagePack chinesePack = LanguagePack(
         LangUnit(title: '한자 뜻 찾기', emoji: '📜', typeIndex: 6),
       ],
     ),
+  ],
+  // 별을 단계 번호 순서로 저장하던 시절의 묶음 순서 (기록 이사용 — 고치지 말 것)
+  v1UnitTitles: const [
+    '낱말 소리 찾기',
+    '숫자 소리 찾기',
+    '한자 보고 그림 찾기',
+    '그림 보고 한자 찾기',
+    '숫자 한자 찾기',
+    '듣고 한자 찾기',
+    '한자 뜻 찾기'
   ],
   generateOne: _generate,
 );

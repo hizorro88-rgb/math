@@ -31,10 +31,19 @@
 - 정답 자동 넘어가기(AutoNextBar)는 그려진 프레임 시간 기준 3초 —
   벽시계 기준으로 되돌리면 소리 재생 랙 때문에 즉시 넘어가는 버그가 재발한다.
 - 전체 열기 코드는 lib/models/premium.dart의 unlockCode.
-- 수학 커리큘럼에 유닛을 넣거나 순서를 바꾸면 단계 번호가 밀린다 —
-  progress.dart의 level_stars 키를 올리고(현재 v5) 직전 버전의
-  유닛 제목 목록을 추가해 제목 기반 마이그레이션으로 별 기록을 지킬 것.
-  이용권 화면의 단계 수 문구와 시드 배열 길이도 함께 갱신.
+- 별 기록은 묶음 제목 기준으로 저장한다(lib/models/unit_stars.dart, 키
+  math/kr/en_unit_stars_v1, lang_<id>_unit_stars_v1). 묶음은 어디에 넣고 빼도
+  되지만 **묶음 제목은 바꾸지 말 것** — 바꾸면 기록이 사라진다. 꼭 바꿔야 하면
+  UnitStarStore의 renamed에 옛 제목→새 제목을 적고 test/unit_stars_test.dart의
+  고정 목록도 고친다. 한 과목 안에서 제목이 겹치면 안 된다.
+  옛 순서 저장 키(level_stars_v5 등)는 처음 열 때 한 번 옮겨 담는다(고치지 말 것).
+  이용권 화면 단계 수는 totalStageCount로 자동 계산된다.
+- 문제 유형 enum(EnQuizType·KrQuizType·LangUnitType)은 통계가 순서로 저장되므로
+  새 유형은 맨 뒤에만 붙인다. 화면 목록 순서는 커리큘럼의 typesInOrder를 쓴다.
+- 영어 파닉스(lib/models/english_phonics.dart): TTS가 낱소리를 못 내서 그림 낱말로
+  소리를 익힌다. 첫소리 그림은 이름이 하나뿐인 것만(🧢 cap/hat 금지), C·K·Q는 같은
+  소리라 서로 오답으로 내지 않는다. 앞 단계 글자는 이름에 소리가 든 것만.
+  test/english_phonics_test.dart가 지킨다.
 - 언어 팩(lib/models/language_pack.dart)은 두 가지 방식이 있다.
   일본어·중국어·한자는 유형 기반(generateOne), 영어회화는 주제 기반
   (generateLevel — 한 판 10문제를 팩이 통째로 만든다, unitBased=true).
