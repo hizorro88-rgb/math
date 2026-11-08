@@ -144,6 +144,7 @@ class LanguagePack {
     this.generateOne,
     this.generateLevel,
     this.forAdults = false,
+    this.freeCategories = 1,
     List<String>? v1UnitTitles,
   }) : assert(generateOne != null || generateLevel != null,
             '문제를 만드는 방법이 최소 하나는 있어야 한다') {
@@ -184,6 +185,9 @@ class LanguagePack {
 
   final List<LangUnitType> types;
   final List<LangCategory> categories;
+
+  /// 앞에서 몇 개의 카테고리가 무료인지 (PremiumStore.isCategoryFree)
+  final int freeCategories;
 
   /// 유형·단계에 맞는 문제 하나를 만든다. (유형 기반 팩: 일본어·중국어·한자)
   final LangQuestion Function(int typeIndex, int stage, Random random)?

@@ -128,8 +128,31 @@ class _MapData {
   final int? grown;
 }
 
-class _LevelMapScreenState extends State<LevelMapScreen> {
+/// 홈 위에 쌓였던 화면이 닫히면 홈을 새로 읽게 (MaterialApp에 등록).
+/// PageRoute만 본다 — 과목 고르기 시트 같은 팝업이 닫힐 때는 새로 읽지 않는다
+/// (고른 과목을 저장하기 전에 다시 읽어 되돌리는 일이 없게).
+final homeRouteObserver = RouteObserver<PageRoute<dynamic>>();
+
+class _LevelMapScreenState extends State<LevelMapScreen> with RouteAware {
   late Future<_MapData> _dataFuture;
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final route = ModalRoute.of(context);
+    if (route is PageRoute) homeRouteObserver.subscribe(this, route);
+  }
+
+  @override
+  void dispose() {
+    homeRouteObserver.unsubscribe(this);
+    super.dispose();
+  }
+
+  /// 결과 화면 → '다음 단계' → '처음으로'처럼 여러 판을 거쳐 돌아와도
+  /// 별·코인·바로 시작이 최신이게.
+  @override
+  void didPopNext() => _refresh();
 
   /// 지금 보고 있는 과목 (0: 수학, 1: 한글, 2: 영어, 3~: 언어 팩)
   int _subject = 0;
@@ -341,8 +364,10 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
   }
 
   /// 잠긴 카테고리면 부모 확인 뒤 이용권 화면을 열고 false를 돌려준다.
-  Future<bool> _checkAccess(int categoryIndex) async {
-    if (PremiumStore.isCategoryFree(categoryIndex)) return true;
+  Future<bool> _checkAccess(int categoryIndex, {int freeCount = 1}) async {
+    if (PremiumStore.isCategoryFree(categoryIndex, freeCount: freeCount)) {
+      return true;
+    }
     if (await PremiumStore.hasPass()) return true;
     if (!mounted) return false;
     // 아이가 먼저 보는 건 부모 문제(곱셈)가 아니라 그림 한 장 + 목소리.
@@ -519,7 +544,9 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
 
   Future<void> _openLangCategory(
       LanguagePack pack, LangCategory category) async {
-    if (!await _checkAccess(category.index)) return;
+    if (!await _checkAccess(category.index, freeCount: pack.freeCategories)) {
+      return;
+    }
     if (!mounted) return;
     await Navigator.of(context).push(
       MaterialPageRoute(
@@ -745,15 +772,19 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
   /// 홈의 "▶ 바로 시작": 지금 과목에서 다음에 풀 단계 하나.
   /// 안 푼 단계 → 별이 덜 찬 단계 순으로 찾고, 잠긴 카테고리는 건너뛴다.
   _NextUp? _nextUp(_MapData data) {
-    bool playable(int category) =>
-        data.hasPass || PremiumStore.isCategoryFree(category);
+    bool playable(int category, int freeCount) =>
+        data.hasPass ||
+        PremiumStore.isCategoryFree(category, freeCount: freeCount);
 
     int? pick(List<int> categories, List<int> stars,
-        bool Function(int number) unlocked, int startCategory) {
+        bool Function(int number) unlocked, int startCategory,
+        {int freeCount = 1}) {
       for (final want in [0, 1, 2]) {
         for (final from in [startCategory, 0]) {
           for (var i = 0; i < categories.length; i++) {
-            if (categories[i] < from || !playable(categories[i])) continue;
+            if (categories[i] < from || !playable(categories[i], freeCount)) {
+              continue;
+            }
             if (stars[i] == want && unlocked(i + 1)) return i;
           }
         }
@@ -817,7 +848,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
         final stars = data.langStars[_subject - 3];
         final levels = pack.levels;
         final i = pick([for (final l in levels) l.unit.category.index], stars,
-            (n) => LangProgressStore.isUnlocked(pack, stars, n), 0);
+            (n) => LangProgressStore.isUnlocked(pack, stars, n), 0,
+            freeCount: pack.freeCategories);
         if (i == null) return null;
         final l = levels[i];
         return _NextUp(
@@ -1010,7 +1042,9 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
                                       1)
                               .length,
                           total: category.totalLevels,
-                          locked: !data.hasPass && category.index > 0,
+                          locked: !data.hasPass &&
+                              category.index >=
+                                  languagePacks[_subject - 3].freeCategories,
                           onTap: () => _openLangCategory(
                               languagePacks[_subject - 3], category),
                         ),

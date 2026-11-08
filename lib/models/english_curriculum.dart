@@ -108,20 +108,7 @@ class EnglishCurriculum {
           EnUnit(title: '대문자 소문자 짝', emoji: '🅰️', type: EnQuizType.caseMatch),
         ],
       ),
-      EnCategory(
-        title: '파닉스',
-        emoji: '🔠',
-        desc: '글자가 내는 소리로 낱말을 읽어요',
-        color: UnitColors.purple,
-        units: [
-          EnUnit(
-              title: '글자 소리로 시작해요', emoji: '🔠', type: EnQuizType.letterSound),
-          EnUnit(title: '가운데 소리 찾기', emoji: '🎈', type: EnQuizType.shortVowel),
-          EnUnit(title: '읽고 그림 찾기', emoji: '📖', type: EnQuizType.decode),
-          EnUnit(title: '끝소리 짝 찾기', emoji: '🎵', type: EnQuizType.rhyme),
-          EnUnit(title: '두 글자 소리', emoji: '👯', type: EnQuizType.cluster),
-        ],
-      ),
+      // 쉬운 낱말(듣고 그림 찾기)을 먼저 — 파닉스 50단계를 다 해야 낱말이 나오지 않게
       EnCategory(
         title: '영어 낱말',
         emoji: '🍎',
@@ -137,6 +124,20 @@ class EnglishCurriculum {
               emoji: '🖼️',
               type: EnQuizType.pictureToWord),
           EnUnit(title: '첫 글자 찾기', emoji: '🎯', type: EnQuizType.firstLetter),
+        ],
+      ),
+      EnCategory(
+        title: '파닉스',
+        emoji: '🔠',
+        desc: '글자가 내는 소리로 낱말을 읽어요',
+        color: UnitColors.purple,
+        units: [
+          EnUnit(
+              title: '글자 소리로 시작해요', emoji: '🔠', type: EnQuizType.letterSound),
+          EnUnit(title: '가운데 소리 찾기', emoji: '🎈', type: EnQuizType.shortVowel),
+          EnUnit(title: '읽고 그림 찾기', emoji: '📖', type: EnQuizType.decode),
+          EnUnit(title: '끝소리 짝 찾기', emoji: '🎵', type: EnQuizType.rhyme),
+          EnUnit(title: '두 글자 소리', emoji: '👯', type: EnQuizType.cluster),
         ],
       ),
       EnCategory(

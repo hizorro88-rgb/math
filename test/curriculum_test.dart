@@ -76,6 +76,28 @@ void main() {
     });
   });
 
+  test('맞을까 틀릴까는 👍👎가 번갈아만 나오지 않는다 (같은 답 연속도 있고, 넷 연속은 없다)', () {
+    final generator = QuestionGenerator(random: Random(3));
+    final judgeLevels =
+        Curriculum.levels.where((l) => l.config.mode == QuizMode.judge);
+    expect(judgeLevels, isNotEmpty);
+    var sawRepeat = false;
+    for (var rep = 0; rep < 50; rep++) {
+      for (final level in judgeLevels) {
+        final answers = [
+          for (final q in generator.generate(level.config)) q.answer
+        ];
+        for (var i = 1; i < answers.length; i++) {
+          if (answers[i] == answers[i - 1]) sawRepeat = true;
+        }
+        for (var i = 3; i < answers.length; i++) {
+          expect(answers.sublist(i - 3, i + 1).toSet().length, greaterThan(1));
+        }
+      }
+    }
+    expect(sawRepeat, isTrue);
+  });
+
   group('진행 규칙', () {
     test('맞힌 개수에 따라 별이 계산된다', () {
       expect(starsForScore(10, 10), 3);

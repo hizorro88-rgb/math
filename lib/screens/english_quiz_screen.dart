@@ -61,6 +61,9 @@ class _EnEntry {
 class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
   late final int _baseCount;
 
+  /// 이 과목의 단계별 별 (다음 단계가 처음인지 볼 때)
+  List<int>? _stageStars;
+
   /// 상단바 진행 점 (틀린 문제를 다시 풀어도 점 수는 그대로)
   late final QuizDotTracker _dots;
   final List<_EnEntry> _entries = [];
@@ -96,6 +99,10 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
     final questions = widget.questions ??
         generateEnglishRound(widget.type, widget.stage, widget.level);
     _baseCount = questions.length;
+    // '다음 단계'에서 배우기 카드를 띄울지 보려고 단계별 별을 미리 읽어 둔다
+    if (widget.level != null) {
+      EnglishProgressStore.load().then((s) => _stageStars = s);
+    }
     _dots = QuizDotTracker(_baseCount);
     _entries.addAll(questions.map(_EnEntry.new));
     WidgetsBinding.instance.addPostFrameCallback((_) => _start());
@@ -250,7 +257,8 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
           return NextStage(
             categoryIndex: n.unit.category.index,
             builder: () => englishLevelEntry(n,
-                showCards: autoShowLearnCards(n.indexInUnit, 0)),
+                showCards: autoShowLearnCards(
+                    n.indexInUnit, _stageStars?[n.number - 1] ?? 0)),
           );
         },
         headerText: level == null

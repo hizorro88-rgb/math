@@ -201,6 +201,8 @@ final LanguagePack hanjaPack = LanguagePack(
       ],
     ),
   ],
+  // 8급을 맨 앞에 끼웠으니 원래 무료였던 천자문 첫걸음까지 무료로 둔다
+  freeCategories: 2,
   // 별을 단계 번호 순서로 저장하던 시절의 묶음 순서 (기록 이사용 — 고치지 말 것)
   v1UnitTitles: const [
     '한자 소리 찾기',

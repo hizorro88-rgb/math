@@ -52,6 +52,9 @@ class _KrEntry {
 class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
   late final int _baseCount;
 
+  /// 이 과목의 단계별 별 (다음 단계가 처음인지 볼 때)
+  List<int>? _stageStars;
+
   /// 상단바 진행 점 (틀린 문제를 다시 풀어도 점 수는 그대로)
   late final QuizDotTracker _dots;
   final List<_KrEntry> _entries = [];
@@ -87,6 +90,10 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
     final questions = widget.questions ??
         KoreanQuestionGenerator().generate(widget.type, stage: widget.stage);
     _baseCount = questions.length;
+    // '다음 단계'에서 배우기 카드를 띄울지 보려고 단계별 별을 미리 읽어 둔다
+    if (widget.level != null) {
+      KoreanProgressStore.load().then((s) => _stageStars = s);
+    }
     _dots = QuizDotTracker(_baseCount);
     _entries.addAll(questions.map(_KrEntry.new));
     WidgetsBinding.instance.addPostFrameCallback((_) => _start());
@@ -233,7 +240,8 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
           return NextStage(
             categoryIndex: n.unit.category.index,
             builder: () => koreanLevelEntry(n,
-                showCards: autoShowLearnCards(n.indexInUnit, 0)),
+                showCards: autoShowLearnCards(
+                    n.indexInUnit, _stageStars?[n.number - 1] ?? 0)),
           );
         },
         headerText: level == null

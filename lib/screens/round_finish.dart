@@ -18,10 +18,14 @@ enum RoundSubject { math, korean, english, otherLang }
 
 /// 통과하면 이어서 할 다음 단계
 class NextStage {
-  const NextStage({required this.categoryIndex, required this.builder});
+  const NextStage(
+      {required this.categoryIndex, required this.builder, this.freeCount = 1});
 
   /// 다음 단계의 나이 묶음 (이용권 잠금 확인용)
   final int categoryIndex;
+
+  /// 그 과목에서 앞의 몇 묶음이 무료인지
+  final int freeCount;
   final Widget Function() builder;
 }
 
@@ -87,7 +91,8 @@ Future<void> finishRound(
   // 다음 단계가 이용권으로 잠긴 묶음이면 버튼을 숨긴다
   // (홈에서 부모 확인 → 이용권 안내를 거치게 한다).
   if (nextStage != null &&
-      !PremiumStore.isCategoryFree(nextStage.categoryIndex) &&
+      !PremiumStore.isCategoryFree(nextStage.categoryIndex,
+          freeCount: nextStage.freeCount) &&
       !await PremiumStore.hasPass()) {
     nextStage = null;
   }

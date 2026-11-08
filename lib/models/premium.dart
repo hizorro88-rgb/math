@@ -52,6 +52,9 @@ class PremiumStore {
     await prefs.setBool(_key, value);
   }
 
-  /// 무료로 열려 있는 카테고리인지: 모든 과목의 첫 번째 카테고리는 무료 체험
-  static bool isCategoryFree(int categoryIndex) => categoryIndex == 0;
+  /// 무료로 열려 있는 카테고리인지: 모든 과목의 첫 번째 카테고리는 무료 체험.
+  /// [freeCount]는 앞에서 몇 개가 무료인지 (한자는 8급을 앞에 끼우며 2개 —
+  /// 원래 무료였던 천자문 첫걸음이 잠기지 않게).
+  static bool isCategoryFree(int categoryIndex, {int freeCount = 1}) =>
+      categoryIndex < freeCount;
 }

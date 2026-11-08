@@ -1,6 +1,7 @@
 import 'dart:math';
 
 import 'package:flutter_test/flutter_test.dart';
+import 'package:preschool_math/models/premium.dart';
 import 'package:preschool_math/models/hanja_pack.dart';
 import 'package:preschool_math/models/japanese_pack.dart';
 
@@ -54,5 +55,13 @@ void main() {
         expect(q.choices, contains(plain));
       }
     }
+  });
+
+  test('8급을 앞에 끼워도 원래 무료였던 천자문 첫걸음은 계속 무료', () {
+    expect(hanjaPack.categories[1].title, '천자문 첫걸음');
+    expect(PremiumStore.isCategoryFree(1, freeCount: hanjaPack.freeCategories),
+        isTrue);
+    expect(PremiumStore.isCategoryFree(2, freeCount: hanjaPack.freeCategories),
+        isFalse);
   });
 }

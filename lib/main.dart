@@ -56,6 +56,7 @@ class PreschoolMathApp extends StatelessWidget {
     return MaterialApp(
       title: '쿼카 학교',
       debugShowCheckedModeBanner: false,
+      navigatorObservers: [homeRouteObserver],
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(

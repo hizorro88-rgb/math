@@ -402,6 +402,10 @@ class QuestionGenerator {
     final questions = <Question>[];
     String? previousKey;
     int? previousAnswer;
+    // 맞을까 틀릴까는 답이 둘뿐이라 '같은 답 연속 피하기'를 하면 👍👎👍👎로
+    // 번갈아 나와 생각 없이 맞힐 수 있다 → 같은 답은 세 번까지만 이어지게.
+    final twoAnswers = config.mode == QuizMode.judge;
+    var run = 0;
 
     for (var i = 0; i < config.questionCount; i++) {
       Question question;
@@ -411,8 +415,11 @@ class QuestionGenerator {
       do {
         question = _generateOne(i < 2 ? eased : config, index: i);
       } while ((question.dedupKey == previousKey ||
-              question.answer == previousAnswer) &&
+              (twoAnswers
+                  ? question.answer == previousAnswer && run >= 3
+                  : question.answer == previousAnswer)) &&
           ++attempts < 30);
+      run = question.answer == previousAnswer ? run + 1 : 1;
       previousKey = question.dedupKey;
       previousAnswer = question.answer;
       questions.add(question);
