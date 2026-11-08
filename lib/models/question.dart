@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'dart:math' as math;
 
 import 'quiz_config.dart';
 
@@ -22,6 +23,23 @@ enum QuestionOp {
 
   /// 나머지가 있는 나눗셈 (정답은 left — 나머지 또는 몫)
   remainder,
+
+  // ── 측정·도형·자료 (정답은 left, 그림 정보는 sequence) ──
+
+  /// 돈 세기·거스름돈 (원). sequence = 동전·지폐 금액들
+  money,
+
+  /// 자로 길이 재기 (cm). sequence = [시작 눈금, 끝 눈금, 자 길이]
+  length,
+
+  /// 도형의 꼭짓점·변 수. sequence = [모서리 수(원은 0)]
+  sides,
+
+  /// 그림그래프 읽기. sequence = 칸별 개수, shapeItems = 칸별 그림
+  graph,
+
+  /// 단위 바꾸기 (1 m 20 cm = □ cm)
+  convert,
 }
 
 /// 모양 세기에 쓰는 도형과 이름
@@ -150,6 +168,11 @@ class Question {
       QuestionOp.timeCalc => left,
       QuestionOp.place => left,
       QuestionOp.remainder => left,
+      QuestionOp.money => left,
+      QuestionOp.length => left,
+      QuestionOp.sides => left,
+      QuestionOp.graph => left,
+      QuestionOp.convert => left,
     };
   }
 
@@ -159,8 +182,12 @@ class Question {
   String labelFor(int value) => switch (op) {
         QuestionOp.fraction => '${value ~/ 100}/${value % 100}',
         QuestionOp.decimal => (value / 10).toStringAsFixed(1),
-        QuestionOp.clock =>
-          value % 60 == 0 ? '${value ~/ 60}시' : '${value ~/ 60}시 30분',
+        QuestionOp.clock => value % 60 == 0
+            ? '${value ~/ 60}시'
+            : '${value ~/ 60}시 ${value % 60}분',
+        QuestionOp.money => '$value원',
+        QuestionOp.convert => '$value $emoji',
+        QuestionOp.length => '$value cm',
         QuestionOp.timeCalc => variant == 1
             ? '$value분'
             : value % 60 == 0
@@ -204,7 +231,12 @@ class Question {
       QuestionOp.decimal ||
       QuestionOp.timeCalc ||
       QuestionOp.place ||
-      QuestionOp.remainder =>
+      QuestionOp.remainder ||
+      QuestionOp.money ||
+      QuestionOp.length ||
+      QuestionOp.sides ||
+      QuestionOp.graph ||
+      QuestionOp.convert =>
         prompt,
     };
   }
@@ -248,7 +280,12 @@ class Question {
       QuestionOp.decimal ||
       QuestionOp.timeCalc ||
       QuestionOp.place ||
-      QuestionOp.remainder =>
+      QuestionOp.remainder ||
+      QuestionOp.money ||
+      QuestionOp.length ||
+      QuestionOp.sides ||
+      QuestionOp.graph ||
+      QuestionOp.convert =>
         prompt,
     };
   }
@@ -265,8 +302,13 @@ class Question {
         QuestionOp.decimal ||
         QuestionOp.timeCalc ||
         QuestionOp.place ||
-        QuestionOp.remainder =>
-          '${op.name}:$variant:$prompt:$left',
+        QuestionOp.remainder ||
+        QuestionOp.money ||
+        QuestionOp.length ||
+        QuestionOp.sides ||
+        QuestionOp.graph ||
+        QuestionOp.convert =>
+          '${op.name}:$variant:$prompt:$left:${sequence.join(',')}',
         _ => '${op.name}:$left:$right:$blankSide',
       };
 }
@@ -521,20 +563,44 @@ class QuestionGenerator {
       // 시계 보기: 몇 시(정각), 기준값이 18 이상이면 몇 시 반도 섞는다.
       // 값은 분으로 부호화한다 (3시 = 180, 3시 30분 = 210).
       case QuizMode.clock:
-        final halfAllowed = max >= 18;
+        // 정각 → (18부터) 30분 → (30부터) 5분 단위 → (50부터) 1분 단위
+        int pickMinute() {
+          if (max >= 50 && _random.nextBool()) return _random.nextInt(60);
+          if (max >= 30) return 5 * _random.nextInt(12);
+          return max >= 18 && _random.nextBool() ? 30 : 0;
+        }
         final hour = 1 + _random.nextInt(12); // 1..12
-        final minute = halfAllowed && _random.nextBool() ? 30 : 0;
+        final minute = pickMinute();
         final answer = hour * 60 + minute;
         final choices = <int>{answer};
+        // 헷갈리는 보기: 시침·분침을 바꿔 읽은 시각, 한 시간 차이, 5분 차이
+        if (max >= 30) {
+          final swapped =
+              (minute ~/ 5 == 0 ? 12 : minute ~/ 5) * 60 + (hour % 12) * 5;
+          for (final c in [
+            // 분침이 가리키는 숫자를 그대로 분으로 읽는 실수 (3시 40분 → 3시 8분)
+            if (minute % 5 == 0 && minute >= 10) hour * 60 + minute ~/ 5,
+            // 시침이 다음 숫자 가까이 가면 다음 시로 읽는 실수 (30분 이후만)
+            if (minute >= 30) (hour % 12 + 1) * 60 + minute,
+            swapped,
+            // 5분 차이 (55분이면 5분 앞으로)
+            hour * 60 + (minute >= 55 ? minute - 5 : minute + 5),
+          ]) {
+            if (choices.length < 4 && c >= 60 && c < 13 * 60) choices.add(c);
+          }
+        }
         while (choices.length < 4) {
           final h = 1 + _random.nextInt(12);
-          final m = halfAllowed && _random.nextBool() ? 30 : 0;
-          choices.add(h * 60 + m);
+          choices.add(h * 60 + pickMinute());
         }
+        // 분까지 읽는 단계는 '몇 시 몇 분', 앞 단계는 '몇 시'로 묻는다
+        final withMinutes = max >= 30;
         return Question(
           op: QuestionOp.clock,
           left: answer,
           right: 0,
+          prompt: withMinutes ? '몇 시 몇 분일까요?' : '',
+          promptSpeech: withMinutes ? '시계가 가리키는 시각은 몇 시 몇 분일까요?' : '',
           choices: choices.toList()..shuffle(_random),
           emoji: _emoji,
         );
@@ -923,6 +989,36 @@ class QuestionGenerator {
           emoji: item.emoji,
         );
 
+      case QuizMode.money:
+        return _money(max, index);
+
+      case QuizMode.length:
+        return _length(max, index);
+
+      case QuizMode.shapeSides:
+        // 세모 → 네모 → 오각형·육각형, 원(꼭짓점 0개)도 섞는다
+        final kinds = [0, 3, 4, if (max >= 5) 5, if (max >= 6) 6];
+        final corners = kinds[_random.nextInt(kinds.length)];
+        final askSides = _random.nextBool();
+        final what = askSides ? '변' : '꼭짓점';
+        return Question(
+          op: QuestionOp.sides,
+          left: corners,
+          right: askSides ? 1 : 0,
+          variant: askSides ? 1 : 0,
+          sequence: [corners],
+          prompt: '$what은 몇 개일까요?',
+          promptSpeech: '이 도형의 $what은 몇 개일까요?',
+          choices: _buildChoices(corners, 7),
+          emoji: '',
+        );
+
+      case QuizMode.picGraph:
+        return _picGraph(max, index);
+
+      case QuizMode.unitConvert:
+        return _unitConvert(max, index);
+
       case QuizMode.storyDiv:
         final divisorMax = max.clamp(2, 9);
         final divisorMin = config.minNumber.clamp(2, divisorMax);
@@ -947,6 +1043,200 @@ class QuestionGenerator {
           emoji: item.emoji,
         );
     }
+  }
+
+  /// 돈: 동전(10·50·100·500원)과 지폐(1000원)를 세거나 거스름돈을 구한다
+  Question _money(int max, int index) {
+    final units = [10, 50, 100, if (max > 300) 500, if (max > 1000) 1000];
+    // 거스름돈 문제는 큰 금액 묶음의 절반쯤
+    if (max > 1000 && index.isOdd) {
+      final paid = max > 1500 ? 2000 : 1000;
+      final price = 100 * (1 + _random.nextInt(paid ~/ 100 - 1));
+      final item = _storyItem();
+      return Question(
+        op: QuestionOp.money,
+        left: paid - price,
+        right: price,
+        variant: 1,
+        sequence: [paid],
+        prompt:
+            '${item.emoji} ${item.name} 값은 $price원이에요.\n$paid원을 내면\n거스름돈은 얼마일까요?',
+        promptSpeech: '${item.name} 값은 $price원이에요. $paid원을 내면 거스름돈은 얼마일까요?',
+        choices: _moneyChoices(paid - price, price: price),
+        emoji: '',
+      );
+    }
+    final coins = <int>[];
+    var total = 0;
+    final count = 2 + _random.nextInt(4); // 2..5개
+    for (var i = 0; i < count; i++) {
+      final fit = [
+        for (final u in units)
+          if (total + u <= max) u
+      ];
+      if (fit.isEmpty) break;
+      final c = fit[_random.nextInt(fit.length)];
+      coins.add(c);
+      total += c;
+    }
+    coins.sort((a, b) => b.compareTo(a)); // 큰 돈부터 놓아야 세기 쉽다
+    return Question(
+      op: QuestionOp.money,
+      left: total,
+      right: 0,
+      variant: 0,
+      sequence: coins,
+      prompt: '모두 얼마일까요?',
+      promptSpeech: '돈을 모두 세면 얼마일까요?',
+      choices: _moneyChoices(total),
+      emoji: '',
+    );
+  }
+
+  /// 정답 + 일부러 고른 헷갈리는 오답들 (겹치거나 0 미만이면 가까운 수로 채움)
+  List<int> _withDistractors(int answer, List<int> candidates) {
+    final set = <int>{answer};
+    for (final c in candidates) {
+      if (set.length == 4) break;
+      if (c >= 0) set.add(c);
+    }
+    var spread = 1;
+    while (set.length < 4) {
+      for (final c in [answer + spread, answer - spread]) {
+        if (set.length < 4 && c >= 0) set.add(c);
+      }
+      spread++;
+    }
+    return set.toList()..shuffle(_random);
+  }
+
+  /// 돈 보기: 10원·50원·100원 차이처럼 실제로 헷갈리는 금액
+  List<int> _moneyChoices(int answer, {int? price}) =>
+      _withDistractors(answer, [
+        // 값을 그대로 답하는 실수가 가장 흔하다
+        if (price != null) price,
+        for (final d in [10, -10, 50, -50, 100, -100, 500]..shuffle(_random))
+          if (answer + d > 0 && d.abs() <= math.max(100, answer)) answer + d
+      ]);
+
+  /// 길이: 자 위의 막대 길이를 읽는다. 뒤 단계는 0이 아닌 눈금에서 시작한다.
+  Question _length(int max, int index) {
+    final rulerLength = max.clamp(5, 15);
+    final len = 2 + _random.nextInt(rulerLength - 2); // 2..ruler-1
+    final shifted = max >= 10 && index.isOdd;
+    final start = shifted ? 1 + _random.nextInt(rulerLength - len) : 0;
+    return Question(
+      op: QuestionOp.length,
+      left: len,
+      right: start,
+      variant: shifted ? 1 : 0,
+      sequence: [start, start + len, rulerLength],
+      prompt: '막대의 길이는 몇 cm일까요?',
+      promptSpeech:
+          shifted ? '막대가 0이 아닌 곳에서 시작해요. 길이는 몇 센티미터일까요?' : '막대의 길이는 몇 센티미터일까요?',
+      // 끝 눈금을 그대로 읽는 실수(start+len)를 보기에 넣는다
+      choices: shifted
+          ? _withDistractors(len, [start + len, len + 1, len - 1])
+          : _buildChoices(len, rulerLength),
+      emoji: '',
+    );
+  }
+
+  /// 그림그래프: 칸마다 그림 개수를 읽고, 가장 많은 것·차이를 구한다
+  Question _picGraph(int max, int index) {
+    final kinds = [..._storyItems]..shuffle(_random);
+    final rows = max >= 7 ? 4 : 3;
+    final top = max.clamp(4, 9);
+    final counts = <int>[];
+    while (counts.length < rows) {
+      final c = 1 + _random.nextInt(top);
+      if (!counts.contains(c)) counts.add(c); // 같은 개수가 없어야 '가장 많은'이 하나
+    }
+    final picked = kinds.take(rows).toList();
+    final form = max >= 6 ? index % 3 : index % 2;
+    int answer;
+    String text;
+    String speech;
+    switch (form) {
+      case 0:
+        final i = _random.nextInt(rows);
+        answer = counts[i];
+        text =
+            '${picked[i].emoji} ${picked[i].name}${_josa(picked[i].name, '은', '는')} 몇 개일까요?';
+        speech = '${picked[i].name}${_josa(picked[i].name, '은', '는')} 몇 개일까요?';
+      case 1:
+        answer = counts.reduce(math.max);
+        text = '가장 많은 것은 몇 개일까요?';
+        speech = text;
+      default:
+        final big = counts.indexOf(counts.reduce(math.max));
+        final small = counts.indexOf(counts.reduce(math.min));
+        answer = counts[big] - counts[small];
+        text =
+            '${picked[big].name}${_josa(picked[big].name, '은', '는')} ${picked[small].name}보다\n몇 개 더 많을까요?';
+        speech =
+            '${picked[big].name}${_josa(picked[big].name, '은', '는')} ${picked[small].name}보다 몇 개 더 많을까요?';
+    }
+    return Question(
+      op: QuestionOp.graph,
+      left: answer,
+      right: 0,
+      variant: form,
+      sequence: counts,
+      shapeItems: [for (final p in picked) p.emoji],
+      prompt: text, promptSpeech: speech.replaceAll('\n', ' '),
+      // 차이 문제는 두 칸의 개수 자체를 답하는 실수를 보기에 넣는다
+      choices: form == 2
+          ? _withDistractors(
+              answer, [counts.reduce(math.max), counts.reduce(math.min)])
+          : _buildChoices(answer, top + 1),
+      emoji: '',
+    );
+  }
+
+  /// 단위 바꾸기 (초3·4): cm↔m, mm↔cm, g↔kg, mL↔L
+  Question _unitConvert(int max, int index) {
+    final kinds = [
+      ('m', 'cm', 100, '미터', '센티미터'),
+      ('cm', 'mm', 10, '센티미터', '밀리미터'),
+      if (max >= 4) ('kg', 'g', 1000, '킬로그램', '그램'),
+      if (max >= 6) ('L', 'mL', 1000, '리터', '밀리리터'),
+    ];
+    final k = kinds[_random.nextInt(kinds.length)];
+    final big = 1 +
+        _random.nextInt(math.min(
+            max, 9)); // m·cm는 1~99 cm (1 m 5 cm처럼 한 자리도), mm는 1~9, g·mL는 100 단위
+    final small = k.$3 == 10
+        ? 1 + _random.nextInt(9)
+        : k.$3 == 100
+            ? 1 + _random.nextInt(99)
+            : 100 * (1 + _random.nextInt(9));
+    final total = big * k.$3 + small;
+    final toSmall = max < 5 || index.isEven;
+    final answer = toSmall ? total : big;
+    return Question(
+      op: QuestionOp.convert,
+      left: answer,
+      right: k.$3,
+      variant: toSmall ? 0 : 1,
+      prompt: toSmall
+          ? '$big ${k.$1} $small ${k.$2}\n= □ ${k.$2}'
+          : '$total ${k.$2}\n= □ ${k.$1} $small ${k.$2}',
+      promptSpeech: toSmall
+          ? '$big ${k.$4} $small ${k.$5}${_josa(k.$5, '은', '는')} 몇 ${k.$5}일까요?'
+          : '$total ${k.$5}${_josa(k.$5, '은', '는')} 몇 ${k.$4} $small ${k.$5}일까요?',
+      // 단위를 잘못 바꾼 수(× 10)를 보기에 넣는다
+      choices: toSmall // 숫자를 이어 붙이는 실수(1 m 5 cm → 15), 자리를 잘못 맞춘 수, 그냥 더한 수
+          ? _withDistractors(total, [
+              int.parse('$big$small'),
+              big * k.$3 * 10 + small,
+              big + small,
+              total + k.$3,
+            ])
+          : _buildChoices(big, 11),
+      // 보기 뒤에 붙일 단위 (labelFor가 쓴다)
+      emoji: toSmall ? k.$2 : k.$1,
+    );
   }
 
   /// 이야기 문제에 나오는 물건 (그림·이름·담는 그릇)

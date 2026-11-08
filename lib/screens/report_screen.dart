@@ -311,6 +311,7 @@ class _AccuracyCard extends StatelessWidget {
       ('🍕 분수', stats.fractionCorrect, stats.fractionWrong),
       ('💧 소수', stats.decimalCorrect, stats.decimalWrong),
       ('⏱️ 시간 계산', stats.timeCorrect, stats.timeWrong),
+      ('📐 측정·도형', stats.measureCorrect, stats.measureWrong),
       for (var i = 0; i < statBandNames.length; i++)
         ('📏 ${statBandNames[i]}', stats.bandCorrect[i], stats.bandWrong[i]),
     ];

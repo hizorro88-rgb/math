@@ -382,6 +382,18 @@ class Curriculum {
               startMax: 150,
               endMax: 999),
           Unit(
+              title: '도형의 꼭짓점과 변',
+              emoji: '🔷',
+              mode: QuizMode.shapeSides,
+              startMax: 4,
+              endMax: 6),
+          Unit(
+              title: '동전 세기',
+              emoji: '💵',
+              mode: QuizMode.money,
+              startMax: 100,
+              endMax: 500),
+          Unit(
               title: '두 자리 덧셈',
               emoji: '➕',
               mode: QuizMode.addition,
@@ -413,6 +425,24 @@ class Curriculum {
               mode: QuizMode.pattern,
               startMax: 2,
               endMax: 5),
+          Unit(
+              title: '몇 시 몇 분',
+              emoji: '🕒',
+              mode: QuizMode.clock,
+              startMax: 30,
+              endMax: 60),
+          Unit(
+              title: '길이 재기',
+              emoji: '📏',
+              mode: QuizMode.length,
+              startMax: 5,
+              endMax: 15),
+          Unit(
+              title: '그래프 읽기',
+              emoji: '📊',
+              mode: QuizMode.picGraph,
+              startMax: 4,
+              endMax: 9),
           Unit(
               title: '곱셈 첫걸음 (2~3단)',
               emoji: '✖️',
@@ -476,6 +506,12 @@ class Curriculum {
               startMax: 2,
               endMax: 9),
           Unit(
+              title: '단위 바꾸기',
+              emoji: '🔁',
+              mode: QuizMode.unitConvert,
+              startMax: 3,
+              endMax: 9),
+          Unit(
               title: '큰 수 곱셈',
               emoji: '✖️',
               mode: QuizMode.multiplication,
@@ -487,6 +523,12 @@ class Curriculum {
               mode: QuizMode.mixed,
               startMax: 100,
               endMax: 400),
+          Unit(
+              title: '돈 계산',
+              emoji: '💵',
+              mode: QuizMode.money,
+              startMax: 1100,
+              endMax: 2000),
           Unit(
               title: '수학 왕 되기',
               emoji: '🎲',

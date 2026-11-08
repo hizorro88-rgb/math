@@ -62,7 +62,22 @@ enum QuizMode {
   storyMul('이야기 곱셈', '🍱'),
 
   /// 이야기 문제(나눗셈): 똑같이 나누기·묶기
-  storyDiv('이야기 나눗셈', '🧺');
+  storyDiv('이야기 나눗셈', '🧺'),
+
+  /// 돈 세기·거스름돈 (기준값 = 최대 금액)
+  money('돈 세기', '💵'),
+
+  /// 자로 길이 재기 (기준값 = 자 길이 cm)
+  length('길이 재기', '📏'),
+
+  /// 도형의 꼭짓점·변 세기 (기준값 = 가장 많은 꼭짓점)
+  shapeSides('꼭짓점과 변', '🔷'),
+
+  /// 그림그래프 읽기 (기준값 = 가장 큰 개수)
+  picGraph('그래프 읽기', '📊'),
+
+  /// 단위 바꾸기 (m·cm·mm·kg·g·L·mL)
+  unitConvert('단위 바꾸기', '🔁');
 
   const QuizMode(this.label, this.emoji);
 

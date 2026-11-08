@@ -99,6 +99,16 @@ class _PracticeScreenState extends State<PracticeScreen> {
       QuizMode.storyDiv,
     }.contains(_mode)) {
       maxNumber = math.max(math.min(maxNumber, 9), 3);
+    } else if (_mode == QuizMode.money) {
+      maxNumber = maxNumber * 20; // 100·200·400·2000원
+    } else if (_mode == QuizMode.length) {
+      maxNumber = maxNumber.clamp(5, 15);
+    } else if (_mode == QuizMode.shapeSides) {
+      maxNumber = maxNumber.clamp(4, 6);
+    } else if (_mode == QuizMode.picGraph) {
+      maxNumber = maxNumber.clamp(4, 9);
+    } else if (_mode == QuizMode.unitConvert) {
+      maxNumber = maxNumber.clamp(3, 9);
     } else if (_mode == QuizMode.placeValue) {
       // 자릿값은 두 자리부터: 쉬움·보통은 두 자리, 최고 도전은 세 자리
       maxNumber = maxNumber >= 100 ? 999 : 99;

@@ -214,8 +214,17 @@ class _QuizScreenState extends State<QuizScreen> {
             QuestionOp.pattern,
             QuestionOp.compare,
           };
-          if (_question.prompt.isNotEmpty ||
-              (!_question.listenOnly && noteOps.contains(_question.op))) {
+          // 자·도형·그래프·동전 그림이 있어야 풀 수 있는 문제는 담지 않는다
+          final needsPicture = const {
+                QuestionOp.clock,
+                QuestionOp.length,
+                QuestionOp.sides,
+                QuestionOp.graph,
+              }.contains(_question.op) ||
+              (_question.op == QuestionOp.money && _question.variant == 0);
+          if (!needsPicture &&
+              (_question.prompt.isNotEmpty ||
+                  (!_question.listenOnly && noteOps.contains(_question.op)))) {
             WrongNoteStore.add(WrongNote(
               subject: 'math',
               subjectEmoji: '🧮',
@@ -676,8 +685,10 @@ class _EmojiHint extends StatelessWidget {
         (question.op == QuestionOp.mul ||
             question.op == QuestionOp.div ||
             question.variant == 3 ||
-            question.left > 10 ||
-            question.left + question.right > 10)) {
+            (question.op == QuestionOp.add
+                    ? question.left + question.right
+                    : question.left) >
+                10)) {
       return const SizedBox.shrink();
     }
 
@@ -842,12 +853,283 @@ class _EmojiHint extends StatelessWidget {
           ones: question.sequence[2],
         );
 
-      // 소수·시간 계산·나머지 나눗셈은 문장이 곧 문제라 그림 힌트가 없다.
+      // 돈: 큰 돈부터 동전·지폐를 늘어놓는다 (거스름돈 문제는 글만)
+      case QuestionOp.money:
+        if (question.variant != 0) return const SizedBox.shrink();
+        return _MoneyRow(amounts: question.sequence);
+
+      // 길이: 자 위에 막대를 올려 둔다
+      case QuestionOp.length:
+        // 좁은 폰(320dp)에서도 카드 밖으로 안 나가게 줄여 그린다
+        return FittedBox(
+          fit: BoxFit.scaleDown,
+          child: SizedBox(
+            width: 300,
+            height: 90,
+            child: CustomPaint(
+              painter: _RulerPainter(
+                start: question.sequence[0],
+                end: question.sequence[1],
+                length: question.sequence[2],
+              ),
+            ),
+          ),
+        );
+
+      // 도형: 꼭짓점에 점을 찍어 세기 쉽게
+      case QuestionOp.sides:
+        return SizedBox(
+          width: 130,
+          height: 130,
+          child: CustomPaint(
+            painter: _PolygonPainter(corners: question.sequence[0]),
+          ),
+        );
+
+      // 그림그래프: 칸마다 그림을 줄지어 놓는다
+      case QuestionOp.graph:
+        return FittedBox(
+          fit: BoxFit.scaleDown,
+          child: _PicGraph(
+            emojis: question.shapeItems,
+            counts: question.sequence,
+          ),
+        );
+
+      // 소수·시간 계산·나머지 나눗셈·단위는 문장이 곧 문제라 그림 힌트가 없다.
       case QuestionOp.decimal:
       case QuestionOp.timeCalc:
       case QuestionOp.remainder:
+      case QuestionOp.convert:
         return const SizedBox.shrink();
     }
+  }
+}
+
+/// 동전(10·50·100·500원)과 지폐(1000원). 금색 대신 은색·구리색 — 앰버는 코인 보상 색이다.
+class _MoneyRow extends StatelessWidget {
+  const _MoneyRow({required this.amounts});
+
+  final List<int> amounts;
+
+  @override
+  Widget build(BuildContext context) {
+    Widget coin(int won) {
+      if (won >= 1000) {
+        return Container(
+          width: 84,
+          height: 44,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: AppColors.inkSoft, width: 2),
+          ),
+          child: Text('$won원',
+              style: const TextStyle(
+                  fontSize: AppFont.body, fontWeight: FontWeight.bold)),
+        );
+      }
+      final size = won >= 500 ? 58.0 : (won >= 100 ? 52.0 : 46.0);
+      return Container(
+        width: size,
+        height: size,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: won == 10 ? AppColors.brownSurface : AppColors.line,
+          border: Border.all(
+              color: won == 10 ? AppColors.brown : AppColors.inkMuted,
+              width: 2.5),
+        ),
+        child: Text('$won',
+            style: const TextStyle(
+                fontSize: AppFont.body, fontWeight: FontWeight.bold)),
+      );
+    }
+
+    return Semantics(
+      label: '${amounts.join('원, ')}원',
+      child: Wrap(
+        alignment: WrapAlignment.center,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        spacing: 8,
+        runSpacing: 8,
+        children: [for (final a in amounts) coin(a)],
+      ),
+    );
+  }
+}
+
+/// 자: 0~[length] cm 눈금 위에 [start]~[end] 막대를 그린다
+class _RulerPainter extends CustomPainter {
+  const _RulerPainter(
+      {required this.start, required this.end, required this.length});
+
+  final int start;
+  final int end;
+  final int length;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    const pad = 12.0;
+    final unit = (size.width - pad * 2) / length;
+    final rulerTop = size.height * 0.48;
+    // 막대
+    final bar = RRect.fromRectAndRadius(
+      Rect.fromLTRB(
+          pad + start * unit, rulerTop - 26, pad + end * unit, rulerTop - 6),
+      const Radius.circular(4),
+    );
+    canvas.drawRRect(bar, Paint()..color = AppColors.figureFill);
+    canvas.drawRRect(
+        bar,
+        Paint()
+          ..color = AppColors.figureLine
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2);
+    // 자 몸통
+    final body = RRect.fromRectAndRadius(
+      Rect.fromLTRB(0, rulerTop, size.width, size.height - 4),
+      const Radius.circular(6),
+    );
+    canvas.drawRRect(body, Paint()..color = AppColors.rewardSurface);
+    canvas.drawRRect(
+        body,
+        Paint()
+          ..color = AppColors.brown
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2);
+    // 눈금과 숫자
+    final tick = Paint()
+      ..color = AppColors.ink
+      ..strokeWidth = 1.6;
+    for (var i = 0; i <= length; i++) {
+      final x = pad + i * unit;
+      canvas.drawLine(Offset(x, rulerTop), Offset(x, rulerTop + 14), tick);
+      if (i < length) {
+        final half = x + unit / 2;
+        canvas.drawLine(
+            Offset(half, rulerTop), Offset(half, rulerTop + 7), tick);
+      }
+      final tp = TextPainter(
+        text: TextSpan(
+          text: '$i',
+          style: const TextStyle(
+              fontSize: AppFont.caption,
+              color: AppColors.ink,
+              fontWeight: FontWeight.bold),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, Offset(x - tp.width / 2, rulerTop + 16));
+    }
+  }
+
+  @override
+  bool shouldRepaint(_RulerPainter old) =>
+      old.start != start || old.end != end || old.length != length;
+}
+
+/// 도형: 꼭짓점이 [corners]개인 정다각형 (0이면 원)
+class _PolygonPainter extends CustomPainter {
+  const _PolygonPainter({required this.corners});
+
+  final int corners;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final c = Offset(size.width / 2, size.height / 2);
+    final r = size.width * 0.42;
+    final fill = Paint()..color = AppColors.figureFill;
+    final line = Paint()
+      ..color = AppColors.figureLine
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 3;
+    if (corners == 0) {
+      canvas.drawCircle(c, r, fill);
+      canvas.drawCircle(c, r, line);
+      return;
+    }
+    // 네모는 마름모로 보이지 않게 45도 돌려 반듯하게 세운다
+    final startAngle = -math.pi / 2 + (corners == 4 ? math.pi / 4 : 0);
+    final pts = [
+      for (var i = 0; i < corners; i++)
+        c +
+            Offset(math.cos(startAngle + i * 2 * math.pi / corners),
+                    math.sin(startAngle + i * 2 * math.pi / corners)) *
+                r,
+    ];
+    final path = Path()..addPolygon(pts, true);
+    canvas.drawPath(path, fill);
+    canvas.drawPath(path, line);
+    for (final p in pts) {
+      canvas.drawCircle(p, 5, Paint()..color = AppColors.ink);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_PolygonPainter old) => old.corners != corners;
+}
+
+/// 그림그래프: 칸 이름(그림) + 개수만큼 그림
+class _PicGraph extends StatelessWidget {
+  const _PicGraph({required this.emojis, required this.counts});
+
+  final List<String> emojis;
+  final List<int> counts;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(8),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: AppColors.line, width: 2),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var i = 0; i < emojis.length; i++)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 2),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 40,
+                    alignment: Alignment.center,
+                    decoration: const BoxDecoration(
+                      border: Border(
+                          right: BorderSide(color: AppColors.line, width: 2)),
+                    ),
+                    child: Text(emojis[i],
+                        style: const TextStyle(fontSize: AppFont.heading)),
+                  ),
+                  const SizedBox(width: 6),
+                  SizedBox(
+                    width: 9 * 24,
+                    child: Row(
+                      children: [
+                        // 그림그래프는 그 물건 그림을 개수만큼 늘어놓는다
+                        for (var k = 0; k < counts[i]; k++)
+                          SizedBox(
+                            width: 24,
+                            child: Center(
+                              child: Text(emojis[i],
+                                  style:
+                                      const TextStyle(fontSize: AppFont.body)),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -1007,13 +1289,25 @@ class _ClockPainter extends CustomPainter {
         ..color = AppColors.brown
         ..style = PaintingStyle.stroke
         ..strokeWidth = 5,
-    );
+    ); // 분 눈금 60개 (5분마다 길게) — 몇 분까지 읽으려면 눈금이 있어야 한다
+    for (var i = 0; i < 60; i++) {
+      final a = (i * 6 - 90) * math.pi / 180;
+      final dir = Offset(math.cos(a), math.sin(a));
+      final long = i % 5 == 0;
+      canvas.drawLine(
+        center + dir * (radius - (long ? 9 : 5)),
+        center + dir * (radius - 2.5),
+        Paint()
+          ..color = long ? AppColors.ink : AppColors.inkMuted
+          ..strokeWidth = long ? 2 : 1,
+      );
+    }
 
     // 숫자 1~12
     for (var n = 1; n <= 12; n++) {
       final angle = (n * 30 - 90) * math.pi / 180;
       final pos =
-          center + Offset(math.cos(angle), math.sin(angle)) * (radius - 16);
+          center + Offset(math.cos(angle), math.sin(angle)) * (radius - 22);
       final painter = TextPainter(
         text: TextSpan(
           text: '$n',
