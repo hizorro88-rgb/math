@@ -53,10 +53,10 @@ enum EnQuizType {
   themeWord('주제 낱말', '주제', '🎨'),
 
   /// 영어 낱말을 보고(듣고) 한국어 뜻을 고른다 (APPLE → 사과)
-  meaningPick('뜻 고르기', '뜻', '💬'),
+  meaningPick('뜻 고르기', '뜻', '🤔'),
 
   /// 한국어 뜻을 듣고 영어 낱말을 고른다 (사과 → APPLE)
-  englishPick('영어로 고르기', '영어로', '🇬🇧'),
+  englishPick('영어로 고르기', '영어로', '🔤'),
 
   /// 빠진 글자를 채운다 (🍎 AP_LE → P)
   missingLetter('빠진 글자 찾기', '빠진 글자', '🔍'),
@@ -124,8 +124,9 @@ class EnglishQuestion {
   /// [revealSpeech]를 읽을 언어 (뜻 문제는 한국어 뜻을 읽는다)
   final String revealLang;
 
-  /// 소리 없이 스스로 읽는 문제인지 — 처음엔 읽어 주지 않는다
-  bool get readAlone => type == EnQuizType.decode;
+  /// 소리 없이 스스로 읽는(떠올리는) 문제인지 — 처음엔 읽어 주지 않고
+  /// 답한 뒤에 [revealSpeech]로 들려준다 (혼자 읽기, 그림 보고 영어 떠올리기)
+  bool get readAlone => speech.isEmpty;
 
   final String dedupKey;
 }
@@ -142,12 +143,20 @@ class EnglishQuestionGenerator {
   /// 주제 낱말 묶음의 주제 (null이면 모든 주제)
   String? _theme;
 
+  /// 소리를 들을 수 있는지 — 없으면 주제 낱말에서 듣기 문제를 빼고 낸다
+  bool _listening = true;
+
+  /// 이번 판에 정답으로 나온 낱말 (한 판에 같은 낱말이 거듭 나오지 않게)
+  final _usedVocab = <String>{};
+
   /// [0]은 기존 문구(테스트 고정점), 나머지는 회전.
   String _rot(List<String> pool) => pool[_seq % pool.length];
 
   List<EnglishQuestion> generate(EnQuizType type,
-      {int stage = 0, int count = 10, String? theme}) {
+      {int stage = 0, int count = 10, String? theme, bool listening = true}) {
     _theme = theme;
+    _listening = listening;
+    _usedVocab.clear();
     final questions = <EnglishQuestion>[];
     String? previousKey;
     for (var i = 0; i < count; i++) {
@@ -456,12 +465,16 @@ class EnglishQuestionGenerator {
     switch (type) {
       case EnQuizType.themeWord:
         final themes = _theme?.split(',');
-        final pool = [
+        final pool = _growPool([
           for (final v in enVocab)
             if (themes?.contains(v.theme) ?? true) v
-        ];
+        ], stage);
         // 문항마다 모양을 바꾼다: 듣고 그림 → 그림 보고 낱말 → 낱말 뜻
-        final form = stage < 3 ? _seq % 2 : _seq % 3;
+        final form = !_listening
+            ? (stage < 3 ? 1 : 1 + _seq % 2)
+            : stage < 3
+                ? _seq % 2
+                : _seq % 3;
         return switch (form) {
           0 => _vocabListen(type, pool),
           1 => _vocabPicture(type, pool),
@@ -503,10 +516,22 @@ class EnglishQuestionGenerator {
         final blanked = [
           for (var i = 0; i < letters.length; i++) i == at ? '_' : letters[i]
         ].join(' ');
+        // 오답은 같은 종류(모음↔모음, 자음↔자음)에서, 다른 낱말이 되는 글자는 빼고
+        final isVowel = 'AEIOU'.contains(answer);
+        final known = {for (final v in enVocab) v.shown};
         final wrong = [
           for (final c in enAlphabet)
-            if (c != answer) c
+            if (c != answer &&
+                'AEIOU'.contains(c) == isVowel &&
+                !known
+                    .contains(blanked.replaceAll(' ', '').replaceFirst('_', c)))
+              c
         ]..shuffle(_random);
+        // 모음은 다섯뿐이라 모자라면 자음으로 채운다
+        for (final c in [...enAlphabet]..shuffle(_random)) {
+          if (wrong.length >= 3) break;
+          if (c != answer && !wrong.contains(c)) wrong.add(c);
+        }
         return EnglishQuestion(
           type: type,
           instruction: _rot(const ['빠진 글자는 무엇일까요?', '빈칸에 들어갈 글자는?']),
@@ -527,18 +552,19 @@ class EnglishQuestionGenerator {
             : enSightWords;
         final target = pool[_random.nextInt(pool.length)];
         // 첫 글자나 길이가 비슷한 낱말을 오답으로 (헷갈리는 모양끼리 구별하기)
-        final similar = [
+        // 첫 글자가 같은 낱말 → 길이가 같은 낱말 → 나머지 순서로 오답을 채운다
+        // (대문자 'I'는 오답으로 내면 모양만 보고 지울 수 있어 뺀다)
+        final candidates = [
           for (final w in enSightWords)
-            if (w != target &&
-                (w[0].toLowerCase() == target[0].toLowerCase() ||
-                    w.length == target.length))
-              w
+            if (w != target && w != 'I') w
         ]..shuffle(_random);
-        final rest = [
-          for (final w in enSightWords)
-            if (w != target && !similar.contains(w)) w
-        ]..shuffle(_random);
-        final wrong = [...similar, ...rest].take(3).toList();
+        int rank(String w) => w[0].toLowerCase() == target[0].toLowerCase()
+            ? 0
+            : w.length == target.length
+                ? 1
+                : 2;
+        candidates.sort((a, b) => rank(a).compareTo(rank(b)));
+        final wrong = candidates.take(3).toList();
         return EnglishQuestion(
           type: type,
           instruction: _rot(const ['들리는 낱말을 찾아요', '어떤 낱말일까요?']),
@@ -553,26 +579,57 @@ class EnglishQuestionGenerator {
   }
 
   /// 단어 퀴즈 범위: 앞 단계는 그림이 쉬운 주제, 뒤 단계는 전부
-  List<EnVocab> _vocabPool(int stage) => stage < 5
-      ? [
-          for (final v in enVocab)
-            if (const {'animal', 'food', 'thing', 'vehicle', 'color', 'body'}
-                .contains(v.theme))
-              v
-        ]
-      : enVocab;
+  List<EnVocab> _vocabPool(int stage) => _growPool(
+      stage < 5
+          ? [
+              for (final v in enVocab)
+                if (const {
+                  'animal',
+                  'food',
+                  'thing',
+                  'vehicle',
+                  'color',
+                  'body'
+                }.contains(v.theme))
+                  v
+            ]
+          : enVocab,
+      stage);
+
+  /// 단계가 오를수록 주제마다 뒤쪽(조금 어려운) 낱말까지 넓힌다.
+  /// 주제 안의 낱말은 쉬운 것부터 적혀 있다 — 0단계는 주제마다 앞 5개.
+  List<EnVocab> _growPool(List<EnVocab> pool, int stage) {
+    final perTheme = 5 + stage * 2;
+    final seen = <String, int>{};
+    return [
+      for (final v in pool)
+        if ((seen[v.theme] = (seen[v.theme] ?? 0) + 1) <= perTheme) v
+    ];
+  }
 
   /// 낱말 4개 (첫 번째가 정답). 뜻·그림이 겹치는 낱말은 같이 안 나온다.
   List<EnVocab> _pickVocab(List<EnVocab> pool) {
-    final target = pool[_random.nextInt(pool.length)];
+    final fresh = [
+      for (final v in pool)
+        if (!_usedVocab.contains(v.word)) v
+    ];
+    final from = fresh.isEmpty ? pool : fresh;
+    final target = from[_random.nextInt(from.length)];
+    _usedVocab.add(target.word);
     final kos = {target.ko};
     final emojis = {target.emoji};
+    final groups = {if (target.group != null) target.group};
     final others = [...pool]..shuffle(_random);
     final picked = [target];
     for (final v in others) {
       if (picked.length == 4) break;
       if (v.word == target.word) continue;
-      if (kos.add(v.ko) && emojis.add(v.emoji)) picked.add(v);
+      if (v.group != null && groups.contains(v.group)) continue;
+      if (kos.contains(v.ko) || emojis.contains(v.emoji)) continue;
+      kos.add(v.ko);
+      emojis.add(v.emoji);
+      if (v.group != null) groups.add(v.group);
+      picked.add(v);
     }
     return picked;
   }
@@ -604,7 +661,8 @@ class EnglishQuestionGenerator {
       choices: _shuffled([for (final v in picked) v.shown]),
       answer: target.shown,
       answerText: '${target.shown} (${target.ko})',
-      speech: target.word,
+      // 소리를 먼저 들려주면 떠올리기가 아니라 소리 맞히기가 된다
+      speech: '',
       revealSpeech: target.word,
       dedupKey: 'tw:${target.word}',
     );

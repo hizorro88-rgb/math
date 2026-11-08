@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 
 import '../models/english_curriculum.dart';
 import '../models/english_question.dart';
+import '../models/korean_curriculum.dart';
 import '../models/korean_question.dart';
 import '../models/language_packs.dart';
 import '../models/quiz_config.dart';
@@ -138,26 +139,33 @@ class _PracticeScreenState extends State<PracticeScreen> {
                     const SizedBox(height: 16),
                     const _SectionLabel('어떤 공부를 할까요?'),
                     const SizedBox(height: 8),
+                    // 한글·영어는 유형이 많아 지도와 같은 묶음별로 나눠 보여 준다
                     if (_subject == 1)
-                      ..._buildGrid(
-                        KrQuizType.values,
-                        (t) => _ChoiceCard(
-                          emoji: t.emoji,
-                          label: t.label,
-                          selected: _krType == t,
-                          onTap: () => setState(() => _krType = t),
+                      for (final cat in KoreanCurriculum.categories) ...[
+                        _GroupLabel('${cat.emoji} ${cat.title}'),
+                        ..._buildGrid(
+                          {for (final u in cat.units) u.type}.toList(),
+                          (t) => _ChoiceCard(
+                            emoji: t.emoji,
+                            label: t.label,
+                            selected: _krType == t,
+                            onTap: () => setState(() => _krType = t),
+                          ),
                         ),
-                      )
+                      ]
                     else if (_subject == 2)
-                      ..._buildGrid(
-                        EnglishCurriculum.typesInOrder,
-                        (t) => _ChoiceCard(
-                          emoji: t.emoji,
-                          label: t.label,
-                          selected: _enType == t,
-                          onTap: () => setState(() => _enType = t),
+                      for (final cat in EnglishCurriculum.categories) ...[
+                        _GroupLabel('${cat.emoji} ${cat.title}'),
+                        ..._buildGrid(
+                          {for (final u in cat.units) u.type}.toList(),
+                          (t) => _ChoiceCard(
+                            emoji: t.emoji,
+                            label: t.label,
+                            selected: _enType == t,
+                            onTap: () => setState(() => _enType = t),
+                          ),
                         ),
-                      )
+                      ]
                     else if (_subject >= 3)
                       // 주제 기반 팩(영어회화)은 유형 대신 배울 주제를 고른다.
                       ..._buildGrid(
@@ -294,6 +302,28 @@ class _PracticeScreenState extends State<PracticeScreen> {
         const SizedBox(height: 10),
       ],
     ];
+  }
+}
+
+/// 묶음 이름 (연습 칸 무리 위의 작은 제목)
+class _GroupLabel extends StatelessWidget {
+  const _GroupLabel(this.text);
+
+  final String text;
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 6, left: 2),
+      child: Text(
+        text,
+        style: const TextStyle(
+          fontSize: AppFont.small,
+          fontWeight: FontWeight.bold,
+          color: AppColors.inkSoft,
+        ),
+      ),
+    );
   }
 }
 

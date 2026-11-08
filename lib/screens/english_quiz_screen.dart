@@ -78,8 +78,11 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
   @override
   void initState() {
     super.initState();
-    final questions =
-        EnglishQuestionGenerator().generate(widget.type, stage: widget.stage);
+    final questions = EnglishQuestionGenerator().generate(widget.type,
+        stage: widget.stage,
+        theme: widget.level?.unit.theme,
+        // 소리가 안 나는 기기에서도 주제 낱말은 그림·뜻 문제로 풀 수 있게
+        listening: Speech.enabled && Speech.isLangAvailable('en-US'));
     _baseCount = questions.length;
     _dots = QuizDotTracker(_baseCount);
     _entries.addAll(questions.map(_EnEntry.new));
@@ -88,7 +91,10 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
 
   /// 소리 찾기 유형은 소리가 있어야 풀 수 있으니 먼저 확인한다.
   Future<void> _start() async {
-    final needsListening = widget.type == EnQuizType.listenLetter;
+    final needsListening = const {
+      EnQuizType.listenLetter,
+      EnQuizType.sightWord,
+    }.contains(widget.type);
     if (needsListening) {
       final ready =
           await ensureListenReady(context, lang: 'en-US', langName: '영어');
@@ -173,22 +179,22 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
     if (_isCorrect) {
       Sounds.correct(_combo);
       HapticFeedback.lightImpact().ignore();
+      final reveal =
+          _question.tiles.isEmpty && _question.revealSpeech.isNotEmpty;
       QuizVoice.correct(_isRetryQuestion ? 0 : _combo,
           say: _question.tiles.isNotEmpty
               ? choice
-              : _question.revealSpeech.isNotEmpty
+              : reveal
                   ? _question.revealSpeech
                   : null,
-          lang: _question.speechLang);
+          lang: reveal ? _question.revealLang : _question.speechLang);
     } else {
       Sounds.wrong();
       // 틀렸을 때 진동은 맞혔을 때보다 약하게 — 꾸짖는 느낌을 주지 않는다
       HapticFeedback.selectionClick().ignore();
-      QuizVoice.wrong(
-          _question.revealSpeech.isNotEmpty
-              ? _question.revealSpeech
-              : _question.answerText,
-          lang: _question.speechLang);
+      final reveal = _question.revealSpeech.isNotEmpty;
+      QuizVoice.wrong(reveal ? _question.revealSpeech : _question.answerText,
+          lang: reveal ? _question.revealLang : _question.speechLang);
     }
   }
 
@@ -287,15 +293,8 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
 
   Widget _buildQuestionCard() {
     // 그림·🔊는 큼직하게, 낱말·글자 배열은 그보다 작게
-    final displayIsText = switch (_question.type) {
-      EnQuizType.wordToPicture ||
-      EnQuizType.alphabetOrder ||
-      EnQuizType.caseMatch ||
-      EnQuizType.letterSound ||
-      EnQuizType.decode =>
-        true,
-      _ => false,
-    };
+    // 글자(영어·한글)가 든 표시는 글자 크기, 그림만 있으면 그림 크기
+    final displayIsText = RegExp(r'[A-Za-z가-힣]').hasMatch(_question.display);
     // 듣기 문제는 문제 자체가 커다란 듣기 버튼
     final listenDisplay = _question.display == '🔊';
     return QuizCard(
@@ -306,7 +305,7 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
           ? null
           : _question.readAlone
               ? () => Speech.speak(_question.revealSpeech,
-                  lang: _question.speechLang, force: true)
+                  lang: _question.revealLang, force: true)
               : () => _speakQuestion(force: true),
       badge: _isRetryQuestion
           ? const QuizBadge.retry()
@@ -333,12 +332,16 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
             ),
           if (_question.subDisplay.isNotEmpty) ...[
             const SizedBox(height: 8),
-            Text(
-              _question.subDisplay,
-              style: const TextStyle(
-                fontSize: 34,
-                fontWeight: FontWeight.bold,
-                letterSpacing: 4,
+            // 긴 낱말(E L E P H A N T)도 한 줄에 — 두 줄이면 두 낱말처럼 보인다
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                _question.subDisplay,
+                style: const TextStyle(
+                  fontSize: 34,
+                  fontWeight: FontWeight.bold,
+                  letterSpacing: 4,
+                ),
               ),
             ),
           ],

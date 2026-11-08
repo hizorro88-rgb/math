@@ -33,11 +33,15 @@ class EnUnit {
     required this.title,
     required this.emoji,
     required this.type,
+    this.theme,
   });
 
   final String title;
   final String emoji;
   final EnQuizType type;
+
+  /// 주제 낱말 묶음의 주제 id들 (쉼표로 이어서, 예: 'color,number')
+  final String? theme;
 
   late final int index;
   late final EnCategory category;
@@ -133,6 +137,44 @@ class EnglishCurriculum {
               emoji: '🖼️',
               type: EnQuizType.pictureToWord),
           EnUnit(title: '첫 글자 찾기', emoji: '🎯', type: EnQuizType.firstLetter),
+        ],
+      ),
+      EnCategory(
+        title: '단어 퀴즈',
+        emoji: '💬',
+        desc: '주제별 낱말과 뜻을 익혀요',
+        color: UnitColors.mustard,
+        units: [
+          EnUnit(
+              title: '색깔과 숫자',
+              emoji: '🎨',
+              type: EnQuizType.themeWord,
+              theme: 'color,number'),
+          EnUnit(
+              title: '몸과 가족',
+              emoji: '👪',
+              type: EnQuizType.themeWord,
+              theme: 'body,family'),
+          EnUnit(
+              title: '동작과 기분',
+              emoji: '🏃',
+              type: EnQuizType.themeWord,
+              theme: 'action,feeling'),
+          EnUnit(
+              title: '동물과 음식',
+              emoji: '🐶',
+              type: EnQuizType.themeWord,
+              theme: 'animal,food'),
+          EnUnit(
+              title: '옷과 탈것',
+              emoji: '👕',
+              type: EnQuizType.themeWord,
+              theme: 'clothes,vehicle'),
+          EnUnit(title: '뜻 고르기', emoji: '🤔', type: EnQuizType.meaningPick),
+          EnUnit(title: '영어로 고르기', emoji: '🔤', type: EnQuizType.englishPick),
+          EnUnit(
+              title: '빠진 글자 찾기', emoji: '🔍', type: EnQuizType.missingLetter),
+          EnUnit(title: '자주 쓰는 낱말', emoji: '👀', type: EnQuizType.sightWord),
         ],
       ),
       EnCategory(

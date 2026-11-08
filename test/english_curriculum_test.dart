@@ -16,7 +16,7 @@ void main() {
     test('알파벳 → 파닉스 → 낱말 → 스펠링, 묶음마다 10단계로 이어진다', () {
       expect(
         EnglishCurriculum.categories.map((c) => c.title).toList(),
-        ['알파벳 첫걸음', '파닉스', '영어 낱말', '스펠링 도전'],
+        ['알파벳 첫걸음', '파닉스', '영어 낱말', '단어 퀴즈', '스펠링 도전'],
       );
       expect(
         EnglishCurriculum.totalLevels,

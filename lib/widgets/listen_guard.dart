@@ -22,8 +22,8 @@ Future<bool> ensureListenReady(
         context,
         emoji: '🙉',
         title: '음성을 쓸 수 없어요',
-        message: '이 기기에는 $langName 읽어주기 음성이 없어서\n듣기 문제를 풀 수 없어요.\n'
-            '$langName 음성을 설치하면 바로 풀 수 있어요!',
+        message: '이 기기에 $langName 음성이 없어요.\n'
+            '음성을 설치하면 듣기 문제를 풀 수 있어요!',
         buttons: [
           // 안드로이드: 기기 TTS 설정으로 바로 이동 (음성 데이터 설치 입구)
           if (Speech.canOpenTtsSettings) ...[
@@ -148,7 +148,8 @@ Widget _guardDialog(
           ),
           const SizedBox(height: 8),
           Text(
-            message,
+            // 어절 중간에서 줄이 끊기지 않게 ('없어/서' 방지)
+            keepAll(message),
             textAlign: TextAlign.center,
             style: const TextStyle(
                 fontSize: AppFont.body, color: AppColors.inkSoft, height: 1.5),

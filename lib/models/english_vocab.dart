@@ -8,7 +8,7 @@ library;
 
 /// 단어 하나
 class EnVocab {
-  const EnVocab(this.word, this.emoji, this.ko, this.theme);
+  const EnVocab(this.word, this.emoji, this.ko, this.theme, [this.group]);
 
   /// 소문자 영어 낱말 (발음도 이것으로)
   final String word;
@@ -19,6 +19,9 @@ class EnVocab {
 
   /// 주제 id ([enThemes]의 키)
   final String theme;
+
+  /// 그림이 닮은 낱말 무리 (😴 sleep · 😪 sleepy) — 한 문제 보기에 함께 안 나온다
+  final String? group;
 
   String get shown => word.toUpperCase();
 }
@@ -34,6 +37,7 @@ const Map<String, (String, String)> enThemes = {
   'animal': ('동물', '🐶'),
   'food': ('음식', '🍎'),
   'thing': ('물건', '🎒'),
+  'clothes': ('옷', '👕'),
   'nature': ('자연', '🌳'),
   'vehicle': ('탈것', '🚗'),
 };
@@ -61,7 +65,7 @@ const List<EnVocab> enVocab = [
   EnVocab('nine', '9️⃣', '아홉', 'number'),
   EnVocab('ten', '🔟', '열', 'number'),
   // 몸
-  EnVocab('eye', '👁️', '눈', 'body'),
+  EnVocab('eye', '👀', '눈', 'body'),
   EnVocab('ear', '👂', '귀', 'body'),
   EnVocab('nose', '👃', '코', 'body'),
   EnVocab('mouth', '👄', '입', 'body'),
@@ -69,39 +73,39 @@ const List<EnVocab> enVocab = [
   EnVocab('foot', '🦶', '발', 'body'),
   EnVocab('leg', '🦵', '다리', 'body'),
   EnVocab('arm', '💪', '팔', 'body'),
-  EnVocab('tooth', '🦷', '이', 'body'),
+  EnVocab('tooth', '🦷', '이빨', 'body'),
   // 가족
-  EnVocab('mom', '👩', '엄마', 'family'),
-  EnVocab('dad', '👨', '아빠', 'family'),
+  EnVocab('mom', '👩', '엄마', 'family', 'woman'),
+  EnVocab('dad', '👨', '아빠', 'family', 'man'),
   EnVocab('baby', '👶', '아기', 'family'),
   EnVocab('grandma', '👵', '할머니', 'family'),
   EnVocab('grandpa', '👴', '할아버지', 'family'),
-  EnVocab('boy', '👦', '남자아이', 'family'),
-  EnVocab('girl', '👧', '여자아이', 'family'),
+  EnVocab('boy', '👦', '남자아이', 'family', 'man'),
+  EnVocab('girl', '👧', '여자아이', 'family', 'woman'),
   EnVocab('family', '👪', '가족', 'family'),
   // 동작
   EnVocab('run', '🏃', '달리다', 'action'),
   EnVocab('swim', '🏊', '수영하다', 'action'),
-  EnVocab('sleep', '😴', '자다', 'action'),
+  EnVocab('sleep', '😴', '자다', 'action', 'sleepy'),
   EnVocab('read', '📖', '읽다', 'action'),
   EnVocab('sing', '🎤', '노래하다', 'action'),
   EnVocab('dance', '💃', '춤추다', 'action'),
-  EnVocab('cry', '😭', '울다', 'action'),
+  EnVocab('cry', '😭', '울다', 'action', 'sad'),
   EnVocab('walk', '🚶', '걷다', 'action'),
   EnVocab('write', '✍️', '쓰다', 'action'),
   EnVocab('climb', '🧗', '오르다', 'action'),
   EnVocab('ride', '🚴', '타다', 'action'),
-  EnVocab('eat', '😋', '먹다', 'action'),
+  EnVocab('eat', '🍽️', '먹다', 'action'),
   // 기분
   EnVocab('happy', '😊', '기쁜', 'feeling'),
-  EnVocab('sad', '😞', '슬픈', 'feeling'),
+  EnVocab('sad', '😞', '슬픈', 'feeling', 'sad'),
   EnVocab('angry', '😠', '화난', 'feeling'),
-  EnVocab('scared', '😨', '무서운', 'feeling'),
-  EnVocab('sleepy', '😪', '졸린', 'feeling'),
+  EnVocab('scared', '😨', '겁먹은', 'feeling', 'shock'),
+  EnVocab('sleepy', '😪', '졸린', 'feeling', 'sleepy'),
   EnVocab('hot', '🥵', '더운', 'feeling'),
   EnVocab('cold', '🥶', '추운', 'feeling'),
   EnVocab('sick', '🤒', '아픈', 'feeling'),
-  EnVocab('surprised', '😲', '놀란', 'feeling'),
+  EnVocab('surprised', '😲', '놀란', 'feeling', 'shock'),
   // 동물
   EnVocab('cat', '🐱', '고양이', 'animal'),
   EnVocab('dog', '🐶', '개', 'animal'),
@@ -111,7 +115,7 @@ const List<EnVocab> enVocab = [
   EnVocab('owl', '🦉', '부엉이', 'animal'),
   EnVocab('ant', '🐜', '개미', 'animal'),
   EnVocab('bee', '🐝', '벌', 'animal'),
-  EnVocab('hen', '🐔', '닭', 'animal'),
+  EnVocab('chicken', '🐔', '닭', 'animal'),
   EnVocab('lion', '🦁', '사자', 'animal'),
   EnVocab('tiger', '🐯', '호랑이', 'animal'),
   EnVocab('bear', '🐻', '곰', 'animal'),
@@ -125,7 +129,7 @@ const List<EnVocab> enVocab = [
   EnVocab('rabbit', '🐰', '토끼', 'animal'),
   EnVocab('monkey', '🐵', '원숭이', 'animal'),
   EnVocab('zebra', '🦓', '얼룩말', 'animal'),
-  EnVocab('turtle', '🐢', '거북', 'animal'),
+  EnVocab('turtle', '🐢', '거북이', 'animal'),
   EnVocab('penguin', '🐧', '펭귄', 'animal'),
   EnVocab('mouse', '🐭', '쥐', 'animal'),
   EnVocab('elephant', '🐘', '코끼리', 'animal'),
@@ -134,7 +138,7 @@ const List<EnVocab> enVocab = [
   EnVocab('octopus', '🐙', '문어', 'animal'),
   EnVocab('butterfly', '🦋', '나비', 'animal'),
   EnVocab('spider', '🕷️', '거미', 'animal'),
-  EnVocab('crab', '🦀', '게', 'animal'),
+  EnVocab('crab', '🦀', '꽃게', 'animal'),
   // 음식
   EnVocab('apple', '🍎', '사과', 'food'),
   EnVocab('banana', '🍌', '바나나', 'food'),
@@ -159,7 +163,6 @@ const List<EnVocab> enVocab = [
   EnVocab('honey', '🍯', '꿀', 'food'),
   EnVocab('juice', '🧃', '주스', 'food'),
   // 물건
-  EnVocab('hat', '🎩', '모자', 'thing'),
   EnVocab('key', '🔑', '열쇠', 'thing'),
   EnVocab('bed', '🛏️', '침대', 'thing'),
   EnVocab('box', '📦', '상자', 'thing'),
@@ -168,8 +171,6 @@ const List<EnVocab> enVocab = [
   EnVocab('book', '📕', '책', 'thing'),
   EnVocab('ball', '⚽', '공', 'thing'),
   EnVocab('clock', '⏰', '시계', 'thing'),
-  EnVocab('shoe', '👟', '신발', 'thing'),
-  EnVocab('sock', '🧦', '양말', 'thing'),
   EnVocab('chair', '🪑', '의자', 'thing'),
   EnVocab('pencil', '✏️', '연필', 'thing'),
   EnVocab('scissors', '✂️', '가위', 'thing'),
@@ -181,6 +182,17 @@ const List<EnVocab> enVocab = [
   EnVocab('balloon', '🎈', '풍선', 'thing'),
   EnVocab('gift', '🎁', '선물', 'thing'),
   EnVocab('bell', '🔔', '종', 'thing'),
+  // 옷
+  EnVocab('shirt', '👕', '셔츠', 'clothes'),
+  EnVocab('pants', '👖', '바지', 'clothes'),
+  EnVocab('dress', '👗', '원피스', 'clothes'),
+  EnVocab('coat', '🧥', '외투', 'clothes'),
+  EnVocab('cap', '🧢', '야구모자', 'clothes', 'hat'),
+  EnVocab('hat', '🎩', '모자', 'clothes', 'hat'),
+  EnVocab('gloves', '🧤', '장갑', 'clothes'),
+  EnVocab('scarf', '🧣', '목도리', 'clothes'),
+  EnVocab('shoe', '👟', '신발', 'clothes'),
+  EnVocab('sock', '🧦', '양말', 'clothes'),
   // 자연
   EnVocab('sun', '☀️', '해', 'nature'),
   EnVocab('moon', '🌙', '달', 'nature'),
@@ -189,7 +201,7 @@ const List<EnVocab> enVocab = [
   EnVocab('flower', '🌸', '꽃', 'nature'),
   EnVocab('cloud', '☁️', '구름', 'nature'),
   EnVocab('rain', '🌧️', '비', 'nature'),
-  EnVocab('snow', '☃️', '눈', 'nature'),
+  EnVocab('snow', '❄️', '눈', 'nature'),
   EnVocab('rainbow', '🌈', '무지개', 'nature'),
   EnVocab('fire', '🔥', '불', 'nature'),
   EnVocab('leaf', '🍃', '나뭇잎', 'nature'),
