@@ -26,6 +26,7 @@ import '../widgets/pet_parts.dart';
 import '../widgets/pulse.dart';
 import '../models/boss.dart';
 import '../models/quiz_config.dart';
+import '../models/learn_cards.dart';
 import 'badge_screen.dart';
 import 'category_screen.dart';
 import 'english_category_screen.dart';
@@ -46,6 +47,7 @@ import 'settings_screen.dart';
 import 'shop_screen.dart';
 import 'sticker_book_screen.dart';
 import 'wrong_notes_screen.dart';
+import 'learn_cards_screen.dart';
 
 /// 홈 화면: 마스코트 인사, 칭호 카드, 오늘의 미션,
 /// 그리고 나이·학년별(4살~초3) 학습 카테고리.
@@ -784,8 +786,10 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
             l.unit.emoji,
             l.unit.title,
             l.unit.category.color,
-            () => go(
-                KoreanQuizScreen(type: l.unit.type, stage: l.stage, level: l)));
+            // 묶음 첫 단계면 배우기 카드부터 (지도에서 열 때와 똑같이)
+            () => go(koreanLevelEntry(l,
+                showCards:
+                    autoShowLearnCards(l.indexInUnit, data.krStars[i]))));
       case 2:
         final levels = EnglishCurriculum.levels;
         final i = pick(
@@ -799,8 +803,9 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
             l.unit.emoji,
             l.unit.title,
             l.unit.category.color,
-            () => go(EnglishQuizScreen(
-                type: l.unit.type, stage: l.stage, level: l)));
+            () => go(englishLevelEntry(l,
+                showCards:
+                    autoShowLearnCards(l.indexInUnit, data.enStars[i]))));
       default:
         final pack = languagePacks[_subject - 3];
         final stars = data.langStars[_subject - 3];
@@ -813,11 +818,8 @@ class _LevelMapScreenState extends State<LevelMapScreen> {
             l.unit.emoji,
             l.unit.title,
             l.unit.category.color,
-            () => go(LanguageQuizScreen(
-                pack: pack,
-                typeIndex: l.unit.typeIndex,
-                stage: l.stage,
-                level: l)));
+            () => go(langLevelEntry(pack, l,
+                showCards: autoShowLearnCards(l.indexInUnit, stars[i]))));
     }
   }
 

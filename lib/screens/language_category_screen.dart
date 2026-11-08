@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 
 import '../models/language_pack.dart';
+import '../models/learn_cards.dart';
 import '../widgets/stage_parts.dart';
-import 'language_quiz_screen.dart';
+import 'learn_cards_screen.dart';
 import '../theme.dart';
 
 /// 언어 팩 공용 카테고리 상세: 묶음들과 단계 지도.
@@ -27,19 +28,15 @@ class _LanguageCategoryScreenState extends State<LanguageCategoryScreen> {
   }
 
   Future<void> _openLevel(LangLevel level) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => LanguageQuizScreen(
-          pack: widget.pack,
-          typeIndex: level.unit.typeIndex,
-          stage: level.stage,
-          level: level,
-        ),
-      ),
-    );
+    // 묶음 첫 단계·6단계를 처음 열 때는 배우기 카드부터 (그림·소리로 먼저 만나기)
+    final stars = await _starsFuture;
     if (!mounted) return;
-    setState(() {
-      _starsFuture = LangProgressStore.load(widget.pack);
+    final show = autoShowLearnCards(level.indexInUnit, stars[level.number - 1]);
+    await pushLevel(
+        context, langLevelEntry(widget.pack, level, showCards: show), then: () {
+      if (mounted) {
+        setState(() => _starsFuture = LangProgressStore.load(widget.pack));
+      }
     });
   }
 
@@ -141,6 +138,22 @@ class _UnitSection extends StatelessWidget {
         pack.levels.where((l) => l.unit.index == unit.index).toList();
     return StageUnitCard(
       highlight: highlight,
+      // 🎴 카드: 지금 할 단계(없으면 마지막 단계)의 판으로 카드를 만든다
+      onLearn: langCardPool(pack, unit.typeIndex).isEmpty
+          ? null
+          : () {
+              final l = unitLevels.firstWhere((l) => stars[l.number - 1] == 0,
+                  orElse: () => unitLevels.last);
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => LearnCardsScreen(
+                    title: unit.title,
+                    cards: langLearnCards(
+                        pack,
+                        unit.typeIndex,
+                        pack.generate(unit.typeIndex,
+                            stage: l.stage, unitIndex: unit.index))),
+              ));
+            },
       emoji: unit.emoji,
       title: unit.title,
       color: unit.color,

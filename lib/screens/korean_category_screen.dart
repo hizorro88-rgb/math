@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
 
 import '../models/korean_curriculum.dart';
+import '../models/korean_question.dart';
+import '../models/learn_cards.dart';
 import '../widgets/stage_parts.dart';
-import 'korean_quiz_screen.dart';
+import 'learn_cards_screen.dart';
 
 /// 한글 카테고리 상세: 묶음들과 단계 지도.
 class KoreanCategoryScreen extends StatefulWidget {
@@ -24,18 +26,13 @@ class _KoreanCategoryScreenState extends State<KoreanCategoryScreen> {
   }
 
   Future<void> _openLevel(KrLevel level) async {
-    await Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => KoreanQuizScreen(
-          type: level.unit.type,
-          stage: level.stage,
-          level: level,
-        ),
-      ),
-    );
+    // 묶음 첫 단계·6단계를 처음 열 때는 배우기 카드부터 (그림·소리로 먼저 만나기)
+    final stars = await _starsFuture;
     if (!mounted) return;
-    setState(() {
-      _starsFuture = KoreanProgressStore.load();
+    final show = autoShowLearnCards(level.indexInUnit, stars[level.number - 1]);
+    await pushLevel(context, koreanLevelEntry(level, showCards: show),
+        then: () {
+      if (mounted) setState(() => _starsFuture = KoreanProgressStore.load());
     });
   }
 
@@ -108,6 +105,21 @@ class _UnitSection extends StatelessWidget {
         .toList();
     return StageUnitCard(
       highlight: highlight,
+      // 🎴 카드: 지금 할 단계(없으면 마지막 단계)의 판으로 카드를 만든다
+      onLearn: koreanCardPool(unit.type).isEmpty
+          ? null
+          : () {
+              final l = unitLevels.firstWhere((l) => stars[l.number - 1] == 0,
+                  orElse: () => unitLevels.last);
+              Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => LearnCardsScreen(
+                    title: unit.title,
+                    cards: koreanLearnCards(
+                        unit.type,
+                        KoreanQuestionGenerator()
+                            .generate(unit.type, stage: l.stage))),
+              ));
+            },
       emoji: unit.emoji,
       title: unit.title,
       color: unit.color,

@@ -8,13 +8,24 @@ import '../models/english_question.dart';
 import '../models/progress.dart';
 import '../models/stats.dart';
 import '../models/wrong_notes.dart';
+import '../models/learn_cards.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../theme.dart';
 import '../widgets/listen_guard.dart';
 import '../widgets/quiz_exit_dialog.dart';
 import '../widgets/quiz_parts.dart';
+import 'learn_cards_screen.dart';
 import 'round_finish.dart';
+
+/// 영어 한 판 문제 만들기 (배우기 카드와 퀴즈가 같은 판을 쓰도록 한 곳에서)
+List<EnglishQuestion> generateEnglishRound(
+        EnQuizType type, int stage, EnLevel? level) =>
+    EnglishQuestionGenerator().generate(type,
+        stage: stage,
+        theme: level?.unit.theme,
+        // 소리가 안 나는 기기에서도 주제 낱말은 그림·뜻 문제로 풀 수 있게
+        listening: Speech.enabled && Speech.isLangAvailable('en-US'));
 
 /// 영어 퀴즈 화면: 수학 퀴즈와 같은 흐름(진행 바·콤보·재출제·피드백 판)으로
 /// 낱말/글자/그림 보기를 고른다. 듣기 문제는 TTS가 문제를 읽어 준다.
@@ -24,9 +35,13 @@ class EnglishQuizScreen extends StatefulWidget {
     required this.type,
     this.stage = 0,
     this.level,
+    this.questions,
   });
 
   final EnQuizType type;
+
+  /// 미리 만든 문제 (배우기 카드와 같은 판을 풀 때). 없으면 새로 만든다.
+  final List<EnglishQuestion>? questions;
   final int stage;
 
   /// 단계 도전이면 해당 단계, 아니면 null
@@ -78,11 +93,8 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
   @override
   void initState() {
     super.initState();
-    final questions = EnglishQuestionGenerator().generate(widget.type,
-        stage: widget.stage,
-        theme: widget.level?.unit.theme,
-        // 소리가 안 나는 기기에서도 주제 낱말은 그림·뜻 문제로 풀 수 있게
-        listening: Speech.enabled && Speech.isLangAvailable('en-US'));
+    final questions = widget.questions ??
+        generateEnglishRound(widget.type, widget.stage, widget.level);
     _baseCount = questions.length;
     _dots = QuizDotTracker(_baseCount);
     _entries.addAll(questions.map(_EnEntry.new));
@@ -237,8 +249,8 @@ class _EnglishQuizScreenState extends State<EnglishQuizScreen> {
           final n = EnglishCurriculum.levelAt(level.number + 1);
           return NextStage(
             categoryIndex: n.unit.category.index,
-            builder: () =>
-                EnglishQuizScreen(type: n.unit.type, stage: n.stage, level: n),
+            builder: () => englishLevelEntry(n,
+                showCards: autoShowLearnCards(n.indexInUnit, 0)),
           );
         },
         headerText: level == null

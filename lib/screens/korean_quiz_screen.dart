@@ -8,12 +8,14 @@ import '../models/korean_question.dart';
 import '../models/progress.dart';
 import '../models/stats.dart';
 import '../models/wrong_notes.dart';
+import '../models/learn_cards.dart';
 import '../services/sounds.dart';
 import '../services/speech.dart';
 import '../theme.dart';
 import '../widgets/listen_guard.dart';
 import '../widgets/quiz_exit_dialog.dart';
 import '../widgets/quiz_parts.dart';
+import 'learn_cards_screen.dart';
 import 'round_finish.dart';
 
 /// 한글 퀴즈 화면: 수학 퀴즈와 같은 흐름(진행 바·콤보·재출제·피드백 판)으로
@@ -24,9 +26,13 @@ class KoreanQuizScreen extends StatefulWidget {
     required this.type,
     this.stage = 0,
     this.level,
+    this.questions,
   });
 
   final KrQuizType type;
+
+  /// 미리 만든 문제 (배우기 카드와 같은 판을 풀 때). 없으면 새로 만든다.
+  final List<KoreanQuestion>? questions;
   final int stage;
 
   /// 단계 도전이면 해당 단계, 아니면 null
@@ -78,7 +84,7 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
   @override
   void initState() {
     super.initState();
-    final questions =
+    final questions = widget.questions ??
         KoreanQuestionGenerator().generate(widget.type, stage: widget.stage);
     _baseCount = questions.length;
     _dots = QuizDotTracker(_baseCount);
@@ -226,8 +232,8 @@ class _KoreanQuizScreenState extends State<KoreanQuizScreen> {
           final n = KoreanCurriculum.levelAt(level.number + 1);
           return NextStage(
             categoryIndex: n.unit.category.index,
-            builder: () =>
-                KoreanQuizScreen(type: n.unit.type, stage: n.stage, level: n),
+            builder: () => koreanLevelEntry(n,
+                showCards: autoShowLearnCards(n.indexInUnit, 0)),
           );
         },
         headerText: level == null

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../theme.dart';
+import 'bouncy_button.dart';
 import 'kid_notice.dart';
 import 'level_bubble.dart';
 
@@ -33,7 +34,11 @@ class StageUnitCard extends StatelessWidget {
     required this.color,
     required this.levels,
     this.highlight = true,
+    this.onLearn,
   });
+
+  /// 배우기 카드 열기 (없으면 버튼이 안 보인다)
+  final VoidCallback? onLearn;
 
   /// 이 묶음에 "지금 할 원"(펄스)을 표시할지 — 지도 전체에서 첫 묶음 하나만
   final bool highlight;
@@ -74,6 +79,38 @@ class StageUnitCard extends StatelessWidget {
         const SizedBox(width: 10),
         Expanded(
             child: Text(title, style: displayStyle(fontSize: AppFont.title))),
+        if (onLearn != null && !_locked)
+          // 🎴 카드 = 배우기 카드 (문제 전에 그림·소리로 먼저 만나기).
+          // 글을 못 읽는 아이도 알아보게 그림 + 짧은 글.
+          Semantics(
+            button: true,
+            label: '$title 배우기 카드',
+            excludeSemantics: true,
+            onTap: onLearn,
+            child: PressBounce(
+              onTap: onLearn,
+              child: Container(
+                padding: const EdgeInsets.fromLTRB(8, 4, 12, 4),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(999),
+                  border: Border.all(color: AppColors.outline, width: 2),
+                ),
+                child: const Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('🎴', style: TextStyle(fontSize: AppFont.heading)),
+                    SizedBox(width: 4),
+                    Text('카드',
+                        style: TextStyle(
+                            fontSize: AppFont.small,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.inkSoft)),
+                  ],
+                ),
+              ),
+            ),
+          ),
         if (_locked)
           // 🔒(자물쇠)는 '어른이 여는 것'에만 — 진행 잠금은 빈 점선 동그라미
           const Icon(Icons.radio_button_unchecked_rounded,

@@ -309,6 +309,9 @@ void main() {
     await scrollAndTap(tester, find.text('한글 첫걸음'));
     expect(find.text('낱말 보고 그림 찾기'), findsOneWidget);
     await scrollAndTap(tester, find.text('1').first);
+    // 묶음 첫 단계를 처음 열면 배우기 카드가 먼저 나온다
+    expect(find.byKey(const ValueKey('learn-start')), findsOneWidget);
+    await scrollAndTap(tester, find.byKey(const ValueKey('learn-start')));
     expect(find.text('알맞은 그림을 찾아요'), findsOneWidget);
 
     // 카드에 크게 보이는 낱말(fontSize 40)을 읽고 짝이 되는 그림을 누른다.
@@ -616,6 +619,8 @@ void main() {
     await scrollAndTap(tester, find.text('영어 낱말'));
     expect(find.text('낱말 듣고 그림 찾기'), findsOneWidget);
     await scrollAndTap(tester, find.text('1').first); // 카테고리 첫 단계
+    // 처음 여는 묶음은 배우기 카드부터 → 문제 풀기
+    await scrollAndTap(tester, find.byKey(const ValueKey('learn-start')));
     expect(find.text('잘 듣고 알맞은 그림을 찾아요'), findsOneWidget);
 
     // 카드에 크게 보이는 영어 낱말로 정답 그림을 찾아 누른다.
